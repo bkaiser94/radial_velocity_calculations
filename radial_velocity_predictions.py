@@ -1,8 +1,6 @@
 import numpy as np
 import os
 from glob import glob
-import matplotlib as mpl
-mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 from astropy.io import fits
 import sys
@@ -12,21 +10,36 @@ import astropy.units as u
 from astropy.units import cds
 cds.enable()
 
-ra = sys.argv[1]
-dec = sys.argv[2]
-times = ['2018-03-19T02:19:00', '2018-03-19T10:01:00']
-#obs_times= Time(times, format = 'isot', scale='utc', location = coord.EarthLocation.of_site('Cerro Tololo'))
+ra = float(sys.argv[1])
+dec = float(sys.argv[2])
+
 parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
-cerro_pachon_location = coord.EarthLocation.from_geodetic(lat = '-30 14 16.41', lon = '-70 44 01.11', height = 2748* u.m)
+cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
+
+times = ['2018-03-19T02:19:00', '2018-03-19T10:01:00']
+obs_times= Time(times, format = 'isot', scale='utc', location = cerro_pachon_location)
+target_coord = coord.SkyCoord(ra, dec, unit= (u.deg, u.deg), frame= 'icrs')
+
+def to_barycenter(input_times):
+    bary_corr =input_times.light_travel_time(target_coord)
+    return (input_times+ bary_corr).tdb.mjd
+
+
+
 m1 = (0.14 *u.Msun).si
 m2 = (1.4 *u.Msun).si
 e = 0.000023
 omega = 97 * u.degree
 period = (0.4497391377 * u.day).to(u.second)
 t0 = Time(55756.23, format = 'mjd', scale= 'utc', location = parkes_location)
+tasc = Time(55756.1047771, format = 'mjd', scale= 'utc', location = parkes_location)
 
-for thing in coord.EarthLocation.get_site_names():
-    print (thing)
+
+bmjd_obs = to_barycenter(obs_times) #corrected to barycenter to use against the rv curve
+bmjd_t0 = to_barycenter(t0) #corrected initial epoch
+bmjd_tasc= to_barycenter(tasc)
+#for thing in coord.EarthLocation.get_site_names():
+    #print (thing)
 print (u.Unit('m'))
 print (parkes_location)
 print (period)
