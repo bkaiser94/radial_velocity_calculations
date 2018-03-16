@@ -26,7 +26,7 @@ def to_barycenter(input_times):
 
 
 lam_rest = 6562.81*u.angstrom #angstroms
-m1 = (0.12 *u.Msun).si
+m1 = (0.14 *u.Msun).si
 m2 = (1.4 *u.Msun).si
 e = 0.000023
 omega = 97 * u.degree
