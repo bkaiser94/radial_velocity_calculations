@@ -1,3 +1,18 @@
+"""
+written by Ben Kaiser (UNC - Chapel Hill)
+
+:INPUTS:
+    RA : decimal degree value provided as commandline input
+    DEC: decimal degree value provided as commandline input
+
+:OUTPUTS:
+    print plots showing the times the target should be observed to get the radial velocity values in quadrature
+    
+
+
+*** There are orbital parameters that are contained within the variables in this file that have to be edited in file in order for this script to work with a system other than the one it was originally written for. The RA and DEC are required as inputs so the target isn't obvious to  anyone but the person running it.****
+"""
+
 import numpy as np
 import os
 from glob import glob
