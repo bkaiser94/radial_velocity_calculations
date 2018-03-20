@@ -28,20 +28,35 @@ def to_barycenter(input_times):
 lam_rest = 6562.81*u.angstrom #angstroms
 m1 = (0.14 *u.Msun).si
 m2 = (1.4 *u.Msun).si
-e = 0.000023
+e = 0.000023# median
+#e = 0.000031# max
+#e=0.8
 omega = 97 * u.degree
-period = (0.4497391377 * u.day).to(u.second)
+period = (0.4497391377 * u.day).to(u.second) #median
+#period = (0.449739137 * u.day).to(u.second) #low
+#period = (0.4497391384 * u.day).to(u.second) #high
+
 t0 = Time(55756.23, format = 'mjd', scale= 'utc', location = parkes_location)
-tasc = Time(55756.1047771, format = 'mjd', scale= 'utc', location = parkes_location)
+tasc = Time(55756.1047771, format = 'mjd', scale= 'utc', location = parkes_location) #median
+#tasc = Time(55756.1047767, format = 'mjd', scale= 'utc', location = parkes_location) #min
+tconj= Time(55756.21712, format = 'mjd', scale ='utc', location = parkes_location)
+
+#epoch_difference = obs_times[0].mjd-tasc.mjd
+epoch_difference = obs_times[0].mjd-tconj.mjd
+print "epoch difference: ", epoch_difference
 
 
 bmjd_obs = to_barycenter(obs_times) #corrected to barycenter to use against the rv curve
 bmjd_t0 = to_barycenter(t0) #corrected initial epoch
 bmjd_tasc= to_barycenter(tasc)
+bmjd_tconj = to_barycenter(tconj)
 
 #calculate nearest bmjd to start for calculating radial velocities around the observations
-time_dif= bmjd_obs[0]-bmjd_tasc #days between epoch and beginning of observability
-nearest_time = int(time_dif/period.to(u.day).value)*period.to(u.day).value+bmjd_tasc #beginning of the orbital cycle
+#time_dif= bmjd_obs[0]-bmjd_tasc #days between epoch and beginning of observability
+time_dif = bmjd_obs[0]-bmjd_tconj
+#nearest_time = int(time_dif/period.to(u.day).value)*period.to(u.day).value+bmjd_tasc #beginning of the orbital cycle
+nearest_time = int(time_dif/period.to(u.day).value)*period.to(u.day).value+bmjd_tconj #beginning of the orbital cycle
+
 print ("obs start", bmjd_obs[0])
 print ("nearest start time", nearest_time)
 G = u.cds.G.si
@@ -91,27 +106,40 @@ def v(th,a,e,m1,m2,dt, body_num):
     vel= (x_i1-x_i)/dt
     return vel
     
+def get_quad_points(velocities):
+    zeros = np.argsort(velocities**2)[0:6]
+    first_max = np.argsort(velocities)[-3:]
+    first_min= np.argsort(velocities)[0:3]
+    return np.hstack([zeros,first_max, first_min])
+
 v1= v(th, a_thing, e, m1, m2, dt, 1)
 
 v2= v(th, a_thing , e, m1, m2, dt, 2)
+
 
 print ("Maximum radial velocity companion:", np.nanmax(v1))
 bmjd_times =Time(nearest_time+ days.value,  format = 'mjd', scale='tdb', location = cerro_pachon_location)
 mjd_times= bmjd_times+ bmjd_times.light_travel_time(target_coord)
 utc_times = mjd_times.utc.mjd
 utc_difs =((utc_times-obs_times[0].mjd)*u.day).to(u.hour)
+
+quad_points = get_quad_points(v1)
+quad_days = utc_times[quad_points]
+quad_hours = utc_difs[quad_points]
+quad_times = Time(((quad_hours.to(u.day) +obs_times[0].mjd*u.day).to(u.day)).value, format='mjd', scale= 'utc').iso
+
+for plusmin,actual_time, day_value  in zip(quad_hours, quad_times, quad_days):
+    print plusmin, actual_time, day_value
 plt.xlabel(r't (hours)')
 plt.ylabel(r'v ('+str(v1.unit)+')')
 plt.axvline(x =( (obs_times[0].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'k', label = times[0])
 plt.axvline(x=( (obs_times[1].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'r', label = times[1])
 plt.plot(utc_difs,v1,label='Comp');
 plt.plot(utc_difs,v2,label= 'NS');
+plt.plot(utc_difs[quad_points], v1[quad_points], marker = '*', color ='k', linestyle = 'None')
 plt.legend();
 plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun)))
 plt.show()
-print(N)
-print (p(a_thing,m1,m2).to(u.day))
-print (v1.unit)
 print (a_thing.to(u.au))
 print ("a in ls", (a_thing/(u.cds.c.si)).to(u.second))
 
@@ -136,7 +164,7 @@ lam_range = np.linspace(3000., 7000, 8000)*u.angstrom
 all_lams = calc_lam_obs(np.max(v1), lam_range)
 plt.xlabel(r'$\lambda_{rest}$ ('+ str(lam_range.unit)+')')
 plt.ylabel(r'$\lambda_{obs}$ ('+str(all_lams.unit)+') at max velocity of'+ str(np.max(v1)))
-plt.plot(lam_range, all_lams);
+plt.plot(lam_range, all_lams, label = 'wavelengths');
 plt.legend();
 plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun))+ r'$v_{companion}$' + str(np.max(v1) ))
 plt.show()
