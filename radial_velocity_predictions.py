@@ -31,7 +31,8 @@ dec = float(sys.argv[2])
 parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
-times = ['2018-03-19T02:19:00', '2018-03-19T10:11:00']
+#times = ['2018-03-19T02:19:00', '2018-03-19T10:11:00']
+times = ['2018-03-27T01:45:00', '2018-03-27T10:04:00']
 obs_times= Time(times, format = 'isot', scale='utc', location = cerro_pachon_location)
 target_coord = coord.SkyCoord(ra, dec, unit= (u.deg, u.deg), frame= 'icrs')
 
