@@ -225,9 +225,9 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width):
     print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
     cut_light_values= high_light_values[upper_cut]
     popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= p0_list)
-    #plt.plot(cut_x_pixels, cut_light_values)
-    #plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels, popt[0], popt[1], popt[2], popt[3]))
-    #plt.show()
+    plt.plot(cut_x_pixels, cut_light_values)
+    plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels, popt[0], popt[1], popt[2], popt[3]))
+    plt.show()
     return popt, pcov
 
 
@@ -253,11 +253,11 @@ for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
         lamp_params, lamp_cov = fit_gaussian_curve(x_positions, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width)
         peaks_found.append(lamp_params[0])
         wave_peaks_found.append(lamp_line_wave)
-        #plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
-        #plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
-        #plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
-        #plt.show()
-        #break
+        plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
+        plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
+        plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
+        plt.legend()
+        plt.show()
     except RuntimeError as error:
         print error
 
