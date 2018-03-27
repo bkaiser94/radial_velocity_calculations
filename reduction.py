@@ -39,15 +39,17 @@ bkg_shift= 50
 #line_sides= np.array([4,4,4,4,4])
 #line_x_checks= np.array([175, 728, 883, 893, 1490]) #x-values that are approximately in the middle of the lamp lines so we know where to look for centroiding
 balmer_rest_waves= np.array([4101.734, 4340.472, 4861.35]) #Only 3 Balmer Lines seem to be in this image.
-balmer_x_checks= np.array([615 ,896, 1515])   #wavelength values that should be checked for the Balmer emission lines in our spectrum (1360 line should be 30 pixels on either side)
+balmer_x_checks= np.array([610 ,896, 1510])   #wavelength values that should be checked for the Balmer emission lines in our spectrum (1360 line should be 30 pixels on either side)
 balmer_line_sides= np.array([30,30, 31]) #Number of pixels on either side of the guessed peak that should be included in the centroiding effort for the balmer lines (those are based on attempted lines).
 
 ###
 lamp_sigma_guess = 3
-line_search_width= 10
+line_search_width= 12
 balmer_sigma_guess= 7
 lamp_p0 = [1, 500,  lamp_sigma_guess, 0]
-balmer_p0= [-1, 500, balmer_sigma_guess,balmer_line_sides[0],0]
+#balmer_p0= [-1, 500, balmer_sigma_guess,balmer_line_sides[0],0]
+balmer_p0= [-10, 500, balmer_sigma_guess,0]
+
 ###
 n_trials= 1000
 ########
@@ -73,23 +75,23 @@ n_trials= 1000
                                     #4965.0795, 5141.7827, 5162.2846, 
                                     #5187.7462] ]) 
                                    
-WaveList_Fe_930_12_24= np.array([ [431.795, 1057.76, 1194.97, 1315.35, 
-                                   1381.1, 1444.58,  1630.61, 
-                                   1682.99, 1726.03, 1779.61, 
-                                   1893.19, 2132.53, 2210.85, 
-                                   2279.64, 2361.34, 2443.06, 2468.22, 
-                                   2515.14, 2630.53, 2795.45, 2886.45, 
-                                   2985.15, 3085.52, 3162.56,  
+WaveList_Fe_930_12_24= np.array([ [431.795, 1057.76,  1315.35, 
+                                   1444.58,  1630.61, 
+                                   1682.99, 1726.03, 
+                                   2132.53,  
+                                   2279.64, 2361.34,  
+                                   2886.45, 
+                                   2985.15, 3085.52,   
                                    3367.86, 3795.76, 3845.65, 
                                    3907.57], 
                                    
-                                   [3729.3087, 3994.7918, 4052.9208, 4103.9121, 
-                                    4131.7235, 4158.5905,  4237.2198, 
-                                    4259.3619, 4277.5282, 4300.1008, 
-                                    4348.064, 4448.8792, 4481.8107, 
-                                    4510.7332, 4545.0519, 4579.3495, 4589.8978, 
-                                    4609.5673, 4657.9012, 4726.8683, 4764.8646, 
-                                    4806.0205, 4847.8095, 4879.8635, 
+                                   [3729.3087, 3994.7918,  4103.9121, 
+                                    4158.5905,  4237.2198, 
+                                    4259.3619, 4277.5282, 
+                                    4448.8792,  
+                                    4510.7332, 4545.0519, 
+                                    4764.8646, 
+                                    4806.0205, 4847.8095,  
                                     4965.0795, 5141.7827, 5162.2846, 
                                     5187.7462] ]) 
 line_x_checks = WaveList_Fe_930_12_24[0]/2.
@@ -215,6 +217,7 @@ def gaussian_curve(x, a, x0, sigma,b):
 
 def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width):
     cut_region = np.where(x_pixels> (p0_list[1]-search_width ))
+    print '========'
     print p0_list
     print  "lower bound:", p0_list[1]-search_width
     print "upper bound: ", p0_list[1]+search_width
@@ -225,9 +228,27 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width):
     print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
     cut_light_values= high_light_values[upper_cut]
     popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= p0_list)
-    plt.plot(cut_x_pixels, cut_light_values)
-    plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels, popt[0], popt[1], popt[2], popt[3]))
-    plt.show()
+    try:
+        cut_region = np.where(x_pixels> (popt[1]-search_width ))
+        print popt
+        print  "lower bound:", popt[1]-search_width
+        print "upper bound: ", popt[1]+search_width
+        high_x_pixels= np.copy(x_pixels[cut_region])
+        high_light_values= np.copy(light_values[cut_region])
+        upper_cut = np.where(high_x_pixels < (popt[1]+search_width))
+        cut_x_pixels = high_x_pixels[upper_cut]
+        print np.min(cut_x_pixels), np.max(cut_x_pixels), popt[1]
+        cut_light_values= high_light_values[upper_cut]
+        popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= popt)
+    except ValueError as error:
+        print "probably chose a center outside the bounds of the image"
+        print error
+        
+    print popt
+    print '========'
+    #plt.plot(cut_x_pixels, cut_light_values)
+    #plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels, popt[0], popt[1], popt[2], popt[3]))
+    #plt.show()
     return popt, pcov
 
 
@@ -245,13 +266,13 @@ def line_centroiding(lamp_light,line_x_checks,line_sides):
 		centroids= np.append(centroids,[line_centroid])
 	return centroids
 
-centroids = line_centroiding(lamp_light, line_x_checks,line_sides)
+#centroids = line_centroiding(lamp_light, line_x_checks,line_sides)
 peaks_found=[]
 wave_peaks_found = []
 for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
     try:
         lamp_params, lamp_cov = fit_gaussian_curve(x_positions, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width)
-        peaks_found.append(lamp_params[0])
+        peaks_found.append(lamp_params[1])
         wave_peaks_found.append(lamp_line_wave)
         plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
         plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
@@ -264,6 +285,12 @@ for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
 ######## Line locations
 peaks_found = np.array(peaks_found)
 wave_peaks_found = np.array(wave_peaks_found)
+print "line_x_checks:"
+print line_x_checks
+print "peaks found"
+print peaks_found
+print "wave_peaks_found"
+print wave_peaks_found
 #polynomial fitting
 #poly_coeffs_lamp= np.polyfit(centroids,lamp_lines,2)
 poly_coeffs_lamp =np.polyfit(peaks_found, wave_peaks_found, 2)
@@ -272,9 +299,9 @@ def x_to_wavelength(x_positions):
 	return poly_curve_wavelength
 poly_curve_wavelength= x_to_wavelength(x_positions)
 
-print "test x-positions: ", line_x_checks
-print "centroids (x-positions): ", centroids
-print "Wavelengths (anstroms): ", lamp_lines
+#print "test x-positions: ", line_x_checks
+#print "centroids (x-positions): ", centroids
+#print "Wavelengths (anstroms): ", lamp_lines
 
 print poly_curve_wavelength.shape
 print poly_coeffs_lamp
@@ -293,9 +320,11 @@ plt.title('Target Spectrum')
 #plt.ylim(10,200)
 plt.show()
 
-plt.plot(x_positions, poly_curve_wavelength)
-plt.plot(peaks_found, wave_peaks_found, marker= '*')
+plt.plot(x_positions, poly_curve_wavelength,  label = 'wavelength solution', color ='blue')
+plt.plot(peaks_found, wave_peaks_found, marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
+plt.plot(line_x_checks, lamp_lines, label = 'input points', color = 'green', marker = '*', linestyle = 'none')
 plt.title("wavelength to pixel position")
+plt.legend()
 plt.show()
 
 def get_redshift(rest_lam, obs_lam):
@@ -304,10 +333,27 @@ def get_redshift(rest_lam, obs_lam):
 def get_radial_velocity(redshift):
     return redshift*c
 balmer_centroids= line_centroiding(target_light, balmer_x_checks, balmer_line_sides)
-balmer_centroids_waves= x_to_wavelength(balmer_centroids)
+
+balmer_centers = []
+for balmer_line_x, balmer_wave in zip(balmer_x_checks, balmer_rest_waves):
+    try:
+        balmer_params, balmer_cov = fit_gaussian_curve(x_positions, target_light, [balmer_p0[0], balmer_line_x, balmer_p0[2], balmer_p0[3]], line_search_width)
+        balmer_centers.append(balmer_params[1])
+        plt.plot(x_positions, target_light, label = 'observed', color = 'blue')
+        plt.plot(x_positions, gaussian_curve(x_positions,balmer_params[0], balmer_params[1], balmer_params[2], balmer_params[3]), color = 'r', label = 'Gaussian Fit')
+        plt.title("guess: " + str(balmer_line_x) + ' fit:' + str(balmer_params[1])+' restwave:' + str(balmer_wave))
+        plt.legend()
+        plt.show()
+    except RuntimeError as error:
+        print error
+balmer_centers = np.array(balmer_centers)
+#balmer_centroids_waves= x_to_wavelength(balmer_centroids)
+balmer_centers = x_to_wavelength(balmer_centers)
 print "Balmer_lines: ", balmer_rest_waves
-print "Target_Balmer_lines ", balmer_centroids_waves
-redshifts = get_redshift(balmer_rest_waves, balmer_centroids_waves)
+print "Target_Balmer_lines", balmer_centers
+#print "Target_Balmer_lines ", balmer_centroids_waves
+#redshifts = get_redshift(balmer_rest_waves, balmer_centroids_waves)
+redshifts= get_redshift(balmer_rest_waves, balmer_centers)
 print "redshifts: ", redshifts
 radial_velocities = get_radial_velocity(redshifts)
 print "radial_velocities:", radial_velocities
