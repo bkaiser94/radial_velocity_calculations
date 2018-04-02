@@ -9,6 +9,7 @@ import sys
 from astropy.io import fits
 from glob import glob
 import scipy.optimize as sciop
+import cosmics
 
 
 c= 2.998E5  #km/s
@@ -47,9 +48,9 @@ balmer_line_sides = 30.
 lamp_sigma_guess = 3
 line_search_width= 4
 balmer_sigma_guess= 14
-lamp_p0 = [1, 500,  lamp_sigma_guess, 0]
+lamp_p0 = [100, 500,  lamp_sigma_guess, 0]
 #balmer_p0= [-1, 500, balmer_sigma_guess,balmer_line_sides[0],0]
-balmer_p0= [-10, 500, balmer_sigma_guess,0]
+balmer_p0= [-100, 500, balmer_sigma_guess,0]
 
 ###
 n_trials= 1000
@@ -122,9 +123,12 @@ def make_image_stack(imagelist):
     for img in imagelist:
         filename = glob(img)[0]
         i= fits.open(img)
+        header = fits.getheader(img)
         img_data= i[0].data
         images.append(img_data)
-    return np.array(images)
+        gain =header['GAIN']
+        readnoise = header['RDNOISE']
+    return np.array(images),gain, readnoise
 
 
 
@@ -133,16 +137,16 @@ def make_image_stack(imagelist):
 
 
 
-bias_stack = make_image_stack(zerolist)
+bias_stack,gain, readnoise = make_image_stack(zerolist)
 bias_med = np.nanmedian(bias_stack, axis=0)
 
-flat_stack = make_image_stack(flatlist)
+flat_stack, gain, readnoise = make_image_stack(flatlist)
 flat_stack = flat_stack - bias_med #bias subtraction
 flat_med = np.nanmedian(flat_stack, axis=0)
 flat_norm = flat_med/np.nanmedian(flat_med)
 
 
-target_stack = make_image_stack(speclist)
+target_stack, gain, readnoise = make_image_stack(speclist)
 print target_stack.shape
 target_stack = target_stack - bias_med #bias subtraction
 #target_stack = target_stack/flat_norm
@@ -268,9 +272,9 @@ def gaussian_curve(x, a, x0, sigma,b):
 def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width):
     cut_region = np.where(x_pixels> (p0_list[1]-search_width ))
     print '========'
-    print p0_list
-    print  "lower bound:", p0_list[1]-search_width
-    print "upper bound: ", p0_list[1]+search_width
+    #print p0_list
+    #print  "lower bound:", p0_list[1]-search_width
+    #print "upper bound: ", p0_list[1]+search_width
     high_x_pixels= np.copy(x_pixels[cut_region])
     high_light_values= np.copy(light_values[cut_region])
     upper_cut = np.where(high_x_pixels < (p0_list[1]+search_width))
@@ -322,7 +326,7 @@ wave_peaks_found = []
 for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
     try:
         lamp_params, lamp_cov = fit_gaussian_curve(x_positions, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width)
-        if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) ):
+        if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) ):
             peaks_found.append(lamp_params[1])
             wave_peaks_found.append(lamp_line_wave)
             plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
@@ -353,6 +357,7 @@ def x_to_wavelength(x_positions):
 	poly_curve_wavelength= poly_coeffs_lamp[2]+poly_coeffs_lamp[1]*x_positions + poly_coeffs_lamp[0]*(x_positions**2)
 	return poly_curve_wavelength
 poly_curve_wavelength= x_to_wavelength(x_positions)
+
 
 #print "test x-positions: ", line_x_checks
 #print "centroids (x-positions): ", centroids
@@ -389,28 +394,45 @@ def get_radial_velocity(redshift):
     return redshift*c
 #balmer_centroids= line_centroiding(target_light, balmer_x_checks, balmer_line_sides)
 
-balmer_centers = []
-for balmer_line_x, balmer_wave in zip(balmer_x_checks, balmer_rest_waves):
-    try:
-        balmer_params, balmer_cov = fit_gaussian_curve(x_positions, target_light, [balmer_p0[0], balmer_line_x, balmer_p0[2], balmer_p0[3]], balmer_line_sides)
-        balmer_centers.append(balmer_params[1])
-        plt.plot(x_positions, target_light, label = 'observed', color = 'blue')
-        plt.plot(x_positions, gaussian_curve(x_positions,balmer_params[0], balmer_params[1], balmer_params[2], balmer_params[3]), color = 'r', label = 'Gaussian Fit')
-        plt.title("guess: " + str(balmer_line_x) + ' fit:' + str(balmer_params[1])+' restwave:' + str(balmer_wave))
-        plt.legend()
-        plt.show()
-    except RuntimeError as error:
-        print error
-balmer_centers = np.array(balmer_centers)
-#balmer_centroids_waves= x_to_wavelength(balmer_centroids)
-balmer_centers = x_to_wavelength(balmer_centers)
-print "Balmer_lines: ", balmer_rest_waves
-print "Target_Balmer_lines", balmer_centers
-#print "Target_Balmer_lines ", balmer_centroids_waves
-#redshifts = get_redshift(balmer_rest_waves, balmer_centroids_waves)
-redshifts= get_redshift(balmer_rest_waves, balmer_centers)
-print "redshifts: ", redshifts
-radial_velocities = get_radial_velocity(redshifts)
-print "radial_velocities:", radial_velocities
-print np.mean(radial_velocities)
-print '-------------------'
+for target_frame in target_stack:
+    target_cosmic= cosmics.cosmicsimage(target_frame, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
+    target_cosmic.run(maxiter= 4)
+    target_frame= target_cosmic.cleanarray
+    target_light= np.array([])
+    bkg_light= np.array([])
+    print target_light.shape
+    for x_pos in x_positions:
+        xsum= np.sum(target_frame[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides),x_pos])
+        target_light= np.append(target_light,[xsum])
+        bkg_sum= np.sum(target_frame[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides),x_pos])
+        bkg_light= np.append(bkg_light,[bkg_sum])
+    plt.plot(x_positions,target_light,'-')
+    plt.xlabel('x (pixel)')
+    plt.ylabel('Counts')
+    plt.title('Target Spectrum')
+    plt.show()
+    balmer_centers = []
+    for balmer_line_x, balmer_wave in zip(balmer_x_checks, balmer_rest_waves):
+        try:
+            balmer_params, balmer_cov = fit_gaussian_curve(x_positions, target_light, [balmer_p0[0], balmer_line_x, balmer_p0[2], balmer_p0[3]], balmer_line_sides)
+            balmer_centers.append(balmer_params[1])
+            plt.plot(x_positions, target_light, label = 'observed', color = 'blue')
+            plt.plot(x_positions, gaussian_curve(x_positions,balmer_params[0], balmer_params[1], balmer_params[2], balmer_params[3]), color = 'r', label = 'Gaussian Fit')
+            plt.title("guess: " + str(balmer_line_x) + ' fit:' + str(balmer_params[1])+' restwave:' + str(balmer_wave))
+            plt.legend()
+            plt.show()
+        except RuntimeError as error:
+            print error
+    balmer_centers = np.array(balmer_centers)
+    #balmer_centroids_waves= x_to_wavelength(balmer_centroids)
+    balmer_centers = x_to_wavelength(balmer_centers)
+    print "Balmer_lines: ", balmer_rest_waves
+    print "Target_Balmer_lines", balmer_centers
+    #print "Target_Balmer_lines ", balmer_centroids_waves
+    #redshifts = get_redshift(balmer_rest_waves, balmer_centroids_waves)
+    redshifts= get_redshift(balmer_rest_waves, balmer_centers)
+    print "redshifts: ", redshifts
+    radial_velocities = get_radial_velocity(redshifts)
+    print "radial_velocities:", radial_velocities
+    print np.mean(radial_velocities)
+    print '-------------------'
