@@ -10,6 +10,9 @@ from astropy.io import fits
 from glob import glob
 import scipy.optimize as sciop
 import cosmics
+from astropy.time import Time
+from astropy import coordinates as coords
+from astropy import units as u
 
 
 c= 2.998E5  #km/s
@@ -33,7 +36,7 @@ trace_xend = 2055
 trace_band_mid= 105   #y-pixel that's about the center of the bulge of the galaxy
 trace_band_width = 20 #pixel width to determine the centroid of the galaxy
 poly_degree= 3
-core_sides= 6 
+core_sides=  5
 bkg_width= core_sides
 bkg_shift= 50
 
@@ -115,11 +118,12 @@ lamp_lines = np.copy(fear_array['User'])
 line_sides = np.ones(line_x_checks.shape[0])*4.
 
 
-def make_image_stack(imagelist):
+def make_image_stack(imagelist, times= True):
     """
     
     """
     images = []
+    timestamps = []
     for img in imagelist:
         filename = glob(img)[0]
         i= fits.open(img)
@@ -128,7 +132,19 @@ def make_image_stack(imagelist):
         images.append(img_data)
         gain =header['GAIN']
         readnoise = header['RDNOISE']
-    return np.array(images),gain, readnoise
+        if times:
+            starttime = header['OPENTIME']
+            startdate = header['OPENDATE']
+            expstart = Time(str(startdate)+'T'+str(starttime), format = 'isot', scale = 'utc')
+            exptime= header['EXPTIME']*u.s
+            timestamp = expstart+exptime/2
+            print '==='
+            print expstart
+            print timestamp
+            timestamps.append(timestamp)
+        
+        
+    return np.array(images),gain, readnoise, timestamps
 
 
 
@@ -137,16 +153,16 @@ def make_image_stack(imagelist):
 
 
 
-bias_stack,gain, readnoise = make_image_stack(zerolist)
+bias_stack,gain, readnoise, bias_times = make_image_stack(zerolist, times= False)
 bias_med = np.nanmedian(bias_stack, axis=0)
 
-flat_stack, gain, readnoise = make_image_stack(flatlist)
+flat_stack, gain, readnoise, flat_times = make_image_stack(flatlist)
 flat_stack = flat_stack - bias_med #bias subtraction
 flat_med = np.nanmedian(flat_stack, axis=0)
 flat_norm = flat_med/np.nanmedian(flat_med)
 
 
-target_stack, gain, readnoise = make_image_stack(speclist)
+target_stack, gain, readnoise, target_times = make_image_stack(speclist)
 print target_stack.shape
 target_stack = target_stack - bias_med #bias subtraction
 #target_stack = target_stack/flat_norm
@@ -154,17 +170,21 @@ target_stack = target_stack - bias_med #bias subtraction
 target_stack = target_stack[:, :, trace_xstart:trace_xend]
 
 first_lamp =np.copy(target_stack[0])
+first_lamp_time = target_times[0]
 end_lamp = np.copy(target_stack[-1])
+end_lamp_time = target_times[-1]
 target_stack= target_stack[1:-1] #removing the lamps
+target_times= target_times[1:-1]
 print target_stack.shape
 
 #lamp_im = np.nanmean([first_lamp, end_lamp], axis=0)
-#lamp_im = first_lamp
-lamp_im= end_lamp
+lamp_time = first_lamp_time
+lamp_im = first_lamp
+#lamp_im= end_lamp
+#lamp_time = end_lamp_time
 target_med = np.nanmedian(target_stack, axis =0)
 
-plt.imshow(np.log(target_med),cmap = 'hot', interpolation = 'none')
-plt.show()
+
 
 ##########################Polynomial Curve Fitting
 target_band= target_med[trace_band_mid-trace_band_width/2:trace_band_mid+trace_band_width/2,:]
@@ -179,6 +199,11 @@ print polynomial_fit
 print polynomial_fit.shape
 poly_curve_y= polynomial_fit[3]+polynomial_fit[2]*x_positions + polynomial_fit[1]*(x_positions**2)+ polynomial_fit[0]*(x_positions**3)
 
+plt.imshow(np.log(target_med),cmap = 'hot', interpolation = 'none')
+plt.plot(x_positions, poly_curve_y, color = 'blue', label  = 'polynomial fit')
+plt.plot(x_positions,y_positions, color = 'black', label = 'max values', linestyle = 'none', marker = '*')
+plt.legend()
+plt.show()
 target_light= np.array([])
 bkg_light= np.array([])
 lamp_light= np.array([])
@@ -337,7 +362,7 @@ for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
             plt.legend()
             plt.show()
         else:
-            print "Gaussian too flat:", lamp_params[0], lamp_params[2]
+            print "Gaussian too flat or flipped:", lamp_params[0], lamp_params[2]
     except RuntimeError as error:
         print error
 
@@ -394,6 +419,9 @@ def get_radial_velocity(redshift):
     return redshift*c
 #balmer_centroids= line_centroiding(target_light, balmer_x_checks, balmer_line_sides)
 
+rv_list= []
+rv_low=[]
+rv_high = []
 for target_frame in target_stack:
     target_cosmic= cosmics.cosmicsimage(target_frame, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
     target_cosmic.run(maxiter= 4)
@@ -412,10 +440,12 @@ for target_frame in target_stack:
     plt.title('Target Spectrum')
     plt.show()
     balmer_centers = []
+    balmer_sigmas = []
     for balmer_line_x, balmer_wave in zip(balmer_x_checks, balmer_rest_waves):
         try:
             balmer_params, balmer_cov = fit_gaussian_curve(x_positions, target_light, [balmer_p0[0], balmer_line_x, balmer_p0[2], balmer_p0[3]], balmer_line_sides)
             balmer_centers.append(balmer_params[1])
+            balmer_sigmas.append(balmer_params[2])
             plt.plot(x_positions, target_light, label = 'observed', color = 'blue')
             plt.plot(x_positions, gaussian_curve(x_positions,balmer_params[0], balmer_params[1], balmer_params[2], balmer_params[3]), color = 'r', label = 'Gaussian Fit')
             plt.title("guess: " + str(balmer_line_x) + ' fit:' + str(balmer_params[1])+' restwave:' + str(balmer_wave))
@@ -424,7 +454,10 @@ for target_frame in target_stack:
         except RuntimeError as error:
             print error
     balmer_centers = np.array(balmer_centers)
+    balmer_sigmas= np.array(balmer_sigmas)
     #balmer_centroids_waves= x_to_wavelength(balmer_centroids)
+    balmer_sigma_up = x_to_wavelength(np.copy(balmer_centers+balmer_sigmas))
+    balmer_sigma_down = x_to_wavelength(np.copy(balmer_centers-balmer_sigmas))
     balmer_centers = x_to_wavelength(balmer_centers)
     print "Balmer_lines: ", balmer_rest_waves
     print "Target_Balmer_lines", balmer_centers
@@ -433,6 +466,14 @@ for target_frame in target_stack:
     redshifts= get_redshift(balmer_rest_waves, balmer_centers)
     print "redshifts: ", redshifts
     radial_velocities = get_radial_velocity(redshifts)
+    balmer_sigma_down= get_radial_velocity(get_redshift(balmer_rest_waves, balmer_sigma_down))
+    balmer_sigma_up= get_radial_velocity(get_redshift(balmer_rest_waves, balmer_sigma_up))
     print "radial_velocities:", radial_velocities
     print np.mean(radial_velocities)
+    rv_list.append(radial_velocities)
+    rv_low.append(balmer_sigma_down)
+    rv_high.append(balmer_sigma_up)
     print '-------------------'
+
+for rv1, rv_val, rv2 in zip(rv_low, rv_list, rv_high):
+    print rv1, "|", rv_val, "|", rv2
