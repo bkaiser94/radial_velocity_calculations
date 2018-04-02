@@ -145,17 +145,11 @@ def make_image_stack(imagelist, times= True):
             exptime= header['EXPTIME']
             exptimes.append(exptime)
             #timestamp = expstart+exptime/2
-            print '==='
-            print expstart
             #print timestamp
             #timestamps.append(timestamp)
     if times:
         expstarts = Time(expstarts, format = 'isot', scale = 'utc')
-        print expstarts.mjd
-        print  np.array(exptimes)
         timestamps = expstarts + np.array(exptimes)*u.s
-        print timestamps
-        print Time(['1994-02-23T00:00:23', '1997-03-23T03:04:23'], format = 'isot', scale = 'utc')
         
         
     return np.array(images),gain, readnoise, timestamps
@@ -237,11 +231,11 @@ plt.show()
 
 target_light= target_light-bkg_light
 
-plt.plot(x_positions,target_light,'-')
-plt.xlabel('x (pixel)')
-plt.ylabel('Counts')
-plt.title('Target Spectrum with Sky Background Subtraction')
-plt.show()
+#plt.plot(x_positions,target_light,'-')
+#plt.xlabel('x (pixel)')
+#plt.ylabel('Counts')
+#plt.title('Target Spectrum with Sky Background Subtraction')
+#plt.show()
 
 plt.plot(x_positions,target_light,'-')
 plt.xlabel('x (pixel)')
@@ -256,11 +250,11 @@ Balmer0= float(raw_input("3rd Rightmost Balmer line center pixel>>>"))
 balmer_x_checks=np.array([Balmer0,Balmer1,Balmer2])
 
 
-plt.plot(x_positions,bkg_light,'-')
-plt.xlabel('x (pixel)')
-plt.ylabel('Counts')
-plt.title('Sky Background Spectrum')
-plt.show()
+#plt.plot(x_positions,bkg_light,'-')
+#plt.xlabel('x (pixel)')
+#plt.ylabel('Counts')
+#plt.title('Sky Background Spectrum')
+#plt.show()
 ####
 
 def impose_floor(input_light, floor_cutoff):
@@ -491,4 +485,30 @@ for target_frame in target_stack:
 
 for rv1, rv_val, rv2 in zip(rv_low, rv_list, rv_high):
     print rv1, "|", rv_val, "|", rv2
-    
+
+rv_list = np.array(rv_list).T
+target_times= target_times.mjd
+target_times = np.array([target_times])
+print target_times.shape
+print rv_list.shape
+print target_times.dtype
+print rv_list.dtype
+comb_array = np.vstack([target_times, rv_list])
+print comb_array.shape
+response = raw_input("Should the data be output?>>>")
+if response.lower.beginswith('y'):
+    try:
+        previous_array = np.genfromtxt(output_filename)
+        print "====="
+        print previous_array.shape
+        print comb_array.T.shape
+        comb_array = np.vstack([previous_array,comb_array.T])
+        print comb_array.shape
+        np.savetxt(output_filename, comb_array.T)
+    except IOError as error:
+        print error
+        print comb_array.shape
+    np.savetxt(output_filename, comb_array.T)
+else:
+    print "As you wish. Data will not be saved...exiting"
+
