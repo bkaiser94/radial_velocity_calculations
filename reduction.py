@@ -20,6 +20,8 @@ zerolistname= 'listZero'
 flatlistname = 'listFlat'
 speclistname= 'listSpec'
 
+output_filename = 'radial_velocities.txt'
+
 
 #linefilename = 'FeAr_3650to5250_lines.txt'
 linefilename = 'JJ_FeAr_lines.txt'
@@ -124,6 +126,8 @@ def make_image_stack(imagelist, times= True):
     """
     images = []
     timestamps = []
+    exptimes = []
+    expstarts = []
     for img in imagelist:
         filename = glob(img)[0]
         i= fits.open(img)
@@ -135,13 +139,23 @@ def make_image_stack(imagelist, times= True):
         if times:
             starttime = header['OPENTIME']
             startdate = header['OPENDATE']
-            expstart = Time(str(startdate)+'T'+str(starttime), format = 'isot', scale = 'utc')
-            exptime= header['EXPTIME']*u.s
-            timestamp = expstart+exptime/2
+            #expstart = Time(str(startdate)+'T'+str(starttime), format = 'isot', scale = 'utc')
+            expstart = str(startdate)+'T' +str(starttime)
+            expstarts.append(expstart)
+            exptime= header['EXPTIME']
+            exptimes.append(exptime)
+            #timestamp = expstart+exptime/2
             print '==='
             print expstart
-            print timestamp
-            timestamps.append(timestamp)
+            #print timestamp
+            #timestamps.append(timestamp)
+    if times:
+        expstarts = Time(expstarts, format = 'isot', scale = 'utc')
+        print expstarts.mjd
+        print  np.array(exptimes)
+        timestamps = expstarts + np.array(exptimes)*u.s
+        print timestamps
+        print Time(['1994-02-23T00:00:23', '1997-03-23T03:04:23'], format = 'isot', scale = 'utc')
         
         
     return np.array(images),gain, readnoise, timestamps
@@ -477,3 +491,4 @@ for target_frame in target_stack:
 
 for rv1, rv_val, rv2 in zip(rv_low, rv_list, rv_high):
     print rv1, "|", rv_val, "|", rv2
+    
