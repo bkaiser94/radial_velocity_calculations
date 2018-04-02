@@ -45,7 +45,7 @@ balmer_x_checks= np.array([610 ,890, 1510])   #wavelength values that should be 
 balmer_line_sides = 30.
 ###
 lamp_sigma_guess = 3
-line_search_width= 3
+line_search_width= 4
 balmer_sigma_guess= 14
 lamp_p0 = [1, 500,  lamp_sigma_guess, 0]
 #balmer_p0= [-1, 500, balmer_sigma_guess,balmer_line_sides[0],0]
@@ -246,7 +246,7 @@ plt.show()
 
 dotted_pixel = float(raw_input("dotted line pixel>>>"))
 emission_pixel= float(raw_input("emission line pixel>>>"))
-offset = dotted-emission_pixel
+offset = emission_pixel-dotted_pixel
 line_x_checks = np.copy(line_x_checks+offset)
 
 for x_spot in line_x_checks:
