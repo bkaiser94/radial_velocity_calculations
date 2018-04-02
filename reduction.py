@@ -362,13 +362,13 @@ for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
         if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) ):
             peaks_found.append(lamp_params[1])
             wave_peaks_found.append(lamp_line_wave)
-            plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
-            plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
-            plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
-            for x_spot in line_x_checks:
-                plt.axvline( x= x_spot, color = 'r',linestyle = '--')
-            plt.legend()
-            plt.show()
+            #plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
+            #plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
+            #plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
+            #for x_spot in line_x_checks:
+                #plt.axvline( x= x_spot, color = 'r',linestyle = '--')
+            #plt.legend()
+            #plt.show()
         else:
             print "Gaussian too flat or flipped:", lamp_params[0], lamp_params[2]
     except RuntimeError as error:
@@ -442,11 +442,11 @@ for target_frame in target_stack:
         target_light= np.append(target_light,[xsum])
         bkg_sum= np.sum(target_frame[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides),x_pos])
         bkg_light= np.append(bkg_light,[bkg_sum])
-    plt.plot(x_positions,target_light,'-')
-    plt.xlabel('x (pixel)')
-    plt.ylabel('Counts')
-    plt.title('Target Spectrum')
-    plt.show()
+    #plt.plot(x_positions,target_light,'-')
+    #plt.xlabel('x (pixel)')
+    #plt.ylabel('Counts')
+    #plt.title('Target Spectrum')
+    #plt.show()
     balmer_centers = []
     balmer_sigmas = []
     for balmer_line_x, balmer_wave in zip(balmer_x_checks, balmer_rest_waves):
@@ -495,16 +495,17 @@ print target_times.dtype
 print rv_list.dtype
 comb_array = np.vstack([target_times, rv_list])
 print comb_array.shape
-response = raw_input("Should the data be output?>>>")
-if response.lower.beginswith('y'):
+response = raw_input("Should the data be output?>>> ")
+if response.startswith('y'):
     try:
         previous_array = np.genfromtxt(output_filename)
         print "====="
         print previous_array.shape
         print comb_array.T.shape
-        comb_array = np.vstack([previous_array,comb_array.T])
-        print comb_array.shape
-        np.savetxt(output_filename, comb_array.T)
+        new_comb_array = np.copy(np.vstack([previous_array,comb_array.T]))
+        print new_comb_array.shape
+        print new_comb_array
+        np.savetxt(output_filename, new_comb_array)
     except IOError as error:
         print error
         print comb_array.shape
