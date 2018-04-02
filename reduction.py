@@ -41,12 +41,12 @@ bkg_shift= 50
 #line_x_checks= np.array([175, 728, 883, 893, 1490]) #x-values that are approximately in the middle of the lamp lines so we know where to look for centroiding
 balmer_rest_waves= np.array([4101.734, 4340.472, 4861.35]) #Only 3 Balmer Lines seem to be in this image.
 balmer_x_checks= np.array([610 ,890, 1510])   #wavelength values that should be checked for the Balmer emission lines in our spectrum (1360 line should be 30 pixels on either side)
-balmer_line_sides= np.array([30,30, 31]) #Number of pixels on either side of the guessed peak that should be included in the centroiding effort for the balmer lines (those are based on attempted lines).
-
+#balmer_line_sides= np.array([30,30, 31]) #Number of pixels on either side of the guessed peak that should be included in the centroiding effort for the balmer lines (those are based on attempted lines).
+balmer_line_sides = 30.
 ###
 lamp_sigma_guess = 3
 line_search_width= 3
-balmer_sigma_guess= 7
+balmer_sigma_guess= 14
 lamp_p0 = [1, 500,  lamp_sigma_guess, 0]
 #balmer_p0= [-1, 500, balmer_sigma_guess,balmer_line_sides[0],0]
 balmer_p0= [-10, 500, balmer_sigma_guess,0]
@@ -107,6 +107,7 @@ WaveList_Fe_930_12_24= np.array([ [431.795, 1057.76, 1194.97, 1315.35,
 #lamp_lines= lamp_lines[good_fits]
 #line_sides = np.ones(line_x_checks.shape[0])*4.
 
+#For JJ's line list
 fear_array= np.genfromtxt(linefilename, names = True)
 line_x_checks = np.copy(fear_array['Pixel']) +91
 lamp_lines = np.copy(fear_array['User'])
@@ -197,8 +198,21 @@ plt.plot(x_positions,target_light,'-')
 plt.xlabel('x (pixel)')
 plt.ylabel('Counts')
 plt.title('Target Spectrum with Sky Background Subtraction')
-
 plt.show()
+
+plt.plot(x_positions,target_light,'-')
+plt.xlabel('x (pixel)')
+plt.ylabel('Counts')
+plt.title('DO NOT EXIT THIS PLOT UNTIL YOU HAVE INPUT ALL 3 OF THE RAW INPUT VALUES FOR THE BALMER LINES')
+plt.show()
+
+Balmer2= float(raw_input("Rightmost Balmer line center pixel>>>"))
+Balmer1= float(raw_input("2nd Rightmost Balmer line center pixel>>>"))
+Balmer0= float(raw_input("3rd Rightmost Balmer line center pixel>>>"))
+
+balmer_x_checks=np.array([Balmer0,Balmer1,Balmer2])
+
+
 plt.plot(x_positions,bkg_light,'-')
 plt.xlabel('x (pixel)')
 plt.ylabel('Counts')
@@ -226,10 +240,25 @@ for x_spot in line_x_checks:
 plt.plot(x_positions,lamp_light,'-')
 plt.xlabel('x (pixel)')
 plt.ylabel('Counts')
-plt.title('Lamp Spectrum')
+plt.title('Lamp Spectrum (record corresponding dotted line and emission pixels)')
 #plt.yscale('log')
 plt.show()
 
+dotted_pixel = float(raw_input("dotted line pixel>>>"))
+emission_pixel= float(raw_input("emission line pixel>>>"))
+offset = dotted-emission_pixel
+line_x_checks = np.copy(line_x_checks+offset)
+
+for x_spot in line_x_checks:
+    plt.axvline( x= x_spot, color = 'r')
+#for x_spot in np.array(WaveList_Fe_930_12_24[0])/2.:
+    #plt.axvline( x= x_spot, color = 'r')
+plt.plot(x_positions,lamp_light,'-')
+plt.xlabel('x (pixel)')
+plt.ylabel('Counts')
+plt.title('Lamp Spectrum (offset applied)')
+#plt.yscale('log')
+plt.show()
 ####
 ####
 
@@ -299,6 +328,8 @@ for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
             plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
             plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
             plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
+            for x_spot in line_x_checks:
+                plt.axvline( x= x_spot, color = 'r',linestyle = '--')
             plt.legend()
             plt.show()
         else:
@@ -356,12 +387,12 @@ def get_redshift(rest_lam, obs_lam):
 
 def get_radial_velocity(redshift):
     return redshift*c
-balmer_centroids= line_centroiding(target_light, balmer_x_checks, balmer_line_sides)
+#balmer_centroids= line_centroiding(target_light, balmer_x_checks, balmer_line_sides)
 
 balmer_centers = []
 for balmer_line_x, balmer_wave in zip(balmer_x_checks, balmer_rest_waves):
     try:
-        balmer_params, balmer_cov = fit_gaussian_curve(x_positions, target_light, [balmer_p0[0], balmer_line_x, balmer_p0[2], balmer_p0[3]], line_search_width*3)
+        balmer_params, balmer_cov = fit_gaussian_curve(x_positions, target_light, [balmer_p0[0], balmer_line_x, balmer_p0[2], balmer_p0[3]], balmer_line_sides)
         balmer_centers.append(balmer_params[1])
         plt.plot(x_positions, target_light, label = 'observed', color = 'blue')
         plt.plot(x_positions, gaussian_curve(x_positions,balmer_params[0], balmer_params[1], balmer_params[2], balmer_params[3]), color = 'r', label = 'Gaussian Fit')
