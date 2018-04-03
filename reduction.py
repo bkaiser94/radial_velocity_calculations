@@ -25,6 +25,7 @@ output_filename = 'radial_velocities.txt'
 
 #linefilename = 'FeAr_3650to5250_lines.txt'
 linefilename = 'JJ_FeAr_lines.txt'
+#linefilename = 'FeAr_3650to5250_lines_GOODMAN.txt'
 flatlist= np.genfromtxt(flatlistname,dtype = 'str' )
 zerolist = np.genfromtxt(zerolistname, dtype ='str')
 speclist= np.genfromtxt(speclistname, dtype = 'str')
@@ -51,7 +52,7 @@ balmer_x_checks= np.array([610 ,890, 1510])   #wavelength values that should be 
 balmer_line_sides = 30.
 ###
 lamp_sigma_guess = 3
-line_search_width= 4
+line_search_width= 5
 balmer_sigma_guess= 14
 lamp_p0 = [100, 500,  lamp_sigma_guess, 0]
 #balmer_p0= [-1, 500, balmer_sigma_guess,balmer_line_sides[0],0]
@@ -113,6 +114,14 @@ WaveList_Fe_930_12_24= np.array([ [431.795, 1057.76, 1194.97, 1315.35,
 #lamp_lines= lamp_lines[good_fits]
 #line_sides = np.ones(line_x_checks.shape[0])*4.
 
+#fear_array = np.genfromtxt(linefilename, names=True)
+#all_line_x_checks = np.float_(fear_array['GOODMAN_Pixel'])
+#good_fits = np.where(fear_array['Use']==True)
+#print fear_array['Use']
+#line_x_checks = np.copy(all_line_x_checks[good_fits])
+#lamp_lines= np.copy(fear_array['User'][good_fits])
+#line_sides= np.ones(line_x_checks.shape[0])*line_search_width
+
 #For JJ's line list
 fear_array= np.genfromtxt(linefilename, names = True)
 line_x_checks = np.copy(fear_array['Pixel']) +91
@@ -164,10 +173,10 @@ def make_image_stack(imagelist, times= True):
 bias_stack,gain, readnoise, bias_times = make_image_stack(zerolist, times= False)
 bias_med = np.nanmedian(bias_stack, axis=0)
 
-flat_stack, gain, readnoise, flat_times = make_image_stack(flatlist)
-flat_stack = flat_stack - bias_med #bias subtraction
-flat_med = np.nanmedian(flat_stack, axis=0)
-flat_norm = flat_med/np.nanmedian(flat_med)
+#flat_stack, gain, readnoise, flat_times = make_image_stack(flatlist)
+#flat_stack = flat_stack - bias_med #bias subtraction
+#flat_med = np.nanmedian(flat_stack, axis=0)
+#flat_norm = flat_med/np.nanmedian(flat_med)
 
 
 target_stack, gain, readnoise, target_times = make_image_stack(speclist)
@@ -281,6 +290,15 @@ plt.title('Lamp Spectrum (record corresponding dotted line and emission pixels)'
 #plt.yscale('log')
 plt.show()
 
+low_values = np.where(np.abs(x_positions-500)<300)
+plt.plot(x_positions[low_values],lamp_light[low_values],linestyle= '-')
+#plt.ylim((0,1000))
+plt.xlabel('x (pixel)')
+plt.ylabel('Counts')
+plt.title('Lamp Spectrum (record corresponding dotted line and emission pixels)')
+plt.yscale('log')
+plt.show()
+
 dotted_pixel = float(raw_input("dotted line pixel>>>"))
 emission_pixel= float(raw_input("emission line pixel>>>"))
 offset = emission_pixel-dotted_pixel
@@ -362,13 +380,14 @@ for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
         if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) ):
             peaks_found.append(lamp_params[1])
             wave_peaks_found.append(lamp_line_wave)
-            #plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
-            #plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
-            #plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
-            #for x_spot in line_x_checks:
-                #plt.axvline( x= x_spot, color = 'r',linestyle = '--')
-            #plt.legend()
-            #plt.show()
+            plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
+            plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
+            plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
+            for x_spot in line_x_checks:
+                plt.axvline( x= x_spot, color = 'k',linestyle = '--')
+            plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
+            plt.legend()
+            plt.show()
         else:
             print "Gaussian too flat or flipped:", lamp_params[0], lamp_params[2]
     except RuntimeError as error:
@@ -383,11 +402,14 @@ print "peaks found"
 print peaks_found
 print "wave_peaks_found"
 print wave_peaks_found
+for line,peak,wave in zip(line_x_checks, peaks_found, wave_peaks_found):
+    print line, peak, wave
 #polynomial fitting
 #poly_coeffs_lamp= np.polyfit(centroids,lamp_lines,2)
-poly_coeffs_lamp =np.polyfit(peaks_found, wave_peaks_found, 2)
+poly_coeffs_lamp =np.polyfit(peaks_found, wave_peaks_found, 5)
 def x_to_wavelength(x_positions):
-	poly_curve_wavelength= poly_coeffs_lamp[2]+poly_coeffs_lamp[1]*x_positions + poly_coeffs_lamp[0]*(x_positions**2)
+	#poly_curve_wavelength= poly_coeffs_lamp[2]+poly_coeffs_lamp[1]*x_positions + poly_coeffs_lamp[0]*(x_positions**2)
+	poly_curve_wavelength= poly_coeffs_lamp[-1]+poly_coeffs_lamp[-2]*x_positions + poly_coeffs_lamp[-3]*(x_positions**2)+poly_coeffs_lamp[-4]*(x_positions**3)+poly_coeffs_lamp[-5]*(x_positions**4)+poly_coeffs_lamp[-6]*(x_positions**5)
 	return poly_curve_wavelength
 poly_curve_wavelength= x_to_wavelength(x_positions)
 
@@ -417,6 +439,13 @@ plt.plot(x_positions, poly_curve_wavelength,  label = 'wavelength solution', col
 plt.plot(peaks_found, wave_peaks_found, marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
 plt.plot(line_x_checks, lamp_lines, label = 'input points', color = 'green', marker = '*', linestyle = 'none')
 plt.title("wavelength to pixel position")
+plt.legend()
+plt.show()
+
+plt.axhline(y=0 ,  label = 'wavelength solution', color ='blue')
+plt.plot(peaks_found, wave_peaks_found-x_to_wavelength(peaks_found), marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
+plt.plot(line_x_checks, lamp_lines-x_to_wavelength(line_x_checks), label = 'input points', color = 'green', marker = '*', linestyle = 'none')
+plt.title("wavelength to pixel position Residuals")
 plt.legend()
 plt.show()
 
@@ -496,19 +525,22 @@ print rv_list.dtype
 comb_array = np.vstack([target_times, rv_list])
 print comb_array.shape
 response = raw_input("Should the data be output?>>> ")
+response_num = int(raw_input("What number should be tacked onto the end of the filename?>>>"))
 if response.startswith('y'):
-    try:
-        previous_array = np.genfromtxt(output_filename)
-        print "====="
-        print previous_array.shape
-        print comb_array.T.shape
-        new_comb_array = np.copy(np.vstack([previous_array,comb_array.T]))
-        print new_comb_array.shape
-        print new_comb_array
-        np.savetxt(output_filename, new_comb_array)
-    except IOError as error:
-        print error
-        print comb_array.shape
+    #try:
+        #previous_array = np.genfromtxt(output_filename)
+        #print "====="
+        #print previous_array.shape
+        #print comb_array.T.shape
+        #new_comb_array = np.copy(np.vstack([previous_array,comb_array.T]))
+        #print new_comb_array.shape
+        #print new_comb_array
+        #np.savetxt(output_filename, new_comb_array)
+    #except IOError as error:
+        #print error
+        #print comb_array.shape
+    split_out = output_filename.split('.')
+    output_filename= split_out[0]+str(response_num)+'.'+split_out[1]
     np.savetxt(output_filename, comb_array.T)
 else:
     print "As you wish. Data will not be saved...exiting"
