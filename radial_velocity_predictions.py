@@ -46,9 +46,11 @@ lam_rest = 6562.81*u.angstrom #angstroms
 #m2 = (1.4 *u.Msun).si
 m1 = (1.4*u.Msun).si
 m2 = (0.14*u.Msun).si #switched the masses to change the phase by 180 degrees.
+#m2 = (0.12*u.Msun).si #switched the masses to change the phase by 180 degrees.
+
 e = 0.000023# median
 #e = 0.000031# max
-#e=0.8
+#e=0.2
 omega = 97 * u.degree
 period = (0.4497391377 * u.day).to(u.second) #median
 #period = (0.449739137 * u.day).to(u.second) #low
