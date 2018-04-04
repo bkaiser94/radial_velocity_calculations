@@ -14,9 +14,9 @@ print all_array
 mean_rv = np.mean(all_array[1:, :], axis = 0)
 std_dev = np.std(all_array[1:, :], axis =0)
 print mean_rv
-plt.plot(mjd_array, H_8, label = "H8", linestyle = 'none', marker = '*')
-plt.plot(mjd_array, H_9, label = "H9", linestyle = 'none', marker = '*')
-plt.plot(mjd_array, H_10, label = "H10", linestyle = 'none', marker = '*')
+plt.plot(mjd_array, H_8, label = r"H-$\delta$", linestyle = 'none', marker = '*')
+plt.plot(mjd_array, H_9, label = r"H-$\gamma$", linestyle = 'none', marker = '*')
+plt.plot(mjd_array, H_10, label = r"H-$\beta$", linestyle = 'none', marker = '*')
 #plt.plot(mjd_array, mean_rv, label = 'Mean RV')
 plt.errorbar(mjd_array, mean_rv, std_dev, label = 'Mean RV')
 plt.title('')
