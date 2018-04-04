@@ -173,13 +173,13 @@ def plot_datapoints():
     H_delta = all_array[1]
     H_gamma = all_array[2]
     H_beta = all_array[3]
-    print Time(mjd_array, format = 'mjd').utc.isot
-    print all_array
+    #print Time(mjd_array, format = 'mjd').utc.isot
+    #print all_array
     mean_rv = np.copy(np.mean(all_array[1:, :], axis = 0))
     std_dev = np.std(all_array[1:, :], axis =0)
-    print mean_rv
+    #print mean_rv
     def zero_rvs(rv_array):
-        return rv_array-(rv_array.max()-rv_array.min())
+        return rv_array-np.mean([rv_array.max(),rv_array.min()])
     H_delta = zero_rvs(H_delta)
     H_gamma = zero_rvs(H_gamma)
     H_beta = zero_rvs(H_beta)
@@ -193,10 +193,10 @@ def plot_datapoints():
 
 plt.xlabel(r'MJD')
 plt.ylabel(r'v ('+str(v1.unit)+')')
-plt.axvline(x =( (obs_times[0].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'k', label = times[0])
-plt.axvline(x=( (obs_times[1].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'r', label = times[1])
-plt.plot(utc_difs,v1,label='NS');
-plt.plot(utc_difs,v2,label= 'Comp');
+plt.axvline(x =obs_times[0].mjd, color = 'k', label = times[0])
+plt.axvline(x= obs_times[1].mjd, color = 'r', label = times[1])
+plt.plot(utc_times,v1,label='NS');
+plt.plot(utc_times,v2,label= 'Comp');
 #plt.plot(utc_difs[quad_points], v1[quad_points], marker = '*', color ='k', linestyle = 'None')
 plot_datapoints()
 plt.legend();
