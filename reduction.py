@@ -146,10 +146,11 @@ def make_image_stack(imagelist, times= True):
         gain =header['GAIN']
         readnoise = header['RDNOISE']
         if times:
-            starttime = header['OPENTIME']
-            startdate = header['OPENDATE']
+            #starttime = header['OPENTIME']
+            #startdate = header['OPENDATE']
             #expstart = Time(str(startdate)+'T'+str(starttime), format = 'isot', scale = 'utc')
-            expstart = str(startdate)+'T' +str(starttime)
+            #expstart = str(startdate)+'T' +str(starttime)
+            expstart = header['DATE-OBS']
             expstarts.append(expstart)
             exptime= header['EXPTIME']
             exptimes.append(exptime)

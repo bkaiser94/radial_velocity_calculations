@@ -147,24 +147,6 @@ quad_days = utc_times[quad_points]
 quad_hours = utc_difs[quad_points]
 quad_times = Time(((quad_hours.to(u.day) +obs_times[0].mjd*u.day).to(u.day)).value, format='mjd', scale= 'utc').iso
 
-try:
-    plotfile = glob(sys.argv[3])
-except IndexError as error:
-    print "No data file provided, so just outputting the predictions."
-all_array = np.genfromtxt(plotfile[0]).T
-mjd_array = all_array[0]
-H_8 = all_array[1]
-H_9 = all_array[2]
-H_10 = all_array[3]
-
-print all_array
-mean_rv = np.mean(all_array[1:, :], axis = 0)
-std_dev = np.std(all_array[1:, :], axis =0)
-print mean_rv
-plt.plot(mjd_array, H_8, label = r"H-$\delta$", linestyle = 'none', marker = '*')
-plt.plot(mjd_array, H_9, label = r"H-$\gamma$", linestyle = 'none', marker = '*')
-plt.plot(mjd_array, H_10, label = r"H-$\beta$", linestyle = 'none', marker = '*')
-
 for plusmin,actual_time, day_value  in zip(quad_hours, quad_times, quad_days):
     print plusmin, actual_time, day_value
 plt.xlabel(r't (hours)')
@@ -180,6 +162,46 @@ plt.show()
 print (a_thing.to(u.au))
 print ("a in ls", (a_thing/(u.cds.c.si)).to(u.second))
 
+
+def plot_datapoints():
+    try:
+        plotfile = glob(sys.argv[3])
+    except IndexError as error:
+        print "No data file provided, so just outputting the predictions."
+    all_array = np.genfromtxt(plotfile[0]).T
+    mjd_array = all_array[0]
+    H_delta = all_array[1]
+    H_gamma = all_array[2]
+    H_beta = all_array[3]
+    print Time(mjd_array, format = 'mjd').utc.isot
+    print all_array
+    mean_rv = np.copy(np.mean(all_array[1:, :], axis = 0))
+    std_dev = np.std(all_array[1:, :], axis =0)
+    print mean_rv
+    def zero_rvs(rv_array):
+        return rv_array-(rv_array.max()-rv_array.min())
+    H_delta = zero_rvs(H_delta)
+    H_gamma = zero_rvs(H_gamma)
+    H_beta = zero_rvs(H_beta)
+    mean_rv = zero_rvs(mean_rv)
+    plt.plot(mjd_array, H_delta, label = r"H-$\delta$", linestyle = 'none', marker = '*')
+    plt.plot(mjd_array, H_gamma, label = r"H-$\gamma$", linestyle = 'none', marker = '*')
+    plt.plot(mjd_array, H_beta, label = r"H-$\beta$", linestyle = 'none', marker = '*')
+    plt.errorbar(mjd_array, mean_rv, std_dev, label = 'Mean RV', linestyle = 'none', marker = '*')
+    return
+
+
+plt.xlabel(r'MJD')
+plt.ylabel(r'v ('+str(v1.unit)+')')
+plt.axvline(x =( (obs_times[0].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'k', label = times[0])
+plt.axvline(x=( (obs_times[1].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'r', label = times[1])
+plt.plot(utc_difs,v1,label='NS');
+plt.plot(utc_difs,v2,label= 'Comp');
+#plt.plot(utc_difs[quad_points], v1[quad_points], marker = '*', color ='k', linestyle = 'None')
+plot_datapoints()
+plt.legend();
+plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun)))
+plt.show()
 
 def calc_lam_obs(velocity, lam_rest):
     return (velocity/(u.cds.c.si)*lam_rest+lam_rest).to(u.angstrom)
