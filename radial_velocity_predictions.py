@@ -31,8 +31,8 @@ dec = float(sys.argv[2])
 parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
-#times = ['2018-03-19T02:19:00', '2018-03-19T10:11:00']
-times = ['2018-03-27T01:45:00', '2018-03-27T10:04:00']
+times = ['2018-03-19T02:19:00', '2018-03-19T10:11:00']
+#times = ['2018-03-27T01:45:00', '2018-03-27T10:04:00']
 obs_times= Time(times, format = 'isot', scale='utc', location = cerro_pachon_location)
 target_coord = coord.SkyCoord(ra, dec, unit= (u.deg, u.deg), frame= 'icrs')
 
@@ -42,8 +42,10 @@ def to_barycenter(input_times):
 
 
 lam_rest = 6562.81*u.angstrom #angstroms
-m1 = (0.14 *u.Msun).si
-m2 = (1.4 *u.Msun).si
+#m1 = (0.14 *u.Msun).si
+#m2 = (1.4 *u.Msun).si
+m1 = (1.4*u.Msun).si
+m2 = (0.14*u.Msun).si #switched the masses to change the phase by 180 degrees.
 e = 0.000023# median
 #e = 0.000031# max
 #e=0.8
@@ -129,8 +131,9 @@ def get_quad_points(velocities):
     return np.hstack([zeros,first_max, first_min])
 
 v1= v(th, a_thing, e, m1, m2, dt, 1)
-
+v1 = v1.to(u.km/u.s)
 v2= v(th, a_thing , e, m1, m2, dt, 2)
+v2 = v2.to(u.km/u.s)
 
 
 print ("Maximum radial velocity companion:", np.nanmax(v1))
@@ -144,14 +147,32 @@ quad_days = utc_times[quad_points]
 quad_hours = utc_difs[quad_points]
 quad_times = Time(((quad_hours.to(u.day) +obs_times[0].mjd*u.day).to(u.day)).value, format='mjd', scale= 'utc').iso
 
+try:
+    plotfile = glob(sys.argv[3])
+except IndexError as error:
+    print "No data file provided, so just outputting the predictions."
+all_array = np.genfromtxt(plotfile[0]).T
+mjd_array = all_array[0]
+H_8 = all_array[1]
+H_9 = all_array[2]
+H_10 = all_array[3]
+
+print all_array
+mean_rv = np.mean(all_array[1:, :], axis = 0)
+std_dev = np.std(all_array[1:, :], axis =0)
+print mean_rv
+plt.plot(mjd_array, H_8, label = r"H-$\delta$", linestyle = 'none', marker = '*')
+plt.plot(mjd_array, H_9, label = r"H-$\gamma$", linestyle = 'none', marker = '*')
+plt.plot(mjd_array, H_10, label = r"H-$\beta$", linestyle = 'none', marker = '*')
+
 for plusmin,actual_time, day_value  in zip(quad_hours, quad_times, quad_days):
     print plusmin, actual_time, day_value
 plt.xlabel(r't (hours)')
 plt.ylabel(r'v ('+str(v1.unit)+')')
 plt.axvline(x =( (obs_times[0].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'k', label = times[0])
 plt.axvline(x=( (obs_times[1].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'r', label = times[1])
-plt.plot(utc_difs,v1,label='Comp');
-plt.plot(utc_difs,v2,label= 'NS');
+plt.plot(utc_difs,v1,label='NS');
+plt.plot(utc_difs,v2,label= 'Comp');
 plt.plot(utc_difs[quad_points], v1[quad_points], marker = '*', color ='k', linestyle = 'None')
 plt.legend();
 plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun)))
@@ -163,7 +184,7 @@ print ("a in ls", (a_thing/(u.cds.c.si)).to(u.second))
 def calc_lam_obs(velocity, lam_rest):
     return (velocity/(u.cds.c.si)*lam_rest+lam_rest).to(u.angstrom)
 
-lam_obs= calc_lam_obs(v1,lam_rest)
+lam_obs= calc_lam_obs(v2,lam_rest)
 print ("rest wavelength:", lam_rest)
 print ("Maximum wavelength observed (neglecting Earth-induced shifts and systemic velocity): ", np.nanmax(lam_obs))
 plt.xlabel(r't (hours)')
@@ -177,10 +198,10 @@ plt.show()
 
 
 lam_range = np.linspace(3000., 7000, 8000)*u.angstrom
-all_lams = calc_lam_obs(np.max(v1), lam_range)
+all_lams = calc_lam_obs(np.max(v2), lam_range)
 plt.xlabel(r'$\lambda_{rest}$ ('+ str(lam_range.unit)+')')
-plt.ylabel(r'$\lambda_{obs}$ ('+str(all_lams.unit)+') at max velocity of'+ str(np.max(v1)))
+plt.ylabel(r'$\lambda_{obs}$ ('+str(all_lams.unit)+') at max velocity of'+ str(np.max(v2)))
 plt.plot(lam_range, all_lams, label = 'wavelengths');
 plt.legend();
-plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun))+ r'$v_{companion}$' + str(np.max(v1) ))
+plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun))+ r'$v_{companion}$' + str(np.max(v2) ))
 plt.show()
