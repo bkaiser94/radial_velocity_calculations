@@ -37,8 +37,8 @@ obs_times= Time(times, format = 'isot', scale='utc', location = cerro_pachon_loc
 target_coord = coord.SkyCoord(ra, dec, unit= (u.deg, u.deg), frame= 'icrs')
 
 def to_barycenter(input_times):
-    bary_corr =input_times.light_travel_time(target_coord)
-    return (input_times+ bary_corr).tdb.mjd
+    bary_corr =input_times.tdb.light_travel_time(target_coord)
+    return (input_times.tdb+ bary_corr.tdb).mjd
 
 
 lam_rest = 6562.81*u.angstrom #angstroms
@@ -178,18 +178,22 @@ def plot_datapoints():
     #print Time(mjd_array, format = 'mjd').utc.isot
     #print all_array
     mean_rv = np.copy(np.mean(all_array[1:, :], axis = 0))
-    std_dev = np.std(all_array[1:, :], axis =0)
+    std_dev =np.copy( np.std(all_array[1:, :], axis =0))
     #print mean_rv
     def zero_rvs(rv_array):
+        print "systemic velocity (includes Earth's motion):", np.mean([rv_array.max(),rv_array.min()])
         return rv_array-np.mean([rv_array.max(),rv_array.min()])
     H_delta = zero_rvs(H_delta)
     H_gamma = zero_rvs(H_gamma)
     H_beta = zero_rvs(H_beta)
+    remean_rv = np.mean([H_delta, H_gamma, H_beta], axis = 0)
+    remean_std = np.std([H_delta,H_gamma, H_beta], axis=0)
     mean_rv = zero_rvs(mean_rv)
     plt.plot(mjd_array, H_delta, label = r"H-$\delta$", linestyle = 'none', marker = '*')
     plt.plot(mjd_array, H_gamma, label = r"H-$\gamma$", linestyle = 'none', marker = '*')
     plt.plot(mjd_array, H_beta, label = r"H-$\beta$", linestyle = 'none', marker = '*')
-    plt.errorbar(mjd_array, mean_rv, std_dev, label = 'Mean RV', linestyle = 'none', marker = '*')
+    plt.errorbar(mjd_array, mean_rv, std_dev, label = 'Mean RV', linestyle = 'none', marker = 'o')
+    plt.errorbar(mjd_array, remean_rv, remean_std, label = r"Mean of zeroed RV's", linestyle = 'none', marker = 'o')
     return
 
 
