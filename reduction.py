@@ -51,8 +51,8 @@ balmer_x_checks= np.array([610 ,890, 1510])   #wavelength values that should be 
 #balmer_line_sides= np.array([30,30, 31]) #Number of pixels on either side of the guessed peak that should be included in the centroiding effort for the balmer lines (those are based on attempted lines).
 balmer_line_sides = 30.
 ###
-lamp_sigma_guess = 3
-line_search_width= 5
+lamp_sigma_guess = 2
+line_search_width= 3
 balmer_sigma_guess= 14
 lamp_p0 = [100, 500,  lamp_sigma_guess, 0]
 #balmer_p0= [-1, 500, balmer_sigma_guess,balmer_line_sides[0],0]
@@ -124,9 +124,9 @@ WaveList_Fe_930_12_24= np.array([ [431.795, 1057.76, 1194.97, 1315.35,
 
 #For JJ's line list
 fear_array= np.genfromtxt(linefilename, names = True)
-line_x_checks = np.copy(fear_array['Pixel']) +91
+line_x_checks = np.copy(fear_array['Pixel']) +90
 lamp_lines = np.copy(fear_array['User'])
-line_sides = np.ones(line_x_checks.shape[0])*4.
+line_sides = np.ones(line_x_checks.shape[0])*line_search_width
 
 
 def make_image_stack(imagelist, times= True):
@@ -378,7 +378,7 @@ wave_peaks_found = []
 for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
     try:
         lamp_params, lamp_cov = fit_gaussian_curve(x_positions, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width)
-        if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) ):
+        if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) ):
             peaks_found.append(lamp_params[1])
             wave_peaks_found.append(lamp_line_wave)
             plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
@@ -390,7 +390,7 @@ for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
             plt.legend()
             plt.show()
         else:
-            print "Gaussian too flat or flipped:", lamp_params[0], lamp_params[2]
+            print "Gaussian too flat or flipped (or not within the actual fitting region...):", lamp_params
     except RuntimeError as error:
         print error
 
@@ -526,7 +526,7 @@ print rv_list.dtype
 comb_array = np.vstack([target_times, rv_list])
 print comb_array.shape
 response = raw_input("Should the data be output?>>> ")
-response_num = int(raw_input("What number should be tacked onto the end of the filename?>>>"))
+response_num =(raw_input("What should be tacked onto the end of the filename?>>>"))
 if response.startswith('y'):
     #try:
         #previous_array = np.genfromtxt(output_filename)
