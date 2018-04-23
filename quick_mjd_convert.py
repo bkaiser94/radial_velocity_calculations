@@ -21,8 +21,8 @@ cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41),
 
 
 target_coord = coord.SkyCoord(ra, dec, unit= (u.deg, u.deg), frame= 'icrs')
-input_file= 'radial_velocities_combinedb.txt'
-output_file= 'radial_velocities_combinedb_bmjd.txt'
+input_file= 'radial_velocities_combinedc.txt'
+output_file= 'radial_velocities_combinedc_bmjd.txt'
 all_array = np.genfromtxt(input_file).T
 
 def to_barycenter(input_times):
@@ -39,5 +39,5 @@ obs_times = Time(mjd_array, format = 'mjd', scale = 'utc', location = cerro_pach
 obs_times_bary = to_barycenter(obs_times)
 mjd_array = obs_times_bary
 
-header = "BMJD_TDB,H_delta,H_gamma,H_beta"
+header = "BMJD_TDB,H_delta,H_gamma,H_beta,H_delta_s, H_gamma_s, H_beta_s"
 np.savetxt(output_file, all_array.T, delimiter = ',', header = header)

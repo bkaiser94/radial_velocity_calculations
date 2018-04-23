@@ -16,23 +16,34 @@ from astropy import units as u
 
 #standard_directory = '~/Desktop/standards/'
 standard_directory = '/Users/BenKaiser/Desktop/standards/'
-standard_file = "foke/fgd108.dat"
+#standard_file = "foke/fgd108.dat"
+standard_file = 'foke/ffeige67.dat'
+
+#output_filename = "GD108_sensitivity_curve.txt"
+output_filename = 'Feige67_sensitivity_curve.txt'
 
 standard_file = standard_directory+standard_file
 
-standard_name = "GD108"
+#standard_name = "GD108"
+standard_name = 'Feige67'
 
-observed_file = "wcmtb.GD108930blue.fits"
+#observed_file = "wcmtb.GD108930blue.fits"
+observed_file = 'wcmtb.feige67930blue.fits'
 obs_fits = fits.open(observed_file)
 header = fits.getheader(observed_file)
 obs_waves = obs_fits[0].data
 obs_flux = obs_fits[1].data
+airmass = header['AIRMASS']
+obs_time = header['OPENTIME']
+obs_date = header['OPENDATE']
+obs_time = obs_date+'T'+obs_time
+obs_time = Time(obs_time, format = 'isot', scale = 'utc').mjd
 
 
 stand_array = np.genfromtxt(glob(standard_file)[0]).T
 
 stand_waves = stand_array[0]
-stand_flux = stand_array[1] *1e-16 #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
+stand_flux = stand_array[1] *1e16 #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
 
 min_wave = np.nanmin(obs_waves)
 max_wave = np.nanmax(obs_waves)
@@ -56,11 +67,6 @@ plt.legend()
 plt.show()
 
 
-plt.plot(obs_waves, interp_model_flux, label = 'interpolated')
-plt.plot(stand_waves, stand_flux, label = 'model')
-plt.legend()
-plt.show()
-
 interp_obs_flux = np.interp(stand_waves, obs_waves, obs_flux)
 
 #sens_curve_points = obs_flux/interp_model_flux
@@ -68,7 +74,7 @@ interp_obs_flux = np.interp(stand_waves, obs_waves, obs_flux)
 sens_curve_points= interp_obs_flux/stand_flux
 sens_curve_fit= np.polyfit(stand_waves, sens_curve_points,5)
 
-
+np.savetxt(output_filename, sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
 #poly_curve=  sens_curve_fit[-1]+sens_curve_fit[-2]*obs_waves + sens_curve_fit[-3]*(obs_waves**2)+sens_curve_fit[-4]*(obs_waves**3)+sens_curve_fit[-5]*(obs_waves**4)+sens_curve_fit[-6]*(obs_waves**5)
 poly_curve = np.polyval(sens_curve_fit,obs_waves)
 

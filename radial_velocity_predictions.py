@@ -24,6 +24,8 @@ import astropy.coordinates as coord
 import astropy.units as u
 from astropy.units import cds
 cds.enable()
+plt.rc('font', size =18)
+plt.rc('lines', markersize=12)
 
 ra = float(sys.argv[1]) #values in decimal degrees
 dec = float(sys.argv[2])
@@ -48,9 +50,9 @@ m1 = (1.4*u.Msun).si
 m2 = (0.14*u.Msun).si #switched the masses to change the phase by 180 degrees.
 #m2 = (0.12*u.Msun).si #switched the masses to change the phase by 180 degrees.
 
-#e = 0.000023# median
+e = 0.000023# median
 #e = 0.000031# max
-e=0.5
+#e=0.5
 omega = 97 * u.degree
 period = (0.4497391377 * u.day).to(u.second) #median
 #period = (0.449739137 * u.day).to(u.second) #low
@@ -138,13 +140,13 @@ v2= v(th, a_thing , e, m1, m2, dt, 2)
 v2 = v2.to(u.km/u.s)
 
 
-print ("Maximum radial velocity companion:", np.nanmax(v1))
+print ("Maximum radial velocity companion:", np.nanmax(v2))
 bmjd_times =Time(nearest_time+ days.value,  format = 'mjd', scale='tdb', location = cerro_pachon_location)
 mjd_times= bmjd_times+ bmjd_times.light_travel_time(target_coord)
 utc_times = mjd_times.utc.mjd
 utc_difs =((utc_times-obs_times[0].mjd)*u.day).to(u.hour)
 
-quad_points = get_quad_points(v1)
+quad_points = get_quad_points(v2)
 quad_days = utc_times[quad_points]
 quad_hours = utc_difs[quad_points]
 quad_times = Time(((quad_hours.to(u.day) +obs_times[0].mjd*u.day).to(u.day)).value, format='mjd', scale= 'utc').iso
@@ -157,7 +159,7 @@ plt.axvline(x =( (obs_times[0].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, co
 plt.axvline(x=( (obs_times[1].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'r', label = times[1])
 plt.plot(utc_difs,v1,label='NS');
 plt.plot(utc_difs,v2,label= 'Comp');
-plt.plot(utc_difs[quad_points], v1[quad_points], marker = '*', color ='k', linestyle = 'None')
+plt.plot(utc_difs[quad_points], v2[quad_points], marker = '*', color ='k', linestyle = 'None')
 plt.legend();
 plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun)))
 plt.show()
@@ -175,6 +177,9 @@ def plot_datapoints():
     H_delta = all_array[1]
     H_gamma = all_array[2]
     H_beta = all_array[3]
+    H_delta_s = all_array[4]
+    H_gamma_s = all_array[5]
+    H_beta_s = all_array[6]
     #print Time(mjd_array, format = 'mjd').utc.isot
     #print all_array
     mean_rv = np.copy(np.mean(all_array[1:, :], axis = 0))
@@ -189,10 +194,13 @@ def plot_datapoints():
     remean_rv = np.mean([H_delta, H_gamma, H_beta], axis = 0)
     remean_std = np.std([H_delta,H_gamma, H_beta], axis=0)
     mean_rv = zero_rvs(mean_rv)
-    plt.plot(mjd_array, H_delta, label = r"H-$\delta$", linestyle = 'none', marker = '*')
-    plt.plot(mjd_array, H_gamma, label = r"H-$\gamma$", linestyle = 'none', marker = '*')
-    plt.plot(mjd_array, H_beta, label = r"H-$\beta$", linestyle = 'none', marker = '*')
-    plt.errorbar(mjd_array, mean_rv, std_dev, label = 'Mean RV', linestyle = 'none', marker = 'o')
+    #plt.plot(mjd_array, H_delta, label = r"H-$\delta$", linestyle = 'none', marker = '*')
+    #plt.plot(mjd_array, H_gamma, label = r"H-$\gamma$", linestyle = 'none', marker = '*')
+    #plt.plot(mjd_array, H_beta, label = r"H-$\beta$", linestyle = 'none', marker = '*')
+    plt.errorbar(mjd_array, H_delta, H_delta_s, label = r"H-$\delta$", linestyle = 'none', marker = '*')
+    plt.errorbar(mjd_array, H_gamma, H_gamma_s, label = r"H-$\gamma$", linestyle = 'none', marker = '*')
+    plt.errorbar(mjd_array, H_beta, H_beta_s, label = r"H-$\beta$", linestyle = 'none', marker = '*')
+    #plt.errorbar(mjd_array, mean_rv, std_dev, label = 'Mean RV', linestyle = 'none', marker = 'o')
     plt.errorbar(mjd_array, remean_rv, remean_std, label = r"Mean of zeroed RV's", linestyle = 'none', marker = 'o')
     return
 

@@ -127,6 +127,8 @@ for target_frame in target_stack:
     target_cosmic.run(maxiter= 4)
     target_frame= np.copy(target_cosmic.cleanarray)
     
+### convert to electron counts
+target_stack = target_stack * gain
     
 
 ##### Median combining target frames####

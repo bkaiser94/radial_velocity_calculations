@@ -38,6 +38,9 @@ bmjd_array = all_array['BMJD_TDB']
 H_delta = all_array['H_delta']
 H_gamma = all_array["H_gamma"]
 H_beta = all_array['H_beta']
+H_delta_s = all_array["H_delta_s"]
+H_gamma_s = all_array['H_gamma_s']
+H_beta_s = all_array['H_beta_s']
 #print Time(mjd_array, format = 'mjd').utc.isot
 #print all_array
 

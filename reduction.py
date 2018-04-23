@@ -13,14 +13,18 @@ import cosmics
 from astropy.time import Time
 from astropy import coordinates as coords
 from astropy import units as u
-
-
+plt.rc('font', size =18)
+plt.rc('lines', markersize=12)
+n_randoms = 100
 c= 2.998E5  #km/s
 zerolistname= 'listZero'
 flatlistname = 'listFlat'
 speclistname= 'listSpec'
 
 output_filename = 'radial_velocities.txt'
+
+#response_filename = 'GD108_sensitivity_curve.txt'
+response_filename= 'Feige67_sensitivity_curve.txt'
 
 
 #linefilename = 'FeAr_3650to5250_lines.txt'
@@ -198,6 +202,7 @@ print target_stack.shape
 #lamp_im = np.nanmean([first_lamp, end_lamp], axis=0)
 lamp_time = first_lamp_time
 lamp_im = first_lamp
+lamp_im = lamp_im * gain
 #lamp_im= end_lamp
 #lamp_time = end_lamp_time
 target_med = np.nanmedian(target_stack, axis =0)
@@ -291,14 +296,14 @@ plt.title('Lamp Spectrum (record corresponding dotted line and emission pixels)'
 #plt.yscale('log')
 plt.show()
 
-low_values = np.where(np.abs(x_positions-500)<300)
-plt.plot(x_positions[low_values],lamp_light[low_values],linestyle= '-')
-#plt.ylim((0,1000))
-plt.xlabel('x (pixel)')
-plt.ylabel('Counts')
-plt.title('Lamp Spectrum (record corresponding dotted line and emission pixels)')
-plt.yscale('log')
-plt.show()
+#low_values = np.where(np.abs(x_positions-500)<300)
+#plt.plot(x_positions[low_values],lamp_light[low_values],linestyle= '-')
+##plt.ylim((0,1000))
+#plt.xlabel('x (pixel)')
+#plt.ylabel('Counts')
+#plt.title('Lamp Spectrum (record corresponding dotted line and emission pixels)')
+#plt.yscale('log')
+#plt.show()
 
 dotted_pixel = float(raw_input("dotted line pixel>>>"))
 emission_pixel= float(raw_input("emission line pixel>>>"))
@@ -321,7 +326,7 @@ plt.show()
 def gaussian_curve(x, a, x0, sigma,b):
     return a*np.exp(-(x-x0)**2/(2*sigma**2))+b
 
-def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width):
+def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all = False):
     cut_region = np.where(x_pixels> (p0_list[1]-search_width ))
     print '========'
     #print p0_list
@@ -334,6 +339,13 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width):
     print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
     cut_light_values= high_light_values[upper_cut]
     popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= p0_list)
+    if plot_all:
+        plt.plot(cut_x_pixels, cut_light_values, label = "data")
+        plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels,popt[0],popt[1],popt[2],popt[3]),label ='fit')
+        plt.legend()
+        plt.show()
+    else:
+        pass
     #try:
         #cut_region = np.where(x_pixels> (popt[1]-search_width ))
         #print popt
@@ -387,6 +399,8 @@ for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
             for x_spot in line_x_checks:
                 plt.axvline( x= x_spot, color = 'k',linestyle = '--')
             plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
+            plt.xlabel('Pixel')
+            plt.ylabel('Counts')
             plt.legend()
             plt.show()
         else:
@@ -447,7 +461,9 @@ plt.axhline(y=0 ,  label = 'wavelength solution', color ='blue')
 plt.plot(peaks_found, wave_peaks_found-x_to_wavelength(peaks_found), marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
 plt.plot(line_x_checks, lamp_lines-x_to_wavelength(line_x_checks), label = 'input points', color = 'green', marker = '*', linestyle = 'none')
 plt.title("wavelength to pixel position Residuals")
-plt.legend()
+plt.xlabel('Pixel')
+plt.ylabel(r'Wavelength Residual $\AA$')
+plt.legend(loc= 'best')
 plt.show()
 
 def get_redshift(rest_lam, obs_lam):
@@ -457,77 +473,137 @@ def get_radial_velocity(redshift):
     return redshift*c
 #balmer_centroids= line_centroiding(target_light, balmer_x_checks, balmer_line_sides)
 
+#read in the flux calibration coefficients
+flux_poly_coeffs = np.genfromtxt(response_filename, skip_header = 1)
+#obs_wavelengths =x_to_wavelength(x_positions) #this was already done earlier
+sensitivity_curve = np.polyval(flux_poly_coeffs, poly_curve_wavelength)*1e-16
+
+plt.plot(poly_curve_wavelength, sensitivity_curve, label = 'sensitivity_curve')
+plt.legend()
+plt.show()
+
 rv_list= []
+rv_sigma_list=[]
 rv_low=[]
 rv_high = []
 for target_frame in target_stack:
     target_cosmic= cosmics.cosmicsimage(target_frame, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
     target_cosmic.run(maxiter= 4)
     target_frame= target_cosmic.cleanarray
-    target_light= np.array([])
-    bkg_light= np.array([])
-    print target_light.shape
-    for x_pos in x_positions:
-        xsum= np.sum(target_frame[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides),x_pos])
-        target_light= np.append(target_light,[xsum])
-        bkg_sum= np.sum(target_frame[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides),x_pos])
-        bkg_light= np.append(bkg_light,[bkg_sum])
-    #plt.plot(x_positions,target_light,'-')
-    #plt.xlabel('x (pixel)')
-    #plt.ylabel('Counts')
-    #plt.title('Target Spectrum')
-    #plt.show()
-    balmer_centers = []
-    balmer_sigmas = []
-    for balmer_line_x, balmer_wave in zip(balmer_x_checks, balmer_rest_waves):
-        try:
-            balmer_params, balmer_cov = fit_gaussian_curve(x_positions, target_light, [balmer_p0[0], balmer_line_x, balmer_p0[2], balmer_p0[3]], balmer_line_sides)
-            balmer_centers.append(balmer_params[1])
-            balmer_sigmas.append(balmer_params[2])
-            plt.plot(x_positions, target_light, label = 'observed', color = 'blue')
-            plt.plot(x_positions, gaussian_curve(x_positions,balmer_params[0], balmer_params[1], balmer_params[2], balmer_params[3]), color = 'r', label = 'Gaussian Fit')
-            plt.title("guess: " + str(balmer_line_x) + ' fit:' + str(balmer_params[1])+' restwave:' + str(balmer_wave))
-            plt.legend()
-            plt.show()
-        except RuntimeError as error:
-            print error
-    balmer_centers = np.array(balmer_centers)
-    balmer_sigmas= np.array(balmer_sigmas)
-    #balmer_centroids_waves= x_to_wavelength(balmer_centroids)
-    balmer_sigma_up = x_to_wavelength(np.copy(balmer_centers+balmer_sigmas))
-    balmer_sigma_down = x_to_wavelength(np.copy(balmer_centers-balmer_sigmas))
-    balmer_centers = x_to_wavelength(balmer_centers)
-    print "Balmer_lines: ", balmer_rest_waves
-    print "Target_Balmer_lines", balmer_centers
-    #print "Target_Balmer_lines ", balmer_centroids_waves
-    #redshifts = get_redshift(balmer_rest_waves, balmer_centroids_waves)
-    redshifts= get_redshift(balmer_rest_waves, balmer_centers)
-    print "redshifts: ", redshifts
-    radial_velocities = get_radial_velocity(redshifts)
-    balmer_sigma_down= get_radial_velocity(get_redshift(balmer_rest_waves, balmer_sigma_down))
-    balmer_sigma_up= get_radial_velocity(get_redshift(balmer_rest_waves, balmer_sigma_up))
-    print "radial_velocities:", radial_velocities
-    print np.mean(radial_velocities)
+    target_frame = target_frame *gain #conversion to electron counts
+    negative_values = np.where(target_frame < 0)
+    target_frame[negative_values]= 0
+    def find_centers(frame,plot_all = False):
+        target_light= np.array([])
+        bkg_light= np.array([])
+        #print target_light.shape
+        ## convert to electrons
+        
+        for x_pos in x_positions:
+            xsum= np.copy(np.sum(frame[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides),x_pos]))
+            target_light= np.append(target_light,[xsum])
+            bkg_sum= np.sum(frame[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides),x_pos])
+            bkg_light= np.append(bkg_light,[bkg_sum])
+        #plt.plot(x_positions,target_light,'-')
+        #plt.xlabel('x (pixel)')
+        #plt.ylabel('Counts')
+        #plt.title('Target Spectrum')
+        #plt.show()
+        
+        #target_light = target_light/sensitivity_curve
+        balmer_centers = []
+        balmer_sigmas = []
+        for balmer_line_x, balmer_wave in zip(balmer_x_checks, balmer_rest_waves):
+            try:
+                balmer_params, balmer_cov = fit_gaussian_curve(x_positions, target_light, [balmer_p0[0], balmer_line_x, balmer_p0[2], balmer_p0[3]], balmer_line_sides)
+                if ((np.abs(balmer_params[0]) < 1.) 
+                     and (np.abs(balmer_params[2]) > 20) 
+                     and (balmer_params[0] <0)):
+                     print "Line too flat... We'll try moving a little to the side with the center, and rerunning"
+                     balmer_params, balmer_cov = fit_gaussian_curve(x_positions, target_light, [balmer_p0[0], balmer_line_x+1, balmer_p0[2], balmer_p0[3]], balmer_line_sides)
+                balmer_centers.append(balmer_params[1])
+                balmer_sigmas.append(balmer_params[2])
+                if plot_all:
+                    plt.plot(x_positions, target_light, label = 'observed', color = 'blue')
+                    plt.plot(x_positions, gaussian_curve(x_positions,balmer_params[0], balmer_params[1], balmer_params[2], balmer_params[3]), color = 'r', label = 'Gaussian Fit')
+                    plt.title("guess: " + str(balmer_line_x) + ' fit:' + str(balmer_params[1])+' restwave:' + str(balmer_wave))
+                    plt.xlabel('Pixel')
+                    plt.ylabel('Counts')
+                    plt.legend(loc='best')
+                    plt.show()
+                else:
+                    pass
+            except RuntimeError as error:
+                print error
+        balmer_centers = np.array(balmer_centers)
+        balmer_sigmas= np.array(balmer_sigmas)
+        #balmer_centroids_waves= x_to_wavelength(balmer_centroids)
+        #balmer_sigma_up = x_to_wavelength(np.copy(balmer_centers+balmer_sigmas))
+        #balmer_sigma_down = x_to_wavelength(np.copy(balmer_centers-balmer_sigmas))
+        balmer_centers = x_to_wavelength(balmer_centers)
+        #print "Balmer_lines: ", balmer_rest_waves
+        #print "Target_Balmer_lines", balmer_centers
+        #print "Target_Balmer_lines ", balmer_centroids_waves
+        #redshifts = get_redshift(balmer_rest_waves, balmer_centroids_waves)
+        redshifts= get_redshift(balmer_rest_waves, balmer_centers)
+        #print "redshifts: ", redshifts
+        radial_velocities = get_radial_velocity(redshifts)
+        #balmer_sigma_down= get_radial_velocity(get_redshift(balmer_rest_waves, balmer_sigma_down))
+        #balmer_sigma_up= get_radial_velocity(get_redshift(balmer_rest_waves, balmer_sigma_up))
+        #print "radial_velocities:", radial_velocities
+        #print np.mean(radial_velocities)
+        return radial_velocities
+    
+    radial_velocities= find_centers(target_frame,plot_all = True)
     rv_list.append(radial_velocities)
-    rv_low.append(balmer_sigma_down)
-    rv_high.append(balmer_sigma_up)
-    print '-------------------'
+    #rv_low.append(balmer_sigma_down)
+    #rv_high.append(balmer_sigma_up)
+    #print '-------------------'
+    mc_rvs = []
+    for rando in range(0,n_randoms):
+        mc_frame = np.random.poisson(target_frame)
+        mc_radial_velocities = find_centers(mc_frame)
+        bad_vels = np.where(np.abs(mc_radial_velocities-radial_velocities) > 600)
+        print bad_vels[0].shape
+        if bad_vels[0].shape[0] <1:
+            mc_rvs.append(mc_radial_velocities)
+        else:
+            print "Bad velocity in iteration"
+            pass
+    print "randomization done"
+    mc_rvs= np.array(mc_rvs)
+    mc_rvs_sigma = np.std(mc_rvs, axis=0)
+    outliers= np.where(np.abs(mc_rvs-np.median(mc_rvs,axis=0) > 3*mc_rvs_sigma))
+    #mc_rvs[outliers]= 
+    print radial_velocities
+    print mc_rvs_sigma
+    rv_sigma_list.append(mc_rvs_sigma)
+    plt.hist(mc_rvs[:,0])
+    plt.show()
+    plt.hist(mc_rvs[:,1])
+    plt.show()
+    plt.hist(mc_rvs[:,2])
+    plt.show()
+    
+        
 
-for rv1, rv_val, rv2 in zip(rv_low, rv_list, rv_high):
-    print rv1, "|", rv_val, "|", rv2
+#for rv1, rv_val, rv2 in zip(rv_low, rv_list, rv_high):
+    #print rv1, "|", rv_val, "|", rv2
 
 rv_list = np.array(rv_list).T
+rv_sigma_list = np.array(rv_sigma_list).T
 target_times= target_times.mjd
 target_times = np.array([target_times])
 print target_times.shape
 print rv_list.shape
 print target_times.dtype
 print rv_list.dtype
-comb_array = np.vstack([target_times, rv_list])
+comb_array = np.vstack([target_times, rv_list,rv_sigma_list])
 print comb_array.shape
 response = raw_input("Should the data be output?>>> ")
-response_num =(raw_input("What should be tacked onto the end of the filename?>>>"))
+
 if response.startswith('y'):
+    response_num =(raw_input("What should be tacked onto the end of the filename?>>>"))
     #try:
         #previous_array = np.genfromtxt(output_filename)
         #print "====="
