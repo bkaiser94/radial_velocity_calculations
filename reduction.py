@@ -13,8 +13,10 @@ import cosmics
 from astropy.time import Time
 from astropy import coordinates as coords
 from astropy import units as u
-plt.rc('font', size =18)
-plt.rc('lines', markersize=12)
+#plt.rc('font', size =18)
+#plt.rc('lines', markersize=12) #presentation fonts and markersize
+plt.rc('font', size = 11) #paper fonts and marker size
+plt.rc('lines', markersize = 5)
 n_randoms = 100
 c= 2.998E5  #km/s
 zerolistname= 'listZero'

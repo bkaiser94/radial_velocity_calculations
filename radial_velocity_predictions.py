@@ -24,8 +24,10 @@ import astropy.coordinates as coord
 import astropy.units as u
 from astropy.units import cds
 cds.enable()
-plt.rc('font', size =18)
-plt.rc('lines', markersize=12)
+#plt.rc('font', size =18)
+#plt.rc('lines', markersize=12)
+plt.rc('font', size = 12)
+plt.rc('lines', markersize = 12)
 
 ra = float(sys.argv[1]) #values in decimal degrees
 dec = float(sys.argv[2])
@@ -33,7 +35,9 @@ dec = float(sys.argv[2])
 parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
-times = ['2018-03-19T02:19:00', '2018-03-19T10:11:00']
+#times = ['2018-03-19T02:19:00', '2018-03-19T10:11:00']
+times =['2018-04-23T02:00:00','2018-04-23T10:20:00']
+#times =['2018-04-24T02:00:00','2018-04-24T10:20:00']
 #times = ['2018-03-27T01:45:00', '2018-03-27T10:04:00']
 obs_times= Time(times, format = 'isot', scale='utc', location = cerro_pachon_location)
 target_coord = coord.SkyCoord(ra, dec, unit= (u.deg, u.deg), frame= 'icrs')
@@ -47,16 +51,19 @@ lam_rest = 6562.81*u.angstrom #angstroms
 #m1 = (0.14 *u.Msun).si
 #m2 = (1.4 *u.Msun).si
 m1 = (1.4*u.Msun).si
-m2 = (0.14*u.Msun).si #switched the masses to change the phase by 180 degrees.
+#m2 = (0.14*u.Msun).si #switched the masses to change the phase by 180 degrees.
+m2=( 1.58 *u.Msun).si
 #m2 = (0.12*u.Msun).si #switched the masses to change the phase by 180 degrees.
 
-e = 0.000023# median
+#e = 0.000023# median
 #e = 0.000031# max
 #e=0.5
+e=0.0011494 #1227
 omega = 97 * u.degree
-period = (0.4497391377 * u.day).to(u.second) #median
+#period = (0.4497391377 * u.day).to(u.second) #median
 #period = (0.449739137 * u.day).to(u.second) #low
 #period = (0.4497391384 * u.day).to(u.second) #high
+period = (6.721013337  *u.day).to(u.second)# for a different target
 
 t0 = Time(55756.23, format = 'mjd', scale= 'utc', location = parkes_location)
 tasc = Time(55756.1047771, format = 'mjd', scale= 'utc', location = parkes_location) #median
@@ -170,38 +177,39 @@ print ("a in ls", (a_thing/(u.cds.c.si)).to(u.second))
 def plot_datapoints():
     try:
         plotfile = glob(sys.argv[3])
+        
+        all_array = np.genfromtxt(plotfile[0]).T
+        mjd_array = all_array[0]
+        H_delta = all_array[1]
+        H_gamma = all_array[2]
+        H_beta = all_array[3]
+        H_delta_s = all_array[4]
+        H_gamma_s = all_array[5]
+        H_beta_s = all_array[6]
+        #print Time(mjd_array, format = 'mjd').utc.isot
+        #print all_array
+        mean_rv = np.copy(np.mean(all_array[1:, :], axis = 0))
+        std_dev =np.copy( np.std(all_array[1:, :], axis =0))
+        #print mean_rv
+        def zero_rvs(rv_array):
+            print "systemic velocity (includes Earth's motion):", np.mean([rv_array.max(),rv_array.min()])
+            return rv_array-np.mean([rv_array.max(),rv_array.min()])
+        H_delta = zero_rvs(H_delta)
+        H_gamma = zero_rvs(H_gamma)
+        H_beta = zero_rvs(H_beta)
+        remean_rv = np.mean([H_delta, H_gamma, H_beta], axis = 0)
+        remean_std = np.std([H_delta,H_gamma, H_beta], axis=0)
+        mean_rv = zero_rvs(mean_rv)
+        #plt.plot(mjd_array, H_delta, label = r"H-$\delta$", linestyle = 'none', marker = '*')
+        #plt.plot(mjd_array, H_gamma, label = r"H-$\gamma$", linestyle = 'none', marker = '*')
+        #plt.plot(mjd_array, H_beta, label = r"H-$\beta$", linestyle = 'none', marker = '*')
+        plt.errorbar(mjd_array, H_delta, H_delta_s, label = r"H-$\delta$", linestyle = 'none', marker = '*')
+        plt.errorbar(mjd_array, H_gamma, H_gamma_s, label = r"H-$\gamma$", linestyle = 'none', marker = '*')
+        plt.errorbar(mjd_array, H_beta, H_beta_s, label = r"H-$\beta$", linestyle = 'none', marker = '*')
+        #plt.errorbar(mjd_array, mean_rv, std_dev, label = 'Mean RV', linestyle = 'none', marker = 'o')
+        plt.errorbar(mjd_array, remean_rv, remean_std, label = r"Mean of zeroed RV's", linestyle = 'none', marker = 'o')
     except IndexError as error:
         print "No data file provided, so just outputting the predictions."
-    all_array = np.genfromtxt(plotfile[0]).T
-    mjd_array = all_array[0]
-    H_delta = all_array[1]
-    H_gamma = all_array[2]
-    H_beta = all_array[3]
-    H_delta_s = all_array[4]
-    H_gamma_s = all_array[5]
-    H_beta_s = all_array[6]
-    #print Time(mjd_array, format = 'mjd').utc.isot
-    #print all_array
-    mean_rv = np.copy(np.mean(all_array[1:, :], axis = 0))
-    std_dev =np.copy( np.std(all_array[1:, :], axis =0))
-    #print mean_rv
-    def zero_rvs(rv_array):
-        print "systemic velocity (includes Earth's motion):", np.mean([rv_array.max(),rv_array.min()])
-        return rv_array-np.mean([rv_array.max(),rv_array.min()])
-    H_delta = zero_rvs(H_delta)
-    H_gamma = zero_rvs(H_gamma)
-    H_beta = zero_rvs(H_beta)
-    remean_rv = np.mean([H_delta, H_gamma, H_beta], axis = 0)
-    remean_std = np.std([H_delta,H_gamma, H_beta], axis=0)
-    mean_rv = zero_rvs(mean_rv)
-    #plt.plot(mjd_array, H_delta, label = r"H-$\delta$", linestyle = 'none', marker = '*')
-    #plt.plot(mjd_array, H_gamma, label = r"H-$\gamma$", linestyle = 'none', marker = '*')
-    #plt.plot(mjd_array, H_beta, label = r"H-$\beta$", linestyle = 'none', marker = '*')
-    plt.errorbar(mjd_array, H_delta, H_delta_s, label = r"H-$\delta$", linestyle = 'none', marker = '*')
-    plt.errorbar(mjd_array, H_gamma, H_gamma_s, label = r"H-$\gamma$", linestyle = 'none', marker = '*')
-    plt.errorbar(mjd_array, H_beta, H_beta_s, label = r"H-$\beta$", linestyle = 'none', marker = '*')
-    #plt.errorbar(mjd_array, mean_rv, std_dev, label = 'Mean RV', linestyle = 'none', marker = 'o')
-    plt.errorbar(mjd_array, remean_rv, remean_std, label = r"Mean of zeroed RV's", linestyle = 'none', marker = 'o')
     return
 
 

@@ -11,8 +11,10 @@ from astropy.units import cds
 import scipy.stats as scistats
 import scipy.optimize as sciop
 cds.enable()
-plt.rc('font', size =18)
-plt.rc('lines', markersize=12)
+#plt.rc('font', size =18)
+#plt.rc('lines', markersize=12)
+plt.rc('font', size = 11)
+plt.rc('lines', markersize = 5)
 plotting_offset = 0.0005
 
 
@@ -78,42 +80,75 @@ bmjd_tconj = to_barycenter(tconj)
 
 zero_point = bmjd_tconj
 
-#def sine_function(times, systemic_vel,  amplitude, zero_point):
-def sine_function(times, systemic_vel,  amplitude):
+#def sine_function(times, systemic_vel,  amplitude, zero_point, period):
+def sine_function(times, systemic_vel,  amplitude, zero_point):
+#def sine_function(times, systemic_vel,  amplitude):
     return amplitude*np.sin((2*np.pi)/period*(times-zero_point))+systemic_vel
 
 
 def calc_chi_square(rvs, sigmas, sine_function_vals):
-    return (rvs-sine_function_vals)**2/(sigmas**2)
+    return np.sum((rvs-sine_function_vals)**2/(sigmas**2))
+
+def calc_red_chi_square(rvs, sigmas, sine_function_vals, dof = 0):
+    print "degrees of freedom", rvs.shape[0]-dof
+    return calc_chi_square(rvs, sigmas, sine_function_vals)/np.float_(rvs.shape[0]- dof)
 
 
 
-fitted_curve_delta, fitted_cov_delta = sciop.curve_fit(sine_function, bmjd_array, H_delta, sigma=H_delta_s, p0=p0_list)
-fitted_curve_gamma, fitted_cov_gamma = sciop.curve_fit(sine_function, bmjd_array, H_gamma, sigma= H_gamma_s, p0=p0_list)
-fitted_curve_beta, fitted_cov_beta = sciop.curve_fit(sine_function, bmjd_array, H_beta, sigma = H_beta_s, p0=p0_list)
-fitted_curve_all, fitted_cov_all = sciop.curve_fit(sine_function, merged_bmjd, merged_lines, p0= p0_list)
+#fitted_curve_delta, fitted_cov_delta = sciop.curve_fit(sine_function, bmjd_array, H_delta, sigma=H_delta_s, p0=p0_list)
+#fitted_curve_gamma, fitted_cov_gamma = sciop.curve_fit(sine_function, bmjd_array, H_gamma, sigma= H_gamma_s, p0=p0_list)
+#fitted_curve_beta, fitted_cov_beta = sciop.curve_fit(sine_function, bmjd_array, H_beta, sigma = H_beta_s, p0=p0_list)
+#fitted_curve_all, fitted_cov_all = sciop.curve_fit(sine_function, merged_bmjd, merged_lines, p0= p0_list)
+#fitted_curve_all, fitted_cov_all = sciop.curve_fit(sine_function, merged_bmjd, merged_lines, p0= p0_list+[bmjd_array[0]])
+fitted_curve_all, fitted_cov_all = sciop.curve_fit(sine_function, merged_bmjd, merged_lines, p0= p0_list+[bmjd_array[0]])
+#fitted_curve_all, fitted_cov_all = sciop.curve_fit(sine_function, merged_bmjd, merged_lines, p0= p0_list+[bmjd_array[0],period])
 
+print fitted_curve_all
+print "difference in ephemeris (tconj-fit) by phase"
+print  ((zero_point - fitted_curve_all[2])%period)/period
 
-delta_fit_errs = np.sqrt(np.diag(fitted_cov_delta))
-gamma_fit_errs = np.sqrt(np.diag(fitted_cov_gamma))
-beta_fit_errs = np.sqrt(np.diag(fitted_cov_beta))
+#delta_fit_errs = np.sqrt(np.diag(fitted_cov_delta))
+#gamma_fit_errs = np.sqrt(np.diag(fitted_cov_gamma))
+#beta_fit_errs = np.sqrt(np.diag(fitted_cov_beta))
 all_fit_errs= np.sqrt(np.diag(fitted_cov_all))
-print "degrees of freedom: ", H_beta.shape[0]-2
+#print "degrees of freedom: ", H_beta.shape[0]-2
 
-beta_chi_square = scistats.chisquare(H_beta, sine_function(bmjd_array,fitted_curve_beta[0],fitted_curve_beta[1]),ddof=-2)
-gamma_chi_square = scistats.chisquare(H_gamma, sine_function(bmjd_array,fitted_curve_gamma[0],fitted_curve_gamma[1]),ddof=-2)
-delta_chi_square = scistats.chisquare(H_delta, sine_function(bmjd_array,fitted_curve_delta[0],fitted_curve_delta[1]),ddof=-2)
-
-print "chi-square values"
-print "beta", "gamma", "delta"
-print beta_chi_square[0], gamma_chi_square[0], delta_chi_square[0]
+all_lines_bmjd = np.hstack([bmjd_array, bmjd_array, bmjd_array]).T
+all_lines_bmjd = all_lines_bmjd.ravel()
 
 
+#beta_chi_square = scistats.chisquare(H_beta, sine_function(bmjd_array,fitted_curve_beta[0],fitted_curve_beta[1]),ddof=-2)
+#gamma_chi_square = scistats.chisquare(H_gamma, sine_function(bmjd_array,fitted_curve_gamma[0],fitted_curve_gamma[1]),ddof=-2)
+#delta_chi_square = scistats.chisquare(H_delta, sine_function(bmjd_array,fitted_curve_delta[0],fitted_curve_delta[1]),ddof=-2)
+#all_chi_square = scistats.chisquare(merged_lines.ravel(), sine_function(all_lines_bmjd, fitted_curve_all[0],fitted_curve_all[1]) , ddof = -2)
 
-print "sys vel.   period    amplitude    zero_point"
-print fitted_curve_delta
-print fitted_curve_gamma
-print fitted_curve_beta
+
+#print "chi-square values"
+#print "beta", "gamma", "delta"
+#print beta_chi_square[0], gamma_chi_square[0], delta_chi_square[0]
+#print all_chi_square
+
+#all_chi_square= calc_chi_square(merged_lines.ravel(), merged_errors.ravel(), sine_function(all_lines_bmjd, fitted_curve_all[0], fitted_curve_all[1]))
+all_chi_square= calc_chi_square(merged_lines.ravel(), merged_errors.ravel(), sine_function(all_lines_bmjd, fitted_curve_all[0], fitted_curve_all[1], fitted_curve_all[2]))
+#all_chi_square= calc_chi_square(merged_lines.ravel(), merged_errors.ravel(), sine_function(all_lines_bmjd, fitted_curve_all[0], fitted_curve_all[1], fitted_curve_all[2],fitted_curve_all[3]))
+
+
+print all_chi_square
+
+#red_chi =  calc_red_chi_square(merged_lines.ravel(), merged_errors.ravel(), sine_function(all_lines_bmjd, fitted_curve_all[0], fitted_curve_all[1]), dof=2)
+red_chi =  calc_red_chi_square(merged_lines.ravel(), merged_errors.ravel(), sine_function(all_lines_bmjd, fitted_curve_all[0], fitted_curve_all[1], fitted_curve_all[2]), dof=3)
+#red_chi =  calc_red_chi_square(merged_lines.ravel(), merged_errors.ravel(), sine_function(all_lines_bmjd, fitted_curve_all[0], fitted_curve_all[1], fitted_curve_all[2], fitted_curve_all[3]), dof=4)
+
+
+print red_chi
+#print calc_red_chi_square(H_beta,H_beta_s, sine_function(bmjd_array, fitted_curve_beta[0], fitted_curve_beta[1]), dof=2)
+print '-------'
+
+
+#print "sys vel.   period    amplitude    zero_point"
+#print fitted_curve_delta
+#print fitted_curve_gamma
+#print fitted_curve_beta
 
 def zero_rvs(rv_array):
     print "systemic velocity (includes Earth's motion):", np.mean([rv_array.max(),rv_array.min()])
@@ -128,36 +163,36 @@ def get_mass_ratio(K_c, P_B, x_psr):
 
 period_wunits = period*u.day
 
-H_delta_mratio= get_mass_ratio(fitted_curve_delta[1]*(u.km/u.second),period_wunits, x_psr)
-H_gamma_mratio= get_mass_ratio(fitted_curve_gamma[1]*(u.km/u.second),period_wunits, x_psr)
-H_beta_mratio= get_mass_ratio(fitted_curve_beta[1]*(u.km/u.second),period_wunits, x_psr)
+#H_delta_mratio= get_mass_ratio(fitted_curve_delta[1]*(u.km/u.second),period_wunits, x_psr)
+#H_gamma_mratio= get_mass_ratio(fitted_curve_gamma[1]*(u.km/u.second),period_wunits, x_psr)
+#H_beta_mratio= get_mass_ratio(fitted_curve_beta[1]*(u.km/u.second),period_wunits, x_psr)
 all_mratio= get_mass_ratio(fitted_curve_all[1]*(u.km/u.second),period_wunits, x_psr)
 
-H_delta_mratio_high= get_mass_ratio((fitted_curve_delta[1]+delta_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
-H_gamma_mratio_high= get_mass_ratio((fitted_curve_gamma[1]+gamma_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
-H_beta_mratio_high= get_mass_ratio((fitted_curve_beta[1]+beta_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
+#H_delta_mratio_high= get_mass_ratio((fitted_curve_delta[1]+delta_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
+#H_gamma_mratio_high= get_mass_ratio((fitted_curve_gamma[1]+gamma_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
+#H_beta_mratio_high= get_mass_ratio((fitted_curve_beta[1]+beta_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
 all_mratio_high =get_mass_ratio((fitted_curve_all[1]+ all_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
 
 
 
-H_delta_mratio_low= get_mass_ratio((fitted_curve_delta[1]-delta_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
-H_gamma_mratio_low= get_mass_ratio((fitted_curve_gamma[1]-gamma_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
-H_beta_mratio_low= get_mass_ratio((fitted_curve_beta[1]-beta_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
+#H_delta_mratio_low= get_mass_ratio((fitted_curve_delta[1]-delta_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
+#H_gamma_mratio_low= get_mass_ratio((fitted_curve_gamma[1]-gamma_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
+#H_beta_mratio_low= get_mass_ratio((fitted_curve_beta[1]-beta_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
 all_mratio_low =get_mass_ratio((fitted_curve_all[1]-all_fit_errs[1])*(u.km/u.second),period_wunits, x_psr)
 print "Companion masses assuming 1.4 Msun pulsar"
-print "delta", 1.4/H_delta_mratio
-print "gamma", 1.4/H_gamma_mratio
-print "beta", 1.4/H_beta_mratio
+#print "delta", 1.4/H_delta_mratio
+#print "gamma", 1.4/H_gamma_mratio
+#print "beta", 1.4/H_beta_mratio
 print "all", 1.4/all_mratio
 print "Companion masses uncertainty assuming 1.4 Msun pulsar"
-print "delta", 1.4/H_delta_mratio_high-1.4/H_delta_mratio
-print "gamma", 1.4/H_gamma_mratio_high-1.4/H_gamma_mratio
-print "beta", 1.4/H_beta_mratio_high- 1.4/H_beta_mratio
+#print "delta", 1.4/H_delta_mratio_high-1.4/H_delta_mratio
+#print "gamma", 1.4/H_gamma_mratio_high-1.4/H_gamma_mratio
+#print "beta", 1.4/H_beta_mratio_high- 1.4/H_beta_mratio
 print "all", 1.4/all_mratio_high-1.4/all_mratio
 print "Companion masses uncertainty assuming 1.4 Msun pulsar"
-print "delta", 1.4/H_delta_mratio_low-1.4/H_delta_mratio
-print "gamma", 1.4/H_gamma_mratio_low-1.4/H_gamma_mratio
-print "beta", 1.4/H_beta_mratio_low-1.4/H_beta_mratio
+#print "delta", 1.4/H_delta_mratio_low-1.4/H_delta_mratio
+#print "gamma", 1.4/H_gamma_mratio_low-1.4/H_gamma_mratio
+#print "beta", 1.4/H_beta_mratio_low-1.4/H_beta_mratio
 print "all", 1.4/all_mratio_low-1.4/all_mratio
 #H_delta = zero_rvs(H_delta)
 #H_gamma = zero_rvs(H_gamma)
@@ -180,23 +215,132 @@ plot_times = np.linspace(bmjd_array[0]-0.2, bmjd_array[-1]+0.2, 1000)
 #plt.plot(plot_times, sine_function(plot_times, fitted_curve_gamma[0],fitted_curve_gamma[1],fitted_curve_gamma[2]), label = 'fitted curve gamma')
 #plt.plot(plot_times, sine_function(plot_times, fitted_curve_beta[0],fitted_curve_beta[1],fitted_curve_beta[2]), label = 'fitted curve beta')
 
+#delta_label = 'fit delta K:'+str(np.round(fitted_curve_delta[1],2))+'(' + str(np.round(delta_fit_errs[1],2))+')'+'(km/s) sys:' +str(np.round(fitted_curve_delta[0],2)) +'(' + str(np.round(delta_fit_errs[0],2))+')'+'(km/s)'
+#gamma_label='fit gamma K:'+str(np.round(fitted_curve_gamma[1],2))+'(' + str(np.round(gamma_fit_errs[1],2))+')'+'(km/s) sys:' +str(np.round(fitted_curve_gamma[0],2)) +'(' + str(np.round(gamma_fit_errs[0],2))+')'+'(km/s)'
+#beta_label= 'fit beta K:'+str(np.round(fitted_curve_beta[1],2))+'(' + str(np.round(beta_fit_errs[1],2))+')'+'(km/s) sys:' +str(np.round(fitted_curve_beta[0],2))+'(' + str(np.round(beta_fit_errs[0],2))+')'+'(km/s)'
+all_label = 'fit all K:'+str(np.round(fitted_curve_all[1],2))+'(' + str(np.round(all_fit_errs[1],2))+')'+'(km/s) sys:' +str(np.round(fitted_curve_all[0],2))+'(' + str(np.round(all_fit_errs[0],2))+')'+'(km/s)'
+
+#plt.plot(plot_times, sine_function(plot_times, fitted_curve_delta[0],fitted_curve_delta[1]), label = delta_label, color = 'b')
+#plt.plot(plot_times, sine_function(plot_times, fitted_curve_gamma[0],fitted_curve_gamma[1]), label = gamma_label, color = 'g')
+#plt.plot(plot_times, sine_function(plot_times, fitted_curve_beta[0],fitted_curve_beta[1]), label = beta_label, color = 'r')
+#plt.plot(plot_times, sine_function(plot_times, fitted_curve_all[0],fitted_curve_all[1]), label = all_label , color = 'k')
+plt.plot(plot_times, sine_function(plot_times, fitted_curve_all[0],fitted_curve_all[1], fitted_curve_all[2]), label = all_label , color = 'k')
+#plt.plot(plot_times, sine_function(plot_times, fitted_curve_all[0],fitted_curve_all[1], fitted_curve_all[2], fitted_curve_all[3]), label = all_label , color = 'k')
+
+
+#plt.legend()
+#plt.title("Period: " + str(fitted_curve_beta[1] )+ " Sys Vel.: " + str(fitted_curve_beta[0]) + " K: " + str(fitted_curve_beta[2]))
+plt.ylabel('RV (km/s)')
+plt.xlabel('BMJD_TDB')
+#plt.title("Period: " + str(period)+ " Sys Vel.: " + str(fitted_curve_beta[0]) + " K: " + str(fitted_curve_beta[1]))
+#plt.title("Period: " +str(period) + "days, Phase = 0 at Conjunction: " + str(bmjd_tconj))
+plt.title('PSR J1431-4715')
+#plt.errorbar(mjd_array, mean_rv, std_dev, label = 'Mean RV', linestyle = 'none', marker = 'o')
+#plt.errorbar(mjd_array, remean_rv, remean_std, label = r"Mean of zeroed RV's", linestyle = 'none', marker = 'o')
+plt.show()
+
+
+f, (ax1, ax2) = plt.subplots(2,1, sharex=True, sharey = False)
+ax1.errorbar(bmjd_array, H_delta, H_delta_s, label = r"H-$\delta$", linestyle = 'none', marker = '*', color = 'b')
+ax1.errorbar(bmjd_array+plotting_offset, H_gamma, H_gamma_s, label = r"H-$\gamma$", linestyle = 'none', marker = 'o', color = 'g')
+ax1.errorbar(bmjd_array+plotting_offset*2, H_beta, H_beta_s, label = r"H-$\beta$", linestyle = 'none', marker = 's', color = 'r')
+
+plot_times = np.linspace(bmjd_array[0]-0.2, bmjd_array[-1]+0.2, 1000)
+#delta_label = 'fit delta K:'+str(np.round(fitted_curve_delta[1],2))+'(' + str(np.round(delta_fit_errs[1],2))+')'+'(km/s) sys:' +str(np.round(fitted_curve_delta[0],2)) +'(' + str(np.round(delta_fit_errs[0],2))+')'+'(km/s)'
+#gamma_label='fit gamma K:'+str(np.round(fitted_curve_gamma[1],2))+'(' + str(np.round(gamma_fit_errs[1],2))+')'+'(km/s) sys:' +str(np.round(fitted_curve_gamma[0],2)) +'(' + str(np.round(gamma_fit_errs[0],2))+')'+'(km/s)'
+#beta_label= 'fit beta K:'+str(np.round(fitted_curve_beta[1],2))+'(' + str(np.round(beta_fit_errs[1],2))+')'+'(km/s) sys:' +str(np.round(fitted_curve_beta[0],2))+'(' + str(np.round(beta_fit_errs[0],2))+')'+'(km/s)'
+all_label = 'fit all K:'+str(np.round(fitted_curve_all[1],2))+'(' + str(np.round(all_fit_errs[1],2))+')'+'(km/s) sys:' +str(np.round(fitted_curve_all[0],2))+'(' + str(np.round(all_fit_errs[0],2))+')'+'(km/s)'
+
+#ax1.plot(plot_times, sine_function(plot_times, fitted_curve_delta[0],fitted_curve_delta[1]), label = delta_label, color = 'b')
+#ax1.plot(plot_times, sine_function(plot_times, fitted_curve_gamma[0],fitted_curve_gamma[1]), label = gamma_label, color = 'g')
+
+#ax1.plot(plot_times, sine_function(plot_times, fitted_curve_beta[0],fitted_curve_beta[1]), label = beta_label, color = 'r')
+
+#ax1.plot(plot_times, sine_function(plot_times, fitted_curve_all[0],fitted_curve_all[1]), label = all_label , color = 'k')
+#ax1.plot(plot_times, sine_function(plot_times, fitted_curve_all[0],fitted_curve_all[1], fitted_curve_all[2]), label = all_label , color = 'k')
+ax1.plot(plot_times, sine_function(plot_times, fitted_curve_all[0],fitted_curve_all[1], fitted_curve_all[2], fitted_curve_all[3]), label = all_label , color = 'k')
+
+
+ax1.set_ylabel('RV (km/s)')
+#ax1.set_xlabel('BMJD_TDB')
+
+
+ax2.axhline(y=0, color = 'k')
+#fitted_points = sine_function(bmjd_array, fitted_curve_all[0], fitted_curve_all[1])
+#fitted_points = sine_function(bmjd_array, fitted_curve_all[0], fitted_curve_all[1], fitted_curve_all[2])
+fitted_points = sine_function(bmjd_array, fitted_curve_all[0], fitted_curve_all[1], fitted_curve_all[2], fitted_curve_all[3])
+
+
+residuals_delta = H_delta-fitted_points
+residuals_gamma = H_gamma-fitted_points
+residuals_beta = H_beta- fitted_points
+
+ax2.errorbar(bmjd_array, residuals_delta, H_delta_s, marker = '*', color= 'b', linestyle = 'none')
+ax2.errorbar(bmjd_array, residuals_gamma, H_gamma_s, marker = 'o', color = 'g', linestyle= 'none')
+ax2.errorbar(bmjd_array, residuals_beta, H_beta_s, marker = 's', color= 'r', linestyle = 'none')
+ax2.set_xlabel('BMJD_TDB')
+ax2.set_ylabel('Residuals (km/s)')
+f.subplots_adjust(wspace=0)
+f.subplots_adjust(hspace = 0)
+plt.show()
+
+########### attempt with the different subplot sizes
+#f, (ax1, ax2) = plt.subplots(2,1, sharex=True, sharey = False)
+range_x = (np.min(bmjd_array)-0.05, np.max(bmjd_array)+0.05)
+plt.subplot(413)
+plt.axhline(y=0, color = 'k', linestyle = '--')
+#fitted_points = sine_function(bmjd_array, fitted_curve_all[0], fitted_curve_all[1])
+fitted_points = sine_function(bmjd_array, fitted_curve_all[0], fitted_curve_all[1] , fitted_curve_all[2])
+
+residuals_delta = H_delta-fitted_points
+residuals_gamma = H_gamma-fitted_points
+residuals_beta = H_beta- fitted_points
+
+plt.errorbar(bmjd_array, residuals_delta, H_delta_s, marker = '*', color= 'b', linestyle = 'none')
+plt.errorbar(bmjd_array, residuals_gamma, H_gamma_s, marker = 'o', color = 'g', linestyle= 'none')
+plt.errorbar(bmjd_array, residuals_beta, H_beta_s, marker = 's', color= 'r', linestyle = 'none')
+plt.xlim(range_x)
+plt.xlabel('BMJD_TDB')
+plt.ylabel('Residuals')
+
+
+plt.subplot(211)
+frame1 = plt.gca()
+frame1.axes.xaxis.set_ticklabels([])
+plt.errorbar(bmjd_array, H_delta, H_delta_s, label = r"H-$\delta$", linestyle = 'none', marker = '*', color = 'b')
+plt.errorbar(bmjd_array+plotting_offset, H_gamma, H_gamma_s, label = r"H-$\gamma$", linestyle = 'none', marker = 'o', color = 'g')
+plt.errorbar(bmjd_array+plotting_offset*2, H_beta, H_beta_s, label = r"H-$\beta$", linestyle = 'none', marker = 's', color = 'r')
+
+plot_times = np.linspace(bmjd_array[0]-0.2, bmjd_array[-1]+0.2, 1000)
 delta_label = 'fit delta K:'+str(np.round(fitted_curve_delta[1],2))+'(' + str(np.round(delta_fit_errs[1],2))+')'+'(km/s) sys:' +str(np.round(fitted_curve_delta[0],2)) +'(' + str(np.round(delta_fit_errs[0],2))+')'+'(km/s)'
 gamma_label='fit gamma K:'+str(np.round(fitted_curve_gamma[1],2))+'(' + str(np.round(gamma_fit_errs[1],2))+')'+'(km/s) sys:' +str(np.round(fitted_curve_gamma[0],2)) +'(' + str(np.round(gamma_fit_errs[0],2))+')'+'(km/s)'
 beta_label= 'fit beta K:'+str(np.round(fitted_curve_beta[1],2))+'(' + str(np.round(beta_fit_errs[1],2))+')'+'(km/s) sys:' +str(np.round(fitted_curve_beta[0],2))+'(' + str(np.round(beta_fit_errs[0],2))+')'+'(km/s)'
 all_label = 'fit all K:'+str(np.round(fitted_curve_all[1],2))+'(' + str(np.round(all_fit_errs[1],2))+')'+'(km/s) sys:' +str(np.round(fitted_curve_all[0],2))+'(' + str(np.round(all_fit_errs[0],2))+')'+'(km/s)'
 
-plt.plot(plot_times, sine_function(plot_times, fitted_curve_delta[0],fitted_curve_delta[1]), label = delta_label, color = 'b')
-plt.plot(plot_times, sine_function(plot_times, fitted_curve_gamma[0],fitted_curve_gamma[1]), label = gamma_label, color = 'g')
+#ax1.plot(plot_times, sine_function(plot_times, fitted_curve_delta[0],fitted_curve_delta[1]), label = delta_label, color = 'b')
+#ax1.plot(plot_times, sine_function(plot_times, fitted_curve_gamma[0],fitted_curve_gamma[1]), label = gamma_label, color = 'g')
 
-plt.plot(plot_times, sine_function(plot_times, fitted_curve_beta[0],fitted_curve_beta[1]), label = beta_label, color = 'r')
+#ax1.plot(plot_times, sine_function(plot_times, fitted_curve_beta[0],fitted_curve_beta[1]), label = beta_label, color = 'r')
 
-plt.plot(plot_times, sine_function(plot_times, fitted_curve_all[0],fitted_curve_all[1]), label = all_label , color = 'k')
-plt.legend()
-#plt.title("Period: " + str(fitted_curve_beta[1] )+ " Sys Vel.: " + str(fitted_curve_beta[0]) + " K: " + str(fitted_curve_beta[2]))
+plt.plot(plot_times, sine_function(plot_times, fitted_curve_all[0],fitted_curve_all[1]), label = all_label , color = 'k', linestyle = '--')
 plt.ylabel('RV (km/s)')
-plt.xlabel('BMJD_TDB')
-#plt.title("Period: " + str(period)+ " Sys Vel.: " + str(fitted_curve_beta[0]) + " K: " + str(fitted_curve_beta[1]))
-plt.title("Period: " +str(period) + "days, Phase = 0 at Conjunction: " + str(bmjd_tconj))
-#plt.errorbar(mjd_array, mean_rv, std_dev, label = 'Mean RV', linestyle = 'none', marker = 'o')
-#plt.errorbar(mjd_array, remean_rv, remean_std, label = r"Mean of zeroed RV's", linestyle = 'none', marker = 'o')
+plt.xlim(range_x)
+#ax1.set_xlabel('BMJD_TDB')
+
+plt.subplots_adjust(wspace=0)
+plt.subplots_adjust(hspace = 0)
+#plt.tight_layout()
+#plt.title('PSR J1431-4715')
 plt.show()
+
+
+#plt.subplot(211)
+#plt.plot([1,2,3])
+
+#plt.subplot(413)
+#plt.plot([1,2,3])
+#plt.subplots_adjust(wspace=0)
+#plt.show()
+
+
+
