@@ -20,18 +20,28 @@ import spec_plot_tools as spt
 #standard_directory = '~/Desktop/standards/'
 standard_directory = '/Users/BenKaiser/Desktop/standards/'
 #standard_file = "foke/fgd108.dat"
-standard_file = 'foke/ffeige67.dat'
+#standard_file = 'foke/ffeige67.dat'
+standard_file = 'fhamuy/fltt6248.dat'
+#standard_file= 'fhamuy/feg274.dat'
+
 
 #output_filename = "GD108_sensitivity_curve.txt"
-output_filename = 'Feige67_sensitivity_curve.txt'
+#output_filename = 'Feige67_sensitivity_curve.txt'
+output_filename= 'LTT6248_sensitivity_curve.txt'
+#output_filename= 'EG274_sensitivity_curve.txt'
 
 standard_file = standard_directory+standard_file
 
 #standard_name = "GD108"
-standard_name = 'Feige67'
+#standard_name = 'Feige67'
+standard_name = 'LTT6248'
+#standard_name = 'EG274'
 
 #observed_file = "wcmtb.GD108930blue.fits"
-observed_file = 'wcmtb.feige67930blue.fits'
+#observed_file = 'wcmtb.feige67930blue.fits'
+observed_file  = 'wcmtb.ltt6248930blue.fits'
+#observed_file = 'wcmtb.eg274930blue.fits'
+
 obs_fits = fits.open(observed_file)
 header = fits.getheader(observed_file)
 obs_waves1= obs_fits[0].data
@@ -60,7 +70,9 @@ wavelength_masks=[
 stand_array = np.genfromtxt(glob(standard_file)[0]).T
 
 stand_waves1 = stand_array[0]
-stand_flux1 = stand_array[1] *1e16 #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
+#stand_flux1 = stand_array[1] *1e16 #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
+stand_flux1 = stand_array[1]  #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
+
 stand_bins = stand_array[3]
 
 print stand_bins[0]
@@ -167,5 +179,7 @@ fcal_obs = obs_flux1/poly_curve
 #plt.plot(stand_waves1, stand_flux1, label = 'model', marker = 'o', linestyle = 'none')
 plt.plot(obs_waves1, fcal_obs, label ='flux calibrated observation')
 plt.plot(stand_waves1, stand_flux1, label = 'model')
+plt.xlabel('wavelength ($\AA$)')
+plt.ylabel('Flux (ergs/cm/cm/s/A 1e-16)')
 plt.legend()
 plt.show()

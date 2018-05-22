@@ -45,7 +45,7 @@ trace_band_width = 20 #pixel width to determine the centroid of the galaxy
 poly_degree= 3
 core_sides=  5
 bkg_width= core_sides
-bkg_shift= 50
+bkg_shift= 25
 
 
 lamp_sigma_guess = 2

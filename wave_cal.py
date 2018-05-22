@@ -53,7 +53,7 @@ def gaussian_curve(x, a, x0, sigma,b):
 
 def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all = False):
     cut_region = np.where(x_pixels> (p0_list[1]-search_width ))
-    print '========'
+    #print '========'
     #print p0_list
     #print  "lower bound:", p0_list[1]-search_width
     #print "upper bound: ", p0_list[1]+search_width
@@ -64,8 +64,8 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
     #print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
     cut_light_values= high_light_values[upper_cut]
     popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= p0_list)
-    print "[amplitude, x0, sigma, b]"
-    print popt
+    #print "[amplitude, x0, sigma, b]"
+    #print popt
     if plot_all:
         plt.plot(cut_x_pixels, cut_light_values, label = "data")
         plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels,popt[0],popt[1],popt[2],popt[3]),label ='fit')
@@ -155,16 +155,16 @@ def get_trace_waves(target_med, lamp_im):
    
     line_x_checks2 = np.copy(line_x_checks+offset)
 
-    for x_spot in line_x_checks2:
-        plt.axvline( x= x_spot, color = 'r')
+    #for x_spot in line_x_checks2:
+        #plt.axvline( x= x_spot, color = 'r')
     #for x_spot in np.array(WaveList_Fe_930_12_24[0])/2.:
         #plt.axvline( x= x_spot, color = 'r')
-    plt.plot(x_positions,lamp_light,'-')
-    plt.xlabel('x (pixel)')
-    plt.ylabel('Counts')
-    plt.title('Lamp Spectrum (offset applied)')
-    #plt.yscale('log')
-    plt.show()
+    #plt.plot(x_positions,lamp_light,'-')
+    #plt.xlabel('x (pixel)')
+    #plt.ylabel('Counts')
+    #plt.title('Lamp Spectrum (offset applied)')
+    ##plt.yscale('log')
+    #plt.show()
     peaks_found=[]
     wave_peaks_found = []
     for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
@@ -173,16 +173,16 @@ def get_trace_waves(target_med, lamp_im):
             if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1)):
                 peaks_found.append(lamp_params[1])
                 wave_peaks_found.append(lamp_line_wave)
-                plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
-                plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
-                plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
-                for x_spot in line_x_checks:
-                    plt.axvline( x= x_spot, color = 'k',linestyle = '--')
-                plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
-                plt.xlabel('Pixel')
-                plt.ylabel('Counts')
-                plt.legend()
-                plt.show()
+                #plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
+                #plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
+                #plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
+                #for x_spot in line_x_checks:
+                    #plt.axvline( x= x_spot, color = 'k',linestyle = '--')
+                #plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
+                #plt.xlabel('Pixel')
+                #plt.ylabel('Counts')
+                #plt.legend()
+                #plt.show()
             else:
                 print "Gaussian too flat, flipped, or narrow (or not within the actual fitting region...):", lamp_params
         except RuntimeError as error:
@@ -213,12 +213,12 @@ def get_trace_waves(target_med, lamp_im):
     #plt.ylim(10,200)
     plt.show()
 
-    plt.plot(x_positions, poly_curve_wavelength,  label = 'wavelength solution', color ='blue')
-    plt.plot(peaks_found, wave_peaks_found, marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
-    plt.plot(line_x_checks2, lamp_lines, label = 'input points', color = 'green', marker = '*', linestyle = 'none')
-    plt.title("wavelength to pixel position")
-    plt.legend()
-    plt.show()
+    #plt.plot(x_positions, poly_curve_wavelength,  label = 'wavelength solution', color ='blue')
+    #plt.plot(peaks_found, wave_peaks_found, marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
+    #plt.plot(line_x_checks2, lamp_lines, label = 'input points', color = 'green', marker = '*', linestyle = 'none')
+    #plt.title("wavelength to pixel position")
+    #plt.legend()
+    #plt.show()
 
     plt.axhline(y=0 ,  label = 'wavelength solution', color ='blue')
     plt.plot(peaks_found, wave_peaks_found-x_to_wavelength(peaks_found), marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
@@ -228,7 +228,7 @@ def get_trace_waves(target_med, lamp_im):
     plt.ylabel(r'Wavelength Residual $\AA$')
     plt.legend(loc= 'best')
     plt.show()
-    return
+    return [polynomial_fit, poly_coeffs_lamp]
 #######3
 
 
@@ -270,16 +270,90 @@ for counter, img in enumerate(speclist):
         if '_fe' in speclist[counter+1].lower():
             print "Next file is a lamp, so we're going to do the trace and wavelength calibration."
             target_med = np.nanmedian(target_stack, axis = 0)
-            get_trace_waves(target_med, lamp_im)
+            new_coeffs= get_trace_waves(target_med, lamp_im)
+            polynomial_list.append(new_coeffs)
             print "Resetting the target_stack."
             target_stack = [] #
 
         else:
             print "Next file is not a lamp."
         
-        
+print polynomial_list
         #last_file_lamp= False #since this image isn't a lamp
+
+
+def barycentric_vel_corr(header, wavelengths):
+    ra = header['RA']
+    dec = header['DEC']
+    radec = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
+    location_velocity= 10
+    lambda_rest = wavelengths*(u.Angstrom)*const.c/(location_velocity+const.c)
+    return
+
+last_file_lamp = False
+target_stack = []
+association_index = -1
+new_filelist =[]
+#need to determine if the given image is a lamp or a target spectrum
+for counter, img in enumerate(speclist):
+    filename= glob(img)[0]
+    if '_fe' in filename.lower():
+        print 'Lamp file detected: ', filename
         
+        if last_file_lamp:
+            #since the previous file was a lamp, that would make this a new run, so we'd want to use this lamp file, right?
+            print "Double lamp detected, so it must be a new run."
+            
+            
+        else:
+            association_index+=1
+            print "association_index increased: ", association_index
+            #last_file_lamp = True
+            
+        last_file_lamp = True #since the image has to be a lamp
+        
+    else:
+        #the filename doesn't contain a lamp indicator, so it must be a target spectrum
+        print "Target file detected: ", filename
+        
+        i= fits.open(filename)
+        header = fits.getheader(filename)
+        img_data= i[0].data
+        filename = 'w' + filename
+        new_filelist.append(filename)
+        polynomials = polynomial_list[association_index]
+        band_inds= np.indices(img_data.shape)
+        x_positions= band_inds[1,1]
+        target_light= np.array([])
+        bkg_light= np.array([])
+        poly_curve_y = np.polyval(polynomials[0], x_positions)
+        poly_curve_wavelength= np.polyval(polynomials[1], x_positions)
+        for x_pos in x_positions:
+            xsum= np.sum(img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides),x_pos])
+            target_light= np.append(target_light,[xsum])
+            bkg_sum= np.sum(img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides),x_pos])
+            bkg_light= np.append(bkg_light,[bkg_sum])
+        plt.plot(x_positions,target_light,'-')
+        plt.xlabel('x (pixel)')
+        plt.ylabel('Counts')
+        plt.title('Target Spectrum')
+        plt.show()
+        target_light= target_light-bkg_light
+        hdu = fits.PrimaryHDU(poly_curve_wavelength, header = header)
+        hdu1= fits.ImageHDU(target_light)
+        hdu2= fits.ImageHDU(bkg_light)
+        hdulist= fits.HDUList([hdu, hdu1, hdu2])
+        hdulist.writeto(filename, overwrite= True)
+        #target_stack.append(img_data)
+        last_file_lamp = False
+        if '_fe' in speclist[counter+1].lower():
+            print "Next file is a lamp"
+            pass
+            #print "Next file is a lamp, so we're going to do the trace and wavelength calibration."
+            
+
+        else:
+            print "Next file is not a lamp."
             
             
             
