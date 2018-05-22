@@ -82,6 +82,8 @@ for img in speclist:
     target_cosmic.run(maxiter= 4)
     img_data= target_cosmic.cleanarray
     new_filename= 'ctb.' + filename
+    img_data = img_data * gain
+    header.append(card =( 'Counts', 'True', 'if spectrum in counts'))
     new_file_list.append(new_filename)
     new_hdu = fits.PrimaryHDU(img_data, header = header)
     new_hdu.writeto(new_filename, overwrite = True)
