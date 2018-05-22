@@ -16,6 +16,7 @@ from astropy import constants as const
 
 
 import wdatmos
+import spec_plot_tools as spt
 
 target_list_name = 'listFWCTB'
 target_list = np.genfromtxt(target_list_name, dtype = 'str')
@@ -59,16 +60,23 @@ plt.show()
 model_waves = model['w']
 model_flux = model['flux'] #since we'll be arbitrarily-ish scaling this it won't work.
 
-target_vals = np.where((target_waves > scaling_range[0]))
-scale_factor =np.mean( target_flux[scaling_range[0]:scaling_range[1]])/np.mean(model_flux[scaling_range[0]:scaling_range[1]])
+model_spec  = np.vstack([model_waves, model_flux])
+target_spec = np.vstack([target_waves, target_flux])
+
+model_scale_region = spt.trim_spec(model_spec,scaling_range[0],scaling_range[1])
+target_scale_region = spt.trim_spec(target_spec, scaling_range[0], scaling_range[1])
+scale_factor= np.mean(target_scale_region[1, :])/np.mean(model_scale_region[1, :])
 print scale_factor
 scale_model_flux = model_flux* scale_factor
-
 print scale_model_flux.mean()
 print target_flux.mean()
+
+
 plt.plot(model_waves, scale_model_flux, label = 'model'+str(teff) + ' ' + str(logg))
 plt.plot(target_waves, target_flux, label = 'Target')
 plt.legend()
 plt.xlabel('Angstroms')
 plt.ylabel('Flux in cgs 10**-16')
 plt.show()
+
+

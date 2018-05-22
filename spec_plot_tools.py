@@ -43,6 +43,9 @@ def sort_spectrum(input_spec):
 
 
 def clean_spectrum(input_spec, min_wave, max_wave, mask_list):
+    """
+    input_spec should be a vstack of wavelengths and the flux (or error)
+    """
     clean_spec= trim_spec(input_spec, min_wave, max_wave)
     for mask in mask_list:
         clean_spec= remove_range(clean_spec, mask)
