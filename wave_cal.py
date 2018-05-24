@@ -26,14 +26,17 @@ cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41)
 
 
 def to_barycenter(header):
-    input_times = header['DATE-OBS'] #not gps-synched times
+    #input_times = header['DATE-OBS'] #not gps-synched times
+    input_year = header['OPENDATE'] #gps-synched date
+    input_hours = header['OPENTIME'] #gps-synched time
+    input_times = input_year+'T'+input_hours #formatting correctly
     obs_time = Time(input_times, format = 'isot', scale = 'utc',location = cerro_pachon_location)
     ra = header['RA']
     dec = header['DEC']
     target_coord = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg), )
     bary_corr =obs_time.tdb.light_travel_time(target_coord)
     bmjd_tdb_val = (obs_time.tdb+ bary_corr.tdb).mjd
-    header.append(card = ('BMJD_TDB', bmjd_tdb_val, "value from DATE-OBS header"))
+    header.append(card = ('BMJD_TDB', bmjd_tdb_val, "value from OPENDATE and OPENTIME headers"))
     return header
 
 ####
@@ -46,6 +49,10 @@ bkg_shift= 25
 lamp_sigma_guess= 2
 line_search_width = 3
 lamp_p0 = [1000, 500,  lamp_sigma_guess, 0]
+
+seeing_range = [1200, 1220]
+seeing_p0= [100, trace_band_width/2, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
+see_fit_bounds = ([50, 0, 0.7, 0],[18000, 1000, 20, 2000]) #(lower, upper) bounds on the fit for the seeing.
 
 #####
 
@@ -67,8 +74,12 @@ speclist = np.genfromtxt(speclistname, dtype = 'str')
 def gaussian_curve(x, a, x0, sigma,b):
     return a*np.exp(-(x-x0)**2/(2*sigma**2))+b
 
-def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all = False):
+def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all = False, bounds = (-np.inf, np.inf)):
+    """
+    Those bounds are the default for scipy.optimize.curve_fit(), so now changing them changes the bounds
+    """
     cut_region = np.where(x_pixels> (p0_list[1]-search_width ))
+    
     #print '========'
     #print p0_list
     #print  "lower bound:", p0_list[1]-search_width
@@ -79,10 +90,12 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
     cut_x_pixels = high_x_pixels[upper_cut]
     #print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
     cut_light_values= high_light_values[upper_cut]
-    popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= p0_list)
+    popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= p0_list, bounds = bounds)
     #print "[amplitude, x0, sigma, b]"
     #print popt
     if plot_all:
+        print "popt", popt
+        print "bounds", bounds
         plt.plot(cut_x_pixels, cut_light_values, label = "data")
         plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels,popt[0],popt[1],popt[2],popt[3]),label ='fit')
         plt.legend()
@@ -120,9 +133,15 @@ def get_trace_waves(target_med, lamp_im):
     target_band=target_med[trace_band_mid-trace_band_width/2:trace_band_mid+trace_band_width/2,:]
     band_inds= np.indices(target_band.shape)
     x_positions= band_inds[1,1]
+    y_pos = band_inds[0].T[0]
     print 'xpositionsshape', x_positions.shape
     y_positions= np.argmax(target_band,axis=0)+(trace_band_mid-trace_band_width/2)
     print 'yshape', y_positions.shape
+    seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
+    seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds)
+    seeing_sigma = seeing_popt[2]
+    print seeing_popt
+    print "Seeing sigma: ", seeing_popt[2]
     polynomial_fit= np.polyfit(x_positions,y_positions,poly_degree)
     print polynomial_fit
     print polynomial_fit.shape
@@ -244,7 +263,7 @@ def get_trace_waves(target_med, lamp_im):
     plt.ylabel(r'Wavelength Residual $\AA$')
     plt.legend(loc= 'best')
     plt.show()
-    return [polynomial_fit, poly_coeffs_lamp]
+    return [polynomial_fit, poly_coeffs_lamp], seeing_sigma
 #######3
 
 
@@ -254,6 +273,8 @@ last_file_lamp = False
 target_stack = []
 association_index = -1
 polynomial_list = [] #should eventually be [[trace_polynomial, wavelength_fit_polynomial],[ trace...,wavelength...]]
+sigma_list= [] #to be appended to the headers for 
+seeing_list = []
 #need to determine if the given image is a lamp or a target spectrum
 for counter, img in enumerate(speclist):
     filename= glob(img)[0]
@@ -286,7 +307,9 @@ for counter, img in enumerate(speclist):
         if '_fe' in speclist[counter+1].lower():
             print "Next file is a lamp, so we're going to do the trace and wavelength calibration."
             target_med = np.nanmedian(target_stack, axis = 0)
-            new_coeffs= get_trace_waves(target_med, lamp_im)
+            new_coeffs, seeing_sig= get_trace_waves(target_med, lamp_im)
+            sigma_list.append(seeing_sig)
+            seeing_list.append(2*np.sqrt(2*np.log(2))*seeing_sig) #assuming normal distribution for that
             polynomial_list.append(new_coeffs)
             print "Resetting the target_stack."
             target_stack = [] #
@@ -340,6 +363,8 @@ for counter, img in enumerate(speclist):
         filename = 'w' + filename
         new_filelist.append(filename)
         polynomials = polynomial_list[association_index]
+        seeing_sig = sigma_list[association_index]
+        seeing_FWHM = seeing_list[association_index]
         band_inds= np.indices(img_data.shape)
         x_positions= band_inds[1,1]
         target_light= np.array([])
@@ -358,6 +383,9 @@ for counter, img in enumerate(speclist):
         plt.show()
         target_light= target_light-bkg_light
         header= to_barycenter(header) #append the BMJD_TDB value
+        header.append(card= ("pix_scal", 0.3, ' "/pixel'))
+        header.append(card = ('see_sig', seeing_sig, 'Sigma of Gauss seeing fit (pixels)'))
+        header.append(card = ('see_FWHM', seeing_FWHM, 'Seeing (pixels)'))
         #poly_curve_wavelength= barycentric_vel_corr(header, poly_curve_wavelength) #correction of Earth's orbital motion
         hdu = fits.PrimaryHDU(poly_curve_wavelength, header = header)
         hdu1= fits.ImageHDU(target_light)
