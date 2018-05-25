@@ -21,6 +21,11 @@ import spec_plot_tools as spt
 
 target_list_name = 'listFWCTB'
 target_list = np.genfromtxt(target_list_name, dtype = 'str')
+scaling_range = [4600,4650]
+slit_width = 1.0 #arcseconds
+pixel_scale = 0.3 #arcseconds per pixel_scale
+slit_width = slit_width/pixel_scale #slit width in pixels
+
 
 flux_stack = []
 for index in range(23,27):
@@ -35,7 +40,6 @@ target_waves = file_waves
 target_flux= np.nanmedian(flux_stack, axis=0)[0]
 print target_waves.shape
 print target_flux.shape
-scaling_range = [4600,4650]
 
 target_file = target_list[0]
 print target_file
@@ -117,6 +121,15 @@ def plot_overlays_convolve(spec1, spec2, model_string = 'model'):
     plt.title(target_file )
     plt.show()
     return ''
+
+def convolve_model(model_spec, target_spec, header):
+    """
+    receive the fits file input of the target because you need a number of things from the header.
+    """
+    see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
+    see_kernel = conv.Gaussian1DKernel(see_sig)
+    #slit_kernel = conv.
+    return
 
 ######
 
