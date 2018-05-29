@@ -14,10 +14,13 @@ from astropy import coordinates as coords
 from astropy import units as u
 from astropy import constants as const
 from astropy import convolution as conv
+import scipy.interpolate as scinterp
+
 
 
 import wdatmos
 import spec_plot_tools as spt
+import kernel_builder
 
 target_list_name = 'listFWCTB'
 target_list = np.genfromtxt(target_list_name, dtype = 'str')
@@ -26,12 +29,20 @@ slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
+first_conv_bin = 0.1 #width in angstroms of the first interpolation of the model to then be used in the convolution.
+test_loc = 1200 #pixel location in the target spectrum to look to get a pixel to wavelength value to use for the seeing
+
+velocity_bound = 400 #km/s
+velocity_step  = 50 #km
+velocity_tests = np.arange(-1*velocity_bound, velocity_bound, velocity_step)
+
 
 flux_stack = []
 for index in range(23,27):
     filename = target_list[index]
     print filename
     i=fits.open(filename)
+    header = fits.getheader(filename)
     file_waves= i[0].data
     file_flux = i[1].data
     flux_stack.append([file_flux])
@@ -49,6 +60,10 @@ print target_file
 #target_flux = i[1].data
 
 #######
+
+def get_doppler_shifted(wavelengths, radial_velocity):
+    lambda_obs = wavelengths * (radial_velocity*u.km/u.s + const.c.to(u.km/u.s)) / const.c.to(u.km/u.s)
+    return lambda_obs.value
 
 
 def chi_squared(observed, actual):
@@ -100,6 +115,7 @@ def plot_overlays(spec1, spec2, model_string = 'model'):
     plt.plot(spec1[0], spec1[1], label = 'observed')
     #plt.errorbar(spec1[0],spec1[1], yerr = errors[1], label='observed')
     plt.plot(spec2[0], spec2[1], label= model_string, color = 'r')
+    #plt.plot(spec2[0], spec2[1], label = model_string, linestyle ='none', marker = 'o')
     plt.legend(numpoints=1, fontsize=14, loc='best' )
     plt.xlabel(r'Wavelength ($\AA$)')
     plt.ylabel('Flux (cgs units)')
@@ -115,6 +131,8 @@ def plot_overlays_convolve(spec1, spec2, model_string = 'model'):
     spec2conv =conv.convolve( conv.convolve(spec2[1], conv.Gaussian1DKernel(2.2)), conv.Gaussian1DKernel(5))
     #plt.plot(spec2[0], spec2[1], label= model_string, color = 'r')
     plt.plot(spec2[0], spec2conv, label = model_string)
+    #plt.plot(spec2[0], spec2conv, label = model_string, linestyle ='none', marker = 'o')
+
     plt.legend(numpoints=1, fontsize=14, loc='best' )
     plt.xlabel(r'Wavelength ($\AA$)')
     plt.ylabel('Flux (cgs units)')
@@ -126,10 +144,17 @@ def convolve_model(model_spec, target_spec, header):
     """
     receive the fits file input of the target because you need a number of things from the header.
     """
+    wavelengths = np.arange(np.nanmin(model_spec[0]), np.nanmax(model_spec[0]), first_conv_bin)
+    #fluxes = scinterp.interp1d(wavelengths)
+    fluxes = np.interp(wavelengths, model_spec[0], model_spec[1])
+    dlam = target_spec[0][test_loc+1]-target_spec[0][test_loc] #angstroms per pixel at this location in the target
     see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
+    see_sig = see_sig*dlam/first_conv_bin #seeing value in units of indices of the model
     see_kernel = conv.Gaussian1DKernel(see_sig)
     #slit_kernel = conv.
-    return
+    model_conv = conv.convolve(fluxes, see_kernel)
+    model_out = np.vstack([wavelengths, model_conv])
+    return model_out
 
 ######
 
@@ -180,9 +205,20 @@ def run_model_grid(target_spec):
     mask_list = []
     #target_spec = spt.clean_spectrum(target_spec, min_wave, max_wave, mask_list)
     dist_list = []
+    rv_list = []
+    #for teff,logg in zip(teff_array, logg_array):
+        #model = wd(Teff = teff , logg = logg)
+        #model_spec = np.vstack([model['w'], model['flux']])
+        #model_spec = convolve_model(model_spec, target_spec, header)
+        #scaling_coefficient= get_scale_factor(target_spec, model_spec)
+        #model_spec[1]=model_spec[1]*scaling_coefficient
+        #new_dist = calc_sq_dist(target_spec, model_spec)
+        #dist_list.append(new_dist)
     for teff,logg in zip(teff_array, logg_array):
         model = wd(Teff = teff , logg = logg)
         model_spec = np.vstack([model['w'], model['flux']])
+        #insert the doppler shifting
+        model_spec = convolve_model(model_spec, target_spec, header)
         scaling_coefficient= get_scale_factor(target_spec, model_spec)
         model_spec[1]=model_spec[1]*scaling_coefficient
         new_dist = calc_sq_dist(target_spec, model_spec)
@@ -198,8 +234,17 @@ def run_model_grid(target_spec):
     print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist
     #model_spec= get_model_fromfile(min_model)
     min_model = wd(Teff= min_teff, logg = min_logg)
+    
+    #model_waves= np.array(min_model['w'])
+    #print 'Model_waves'
+    #print model_waves
+    #wave_difs = model_waves-np.roll(model_waves, 1)
+    #print wave_difs
+    #plt.plot(model_waves, wave_difs)
+    #plt.show()
     model_spec = np.vstack([min_model['w'], min_model['flux']])
     #model_spec = spt.trim_spec(model_spec, np.min(target_spec[0]), np.max(target_spec[0]))
+    model_spec = convolve_model(model_spec, target_spec, header)
     model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
     scaling_coefficient= get_scale_factor(target_spec, model_spec)
     model_spec[1]= model_spec[1]*scaling_coefficient
@@ -215,5 +260,6 @@ def run_model_grid(target_spec):
     #np.savetxt( 'output_spectrum.csv',output_array, header = 'Wavelength, Flux (cgs units), Error', delimiter = ',')
 
     #print model['w'][0]
-    
+
+print get_doppler_shifted(4000, -200)
 run_model_grid(target_spec)
