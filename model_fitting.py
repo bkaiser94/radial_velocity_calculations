@@ -1,5 +1,5 @@
 """
-this script should open a model file (or all of them I suppose more accurately, and step through them.
+this script should open a model file (or all of them I suppose more accurately), and step through them.
 
 """
 import numpy as np
@@ -32,13 +32,43 @@ slit_width = slit_width/pixel_scale #slit width in pixels
 first_conv_bin = 0.1 #width in angstroms of the first interpolation of the model to then be used in the convolution.
 test_loc = 1200 #pixel location in the target spectrum to look to get a pixel to wavelength value to use for the seeing
 
-velocity_bound = 400 #km/s
+#velocity_bound = 400 #km/s
 velocity_step  = 50 #km
-velocity_tests = np.arange(-1*velocity_bound, velocity_bound, velocity_step)
+#velocity_tests = np.arange(-1*velocity_bound, velocity_bound+velocity_step, velocity_step)
+velocity_low_bound = -500 #km/s
+velocity_high_bound = 300 #km/s
+velocity_tests = np.arange(velocity_low_bound, velocity_high_bound+velocity_step, velocity_step)
+
+low_wave_cut = 4000
+high_wave_cut = 5200
+
+#####
+continuum_list = [[3597,3603],
+                  [3670,3678],
+                  [3782,3785],
+                  [3861,3864],
+                  [4014,4034],
+                  [4183, 4214],
+                  [4589,4608],
+                  [4645,4680],
+                  [4740,4760],
+                  [4930,4935],
+                  [5045,5070],
+                  [5110,5130],
+                  [5220,5240],
+                  [5275,5290]]
+
+
+
+
+
+
+######
 
 
 flux_stack = []
-for index in range(23,27):
+for index in range(25,31):
+#for index in range(3,9):
     filename = target_list[index]
     print filename
     i=fits.open(filename)
@@ -62,6 +92,7 @@ print target_file
 #######
 
 def get_doppler_shifted(wavelengths, radial_velocity):
+    #print "doppler shifting by ", radial_velocity
     lambda_obs = wavelengths * (radial_velocity*u.km/u.s + const.c.to(u.km/u.s)) / const.c.to(u.km/u.s)
     return lambda_obs.value
 
@@ -70,6 +101,43 @@ def chi_squared(observed, actual):
     return (observed - actual)**2/actual
 
 #def rebin_model(target_spec, model_spec)
+
+def get_med_val(input_spec, wave_range):
+    sub_spec = spt.trim_spec(input_spec, wave_range[0], wave_range[1])
+    med_val = np.nanmedian(sub_spec, axis = 1)
+    return med_val
+
+def make_continuum(input_spec, continuum_list= continuum_list):
+    waves= []
+    flux = []
+    for ranges in continuum_list:
+        new_vals = get_med_val(input_spec, ranges)
+        waves.append(new_vals[0])
+        flux.append(new_vals[1])
+    wave_array = np.array(waves)
+    flux_array = np.array(flux)
+    continuum_spec = np.vstack([wave_array, flux_array])
+    #plt.plot(input_spec[0], input_spec[1], label = 'input_spec')
+    #plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum')
+    #plt.legend()
+    #plt.show()
+    return continuum_spec
+
+def get_norm_polynomial(input_spec):
+    continuum_spec = make_continuum(input_spec)
+    poly_coeffs= np.polyfit(continuum_spec[0], continuum_spec[1], 3)
+    #plt.plot(input_spec[0], input_spec[1], label = 'input_spec')
+    #plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum')
+    #plt.plot(input_spec[0], np.polyval(poly_coeffs, input_spec[0]), label = 'fit')
+    #plt.legend()
+    #plt.show()
+    return poly_coeffs
+
+def poly_norm_spec(input_spec):
+    poly_coeffs = get_norm_polynomial(input_spec)
+    poly_vals = np.polyval(poly_coeffs, input_spec[0])
+    input_spec[1]= np.float_(input_spec[1])/poly_vals
+    return input_spec
 
 def calc_sq_dist(target_spec, model_spec, error_spec = np.array([])):
     interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
@@ -150,9 +218,24 @@ def convolve_model(model_spec, target_spec, header):
     dlam = target_spec[0][test_loc+1]-target_spec[0][test_loc] #angstroms per pixel at this location in the target
     see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
     see_sig = see_sig*dlam/first_conv_bin #seeing value in units of indices of the model
-    see_kernel = conv.Gaussian1DKernel(see_sig)
-    #slit_kernel = conv.
-    model_conv = conv.convolve(fluxes, see_kernel)
+    pix_slit_width = slit_width*dlam/first_conv_bin  #slit width value in units of indices of the model
+    #print "pix_slit_width", pix_slit_width, int(pix_slit_width)
+    try:
+        see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(pix_slit_width), mode = 'oversample')
+        see_kernel.normalize()
+        model_conv = conv.convolve(fluxes, see_kernel)
+    except ValueError as error:
+        #print error
+        #print "so making it odd"
+        pix_slit_width= pix_slit_width+1
+        see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(pix_slit_width), mode = 'oversample')
+        see_kernel.normalize()
+        model_conv = conv.convolve(fluxes, see_kernel)
+    pix_width = dlam/first_conv_bin #width in pixels of model of a pixel from the original spectrum
+    #print "pix_width", pix_width
+    pix_kernel = conv.Box1DKernel(width = int(pix_width), mode = 'oversample')
+    pix_kernel.normalize()
+    model_conv = conv.convolve(model_conv, pix_kernel)
     model_out = np.vstack([wavelengths, model_conv])
     return model_out
 
@@ -160,8 +243,8 @@ def convolve_model(model_spec, target_spec, header):
 
 #David's instructions for loading the model
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
-teff = 8000
-logg = 6.25
+teff = 9000
+logg = 5.25
 ####3
 
 #teff_array = np.arange(6000, 15000, 250)
@@ -169,7 +252,7 @@ logg = 6.25
 teff_array=wd.Teffs
 logg_array = wd.loggs
 model = wd(Teff = teff, logg = logg)
-print wd.Teffs[0]
+print wd.Teffs
 print wd.loggs
 model_num =0
 
@@ -187,19 +270,56 @@ model_flux = model['flux'] #since we'll be arbitrarily-ish scaling this it won't
 
 model_spec  = np.vstack([model_waves, model_flux])
 target_spec = np.vstack([target_waves, target_flux])
+target_spec = poly_norm_spec(target_spec)
 
-scale_factor= get_scale_factor(target_spec, model_spec)
-scale_model_flux = model_flux* scale_factor
-print scale_model_flux.mean()
-print target_flux.mean()
+#scale_factor= get_scale_factor(target_spec, model_spec)
+#scale_model_flux = model_flux* scale_factor
+#print scale_model_flux.mean()
+#print target_flux.mean()
+rv_dist_list=[]
+for radial_velocity in velocity_tests:
+    test_model = np.copy(model_spec)
+    test_model[0]=get_doppler_shifted(test_model[0], radial_velocity)
+    test_model = convolve_model(test_model, target_spec, header)
+    test_model = poly_norm_spec(test_model)
+    #scaling_coefficient= get_scale_factor(target_spec, test_model)
+    #test_model[1]=test_model[1]*scaling_coefficient
+    new_rv_dist= calc_sq_dist(target_spec, test_model)
+    rv_dist_list.append(new_rv_dist)
+rv_dist_array = np.array(rv_dist_list)
+min_index = np.argmin(rv_dist_array)
+#min_model = model_file_list[min_index]
+#min_teff = teff_array[min_index]
+#min_logg = logg_array[min_index]
+#min_dist = dist_array[min_index]
+min_rv = velocity_tests[min_index]
+mask_list=[]
+#model_spec= get_model_fromfile(min_model)
+min_model = wd(Teff= teff, logg = logg)
 
-
-plt.plot(model_waves, scale_model_flux, label = 'model'+str(teff) + ' ' + str(logg))
-plt.plot(target_waves, target_flux, label = 'Target')
-plt.legend()
-plt.xlabel('Angstroms')
-plt.ylabel('Flux in cgs 10**-16')
-plt.show()
+#model_waves= np.array(min_model['w'])
+#print 'Model_waves'
+#print model_waves
+#wave_difs = model_waves-np.roll(model_waves, 1)
+#print wave_difs
+#plt.plot(model_waves, wave_difs)
+#plt.show()
+model_spec = np.vstack([min_model['w'], min_model['flux']])
+model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
+#model_spec = spt.trim_spec(model_spec, np.min(target_spec[0]), np.max(target_spec[0]))
+model_spec = convolve_model(model_spec, target_spec, header)
+model_spec= poly_norm_spec(model_spec)
+#scaling_coefficient= get_scale_factor(target_spec, model_spec)
+#model_spec[1]= model_spec[1]*scaling_coefficient
+model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
+#calc_rdist(scaling_coefficient)
+plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(min_rv)+'km/s')
+#plt.plot(model_waves, scale_model_flux, label = 'model'+str(teff) + ' ' + str(logg))
+#plt.plot(target_waves, target_flux, label = 'Target')
+#plt.legend()
+#plt.xlabel('Angstroms')
+#plt.ylabel('Flux in cgs 10**-16')
+#plt.show()
 
 def run_model_grid(target_spec):
     mask_list = []
@@ -215,23 +335,38 @@ def run_model_grid(target_spec):
         #new_dist = calc_sq_dist(target_spec, model_spec)
         #dist_list.append(new_dist)
     for teff,logg in zip(teff_array, logg_array):
+        print "Teff:", teff, "logg:", logg
         model = wd(Teff = teff , logg = logg)
         model_spec = np.vstack([model['w'], model['flux']])
         #insert the doppler shifting
-        model_spec = convolve_model(model_spec, target_spec, header)
-        scaling_coefficient= get_scale_factor(target_spec, model_spec)
-        model_spec[1]=model_spec[1]*scaling_coefficient
-        new_dist = calc_sq_dist(target_spec, model_spec)
+        rv_dist_list=[]
+        for radial_velocity in velocity_tests:
+            test_model = np.copy(model_spec)
+            test_model[0]=get_doppler_shifted(test_model[0], radial_velocity)
+            test_model = convolve_model(test_model, target_spec, header)
+            test_model = poly_norm_spec(test_model)
+            #scaling_coefficient= get_scale_factor(target_spec, test_model)
+            #test_model[1]=test_model[1]*scaling_coefficient
+            new_rv_dist= calc_sq_dist(target_spec, test_model)
+            rv_dist_list.append(new_rv_dist)
+        rv_dist_array = np.array(rv_dist_list)
+        min_rv_index= np.argmin(rv_dist_array)
+        new_dist = np.copy(rv_dist_array[min_rv_index])
+        new_rv = np.copy(velocity_tests[min_rv_index])
+        #new_dist = calc_sq_dist(target_spec, model_spec)
+        rv_list.append(new_rv)
         dist_list.append(new_dist)
     dist_array = np.array(dist_list)
-    for teff,logg, dist_mod in zip(teff_array, logg_array, dist_list):
-        print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod
+    rv_array = np.array(rv_list)
+    for teff,logg, dist_mod, rv in zip(teff_array, logg_array, dist_list, rv_list):
+        print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv
     min_index = np.argmin(dist_list)
     #min_model = model_file_list[min_index]
     min_teff = teff_array[min_index]
     min_logg = logg_array[min_index]
     min_dist = dist_array[min_index]
-    print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist
+    min_rv = rv_array[min_index]
+    print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s'
     #model_spec= get_model_fromfile(min_model)
     min_model = wd(Teff= min_teff, logg = min_logg)
     
@@ -243,13 +378,15 @@ def run_model_grid(target_spec):
     #plt.plot(model_waves, wave_difs)
     #plt.show()
     model_spec = np.vstack([min_model['w'], min_model['flux']])
+    model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
     #model_spec = spt.trim_spec(model_spec, np.min(target_spec[0]), np.max(target_spec[0]))
     model_spec = convolve_model(model_spec, target_spec, header)
-    model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
+    model_spec= poly_norm_spec(model_spec)
     scaling_coefficient= get_scale_factor(target_spec, model_spec)
     model_spec[1]= model_spec[1]*scaling_coefficient
+    model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
     #calc_rdist(scaling_coefficient)
-    plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg))
+    plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
     interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
     interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
     plot_overlays(target_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
@@ -262,4 +399,6 @@ def run_model_grid(target_spec):
     #print model['w'][0]
 
 print get_doppler_shifted(4000, -200)
+
+#target_spec = poly_norm_spec(target_spec)
 run_model_grid(target_spec)
