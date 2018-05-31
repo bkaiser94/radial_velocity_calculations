@@ -11,7 +11,7 @@ def trim_spec(input_spec, min_wave, max_wave):
     #print trimmed_spec.shape
     return trimmed_spec
 
-def remove_range( input_spec, bound_list):
+def remove_range(input_spec, bound_list):
     """
     Removes wavelengths and flux values from the array that fall in the range specified by bound_list
     """

@@ -22,6 +22,10 @@ import wdatmos
 import spec_plot_tools as spt
 import kernel_builder
 
+#plt.rc('font', size =18)
+#plt.rc('lines', markersize=10)
+#plt.rc('lines', linewidth = 2)
+
 target_list_name = 'listFWCTB'
 target_list = np.genfromtxt(target_list_name, dtype = 'str')
 scaling_range = [4600,4650]
@@ -39,24 +43,63 @@ velocity_low_bound = -500 #km/s
 velocity_high_bound = 300 #km/s
 velocity_tests = np.arange(velocity_low_bound, velocity_high_bound+velocity_step, velocity_step)
 
+#low_wave_cut= 3800
+#high_wave_cut= 5200
+
 low_wave_cut = 4000
 high_wave_cut = 5200
 
+
 #####
-continuum_list = [[3597,3603],
-                  [3670,3678],
-                  [3782,3785],
-                  [3861,3864],
-                  [4014,4034],
+#continuum_list = [[3597,3603],
+                  #[3670,3678],
+                  #[3782,3785],
+                  #[3861,3864],
+                  #[4014,4034],
+                  #[4183, 4214],
+                  #[4589,4608],
+                  #[4645,4680],
+                  #[4740,4760],
+                  #[4930,4935],
+                  #[5045,5070],
+                  #[5110,5130],
+                  #[5220,5240],
+                  #[5275,5290]]
+                  
+                  
+#continuum_list = [[3812,3815],
+                  #[3861,3864],
+                  #[3928,3929],
+                  #[4014,4017],
+                  #[4036,4040],
+                  #[4052,4055],
+                  #[4183, 4214],
+                  #[4422,4427],
+                  #[4427,4432],
+                  #[4432,4437],
+                  #[4589,4608],
+                  #[4645, 4650],
+                  #[4655, 4660],
+                  #[4665, 4670],
+                  #[4675,4680],
+                  #[4720,4725],
+                  #[4730,4735],
+                  #[4740,4745],
+                  #[4750,4755],
+                  #[4760,4765],
+                  #[4770,4775],
+                  #[4930,4935],
+                  #[5045,5070],
+                  #[5110,5130]]
+                  
+continuum_list = [[4014,4034],
                   [4183, 4214],
                   [4589,4608],
                   [4645,4680],
                   [4740,4760],
                   [4930,4935],
                   [5045,5070],
-                  [5110,5130],
-                  [5220,5240],
-                  [5275,5290]]
+                  [5110,5130]]
 
 
 
@@ -81,7 +124,8 @@ target_waves = file_waves
 target_flux= np.nanmedian(flux_stack, axis=0)[0]
 print target_waves.shape
 print target_flux.shape
-
+target_spec = np.vstack([target_waves, target_flux])
+target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
 target_file = target_list[0]
 print target_file
 #i= fits.open(target_file)
@@ -96,6 +140,13 @@ def get_doppler_shifted(wavelengths, radial_velocity):
     lambda_obs = wavelengths * (radial_velocity*u.km/u.s + const.c.to(u.km/u.s)) / const.c.to(u.km/u.s)
     return lambda_obs.value
 
+def dopp_shift_continuum_list(radial_velocity):
+    dopp_cont_list = []
+    for waves in continuum_list:
+        shift_waves = get_doppler_shifted(waves, radial_velocity)
+        dopp_cont_list.append(shift_waves)
+    return dopp_cont_list
+
 
 def chi_squared(observed, actual):
     return (observed - actual)**2/actual
@@ -104,7 +155,17 @@ def chi_squared(observed, actual):
 
 def get_med_val(input_spec, wave_range):
     sub_spec = spt.trim_spec(input_spec, wave_range[0], wave_range[1])
-    med_val = np.nanmedian(sub_spec, axis = 1)
+    length = sub_spec[0].shape[0]
+    if length%2 == 0:
+        #even number
+        sub_spec = sub_spec[:, :-1] #trim off the last point
+    
+    #med_val = np.nanmedian(sub_spec, axis =1)
+    med_flux = np.nanmedian(sub_spec[1])
+    med_index = np.where(sub_spec[1] == med_flux)[0]
+    med_wave = sub_spec[0, med_index][0]
+    med_val =[med_wave, med_flux]
+    #print med_val
     return med_val
 
 def make_continuum(input_spec, continuum_list= continuum_list):
@@ -123,18 +184,19 @@ def make_continuum(input_spec, continuum_list= continuum_list):
     #plt.show()
     return continuum_spec
 
-def get_norm_polynomial(input_spec):
-    continuum_spec = make_continuum(input_spec)
+def get_norm_polynomial(input_spec, continuum_list = continuum_list):
+    continuum_spec = make_continuum(input_spec, continuum_list = continuum_list)
     poly_coeffs= np.polyfit(continuum_spec[0], continuum_spec[1], 3)
     #plt.plot(input_spec[0], input_spec[1], label = 'input_spec')
-    #plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum')
+    #plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum', color = 'r')
     #plt.plot(input_spec[0], np.polyval(poly_coeffs, input_spec[0]), label = 'fit')
+    #plt.title(continuum_list[0])
     #plt.legend()
     #plt.show()
     return poly_coeffs
 
-def poly_norm_spec(input_spec):
-    poly_coeffs = get_norm_polynomial(input_spec)
+def poly_norm_spec(input_spec, continuum_list = continuum_list):
+    poly_coeffs = get_norm_polynomial(input_spec, continuum_list = continuum_list)
     poly_vals = np.polyval(poly_coeffs, input_spec[0])
     input_spec[1]= np.float_(input_spec[1])/poly_vals
     return input_spec
@@ -183,6 +245,7 @@ def plot_overlays(spec1, spec2, model_string = 'model'):
     plt.plot(spec1[0], spec1[1], label = 'observed')
     #plt.errorbar(spec1[0],spec1[1], yerr = errors[1], label='observed')
     plt.plot(spec2[0], spec2[1], label= model_string, color = 'r')
+    plt.axhline(y=1, label = 'y=1', color = 'cyan')
     #plt.plot(spec2[0], spec2[1], label = model_string, linestyle ='none', marker = 'o')
     plt.legend(numpoints=1, fontsize=14, loc='best' )
     plt.xlabel(r'Wavelength ($\AA$)')
@@ -243,8 +306,14 @@ def convolve_model(model_spec, target_spec, header):
 
 #David's instructions for loading the model
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
-teff = 9000
-logg = 5.25
+#teff = 9000
+#logg = 5.25
+teff = 14750
+#logg = 3.75
+logg = 6.25
+
+#teff = 6000
+#logg = 3.75
 ####3
 
 #teff_array = np.arange(6000, 15000, 250)
@@ -269,7 +338,7 @@ model_waves = model['w']
 model_flux = model['flux'] #since we'll be arbitrarily-ish scaling this it won't work.
 
 model_spec  = np.vstack([model_waves, model_flux])
-target_spec = np.vstack([target_waves, target_flux])
+#target_spec = np.vstack([target_waves, target_flux])
 target_spec = poly_norm_spec(target_spec)
 
 #scale_factor= get_scale_factor(target_spec, model_spec)
@@ -281,7 +350,8 @@ for radial_velocity in velocity_tests:
     test_model = np.copy(model_spec)
     test_model[0]=get_doppler_shifted(test_model[0], radial_velocity)
     test_model = convolve_model(test_model, target_spec, header)
-    test_model = poly_norm_spec(test_model)
+    dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
+    test_model = poly_norm_spec(test_model, continuum_list = dopp_cont_list)
     #scaling_coefficient= get_scale_factor(target_spec, test_model)
     #test_model[1]=test_model[1]*scaling_coefficient
     new_rv_dist= calc_sq_dist(target_spec, test_model)
