@@ -33,21 +33,33 @@ slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
+#teff = 9000
+#logg = 5.25
+teff = 14750
+#logg = 3.75
+logg = 6.25
+
+#teff = 6000
+#logg = 3.75
+
+poly_degree = 5
+
 first_conv_bin = 0.1 #width in angstroms of the first interpolation of the model to then be used in the convolution.
 test_loc = 1200 #pixel location in the target spectrum to look to get a pixel to wavelength value to use for the seeing
 
 #velocity_bound = 400 #km/s
 velocity_step  = 50 #km
+#velocity_step  = 5 #km
 #velocity_tests = np.arange(-1*velocity_bound, velocity_bound+velocity_step, velocity_step)
 velocity_low_bound = -500 #km/s
 velocity_high_bound = 300 #km/s
 velocity_tests = np.arange(velocity_low_bound, velocity_high_bound+velocity_step, velocity_step)
 
-#low_wave_cut= 3800
-#high_wave_cut= 5200
+low_wave_cut= 3800
+high_wave_cut= 5200
 
-low_wave_cut = 4000
-high_wave_cut = 5200
+#low_wave_cut = 4000
+#high_wave_cut = 5200
 
 
 #####
@@ -67,41 +79,53 @@ high_wave_cut = 5200
                   #[5275,5290]]
                   
                   
-#continuum_list = [[3812,3815],
-                  #[3861,3864],
-                  #[3928,3929],
-                  #[4014,4017],
-                  #[4036,4040],
-                  #[4052,4055],
+continuum_list = [[3809,3812],
+                  [3861,3864],
+                  [3907,3911],
+                  [4014,4017],
+                  [4036,4040],
+                  [4183, 4214],
+                  [4422,4427],
+                  [4427,4432],
+                  [4432,4437],
+                  [4589,4608],
+                  [4645, 4650],
+                  [4655, 4660],
+                  [4665, 4670],
+                  [4675,4680],
+                  [4720,4725],
+                  [4730,4735],
+                  [4740,4745],
+                  [4750,4755],
+                  [4760,4765],
+                  [4770,4775],
+                  [4970,4975],
+                  [5045, 5050],
+                  [5055,5060],
+                  [5065,5070],
+                  [5110,5130],
+                  [5190,5195]]
+                  
+#continuum_list = [[4014,4034],
                   #[4183, 4214],
-                  #[4422,4427],
-                  #[4427,4432],
-                  #[4432,4437],
                   #[4589,4608],
-                  #[4645, 4650],
-                  #[4655, 4660],
-                  #[4665, 4670],
-                  #[4675,4680],
-                  #[4720,4725],
-                  #[4730,4735],
-                  #[4740,4745],
-                  #[4750,4755],
-                  #[4760,4765],
-                  #[4770,4775],
+                  #[4645,4680],
+                  #[4740,4760],
                   #[4930,4935],
                   #[5045,5070],
                   #[5110,5130]]
-                  
-continuum_list = [[4014,4034],
+
+target_continuum_list = [[3861,3864],
+                  [3900,3915],
+                  [4014,4034],
                   [4183, 4214],
                   [4589,4608],
                   [4645,4680],
                   [4740,4760],
                   [4930,4935],
                   [5045,5070],
-                  [5110,5130]]
-
-
+                  [5110,5130],
+                  [5187,5192]]
 
 
 
@@ -186,7 +210,7 @@ def make_continuum(input_spec, continuum_list= continuum_list):
 
 def get_norm_polynomial(input_spec, continuum_list = continuum_list):
     continuum_spec = make_continuum(input_spec, continuum_list = continuum_list)
-    poly_coeffs= np.polyfit(continuum_spec[0], continuum_spec[1], 3)
+    poly_coeffs= np.polyfit(continuum_spec[0], continuum_spec[1], poly_degree)
     #plt.plot(input_spec[0], input_spec[1], label = 'input_spec')
     #plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum', color = 'r')
     #plt.plot(input_spec[0], np.polyval(poly_coeffs, input_spec[0]), label = 'fit')
@@ -306,14 +330,7 @@ def convolve_model(model_spec, target_spec, header):
 
 #David's instructions for loading the model
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
-#teff = 9000
-#logg = 5.25
-teff = 14750
-#logg = 3.75
-logg = 6.25
 
-#teff = 6000
-#logg = 3.75
 ####3
 
 #teff_array = np.arange(6000, 15000, 250)
@@ -339,7 +356,9 @@ model_flux = model['flux'] #since we'll be arbitrarily-ish scaling this it won't
 
 model_spec  = np.vstack([model_waves, model_flux])
 #target_spec = np.vstack([target_waves, target_flux])
-target_spec = poly_norm_spec(target_spec)
+#target_spec = poly_norm_spec(target_spec, continuum_list=target_continuum_list)
+target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree)
+
 
 #scale_factor= get_scale_factor(target_spec, model_spec)
 #scale_model_flux = model_flux* scale_factor
@@ -351,7 +370,8 @@ for radial_velocity in velocity_tests:
     test_model[0]=get_doppler_shifted(test_model[0], radial_velocity)
     test_model = convolve_model(test_model, target_spec, header)
     dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
-    test_model = poly_norm_spec(test_model, continuum_list = dopp_cont_list)
+    #test_model = poly_norm_spec(test_model, continuum_list = dopp_cont_list)
+    test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree)
     #scaling_coefficient= get_scale_factor(target_spec, test_model)
     #test_model[1]=test_model[1]*scaling_coefficient
     new_rv_dist= calc_sq_dist(target_spec, test_model)
@@ -378,7 +398,10 @@ model_spec = np.vstack([min_model['w'], min_model['flux']])
 model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
 #model_spec = spt.trim_spec(model_spec, np.min(target_spec[0]), np.max(target_spec[0]))
 model_spec = convolve_model(model_spec, target_spec, header)
-model_spec= poly_norm_spec(model_spec)
+#model_spec= poly_norm_spec(model_spec)
+dopp_cont_list= dopp_shift_continuum_list(min_rv)
+model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
+
 #scaling_coefficient= get_scale_factor(target_spec, model_spec)
 #model_spec[1]= model_spec[1]*scaling_coefficient
 model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
@@ -414,7 +437,9 @@ def run_model_grid(target_spec):
             test_model = np.copy(model_spec)
             test_model[0]=get_doppler_shifted(test_model[0], radial_velocity)
             test_model = convolve_model(test_model, target_spec, header)
-            test_model = poly_norm_spec(test_model)
+            dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
+            #test_model = poly_norm_spec(test_model)
+            test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
             #scaling_coefficient= get_scale_factor(target_spec, test_model)
             #test_model[1]=test_model[1]*scaling_coefficient
             new_rv_dist= calc_sq_dist(target_spec, test_model)
@@ -447,13 +472,15 @@ def run_model_grid(target_spec):
     #print wave_difs
     #plt.plot(model_waves, wave_difs)
     #plt.show()
+    dopp_cont_list= dopp_shift_continuum_list(min_rv)
     model_spec = np.vstack([min_model['w'], min_model['flux']])
     model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
     #model_spec = spt.trim_spec(model_spec, np.min(target_spec[0]), np.max(target_spec[0]))
     model_spec = convolve_model(model_spec, target_spec, header)
-    model_spec= poly_norm_spec(model_spec)
-    scaling_coefficient= get_scale_factor(target_spec, model_spec)
-    model_spec[1]= model_spec[1]*scaling_coefficient
+    #model_spec= poly_norm_spec(model_spec)
+    model_spec= spt.poly_norm_spec(model_spec, continuum_list=dopp_cont_list, poly_degree = poly_degree)
+    #scaling_coefficient= get_scale_factor(target_spec, model_spec)
+    #model_spec[1]= model_spec[1]*scaling_coefficient
     model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
     #calc_rdist(scaling_coefficient)
     plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
