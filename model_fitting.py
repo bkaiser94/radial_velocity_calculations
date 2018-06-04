@@ -175,56 +175,6 @@ def dopp_shift_continuum_list(radial_velocity):
 def chi_squared(observed, actual):
     return (observed - actual)**2/actual
 
-#def rebin_model(target_spec, model_spec)
-
-def get_med_val(input_spec, wave_range):
-    sub_spec = spt.trim_spec(input_spec, wave_range[0], wave_range[1])
-    length = sub_spec[0].shape[0]
-    if length%2 == 0:
-        #even number
-        sub_spec = sub_spec[:, :-1] #trim off the last point
-    
-    #med_val = np.nanmedian(sub_spec, axis =1)
-    med_flux = np.nanmedian(sub_spec[1])
-    med_index = np.where(sub_spec[1] == med_flux)[0]
-    med_wave = sub_spec[0, med_index][0]
-    med_val =[med_wave, med_flux]
-    #print med_val
-    return med_val
-
-def make_continuum(input_spec, continuum_list= continuum_list):
-    waves= []
-    flux = []
-    for ranges in continuum_list:
-        new_vals = get_med_val(input_spec, ranges)
-        waves.append(new_vals[0])
-        flux.append(new_vals[1])
-    wave_array = np.array(waves)
-    flux_array = np.array(flux)
-    continuum_spec = np.vstack([wave_array, flux_array])
-    #plt.plot(input_spec[0], input_spec[1], label = 'input_spec')
-    #plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum')
-    #plt.legend()
-    #plt.show()
-    return continuum_spec
-
-def get_norm_polynomial(input_spec, continuum_list = continuum_list):
-    continuum_spec = make_continuum(input_spec, continuum_list = continuum_list)
-    poly_coeffs= np.polyfit(continuum_spec[0], continuum_spec[1], poly_degree)
-    #plt.plot(input_spec[0], input_spec[1], label = 'input_spec')
-    #plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum', color = 'r')
-    #plt.plot(input_spec[0], np.polyval(poly_coeffs, input_spec[0]), label = 'fit')
-    #plt.title(continuum_list[0])
-    #plt.legend()
-    #plt.show()
-    return poly_coeffs
-
-def poly_norm_spec(input_spec, continuum_list = continuum_list):
-    poly_coeffs = get_norm_polynomial(input_spec, continuum_list = continuum_list)
-    poly_vals = np.polyval(poly_coeffs, input_spec[0])
-    input_spec[1]= np.float_(input_spec[1])/poly_vals
-    return input_spec
-
 def calc_sq_dist(target_spec, model_spec, error_spec = np.array([])):
     interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
     interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
@@ -258,12 +208,6 @@ def chi_square_countours(teff_array, logg_array, dist_array):
     plt.xlabel('T_eff')
     plt.ylabel('logg')
     plt.show()
-
-def get_scale_factor(target_spec, model_spec, scaling_range=scaling_range):
-    model_scale_region = spt.trim_spec(model_spec,scaling_range[0],scaling_range[1])
-    target_scale_region = spt.trim_spec(target_spec, scaling_range[0], scaling_range[1])
-    scale_factor= np.mean(target_scale_region[1, :])/np.mean(model_scale_region[1, :])
-    return scale_factor
 
 def plot_overlays(spec1, spec2, model_string = 'model'):
     plt.plot(spec1[0], spec1[1], label = 'observed')
@@ -342,28 +286,16 @@ print wd.Teffs
 print wd.loggs
 model_num =0
 
-#print model
-#for teff,logg in zip(teff_array, logg_array):
-    #model = wd(Teff = teff , logg = logg)
-    ##print model['w'][0]
-    #if model != None:
-        #model_num +=1
-
 #####
 
 model_waves = model['w']
 model_flux = model['flux'] #since we'll be arbitrarily-ish scaling this it won't work.
 
 model_spec  = np.vstack([model_waves, model_flux])
-#target_spec = np.vstack([target_waves, target_flux])
 #target_spec = poly_norm_spec(target_spec, continuum_list=target_continuum_list)
 target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree)
 
 
-#scale_factor= get_scale_factor(target_spec, model_spec)
-#scale_model_flux = model_flux* scale_factor
-#print scale_model_flux.mean()
-#print target_flux.mean()
 rv_dist_list=[]
 for radial_velocity in velocity_tests:
     test_model = np.copy(model_spec)
@@ -372,8 +304,6 @@ for radial_velocity in velocity_tests:
     dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
     #test_model = poly_norm_spec(test_model, continuum_list = dopp_cont_list)
     test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree)
-    #scaling_coefficient= get_scale_factor(target_spec, test_model)
-    #test_model[1]=test_model[1]*scaling_coefficient
     new_rv_dist= calc_sq_dist(target_spec, test_model)
     rv_dist_list.append(new_rv_dist)
 rv_dist_array = np.array(rv_dist_list)
@@ -402,10 +332,7 @@ model_spec = convolve_model(model_spec, target_spec, header)
 dopp_cont_list= dopp_shift_continuum_list(min_rv)
 model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
 
-#scaling_coefficient= get_scale_factor(target_spec, model_spec)
-#model_spec[1]= model_spec[1]*scaling_coefficient
 model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
-#calc_rdist(scaling_coefficient)
 plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(min_rv)+'km/s')
 #plt.plot(model_waves, scale_model_flux, label = 'model'+str(teff) + ' ' + str(logg))
 #plt.plot(target_waves, target_flux, label = 'Target')
@@ -423,8 +350,6 @@ def run_model_grid(target_spec):
         #model = wd(Teff = teff , logg = logg)
         #model_spec = np.vstack([model['w'], model['flux']])
         #model_spec = convolve_model(model_spec, target_spec, header)
-        #scaling_coefficient= get_scale_factor(target_spec, model_spec)
-        #model_spec[1]=model_spec[1]*scaling_coefficient
         #new_dist = calc_sq_dist(target_spec, model_spec)
         #dist_list.append(new_dist)
     for teff,logg in zip(teff_array, logg_array):
@@ -440,8 +365,6 @@ def run_model_grid(target_spec):
             dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
             #test_model = poly_norm_spec(test_model)
             test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
-            #scaling_coefficient= get_scale_factor(target_spec, test_model)
-            #test_model[1]=test_model[1]*scaling_coefficient
             new_rv_dist= calc_sq_dist(target_spec, test_model)
             rv_dist_list.append(new_rv_dist)
         rv_dist_array = np.array(rv_dist_list)
@@ -479,10 +402,7 @@ def run_model_grid(target_spec):
     model_spec = convolve_model(model_spec, target_spec, header)
     #model_spec= poly_norm_spec(model_spec)
     model_spec= spt.poly_norm_spec(model_spec, continuum_list=dopp_cont_list, poly_degree = poly_degree)
-    #scaling_coefficient= get_scale_factor(target_spec, model_spec)
-    #model_spec[1]= model_spec[1]*scaling_coefficient
     model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
-    #calc_rdist(scaling_coefficient)
     plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
     interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
     interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
