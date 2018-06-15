@@ -1,7 +1,11 @@
 """
-This script should extract the 1-d spectra and subtract the background region. It should also then wavelength calibrate the target spectra and output the wavelengths, subtracted spectrum, raw spectrum, and background spectrum as a fits file.  I guess it might as well also add a header for the BMJD_TDB time in the ouput fits files for the target.
+This script should extract the 1-d spectra and subtract the background region. It should also then wavelength
+calibrate the target spectra and output the wavelengths, subtracted spectrum, raw spectrum, and background
+spectrum as a fits file.  I guess it might as well also add a header for the BMJD_TDB time in the ouput fits files
+for the target.
 
-This file should create the error spectrum. I should probably tack it on after the sky spectrum. I cannot remove the sky spectrum because it provides a ready check on if a star or something fell into the background region.
+This file should create the error spectrum. I should probably tack it on after the sky spectrum. I cannot remove
+the sky spectrum because it provides a ready check on if a star or something fell into the background region.
 
 STEP 3 of Reduction
 

@@ -3,7 +3,13 @@ This should read in the raw image files for the spectra and the iron lamp that c
 
 This is intended to produce the 1-d extracted spectra that are also median-combined  for a given standard star to be used in flux calibration later.
 
+Outputs are used by flux_calibration.py to produce sensitivity curves
+
 Outputs wcmtb.*       named files.
+
+STEP 4 of Reduction
+
+PART OF STEP-BY-STEP REDUCTION
 """
 
 #I need something to indicate that this is supposed to be a standard star or the actual target in order to fix the 

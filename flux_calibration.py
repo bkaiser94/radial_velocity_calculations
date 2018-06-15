@@ -1,5 +1,12 @@
 """
-This should produce the sensitivity curve that is needed for 
+This should produce the sensitivity curve that is needed for calibrate_flux.py.
+
+Uses the outputs of actual_reduction.py.
+
+Have to manually change targets that are being used... probably could automate that to actually load all of the
+necessary options after at least changing targets... doesn't seem really worth it at this point.
+
+Step 5 of Reduction
 """
 
 import numpy as np

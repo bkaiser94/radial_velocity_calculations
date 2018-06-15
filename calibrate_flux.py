@@ -1,5 +1,16 @@
 """
-This is the file that actually applies the sensitivity curve to the target spectra. The barycentric velocity correction actually needs to occur after the flux-calibration step as the measured wavelengths are the ones that correspond to the given transmissivity of the atmosphere and instrument.
+This is the file that actually applies the sensitivity curve to the target spectra. The sensitivity curves need to
+already be produced by flux_calibration.py. The barycentric velocity correctionactually needs to occur after the
+flux-calibration step as the measured wavelengths are the ones that correspond to the given transmissivity of the
+atmosphere and instrument.
+
+You have to manually (-ish) generate the 'listWCTB' file that includes the target spectra in the first column (whose 
+prefixes are wctb.*) and then in the column beside each one, you should insert the flux standard spectrum that
+was produced by actual_reduction.py for that target.
+
+Step 6  in Reduction
+
+PART OF STEP-BY-STEP REDUCTION.
 """
 
 
