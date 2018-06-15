@@ -59,6 +59,7 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     wavelengths= i[0].data
     counts = i[1].data
     bkg_counts = i[2].data
+    noise_spec = i[3].data
     sens_curve = np.polyval(sens_curve_coeffs,wavelengths)
     flux = counts/sens_curve
     total_flux = np.sum(flux)
@@ -70,6 +71,7 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     header.append(card = ('Wavlngth', 0, 'Angstroms extension for wavelengths'))
     header.append(card = ('Flux', 1, 'in flux units extension for target flux values'))
     header.append(card = ('Bkg', 2, 'in flux units extension for bkg flux values'))
+    header.append(card = ('Noise', 3, 'unitless. Normalized to target flux'))
     header.append(card = ('barycorr', True, 'wavelengths corrected to barycenter'))
     target_file = 'f'+target_file
     wavelengths = barycentric_vel_corr(header, wavelengths)
@@ -77,7 +79,8 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     hdu=fits.PrimaryHDU(wavelengths, header = header)
     hdu1= fits.ImageHDU(flux)
     hdu2 = fits.ImageHDU(bkg_flux)
-    hdulist = fits.HDUList([hdu, hdu1, hdu2])
+    hdu3 = fits.ImageHDU(noise_spec)
+    hdulist = fits.HDUList([hdu, hdu1, hdu2, hdu3])
     hdulist.writeto(target_file, overwrite = True)
     if count%4 == 0:
         plt.plot(wavelengths, flux, label = header['OPENTIME'])
