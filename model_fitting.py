@@ -33,14 +33,15 @@ slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
-#teff = 9000
-#logg = 5.25
-teff = 14750
+teff = 7250
+logg = 5.50
+#teff = 14750
 #logg = 3.75
-logg = 6.25
+#logg = 6.25
 
 #teff = 6000
 #logg = 3.75
+plot_fit = True
 
 poly_degree = 5
 
@@ -293,7 +294,7 @@ model_flux = model['flux'] #since we'll be arbitrarily-ish scaling this it won't
 
 model_spec  = np.vstack([model_waves, model_flux])
 #target_spec = poly_norm_spec(target_spec, continuum_list=target_continuum_list)
-target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree)
+target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree, plot_all = plot_fit)
 
 
 rv_dist_list=[]
@@ -303,7 +304,7 @@ for radial_velocity in velocity_tests:
     test_model = convolve_model(test_model, target_spec, header)
     dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
     #test_model = poly_norm_spec(test_model, continuum_list = dopp_cont_list)
-    test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree)
+    test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree, plot_all = plot_fit)
     new_rv_dist= calc_sq_dist(target_spec, test_model)
     rv_dist_list.append(new_rv_dist)
 rv_dist_array = np.array(rv_dist_list)

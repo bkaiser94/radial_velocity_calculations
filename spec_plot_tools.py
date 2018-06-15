@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 def trim_spec(input_spec, min_wave, max_wave):
     lower_indices = np.where(input_spec[0]< max_wave)
@@ -84,19 +85,22 @@ def make_continuum(input_spec, continuum_list= []):
     #plt.show()
     return continuum_spec
 
-def get_norm_polynomial(input_spec, continuum_list = [], poly_degree = 3):
+def get_norm_polynomial(input_spec, continuum_list = [], poly_degree = 3, plot_all = False):
     continuum_spec = make_continuum(input_spec, continuum_list = continuum_list)
     poly_coeffs= np.polyfit(continuum_spec[0], continuum_spec[1], poly_degree)
-    #plt.plot(input_spec[0], input_spec[1], label = 'input_spec')
-    #plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum', color = 'r')
-    #plt.plot(input_spec[0], np.polyval(poly_coeffs, input_spec[0]), label = 'fit')
-    #plt.title(continuum_list[0])
-    #plt.legend()
-    #plt.show()
+    if plot_all:
+        plt.plot(input_spec[0], input_spec[1], label = 'input_spec')
+        plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum', color = 'r')
+        plt.plot(input_spec[0], np.polyval(poly_coeffs, input_spec[0]), label = 'fit')
+        plt.title(continuum_list[0])
+        plt.legend()
+        plt.show()
+    else:
+        pass
     return poly_coeffs
 
-def poly_norm_spec(input_spec, continuum_list = [], poly_degree = 3):
-    poly_coeffs = get_norm_polynomial(input_spec, continuum_list = continuum_list, poly_degree = poly_degree)
+def poly_norm_spec(input_spec, continuum_list = [], poly_degree = 3, plot_all  = False):
+    poly_coeffs = get_norm_polynomial(input_spec, continuum_list = continuum_list, poly_degree = poly_degree, plot_all = plot_all)
     poly_vals = np.polyval(poly_coeffs, input_spec[0])
     input_spec[1]= np.float_(input_spec[1])/poly_vals
     return input_spec

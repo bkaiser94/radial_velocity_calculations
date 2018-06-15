@@ -1,6 +1,11 @@
 """
+
+OUTDATED. NOT PART OF THE STEP-BY-STEP METHOD.
+
 Written by Ben Kaiser (UNC - Chapel Hill), with some additions of code from the red_cam_pipeline,
-which contains code from the ZZCeti_pipeline from Josh Fuchs github , which was written by J Meza, updated by J Fuchs, and further updated by Ben Kaiser
+which contains code from the ZZCeti_pipeline from Josh Fuchs github , which was written by J Meza, updated by J Fuchs, and further updated by Ben Kaiser.
+
+Produces RV curves for the data actually. It fits 3 gausssians to the reddest Balmer lines that are in the spectra, and requires user input to know where to look for those lines.
 """
 
 import numpy as np

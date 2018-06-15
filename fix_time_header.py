@@ -1,4 +1,9 @@
+"""
+This fixes the GPS-synched time header (well technically the year of it) because it was set to 2019 for some reason when the data was taken in 2018. This edits the original files in listSpec, so it should not be run in the RAW directory (not that anything ever really should be).
 
+This is technically actually step1 in the step-by-step process, but it's not really a reduction step. It's a revision thing.
+
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 import sys

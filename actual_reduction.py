@@ -1,5 +1,9 @@
 """
-This should read in the raw image files for the spectra and the iron lamp that corresponds
+This should read in the raw image files for the spectra and the iron lamp that corresponds.
+
+This is intended to produce the 1-d extracted spectra that are also median-combined  for a given standard star to be used in flux calibration later.
+
+Outputs wcmtb.*       named files.
 """
 
 #I need something to indicate that this is supposed to be a standard star or the actual target in order to fix the 
