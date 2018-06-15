@@ -52,8 +52,8 @@ def to_barycenter(header):
 trace_band_mid= 105   #y-pixel that's about the center of the trace
 trace_band_width = 20 #pixel width to determine the center of the trace
 core_sides=  5
+y_trace_width= core_sides*2+1 #the actual number of pixels in the vertical direction that are in the trace (or background)
 poly_degree = 3 #polynomial degree of the fit to the trace
-bkg_width= core_sides
 bkg_shift= 25
 lamp_sigma_guess= 2
 line_search_width = 3
@@ -390,7 +390,9 @@ for counter, img in enumerate(speclist):
         plt.ylabel('Counts')
         plt.title('Target Spectrum')
         plt.show()
+        noise_spectrum = np.copy(np.sqrt(target_light + bkg_light + y_trace_width*header['RDNOISE']))
         target_light= target_light-bkg_light
+        noise_spectrum = noise_spectrum/target_light #normalized noise values by the target spectrum, so now unitless.
         header= to_barycenter(header) #append the BMJD_TDB value
         header.append(card= ("pix_scal", 0.3, ' "/pixel'))
         header.append(card = ('see_sig', seeing_sig, 'Sigma of Gauss seeing fit (pixels)'))
@@ -399,7 +401,8 @@ for counter, img in enumerate(speclist):
         hdu = fits.PrimaryHDU(poly_curve_wavelength, header = header)
         hdu1= fits.ImageHDU(target_light)
         hdu2= fits.ImageHDU(bkg_light)
-        hdulist= fits.HDUList([hdu, hdu1, hdu2])
+        hdu3 = fits.ImageHDU(noise_spectrum)
+        hdulist= fits.HDUList([hdu, hdu1, hdu2, hdu3])
         hdulist.writeto(filename, overwrite= True)
         #target_stack.append(img_data)
         last_file_lamp = False
