@@ -1,6 +1,10 @@
 """
 This should read in the raw image files for the spectra and the iron lamp that corresponds.
 
+listComb should only include the spectra for one standard star at a time.
+listFe is the reference lamp spectrum you want to use. IT HAS TO HAVE THE SAME BINNING AS THE
+STANDARD SPECTRUM!
+
 This is intended to produce the 1-d extracted spectra that are also median-combined  for a given standard star to be used in flux calibration later.
 
 Outputs are used by flux_calibration.py to produce sensitivity curves
@@ -172,11 +176,11 @@ target_light= np.array([])
 bkg_light= np.array([])
 lamp_light= np.array([])
 for x_pos in x_positions:
-    xsum= np.sum(target_med[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides),x_pos])
+    xsum= np.sum(target_med[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
     target_light= np.append(target_light,[xsum])
-    bkg_sum= np.sum(target_med[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides),x_pos])
+    bkg_sum= np.sum(target_med[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
     bkg_light= np.append(bkg_light,[bkg_sum])
-    lamp_sum= np.sum(lamp_im[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides),x_pos])
+    lamp_sum= np.sum(lamp_im[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
     lamp_light= np.append(lamp_light,[lamp_sum])
 plt.plot(x_positions,target_light,'-')
 plt.xlabel('x (pixel)')

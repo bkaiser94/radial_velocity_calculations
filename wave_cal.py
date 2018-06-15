@@ -167,11 +167,11 @@ def get_trace_waves(target_med, lamp_im):
     lamp_light= np.array([])
     print target_light.shape
     for x_pos in x_positions:
-        xsum= np.sum(target_med[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides),x_pos])
+        xsum= np.sum(target_med[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
         target_light= np.append(target_light,[xsum])
-        bkg_sum= np.sum(target_med[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides),x_pos])
+        bkg_sum= np.sum(target_med[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
         bkg_light= np.append(bkg_light,[bkg_sum])
-        lamp_sum= np.sum(lamp_im[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides),x_pos])
+        lamp_sum= np.sum(lamp_im[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
         lamp_light= np.append(lamp_light,[lamp_sum])
     plt.plot(x_positions,target_light,'-')
     plt.xlabel('x (pixel)')
@@ -381,9 +381,9 @@ for counter, img in enumerate(speclist):
         poly_curve_y = np.polyval(polynomials[0], x_positions)
         poly_curve_wavelength= np.polyval(polynomials[1], x_positions)
         for x_pos in x_positions:
-            xsum= np.sum(img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides),x_pos])
+            xsum= np.sum(img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
             target_light= np.append(target_light,[xsum])
-            bkg_sum= np.sum(img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides),x_pos])
+            bkg_sum= np.sum(img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
             bkg_light= np.append(bkg_light,[bkg_sum])
         plt.plot(x_positions,target_light,'-')
         plt.xlabel('x (pixel)')
