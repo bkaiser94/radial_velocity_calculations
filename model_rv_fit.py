@@ -36,7 +36,7 @@ slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
-plot_fit = True
+plot_fit = False
 
 poly_degree = 5
 
@@ -218,10 +218,14 @@ def retrieve_target_spec(filename):
     header = fits.getheader(filename)
     file_waves= i[0].data
     file_flux = i[1].data
+    file_noise = i[3].data
     file_spec = np.vstack([file_waves, file_flux])
+    file_noise_spec = np.vstack([file_waves, file_noise])
     file_spec = spt.trim_spec(file_spec, low_wave_cut, high_wave_cut)
+    file_noise_spec = spt.trim_spec(file_noise_spec, low_wave_cut, high_wave_cut)
     file_spec = spt.poly_norm_spec(file_spec, continuum_list = target_continuum_list, poly_degree = poly_degree)
-    return file_spec, header
+    file_noise_spec[1] = file_spec[1]*file_noise_spec[1]
+    return file_spec, header, file_noise_spec
 #===========================
 ##########################
 #===========================
@@ -233,7 +237,7 @@ def retrieve_target_spec(filename):
 def fit_rv(target_file):
     return
 
-def minimize_velocity(model_spec, target_spec, target_header, velocity_center, velocity_tests, plot_fit = False):
+def minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_center, velocity_tests, plot_fit = False):
     """
     Test the whole grid and output the optimal radial velocity for the given target spectrum at the specified grid resolution
     """
@@ -246,7 +250,7 @@ def minimize_velocity(model_spec, target_spec, target_header, velocity_center, v
         dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
         #test_model = poly_norm_spec(test_model)
         test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
-        new_rv_dist= calc_sq_dist(target_spec, test_model)
+        new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
         rv_dist_list.append(new_rv_dist)
     rv_dist_array = np.array(rv_dist_list)
     
@@ -263,7 +267,7 @@ def minimize_velocity(model_spec, target_spec, target_header, velocity_center, v
     
 
 def iterate_resolutions(model_spec, target_file ):
-    target_spec, target_header = retrieve_target_spec(target_file) 
+    target_spec, target_header, noise_spec = retrieve_target_spec(target_file) 
     best_rv = velocity_center
     for index in range(1, len(velocity_step_list)):
         #if index >0:
@@ -274,9 +278,9 @@ def iterate_resolutions(model_spec, target_file ):
         velocity_step = velocity_step_list[index]
         velocity_tests= make_velocity_grid(best_rv, velocity_step, prev_velocity_step)
         if index == len(velocity_step_list)-1:
-            best_rv = minimize_velocity(model_spec, target_spec, target_header, best_rv, velocity_tests, plot_fit = plot_fit)
+            best_rv = minimize_velocity(model_spec, target_spec, noise_spec, target_header, best_rv, velocity_tests, plot_fit = plot_fit)
         else:
-            best_rv = minimize_velocity(model_spec, target_spec, target_header, best_rv, velocity_tests, plot_fit = False)
+            best_rv = minimize_velocity(model_spec, target_spec, noise_spec, target_header, best_rv, velocity_tests, plot_fit = False)
         print "==========="
         print target_file, "best_rv: ", best_rv
     if plot_fit:

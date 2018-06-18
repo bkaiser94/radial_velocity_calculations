@@ -54,8 +54,10 @@ slit_yend= 199     #The end of the image with same
 trace_xstart = 9
 trace_xend = 2055
 #bkg_width= 10   #How many pixel rows should be sampled on each edge of the slit
-trace_band_mid= 100   #y-pixel that's about the center of the bulge of the galaxy
-trace_band_width = 20 #pixel width to determine the centroid of the galaxy
+#trace_band_mid= 105   #y-pixel that's about the center of the bulge of the galaxy
+trace_band_mid= 100
+#trace_band_width = 20 #pixel width to determine the centroid of the galaxy
+trace_band_width = 40
 poly_degree= 3
 core_sides=  5
 bkg_width= core_sides
@@ -65,7 +67,8 @@ bkg_shift= 25
 lamp_sigma_guess = 2
 line_search_width= 3
 balmer_sigma_guess= 14
-lamp_p0 = [100, 500,  lamp_sigma_guess, 0]
+lamp_p0 = [1000, 500,  lamp_sigma_guess, 0]
+lamp_bounds = ([0,-np.inf,0,0],[30000,np.inf,20,5000 ])
 #balmer_p0= [-1, 500, balmer_sigma_guess,balmer_line_sides[0],0]
 balmer_p0= [-100, 500, balmer_sigma_guess,0]
 
@@ -212,9 +215,13 @@ plt.show()
 def gaussian_curve(x, a, x0, sigma,b):
     return a*np.exp(-(x-x0)**2/(2*sigma**2))+b
 
-def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width):
+def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all = False, bounds = (-np.inf, np.inf)):
+    """
+    Those bounds are the default for scipy.optimize.curve_fit(), so now changing them changes the bounds
+    """
     cut_region = np.where(x_pixels> (p0_list[1]-search_width ))
-    print '========'
+    
+    #print '========'
     #print p0_list
     #print  "lower bound:", p0_list[1]-search_width
     #print "upper bound: ", p0_list[1]+search_width
@@ -222,9 +229,20 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width):
     high_light_values= np.copy(light_values[cut_region])
     upper_cut = np.where(high_x_pixels < (p0_list[1]+search_width))
     cut_x_pixels = high_x_pixels[upper_cut]
-    print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
+    #print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
     cut_light_values= high_light_values[upper_cut]
-    popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= p0_list)
+    popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= p0_list, bounds = bounds)
+    #print "[amplitude, x0, sigma, b]"
+    #print popt
+    if plot_all:
+        print "popt", popt
+        print "bounds", bounds
+        plt.plot(cut_x_pixels, cut_light_values, label = "data")
+        plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels,popt[0],popt[1],popt[2],popt[3]),label ='fit')
+        plt.legend()
+        plt.show()
+    else:
+        pass
     #try:
         #cut_region = np.where(x_pixels> (popt[1]-search_width ))
         #print popt
@@ -241,8 +259,8 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width):
         #print "probably chose a center outside the bounds of the image"
         #print error
         
-    print popt
-    print '========'
+    #print popt
+    #print '========'
     #plt.plot(cut_x_pixels, cut_light_values)
     #plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels, popt[0], popt[1], popt[2], popt[3]))
     #plt.show()
@@ -250,36 +268,61 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width):
 
 
 peaks_found=[]
+#wave_peaks_found = []
+#for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
+
+dotted_pixel = float(raw_input("dotted line pixel>>>"))
+emission_pixel= float(raw_input("emission line pixel>>>"))
+offset = emission_pixel-dotted_pixel
+print "skipping offsetting. Change lines 148 and 150 if you want otherwise."
+
+line_x_checks2 = np.copy(line_x_checks+offset)
+#for x_spot in line_x_checks2:
+    #plt.axvline( x= x_spot, color = 'r')
+#for x_spot in np.array(WaveList_Fe_930_12_24[0])/2.:
+    #plt.axvline( x= x_spot, color = 'r')
+#plt.plot(x_positions,lamp_light,'-')
+#plt.xlabel('x (pixel)')
+#plt.ylabel('Counts')
+#plt.title('Lamp Spectrum (offset applied)')
+##plt.yscale('log')
+#plt.show()
+peaks_found=[]
 wave_peaks_found = []
-for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
+for lamp_line_guess,lamp_line_wave in zip( line_x_checks2,lamp_lines):
     try:
-        lamp_params, lamp_cov = fit_gaussian_curve(x_positions, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width)
-        if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) ):
+        lamp_params, lamp_cov = fit_gaussian_curve(x_positions, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width, bounds= lamp_bounds)
+        if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1)):
             peaks_found.append(lamp_params[1])
             wave_peaks_found.append(lamp_line_wave)
             plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
             plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
             plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
-            for x_spot in line_x_checks:
+            for x_spot in line_x_checks2:
                 plt.axvline( x= x_spot, color = 'k',linestyle = '--')
             plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
+            plt.xlabel('Pixel')
+            plt.ylabel('Counts')
             plt.legend()
             plt.show()
         else:
-            print "Gaussian too flat or flipped (or not within the actual fitting region...):", lamp_params
+            print "Gaussian too flat, flipped, or narrow (or not within the actual fitting region...):", lamp_params
     except RuntimeError as error:
         print error
-
-######## Line locations
 peaks_found = np.array(peaks_found)
 wave_peaks_found = np.array(wave_peaks_found)
-print "line_x_checks:"
-print line_x_checks
+   
+
+######## Line locations
+#peaks_found = np.array(peaks_found)
+#wave_peaks_found = np.array(wave_peaks_found)
+print "line_x_checks2:"
+print line_x_checks2
 print "peaks found"
 print peaks_found
 print "wave_peaks_found"
 print wave_peaks_found
-for line,peak,wave in zip(line_x_checks, peaks_found, wave_peaks_found):
+for line,peak,wave in zip(line_x_checks2, peaks_found, wave_peaks_found):
     print line, peak, wave
 #polynomial fitting
 #poly_coeffs_lamp= np.polyfit(centroids,lamp_lines,2)
@@ -309,14 +352,14 @@ plt.show()
 
 plt.plot(x_positions, poly_curve_wavelength,  label = 'wavelength solution', color ='blue')
 plt.plot(peaks_found, wave_peaks_found, marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
-plt.plot(line_x_checks, lamp_lines, label = 'input points', color = 'green', marker = '*', linestyle = 'none')
+plt.plot(line_x_checks2, lamp_lines, label = 'input points', color = 'green', marker = '*', linestyle = 'none')
 plt.title("wavelength to pixel position")
 plt.legend()
 plt.show()
 
 plt.axhline(y=0 ,  label = 'wavelength solution', color ='blue')
 plt.plot(peaks_found, wave_peaks_found-x_to_wavelength(peaks_found), marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
-plt.plot(line_x_checks, lamp_lines-x_to_wavelength(line_x_checks), label = 'input points', color = 'green', marker = '*', linestyle = 'none')
+plt.plot(line_x_checks, lamp_lines-x_to_wavelength(line_x_checks2), label = 'input points', color = 'green', marker = '*', linestyle = 'none')
 plt.title("wavelength to pixel position Residuals")
 plt.legend()
 plt.show()

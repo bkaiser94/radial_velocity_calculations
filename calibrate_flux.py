@@ -29,10 +29,14 @@ from astropy import constants as const
 
 speclistname = "listWCTB"
 
+color_list = ['k', 'r', 'g', 'b', 'm', 'cyan', 'purple']
+
 speclist = np.genfromtxt(speclistname, dtype = 'str')
 speclist = speclist.T
 target_list = speclist[0]
 sens_curve_list = speclist[1]
+
+bad_noise_sub = 100
 
 
 parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
@@ -48,8 +52,17 @@ def barycentric_vel_corr(header, wavelengths):
     lambda_rest = lambda_rest.value
     return lambda_rest
 
+#def bad_noise_vals(noise_spec):
+    ##bad_inds = np.where(noise_spec < 0)
+    ##noise_spec[bad_inds]= bad_noise_sub
+    #noise_spec = np.abs(noise_spec)
+    #bad_inds = np.where(noise_spec > bad_noise_sub)
+    #noise_spec[bad_inds] = bad_noise_sub
+    #return noise_spec
+
 count = 0
 summed_flux = []
+summed_counts =[]
 times = []
 airmasses= []
 for target_file, sens_curve_file in zip(target_list, sens_curve_list):
@@ -60,18 +73,20 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     counts = i[1].data
     bkg_counts = i[2].data
     noise_spec = i[3].data
+    #noise_spec = bad_noise_vals(noise_spec) #remove negative noise values and exceedingly high ones
     sens_curve = np.polyval(sens_curve_coeffs,wavelengths)
     flux = counts/sens_curve
     total_flux = np.sum(flux)
     times.append([header['BMJD_TDB']])
     airmasses.append(header['AIRMASS'])
     summed_flux.append(total_flux)
+    summed_counts.append(np.sum(counts))
     header.append(card = ('Senscurv', sens_curve_file, 'file used for flux calibration'))
     header.append(card = ('Units', 'ergs/cm/cm/s/A 10**-16', 'Units for flux'))
     header.append(card = ('Wavlngth', 0, 'Angstroms extension for wavelengths'))
     header.append(card = ('Flux', 1, 'in flux units extension for target flux values'))
     header.append(card = ('Bkg', 2, 'in flux units extension for bkg flux values'))
-    header.append(card = ('Noise', 3, 'unitless. Normalized to target flux'))
+    header.append(card = ('Noise', 3, 'unitless. Normalized'))
     header.append(card = ('barycorr', True, 'wavelengths corrected to barycenter'))
     target_file = 'f'+target_file
     wavelengths = barycentric_vel_corr(header, wavelengths)
@@ -83,14 +98,31 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     hdulist = fits.HDUList([hdu, hdu1, hdu2, hdu3])
     hdulist.writeto(target_file, overwrite = True)
     if count%4 == 0:
-        plt.plot(wavelengths, flux, label = header['OPENTIME'])
+        color = color_list[count%len(color_list)]
+        plt.plot(wavelengths, flux, label = header['OPENTIME'], color= color)
+        #plt.plot(wavelengths, noise_spec*flux, label = header['OPENTIME']+ ' Noise', color = color)
+        #plt.plot(wavelengths, noise_spec, label = header['OPENTIME']+ ' Noise no times', color = color)
     count += 1
+#plt.ylim([-10, 10])
 plt.legend()
 plt.show()
+airmasses = np.array(airmasses)
+scale_airmass = airmasses * np.mean(summed_flux)/np.mean(airmasses)
 
 plt.title('overall brightness change... allegedly')
 plt.plot(times, summed_flux)
+plt.plot(times, scale_airmass, label = 'scaled airmass')
+plt.legend()
 plt.show()
+
+scale_airmass = airmasses * np.mean(summed_counts)/np.mean(airmasses)
+
+plt.title('overall counts change')
+plt.plot(times, summed_counts)
+plt.plot(times, scale_airmass, label = 'scaled airmass')
+plt.legend()
+plt.show()
+
 
 plt.title('airmasses over time')
 plt.plot(times, airmasses)

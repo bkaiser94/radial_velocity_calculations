@@ -135,22 +135,31 @@ target_continuum_list = [[3861,3864],
 
 
 flux_stack = []
-for index in range(25,31):
+noise_stack = []
+#for index in range(25,31):
 #for index in range(3,9):
+for index in range(0,6):
     filename = target_list[index]
     print filename
     i=fits.open(filename)
     header = fits.getheader(filename)
     file_waves= i[0].data
     file_flux = i[1].data
+    file_noise = i[3].data
+    noise = file_noise #don't want to scale it yet since there will be the normalization later
+    #noise = file_flux*file_noise
     flux_stack.append([file_flux])
+    noise_stack.append([noise])
     
 target_waves = file_waves
 target_flux= np.nanmedian(flux_stack, axis=0)[0]
+target_noise = np.nanmedian(noise_stack, axis=0)[0]
 print target_waves.shape
 print target_flux.shape
 target_spec = np.vstack([target_waves, target_flux])
+noise_spec = np.vstack([target_waves, target_noise])
 target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
 target_file = target_list[0]
 print target_file
 #i= fits.open(target_file)
@@ -295,6 +304,7 @@ model_flux = model['flux'] #since we'll be arbitrarily-ish scaling this it won't
 model_spec  = np.vstack([model_waves, model_flux])
 #target_spec = poly_norm_spec(target_spec, continuum_list=target_continuum_list)
 target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree, plot_all = plot_fit)
+noise_spec[1]= noise_spec[1]*target_spec[1] #scale the noise spectrum with the flattened target spectrum.
 
 
 rv_dist_list=[]
@@ -305,7 +315,7 @@ for radial_velocity in velocity_tests:
     dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
     #test_model = poly_norm_spec(test_model, continuum_list = dopp_cont_list)
     test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree, plot_all = plot_fit)
-    new_rv_dist= calc_sq_dist(target_spec, test_model)
+    new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
     rv_dist_list.append(new_rv_dist)
 rv_dist_array = np.array(rv_dist_list)
 min_index = np.argmin(rv_dist_array)
@@ -366,7 +376,8 @@ def run_model_grid(target_spec):
             dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
             #test_model = poly_norm_spec(test_model)
             test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
-            new_rv_dist= calc_sq_dist(target_spec, test_model)
+            #new_rv_dist= calc_sq_dist(target_spec, test_model)
+            new_rv_dist = calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
             rv_dist_list.append(new_rv_dist)
         rv_dist_array = np.array(rv_dist_list)
         min_rv_index= np.argmin(rv_dist_array)
@@ -408,6 +419,7 @@ def run_model_grid(target_spec):
     interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
     interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
     plot_overlays(target_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
+    plot_overlays(target_spec, noise_spec, model_string = 'noise')
     plot_overlays(model_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
     plot_overlays_convolve(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg))
     chi_square_countours(teff_array,logg_array, dist_array)

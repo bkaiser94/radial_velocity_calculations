@@ -49,8 +49,8 @@ def to_barycenter(header):
     return header
 
 ####
-trace_band_mid= 105   #y-pixel that's about the center of the trace
-trace_band_width = 20 #pixel width to determine the center of the trace
+trace_band_mid= 100   #y-pixel that's about the center of the trace
+trace_band_width = 40 #pixel width to determine the center of the trace
 core_sides=  5
 y_trace_width= core_sides*2+1 #the actual number of pixels in the vertical direction that are in the trace (or background)
 poly_degree = 3 #polynomial degree of the fit to the trace
@@ -60,8 +60,9 @@ line_search_width = 3
 lamp_p0 = [1000, 500,  lamp_sigma_guess, 0]
 
 seeing_range = [1200, 1220]
-seeing_p0= [100, trace_band_width/2, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
-see_fit_bounds = ([50, 0, 0.7, 0],[18000, 1000, 20, 2000]) #(lower, upper) bounds on the fit for the seeing.
+#seeing_p0= [1000, trace_band_width/2, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
+seeing_p0= [1000, 5, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
+see_fit_bounds = ([50, 0, 0.7, 0],[18000, 1000, trace_band_width, 2000]) #(lower, upper) bounds on the fit for the seeing.
 
 #####
 
@@ -190,15 +191,14 @@ def get_trace_waves(target_med, lamp_im):
     plt.title('Lamp Spectrum (record corresponding dotted line and emission pixels)')
     #plt.yscale('log')
     plt.show()
-    offset = 0
+    #offset = 0
 
-    #dotted_pixel = float(raw_input("dotted line pixel>>>"))
-    #emission_pixel= float(raw_input("emission line pixel>>>"))
-    #offset = emission_pixel-dotted_pixel
+    dotted_pixel = float(raw_input("dotted line pixel>>>"))
+    emission_pixel= float(raw_input("emission line pixel>>>"))
+    offset = emission_pixel-dotted_pixel
     print "skipping offsetting. Change lines 148 and 150 if you want otherwise."
    
     line_x_checks2 = np.copy(line_x_checks+offset)
-
     #for x_spot in line_x_checks2:
         #plt.axvline( x= x_spot, color = 'r')
     #for x_spot in np.array(WaveList_Fe_930_12_24[0])/2.:
@@ -211,22 +211,22 @@ def get_trace_waves(target_med, lamp_im):
     #plt.show()
     peaks_found=[]
     wave_peaks_found = []
-    for lamp_line_guess,lamp_line_wave in zip( line_x_checks,lamp_lines):
+    for lamp_line_guess,lamp_line_wave in zip( line_x_checks2,lamp_lines):
         try:
             lamp_params, lamp_cov = fit_gaussian_curve(x_positions, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width)
             if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1)):
                 peaks_found.append(lamp_params[1])
                 wave_peaks_found.append(lamp_line_wave)
-                #plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
-                #plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
-                #plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
-                #for x_spot in line_x_checks:
-                    #plt.axvline( x= x_spot, color = 'k',linestyle = '--')
-                #plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
-                #plt.xlabel('Pixel')
-                #plt.ylabel('Counts')
-                #plt.legend()
-                #plt.show()
+                plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
+                plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
+                plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
+                for x_spot in line_x_checks2:
+                    plt.axvline( x= x_spot, color = 'k',linestyle = '--')
+                plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
+                plt.xlabel('Pixel')
+                plt.ylabel('Counts')
+                plt.legend()
+                plt.show()
             else:
                 print "Gaussian too flat, flipped, or narrow (or not within the actual fitting region...):", lamp_params
         except RuntimeError as error:
