@@ -58,10 +58,11 @@ bkg_shift= 25
 lamp_sigma_guess= 2
 line_search_width = 3
 lamp_p0 = [1000, 500,  lamp_sigma_guess, 0]
-
+lamp_bounds = ([0,-np.inf,0,0],[30000,np.inf,20,5000 ])
 seeing_range = [1200, 1220]
 #seeing_p0= [1000, trace_band_width/2, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
-seeing_p0= [1000, 5, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
+#seeing_p0= [1000, 5, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
+seeing_p0= [1000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
 see_fit_bounds = ([50, 0, 0.7, 0],[18000, 1000, trace_band_width, 2000]) #(lower, upper) bounds on the fit for the seeing.
 
 #####
@@ -213,7 +214,7 @@ def get_trace_waves(target_med, lamp_im):
     wave_peaks_found = []
     for lamp_line_guess,lamp_line_wave in zip( line_x_checks2,lamp_lines):
         try:
-            lamp_params, lamp_cov = fit_gaussian_curve(x_positions, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width)
+            lamp_params, lamp_cov = fit_gaussian_curve(x_positions, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width, bounds= lamp_bounds)
             if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1)):
                 peaks_found.append(lamp_params[1])
                 wave_peaks_found.append(lamp_line_wave)

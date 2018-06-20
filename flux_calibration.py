@@ -28,26 +28,26 @@ import spec_plot_tools as spt
 standard_directory = '/Users/BenKaiser/Desktop/standards/'
 #standard_file = "foke/fgd108.dat"
 #standard_file = 'foke/ffeige67.dat'
-standard_file = 'fhamuy/fltt6248.dat'
-#standard_file= 'fhamuy/feg274.dat'
+#standard_file = 'fhamuy/fltt6248.dat'
+standard_file= 'fhamuy/feg274.dat'
 
 
 #output_filename = "GD108_sensitivity_curve.txt"
 #output_filename = 'Feige67_sensitivity_curve.txt'
-output_filename= 'LTT6248_sensitivity_curve.txt'
-#output_filename= 'EG274_sensitivity_curve.txt'
+#output_filename= 'LTT6248_sensitivity_curve.txt'
+output_filename= 'EG274_sensitivity_curve.txt'
 
 standard_file = standard_directory+standard_file
 
 #standard_name = "GD108"
 #standard_name = 'Feige67'
-standard_name = 'LTT6248'
-#standard_name = 'EG274'
+#standard_name = 'LTT6248'
+standard_name = 'EG274'
 
 #observed_file = "wcmtb.GD108930blue.fits"
 #observed_file = 'wcmtb.feige67930blue.fits'
-observed_file  = 'wcmtb.ltt6248930blue.fits'
-#observed_file = 'wcmtb.eg274930blue.fits'
+#observed_file  = 'wcmtb.ltt6248930blue.fits'
+observed_file = 'wcmtb.eg274930blue.fits'
 
 obs_fits = fits.open(observed_file)
 header = fits.getheader(observed_file)

@@ -145,6 +145,12 @@ def get_doppler_shifted(wavelengths, radial_velocity):
     lambda_obs = wavelengths * (radial_velocity*u.km/u.s + const.c.to(u.km/u.s)) / const.c.to(u.km/u.s)
     return lambda_obs.value
 
+def wave2doppler(w, w0):
+    w0_equiv = u.doppler_optical(w0)
+    w_equiv = w.to(u.km/u.s, equivalencies=w0_equiv)
+    return w_equiv.to(u.km/u.s)
+
+print(wave2doppler(waveclosetoHa, 656.489 * u.nm).to(u.km/u.s))
 def dopp_shift_continuum_list(radial_velocity):
     dopp_cont_list = []
     for waves in continuum_list:
@@ -226,6 +232,17 @@ def retrieve_target_spec(filename):
     file_spec = spt.poly_norm_spec(file_spec, continuum_list = target_continuum_list, poly_degree = poly_degree)
     file_noise_spec[1] = file_spec[1]*file_noise_spec[1]
     return file_spec, header, file_noise_spec
+
+
+def make_rest_spectrum(filename, radial_velocity):
+    i = fits.open(filename)
+    header= fits.getheader(filename)
+    file_waves= i[0].data
+    file_flux = i[1].data
+    file_sky = i[2].data
+    file_noise = i[3].data
+    rest_waves = get_doppler_shifted(file_waves, -1*radial_velocity)
+    return
 #===========================
 ##########################
 #===========================
@@ -344,3 +361,6 @@ plt.scatter(time_array, rv_array)
 plt.ylabel('RV (km/s)')
 plt.xlabel("BMJD_TDB")
 plt.show()
+
+out_array = np.vstack([time_array,rv_array])
+np.savetxt('rv_plot.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s)')
