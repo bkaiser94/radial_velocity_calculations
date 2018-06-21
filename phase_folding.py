@@ -11,10 +11,14 @@ from astropy.units import cds
 import scipy.stats as scistats
 import scipy.optimize as sciop
 cds.enable()
-
+#plt.rc('font', size =18)
+#plt.rc('lines', markersize=12)
+plt.rc('font', size = 11)
+plt.rc('lines', markersize = 5)
+plotting_offset = 0.0005
 #p0_list = [-100, 300, 0]
 p0_list = [-100, 300]
-
+photo_bounds = ([-np.inf, 0, -np.inf],[np.inf, np.inf, np.inf])
 precision = 3
 
 parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
@@ -30,7 +34,18 @@ ra = header['RA']
 dec = header['DEC']
 target_coord = coord.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
 
+photometry_t0 = 2458231.5950237 #BJD_TDB, so need to convert to MJD
+photometry_t0= Time(photometry_t0, format = 'jd', scale = 'tdb')
+photometry_file = 'psrj1431m4715_lightcurve.dat'
+photometry_all = np.genfromtxt(photometry_file, skip_header = 2).T
+#print photometry_all
 
+photometry_times = photometry_all[0]*u.s
+photometry_flux = photometry_all[1]
+photometry_error = photometry_all[2]
+
+photometry_times = (photometry_times + photometry_t0).tdb.mjd
+###################################
 
 
 def to_barycenter(input_times):
@@ -43,8 +58,14 @@ def sine_function(times, systemic_vel,  amplitude):
     #return amplitude*np.sin((2*np.pi)*(times)+phase)+systemic_vel
     return amplitude*np.sin((2*np.pi)*(times))+systemic_vel
 
+def photo_sine_function(times, systemic_vel,  amplitude, phase):
+#def photo_sine_function(times, systemic_vel,  amplitude):
+    return amplitude*np.sin(2*(2*np.pi*times+phase))+systemic_vel
+    #return amplitude*np.sin(2*(2*np.pi) *(times+1.45267158))+systemic_vel
+    #return amplitude*np.cos(2*(2*np.pi)*(times))+systemic_vel
 
 
+#############################################
 #e = 0.000023# median
 #e = 0.000031# max
 omega = 97 * u.degree
@@ -85,6 +106,15 @@ zero_times = bmjd_array - zero_point
 folded_times = np.mod(zero_times , period)/period
 #folded_timesB = np.mod(bmjd_arrayB-zero_point, period)/period
 
+photo_zero_times = photometry_times - zero_point
+#photo_period = period/2.
+photo_folded_times = np.mod(photo_zero_times, period)/period
+#fitted_photo_curve, fitted_photo_cov = sciop.curve_fit(photo_sine_function, photo_folded_times, photometry_flux, sigma= photometry_error, p0= [0, 0.08])
+fitted_photo_curve, fitted_photo_cov = sciop.curve_fit(photo_sine_function, photo_folded_times, photometry_flux, sigma= photometry_error, bounds = photo_bounds)
+#photo_residuals= photometry_flux - photo_sine_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1])
+print fitted_photo_curve
+photo_residuals= photometry_flux - photo_sine_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
+
 
 fitted_curve_all, fitted_cov_all = sciop.curve_fit(sine_function, folded_times, rv_array, p0= p0_list)
 residuals = rv_array- sine_function(folded_times, fitted_curve_all[0], fitted_curve_all[1])
@@ -102,30 +132,110 @@ period_wunits = period*u.day
 
 all_mratio= get_mass_ratio(fitted_curve_all[1]*(u.km/u.second),period_wunits, x_psr)
 
-x_vals = np.linspace(0,1,100)
+x_vals = np.linspace(0,1,1000)
 #sine_vals = sine_function(x_vals, fitted_curve_all[0], fitted_curve_all[1], fitted_curve_all[2])
 sine_vals = sine_function(x_vals, fitted_curve_all[0], fitted_curve_all[1])
+#photo_sine_vals = photo_sine_function(x_vals, fitted_photo_curve[0], fitted_photo_curve[1])
+photo_sine_vals = photo_sine_function(x_vals, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
 
 
+
+#### RVs 
+#fig, axes = plt.subplots(nrows=2, ncols=1, sharex=True, sharey=True)
 
 fig = plt.figure()
-ax = fig.add_subplot(111)
+#ax = fig.add_subplot(311)
+ax = plt.subplot2grid((6, 1), (0,0), rowspan = 2)
+ax.axhline(y= fitted_curve_all[0], color = 'r', linestyle = ':', alpha = 0.4, label= str(np.round(fitted_curve_all[0],precision))+' km/s')
+#ax.scatter(folded_times, rv_array, color = 'b', label = '3/18/18')
+ax.plot(folded_times, rv_array, color = 'b', marker = 'o', linestyle = 'none', label = '3/18/18')
 
-ax.scatter(folded_times, rv_array, color = 'b', label = '3/18/18')
 #ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
 ax.plot(x_vals, sine_vals, color = 'k', linestyle = '--', label = 'Model')
-
+ax.set_xticklabels([])
 ax.set_xlim([0,1])
-ax.set_xlabel('Phase')
+#ax.set_xlabel('Phase')
 ax.set_ylabel('RV (km/s)')
 ax.set_title(str(np.round(1.4/all_mratio,precision)) + ' M_sun companion assuming 1.4Msun NS')
 props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 text_string =  r'$K_c =$ ' +str(np.round(fitted_curve_all[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_cov_all[1,1]),precision)) + 'km/s' +'\n'+ r'$v_{sys}=$' +str(np.round(fitted_curve_all[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_cov_all[0,0]),precision))+ ' km/s'
-ax.text(0.05, 0.05,text_string, transform=ax.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
+ax.text(0.2, 0.05,text_string, transform=ax.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
+ax.legend()
+
+#plt.show()
+
+#### Residuals
+
+#fig = plt.figure()
+#ax2 = fig.add_subplot(613)
+ax2 =plt.subplot2grid((6,1), (2, 0), rowspan= 1)
+
+#ax2.scatter(folded_times, residuals, color = 'b', label = '3/18/18')
+ax2.plot(folded_times, residuals, color = 'b', label = '3/18/18', marker = 'o', linestyle = 'none')
+#ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
+#ax.plot(x_vals, sine_vals, color = 'k', linestyle = '--', label = 'Model')
+#ax2.plot(x_vals, np.zeros(x_vals.shape), color = 'k', linestyle = '--', label = 'Model')
+ax2.axhline(y=0, color = 'k', linestyle = '--')
+ax2.set_xticklabels([])
+ax2.set_xlim([0,1])
+#ax2.set_xlabel('Phase')
+ax2.set_ylabel('Residuals (km/s)')
+#ax2.set_title(str(np.round(1.4/all_mratio,precision)) + ' M_sun companion assuming 1.4Msun NS')
+#props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+#text_string =  r'$K_c =$ ' +str(np.round(fitted_curve_all[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_cov_all[1,1]),precision)) + 'km/s' +'\n'+ r'$v_{sys}=$' +str(np.round(fitted_curve_all[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_cov_all[0,0]),precision))+ ' km/s'
+#ax.text(0.05, 0.05,text_string, transform=ax.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
 #ax.legend()
 
-plt.show()
+#plt.show()
 
+###3 Photometry
+
+#fig = plt.figure()
+#ax3 = fig.add_subplot(313)
+ax3 = plt.subplot2grid((6,1), (3, 0), rowspan=2)
+ax3.axhline(y= fitted_photo_curve[0], color = 'r', linestyle = ':', alpha = 0.4, label= str(np.round(fitted_photo_curve[0],precision)))
+ax3.errorbar(photo_folded_times, photometry_flux, photometry_error, color = 'b', label = '4/22/18', linestyle= 'None', marker = 'o')
+#ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
+ax3.plot(x_vals, photo_sine_vals, color = 'k', linestyle = '--', label = 'Model')
+ax3.set_xticklabels([])
+ax3.set_xlim([0,1])
+#ax3.set_xlabel('Phase')
+ax3.set_ylabel('Normalized Flux')
+#ax3.set_title(str(np.round(1.4/all_mratio,precision)) + ' M_sun companion assuming 1.4Msun NS')
+props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+#text_string =  r'$A =$ ' +str(np.round(fitted_photo_curve[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_photo_cov[1,1]),precision)) + '' +'\n'+ r'$b=$' +str(np.round(fitted_photo_curve[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_photo_cov[0,0]),precision))+ ''
+text_string =  r'$A =$ ' +str(np.round(fitted_photo_curve[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_photo_cov[1,1]),precision)) + '' +'\n'+ r'$b=$' +str(np.round(fitted_photo_curve[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_photo_cov[0,0]),precision))+ '' + '\n' + 'phase = ' + str(np.round(fitted_photo_curve[2], precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_photo_cov[2,2]), precision))
+ax3.text(0.2, 0.05,text_string, transform=ax3.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
+ax3.legend()
+
+#plt.subplots_adjust(wspace = 0, hspace = 0, top = 0.95, bottom = 0.05, left = 0.05, right = 0.95)
+#plt.show()
+
+#### Photometric Residuals
+
+#fig = plt.figure()
+#ax2 = fig.add_subplot(613)
+ax4 =plt.subplot2grid((6,1), (5, 0), rowspan= 1)
+
+ax4.errorbar(photo_folded_times, photo_residuals, photometry_error, color = 'b', label = '4/22/18', linestyle= 'None', marker = 'o')
+#ax4.errorbar(photo_folded_times, photo_residuals, photometry_error, color = 'b', label = '4/22/18')
+#ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
+#ax.plot(x_vals, sine_vals, color = 'k', linestyle = '--', label = 'Model')
+#ax2.plot(x_vals, np.zeros(x_vals.shape), color = 'k', linestyle = '--', label = 'Model')
+ax4.axhline(y=0, color = 'k', linestyle = '--')
+ax4.set_xlabel('Phase')
+#ax4.set_xticklabels([])
+ax4.set_xlim([0,1])
+#ax2.set_xlabel('Phase')
+ax4.set_ylabel('Residuals')
+#ax2.set_title(str(np.round(1.4/all_mratio,precision)) + ' M_sun companion assuming 1.4Msun NS')
+#props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+#text_string =  r'$K_c =$ ' +str(np.round(fitted_curve_all[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_cov_all[1,1]),precision)) + 'km/s' +'\n'+ r'$v_{sys}=$' +str(np.round(fitted_curve_all[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_cov_all[0,0]),precision))+ ' km/s'
+#ax.text(0.05, 0.05,text_string, transform=ax.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
+#ax.legend()
+plt.subplots_adjust(wspace = 0, hspace = 0, top = 0.95, bottom = 0.05, left = 0.05, right = 0.95)
+
+plt.show()
 
 #######
 #fig = plt.figure()
