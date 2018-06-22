@@ -58,6 +58,9 @@ obs_time = header['OPENTIME']
 obs_date = header['OPENDATE']
 obs_time = obs_date+'T'+obs_time
 obs_time = Time(obs_time, format = 'isot', scale = 'utc').mjd
+exptime = header['EXPTIME']
+
+obs_flux1= obs_flux1/np.float_(exptime) #converts to counts per second
 
 #####
 wavelength_masks=[
