@@ -22,7 +22,7 @@ import spec_plot_tools as spt
 
 
 teff = 7250
-logg = 5.50
+logg = 5.25
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
 model = wd(Teff = teff, logg = logg)
@@ -49,7 +49,7 @@ first_prev_velocity_step = 200
 velocity_step_list = [200., 100., 10., 1., 0.1] #km/s (the first one doesn't actually get used except to set the outer bounds of the grid)
 velocity_center = -100 #km/s
 velocity_grid_radius = 8 #number of gridpoints away from the central one to include
-overlap_radius = 18
+overlap_radius = 4 #was 18
 velocity_low_bound = -500 #km/s
 velocity_high_bound = 300 #km/s
 velocity_tests = np.arange(velocity_low_bound, velocity_high_bound+velocity_step, velocity_step)
@@ -145,12 +145,12 @@ def get_doppler_shifted(wavelengths, radial_velocity):
     lambda_obs = wavelengths * (radial_velocity*u.km/u.s + const.c.to(u.km/u.s)) / const.c.to(u.km/u.s)
     return lambda_obs.value
 
-def wave2doppler(w, w0):
-    w0_equiv = u.doppler_optical(w0)
-    w_equiv = w.to(u.km/u.s, equivalencies=w0_equiv)
-    return w_equiv.to(u.km/u.s)
+#def wave2doppler(w, w0):
+    #w0_equiv = u.doppler_optical(w0)
+    #w_equiv = w.to(u.km/u.s, equivalencies=w0_equiv)
+    #return w_equiv.to(u.km/u.s)
 
-print(wave2doppler(waveclosetoHa, 656.489 * u.nm).to(u.km/u.s))
+#print(wave2doppler(waveclosetoHa, 656.489 * u.nm).to(u.km/u.s))
 def dopp_shift_continuum_list(radial_velocity):
     dopp_cont_list = []
     for waves in continuum_list:

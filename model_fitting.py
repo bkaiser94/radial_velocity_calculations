@@ -136,9 +136,9 @@ target_continuum_list = [[3861,3864],
 
 flux_stack = []
 noise_stack = []
-#for index in range(25,31):
+for index in range(25,31):
 #for index in range(3,9):
-for index in range(0,6):
+#for index in range(0,6):
     filename = target_list[index]
     print filename
     i=fits.open(filename)

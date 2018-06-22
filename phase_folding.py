@@ -19,7 +19,7 @@ plotting_offset = 0.0005
 #p0_list = [-100, 300, 0]
 p0_list = [-100, 300]
 photo_bounds = ([-np.inf, 0, -np.inf],[np.inf, np.inf, np.inf])
-precision = 3
+precision = 1
 precision2= 4
 parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
