@@ -20,7 +20,7 @@ plotting_offset = 0.0005
 p0_list = [-100, 300]
 photo_bounds = ([-np.inf, 0, -np.inf],[np.inf, np.inf, np.inf])
 precision = 3
-
+precision2= 4
 parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 c= 2.998E8 *u.m/u.s
@@ -33,7 +33,7 @@ header = fits.getheader(filename)
 ra = header['RA']
 dec = header['DEC']
 target_coord = coord.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
-
+rv_file = 'rv_plot.txt'
 photometry_t0 = 2458231.5950237 #BJD_TDB, so need to convert to MJD
 photometry_t0= Time(photometry_t0, format = 'jd', scale = 'tdb')
 photometry_file = 'psrj1431m4715_lightcurve.dat'
@@ -63,6 +63,29 @@ def photo_sine_function(times, systemic_vel,  amplitude, phase):
     return amplitude*np.sin(2*(2*np.pi*times+phase))+systemic_vel
     #return amplitude*np.sin(2*(2*np.pi) *(times+1.45267158))+systemic_vel
     #return amplitude*np.cos(2*(2*np.pi)*(times))+systemic_vel
+    
+    
+#def photo_harmonic_function(times, zeropoint, A, B, C, D, phiA, phiB, phiC, phiD):
+#def photo_harmonic_function(times, zeropoint, A, B, C, D):
+def photo_harmonic_function(times, zeropoint, B, D):
+
+    #return A*np.sin(2*np.pi*times+phiA) + B*np.cos(2*np.pi*times+phiB) + C*np.sin(4*np.pi*times+phiC) + D*np.cos(4*np.pi*times+phiD) + zeropoint
+    #return A*np.sin(2*np.pi*times) + B*np.cos(2*np.pi*times) + C*np.sin(4*np.pi*times) + D*np.cos(4*np.pi*times) + zeropoint
+    return  B*np.cos(2*np.pi*times)+ D*np.cos(4*np.pi*times) + zeropoint
+
+
+
+def make_value_strings(fitted_coeffs, fitted_cov):
+    diagonals = []
+    for i in range(fitted_cov.shape[0]):
+        diagonals.append(fitted_cov[i,i])
+    diagonals = np.sqrt(np.array(diagonals))
+    string_list = []
+    for coeff, cov in zip(fitted_coeffs, diagonals):
+        new_string = r'$($'+str(np.round(coeff, precision2)) + r'$\pm$' + str(np.round(cov, precision2))+r'$)$'
+        string_list.append(new_string)
+    print string_list
+    return string_list
 
 
 #############################################
@@ -82,7 +105,7 @@ tasc = Time(55756.1047771, format = 'mjd', scale= 'utc', location = parkes_locat
 tconj= Time(55756.21712, format = 'mjd', scale ='utc', location = parkes_location)
 
 
-all_array = np.genfromtxt('rv_plot.txt', names = True, delimiter= ',')
+all_array = np.genfromtxt(rv_file, names = True, delimiter= ',')
 bmjd_array = all_array['TimesBMJD_TDB']
 rv_array = all_array['RV_kms']
 
@@ -110,11 +133,17 @@ photo_zero_times = photometry_times - zero_point
 #photo_period = period/2.
 photo_folded_times = np.mod(photo_zero_times, period)/period
 #fitted_photo_curve, fitted_photo_cov = sciop.curve_fit(photo_sine_function, photo_folded_times, photometry_flux, sigma= photometry_error, p0= [0, 0.08])
-fitted_photo_curve, fitted_photo_cov = sciop.curve_fit(photo_sine_function, photo_folded_times, photometry_flux, sigma= photometry_error, bounds = photo_bounds)
+#fitted_photo_curve, fitted_photo_cov = sciop.curve_fit(photo_sine_function, photo_folded_times, photometry_flux, sigma= photometry_error, bounds = photo_bounds)
 #photo_residuals= photometry_flux - photo_sine_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1])
+fitted_photo_curve, fitted_photo_cov = sciop.curve_fit(photo_harmonic_function, photo_folded_times, photometry_flux, sigma=photometry_error)
 print fitted_photo_curve
-photo_residuals= photometry_flux - photo_sine_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
+#photo_residuals= photometry_flux - photo_sine_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
+#photo_residuals = photometry_flux - photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2], fitted_photo_curve[3], fitted_photo_curve[4], fitted_photo_curve[5], fitted_photo_curve[6], fitted_photo_curve[7], fitted_photo_curve[8])
+#photo_residuals = photometry_flux - photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2], fitted_photo_curve[3], fitted_photo_curve[4])
+photo_residuals = photometry_flux - photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
 
+
+coeffs = fitted_photo_curve
 
 fitted_curve_all, fitted_cov_all = sciop.curve_fit(sine_function, folded_times, rv_array, p0= p0_list)
 residuals = rv_array- sine_function(folded_times, fitted_curve_all[0], fitted_curve_all[1])
@@ -136,8 +165,14 @@ x_vals = np.linspace(0,1,1000)
 #sine_vals = sine_function(x_vals, fitted_curve_all[0], fitted_curve_all[1], fitted_curve_all[2])
 sine_vals = sine_function(x_vals, fitted_curve_all[0], fitted_curve_all[1])
 #photo_sine_vals = photo_sine_function(x_vals, fitted_photo_curve[0], fitted_photo_curve[1])
-photo_sine_vals = photo_sine_function(x_vals, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
+#photo_sine_vals = photo_sine_function(x_vals, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
+#photo_harmonic_vals = photo_harmonic_function(x_vals, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2], fitted_photo_curve[3], fitted_photo_curve[4], fitted_photo_curve[5], fitted_photo_curve[6], fitted_photo_curve[7], fitted_photo_curve[8])
+#photo_harmonic_vals = photo_harmonic_function(x_vals, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2], fitted_photo_curve[3], fitted_photo_curve[4])
+photo_harmonic_vals = photo_harmonic_function(x_vals, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
 
+
+
+harmonic_strings = make_value_strings(fitted_photo_curve, fitted_photo_cov)
 
 
 #### RVs 
@@ -196,7 +231,8 @@ ax3 = plt.subplot2grid((6,1), (3, 0), rowspan=2)
 ax3.axhline(y= fitted_photo_curve[0], color = 'r', linestyle = ':', alpha = 0.4, label= str(np.round(fitted_photo_curve[0],precision)))
 ax3.errorbar(photo_folded_times, photometry_flux, photometry_error, color = 'b', label = '4/22/18', linestyle= 'None', marker = 'o')
 #ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
-ax3.plot(x_vals, photo_sine_vals, color = 'k', linestyle = '--', label = 'Model')
+#ax3.plot(x_vals, photo_sine_vals, color = 'k', linestyle = '--', label = 'Model')
+ax3.plot(x_vals, photo_harmonic_vals, color = 'k', linestyle = '--', label = 'Model')
 ax3.set_xticklabels([])
 ax3.set_xlim([0,1])
 #ax3.set_xlabel('Phase')
@@ -204,8 +240,13 @@ ax3.set_ylabel('Normalized Flux')
 #ax3.set_title(str(np.round(1.4/all_mratio,precision)) + ' M_sun companion assuming 1.4Msun NS')
 props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 #text_string =  r'$A =$ ' +str(np.round(fitted_photo_curve[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_photo_cov[1,1]),precision)) + '' +'\n'+ r'$b=$' +str(np.round(fitted_photo_curve[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_photo_cov[0,0]),precision))+ ''
-text_string =  r'$A =$ ' +str(np.round(fitted_photo_curve[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_photo_cov[1,1]),precision)) + '' +'\n'+ r'$b=$' +str(np.round(fitted_photo_curve[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_photo_cov[0,0]),precision))+ '' + '\n' + 'phase = ' + str(np.round(fitted_photo_curve[2], precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_photo_cov[2,2]), precision))
-ax3.text(0.2, 0.05,text_string, transform=ax3.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
+#text_string =  r'$A =$ ' +str(np.round(fitted_photo_curve[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_photo_cov[1,1]),precision)) + '' +'\n'+ r'$b=$' +str(np.round(fitted_photo_curve[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_photo_cov[0,0]),precision))+ '' + '\n' + 'phase = ' + str(np.round(fitted_photo_curve[2], precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_photo_cov[2,2]), precision))
+#text_string =  harmonic_strings[1] + r'$*\sin(2*\pi*t + $' +harmonic_strings[5]+ r'$) +$' + harmonic_strings[2] + r'$*\cos(2*\pi*t + $' +harmonic_strings[6] +  r'$) +$' + harmonic_strings[3]+ r'$*\sin(4*\pi*t + $' +harmonic_strings[7]+  r'$) +$ ' + harmonic_strings[4] + r'$*\cos(4*\pi*t + $'+ harmonic_strings[8]+ r'$) + $' + harmonic_strings[0]
+#text_string =  harmonic_strings[1] + r'$*\sin(2*\pi*t/P) +$' + harmonic_strings[2] + r'$*\cos(2*\pi*t/P) +$' + harmonic_strings[3]+ r'$*\sin(4*\pi*t/P) +$ ' + harmonic_strings[4] + r'$*\cos(4*\pi*t/P) + $' + harmonic_strings[0]
+text_string =   harmonic_strings[1] + r'$*\cos(2*\pi*t/P) +$' + harmonic_strings[2] + r'$*\cos(4*\pi*t/P) + $' + harmonic_strings[0]
+#ax3.text(0.2, 0.05,text_string, transform=ax3.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
+ax3.text(0.05, 0.05,text_string, transform=ax3.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
+
 ax3.legend()
 
 #plt.subplots_adjust(wspace = 0, hspace = 0, top = 0.95, bottom = 0.05, left = 0.05, right = 0.95)
