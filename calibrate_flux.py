@@ -69,10 +69,11 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     sens_curve_coeffs = np.genfromtxt(sens_curve_file)
     i= fits.open(target_file)
     header = fits.getheader(target_file)
+    exptime = header['EXPTIME']
     wavelengths= i[0].data
-    counts = i[1].data
-    bkg_counts = i[2].data
-    noise_spec = i[3].data
+    counts = i[1].data/np.float_(exptime) #need counts/second
+    bkg_counts = i[2].data/np.float_(exptime) #need counts/second
+    noise_spec = i[3].data #don't need to divide this by the exposure time since it's normalized already in proportion to whatever units we use.
     #noise_spec = bad_noise_vals(noise_spec) #remove negative noise values and exceedingly high ones
     sens_curve = np.polyval(sens_curve_coeffs,wavelengths)
     flux = counts/sens_curve
