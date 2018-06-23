@@ -108,7 +108,7 @@ tconj= Time(55756.21712, format = 'mjd', scale ='utc', location = parkes_locatio
 all_array = np.genfromtxt(rv_file, names = True, delimiter= ',')
 bmjd_array = all_array['TimesBMJD_TDB']
 rv_array = all_array['RV_kms']
-
+sigma_array = all_array['Sigma_kms']+0.5
 
 #all_arrayB = np.genfromtxt('rv_plotB.txt', names = True, delimiter= ',')
 #bmjd_arrayB = all_arrayB['TimesBMJD_TDB']
@@ -145,7 +145,8 @@ photo_residuals = photometry_flux - photo_harmonic_function(photo_folded_times, 
 
 coeffs = fitted_photo_curve
 
-fitted_curve_all, fitted_cov_all = sciop.curve_fit(sine_function, folded_times, rv_array, p0= p0_list)
+#fitted_curve_all, fitted_cov_all = sciop.curve_fit(sine_function, folded_times, rv_array, p0= p0_list)
+fitted_curve_all, fitted_cov_all = sciop.curve_fit(sine_function, folded_times, rv_array, sigma = sigma_array, p0= p0_list)
 residuals = rv_array- sine_function(folded_times, fitted_curve_all[0], fitted_curve_all[1])
 print fitted_curve_all
 
@@ -183,8 +184,8 @@ fig = plt.figure()
 ax = plt.subplot2grid((6, 1), (0,0), rowspan = 2)
 ax.axhline(y= fitted_curve_all[0], color = 'r', linestyle = ':', alpha = 0.4, label= str(np.round(fitted_curve_all[0],precision))+' km/s')
 #ax.scatter(folded_times, rv_array, color = 'b', label = '3/18/18')
-ax.plot(folded_times, rv_array, color = 'b', marker = 'o', linestyle = 'none', label = '3/18/18')
-
+#ax.plot(folded_times, rv_array, color = 'b', marker = 'o', linestyle = 'none', label = '3/18/18')
+ax.errorbar(folded_times, rv_array, yerr= sigma_array, color = 'b', marker = 'o', linestyle = 'none', label = '3/18/18')
 #ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
 ax.plot(x_vals, sine_vals, color = 'k', linestyle = '--', label = 'Model')
 ax.set_xticklabels([])
@@ -206,7 +207,9 @@ ax.legend()
 ax2 =plt.subplot2grid((6,1), (2, 0), rowspan= 1)
 
 #ax2.scatter(folded_times, residuals, color = 'b', label = '3/18/18')
-ax2.plot(folded_times, residuals, color = 'b', label = '3/18/18', marker = 'o', linestyle = 'none')
+#ax2.plot(folded_times, residuals, color = 'b', label = '3/18/18', marker = 'o', linestyle = 'none')
+ax2.errorbar(folded_times, residuals, yerr= sigma_array, color = 'b', label = '3/18/18', marker = 'o', linestyle = 'none')
+
 #ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
 #ax.plot(x_vals, sine_vals, color = 'k', linestyle = '--', label = 'Model')
 #ax2.plot(x_vals, np.zeros(x_vals.shape), color = 'k', linestyle = '--', label = 'Model')
@@ -228,7 +231,7 @@ ax2.set_ylabel('Residuals (km/s)')
 #fig = plt.figure()
 #ax3 = fig.add_subplot(313)
 ax3 = plt.subplot2grid((6,1), (3, 0), rowspan=2)
-ax3.axhline(y= fitted_photo_curve[0], color = 'r', linestyle = ':', alpha = 0.4, label= str(np.round(fitted_photo_curve[0],precision)))
+ax3.axhline(y= fitted_photo_curve[0], color = 'r', linestyle = ':', alpha = 0.4, label= str(np.round(fitted_photo_curve[0],precision2)))
 ax3.errorbar(photo_folded_times, photometry_flux, photometry_error, color = 'b', label = '4/22/18', linestyle= 'None', marker = 'o')
 #ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
 #ax3.plot(x_vals, photo_sine_vals, color = 'k', linestyle = '--', label = 'Model')

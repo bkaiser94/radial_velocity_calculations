@@ -15,8 +15,9 @@ from astropy import units as u
 from astropy import constants as const
 from astropy import convolution as conv
 import scipy.interpolate as scinterp
-
-
+import time
+start = time.time()
+#print start
 import wdatmos
 import spec_plot_tools as spt
 
@@ -38,6 +39,8 @@ slit_width = slit_width/pixel_scale #slit width in pixels
 
 plot_fit = False
 
+mc_jump = 1 #number of layers of velocity grid to skip for the Monte Carlo evaluation. Probably want to be >0
+num_mc = 100 #number of randomized spectra to produce for each target spectrum
 poly_degree = 5
 
 first_conv_bin = 0.1 #width in angstroms of the first interpolation of the model to then be used in the convolution.
@@ -130,6 +133,14 @@ target_continuum_list = [[3861,3864],
 
 
 ######
+
+def find_time_difference(begin, end):
+    difference = end-begin
+    hours = int(difference) / 3600
+    minutes = int(difference%3600)/60
+    seconds = difference%60
+    print "Runtime: ", hours, 'h', minutes, 'm', seconds, 's'
+
 def make_velocity_grid(velocity_center, velocity_step, prev_velocity_step, overlap_radius= overlap_radius):
 #def make_velocity_grid(velocity_center, velocity_step, velocity_grid_radius= velocity_grid_radius):
     """
@@ -249,10 +260,12 @@ def make_rest_spectrum(filename, radial_velocity):
 
 
 #model_spec = spt.poly_norm_spec(model_spec, poly_degree= poly_degree)
-
-
-def fit_rv(target_file):
-    return
+def remove_bad_noise(target_spec, noise_spec, scaled_noise):
+    """
+    Basically, this just takes the values from the spectrum where the noise was scaled to be negative for 
+    whatever reason and reassigns them as a positive value that is really large so that they are ignored in chi-
+    squared fitting. 
+    """
 
 def minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_center, velocity_tests, plot_fit = False):
     """
@@ -281,7 +294,45 @@ def minimize_velocity(model_spec, target_spec, noise_spec, target_header, veloci
         plt.plot(new_rv, new_dist,marker = 'o', linestyle ='none', color = 'r')
         plt.show()
     return new_rv
-    
+
+def iterate_MC(model_spec, target_file, original_rv):
+    target_spec, target_header, noise_spec = retrieve_target_spec(target_file) 
+    wave_vals = target_spec[0]
+    scaled_noise = np.copy(noise_spec[1]*target_spec[1])
+    scaled_noise = np.abs(scaled_noise)
+    mc_rvs = []
+    print np.sort(noise_spec[1])[:5]
+    print np.sort(scaled_noise)[:5]
+    for jindex in range(0, num_mc):
+        best_rv = original_rv
+        random_flux = np.random.normal(target_spec[1], scaled_noise)
+        random_spec = np.vstack([wave_vals, random_flux])
+        for index in range(1+mc_jump, len(velocity_step_list)):
+            prev_velocity_step = velocity_step_list[index-1]
+            velocity_step = velocity_step_list[index]
+            velocity_tests= make_velocity_grid(best_rv, velocity_step, prev_velocity_step)
+            if index == len(velocity_step_list)-1:
+                best_rv = minimize_velocity(model_spec, random_spec, noise_spec, target_header, best_rv, velocity_tests, plot_fit = plot_fit)
+            else:
+                best_rv = minimize_velocity(model_spec, random_spec, noise_spec, target_header, best_rv, velocity_tests, plot_fit = False)
+            #print "==========="
+            #print target_file, "best_rv: ", best_rv
+        if plot_fit:
+            test_model = np.copy(model_spec)
+            test_model[0]=get_doppler_shifted(test_model[0], best_rv)
+            test_model = convolve_model(test_model, random_spec, target_header)
+            dopp_cont_list= dopp_shift_continuum_list(best_rv)
+            #test_model = poly_norm_spec(test_model)
+            test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
+            test_model= spt.clean_spectrum(test_model, np.min(random_spec[0]), np.max(random_spec[0]), mask_list)
+            #norm_target_spec = spt.poly_norm_spec(target_spec, continuum_list = target_continuum_list, poly_degree = poly_degree)
+            plt.title("RV: " + str(best_rv) + str(" km/s ") + target_file)
+            plt.plot(random_spec[0], random_spec[1], color = 'b', label = "Target")
+            plt.plot(test_model[0], test_model[1], color = 'r', label = "Model")
+            plt.legend()
+            plt.show()
+        mc_rvs.append(best_rv)
+    return mc_rvs
 
 def iterate_resolutions(model_spec, target_file ):
     target_spec, target_header, noise_spec = retrieve_target_spec(target_file) 
@@ -319,15 +370,29 @@ def iterate_resolutions(model_spec, target_file ):
 
 rv_list = []
 time_list= []
+sigma_list = []
 for target_file in target_list:
+    very_begin = time.time()
+    begin = time.time()
     best_rv = iterate_resolutions(model_spec, target_file)
-    print "###############"
-    print target_file, " best_rv:", best_rv
-    print "###############"
+    end= time.time()
+    find_time_difference(begin, end)
     #i=fits.open(target_file)
+    begin= time.time()
+    mc_rvs = iterate_MC(model_spec, target_file, best_rv)
+    sigma = np.std(mc_rvs)
+    end = time.time()
+    find_time_difference(begin,end)
+    print "###############"
+    print target_file, " best_rv:", best_rv, '+/-', sigma
+    very_end = time.time()
+    find_time_difference(very_begin, very_end)
+    print "###############"
     header = fits.getheader(target_file)
     rv_list.append(best_rv)
     time_list.append(header['BMJD_TDB'])
+    sigma_list.append(sigma)
+    
     #target_spec, target_header = retrieve_target_spec(target_file) #first spectrum in the list for testing.
     ##rv_dist_list=[]
     #velocity_tests = make_velocity_grid(velocity_center, velocity_step_list[0], velocity_grid_radius = velocity_grid_radius)
@@ -354,13 +419,33 @@ for target_file in target_list:
     
 rv_array = np.array(rv_list)
 time_array = np.array(time_list)
+sigma_array = np.array(sigma_list)
 print rv_array
 print time_array
+stop = time.time()
 
-plt.scatter(time_array, rv_array)
+print "Start:", start
+print "Stop:", stop
+#difference = stop-start
+
+#print "Difference: ", stop-start
+find_time_difference(start,stop)
+print "\n#################"
+print "Scaled noise has absolute value used, so that needs to be fixed"
+print "##################\n"
+#plt.scatter(time_array, rv_array)
+plt.errorbar(time_array, rv_array, yerr = sigma_array, color = 'b', marker= 'o', linestyle='none')
 plt.ylabel('RV (km/s)')
 plt.xlabel("BMJD_TDB")
 plt.show()
 
-out_array = np.vstack([time_array,rv_array])
-np.savetxt('rv_plot.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s)')
+out_array = np.vstack([time_array,rv_array, sigma_array])
+np.savetxt('rv_plot.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
+
+#print "Difference: ", stop-start
+#hours = int(difference) / 3600
+#minutes = int(difference%3600)/60
+#seconds = difference%60
+
+#print "Runtime: ", hours, 'h', minutes, 'm', seconds, 's'
+
