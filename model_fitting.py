@@ -116,19 +116,34 @@ continuum_list = [[3809,3812],
                   #[5045,5070],
                   #[5110,5130]]
 
-target_continuum_list = [[3861,3864],
-                  [3900,3915],
-                  [4014,4034],
-                  [4183, 4214],
-                  [4589,4608],
-                  [4645,4680],
-                  [4740,4760],
-                  [4930,4935],
-                  [5045,5070],
-                  [5110,5130],
-                  [5187,5192]]
+#target_continuum_list = [[3861,3864],
+                  #[3900,3915],
+                  #[4014,4034],
+                  #[4183, 4214],
+                  #[4589,4608],
+                  #[4645,4680],
+                  #[4740,4760],
+                  #[4930,4935],
+                  #[5045,5070],
+                  #[5110,5130],
+                  #[5187,5192]]#old one before 2018-07-01
+                  
+                  
 
+#target_continuum_list = [[3814,3820],
+                #[3863,3870],
+                #[3909,3924],
+                #[4014,4034],
+                #[4183, 4214],
+                #[4589,4608],
+                #[4645,4680],
+                #[4740,4760],
+                #[4930,4935],
+                #[5045,5070],
+                #[5110,5130],
+                #[5187,5192]]
 
+target_continuum_list= continuum_list
 
 
 ######
@@ -166,7 +181,9 @@ print target_file
 #header = fits.getheader(target_file)
 #target_waves= i[0].data
 #target_flux = i[1].data
-
+target_spec, header, noise_spec = spt.retrieve_spec('combined_PSRJ1431m4715.fits')
+target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
 #######
 
 def get_doppler_shifted(wavelengths, radial_velocity):
@@ -245,7 +262,7 @@ def plot_overlays_convolve(spec1, spec2, model_string = 'model'):
     plt.legend(numpoints=1, fontsize=14, loc='best' )
     plt.xlabel(r'Wavelength ($\AA$)')
     plt.ylabel('Flux (cgs units)')
-    plt.title(target_file )
+    #plt.title(target_file )
     plt.show()
     return ''
 

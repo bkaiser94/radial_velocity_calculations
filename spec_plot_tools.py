@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from astropy.io import fits
 
 def trim_spec(input_spec, min_wave, max_wave):
     lower_indices = np.where(input_spec[0]< max_wave)
@@ -104,4 +105,23 @@ def poly_norm_spec(input_spec, continuum_list = [], poly_degree = 3, plot_all  =
     poly_vals = np.polyval(poly_coeffs, input_spec[0])
     input_spec[1]= np.float_(input_spec[1])/poly_vals
     return input_spec
+
+
+
+def retrieve_spec(filename):
+    """
+    Input: filename for the target spectrum you want to get
+    
+    Output: Spectrum made of a 2xN numpy array, header of the fits file you loaded it from
+    """
+    #print filename
+    i=fits.open(filename)
+    header = fits.getheader(filename)
+    file_waves= i[0].data
+    file_flux = i[1].data
+    file_noise = i[3].data
+    file_spec = np.vstack([file_waves, file_flux])
+    file_noise_spec = np.vstack([file_waves, file_noise])
+    file_noise_spec[1] = file_spec[1]*file_noise_spec[1]
+    return file_spec, header, file_noise_spec
 
