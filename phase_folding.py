@@ -25,6 +25,8 @@ parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 28
 cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 c= 2.998E8 *u.m/u.s
 
+output_filename = "model_rvs.txt"
+
 #open one of the original files and get the RA and Dec from it
 listnames = np.genfromtxt('listFWCTB', dtype ='str')
 filename = listnames[0]
@@ -151,6 +153,13 @@ fitted_curve_all, fitted_cov_all = sciop.curve_fit(sine_function, folded_times, 
 residuals = rv_array- sine_function(folded_times, fitted_curve_all[0], fitted_curve_all[1])
 print fitted_curve_all
 
+####
+model_rvs = sine_function(folded_times, fitted_curve_all[0], fitted_curve_all[1])
+output_array = np.vstack([bmjd_array, model_rvs]).T
+print "Saving model RV's"
+np.savetxt(output_filename, output_array, delimiter= '\t', header= 'TimesBMJD_TDB\tRV_kms')
+
+#####
 
 def get_mass_ratio(K_c, P_B, x_psr):
     """
