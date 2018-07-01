@@ -1,0 +1,60 @@
+
+import numpy as np
+import os
+from glob import glob
+import matplotlib.pyplot as plt
+#from astropy.io import fits
+import sys
+from astropy.time import Time
+import astropy.coordinates as coord
+import astropy.units as u
+from astropy.units import cds
+import astropy.constants as const
+cds.enable()
+#plt.rc('font', size =18)
+#plt.rc('lines', markersize=12)
+plt.rc('font', size = 12)
+plt.rc('lines', markersize = 12)
+
+precision  = 3
+
+P_orbital = 1.354885217 *u.day  #PSR J1435-6100
+#q= 0.90/1.35 #inclination 90 
+q= 1.35/0.90
+
+def mass_function(m1, m2, inclination):
+    return (m2*np.sin(inclination))**3 / (m1+m2)**2
+#def get_m2(f, 
+print const.G.to(u.Rsun**3/(u.Msun * u.day**2))
+def get_roche_lobe(m_ns, P, q):
+    #first_term = (m_ns.si * P.si**2 * const.G.si*(1+q)/(4*np.pi**2))**(1./3)
+    first_term = (m_ns.si * P.si**2 * const.G.si*(1+1/q)/(4*np.pi**2))**(1./3)
+    second_term = (0.49*q**(-2./3))/(0.6*q**(-2./3)+np.log(1+q**(-1./3)))
+    return (first_term*second_term).to(u.Rsun)
+
+
+
+m_ns_range = np.linspace(1,3.4, 1000)*u.Msun
+
+roche_lobes = get_roche_lobe(m_ns_range, P_orbital, q)
+
+
+plt.plot(m_ns_range, roche_lobes)
+plt.xlabel(r"$M_{NS} (M_{\odot})$")
+plt.ylabel(r"$R_L(R_{\odot})$" )
+plt.title("Roche Lobe vs. Neutron Star Mass for Period=" + str(np.round(P_orbital, precision)) + " , q=" + str(np.round(q,precision)) + r" , and $i= 90\degree$")
+
+plt.show()
+
+plt.plot(m_ns_range*q, roche_lobes)
+plt.xlabel(r"$M_{comp} (M_{\odot})$")
+plt.title("Roche Lobe vs. Companion Star Mass for Period=" + str(np.round(P_orbital, precision)) + " , q=" + str(np.round(q,precision)) + r" , and $i= 90\degree$")
+
+plt.ylabel(r"$R_L(R_{\odot})$" )
+
+plt.show()
+
+
+
+
+

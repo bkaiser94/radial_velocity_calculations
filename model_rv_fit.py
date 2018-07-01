@@ -21,6 +21,11 @@ start = time.time()
 import wdatmos
 import spec_plot_tools as spt
 
+#plt.rc('font', size =18)
+#plt.rc('lines', markersize=12)
+#plt.rc('font', size = 12)
+#plt.rc('lines', markersize = 12)
+
 
 teff = 7250
 logg = 5.25

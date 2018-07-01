@@ -11,9 +11,9 @@ from astropy.units import cds
 import scipy.stats as scistats
 import scipy.optimize as sciop
 cds.enable()
-#plt.rc('font', size =18)
+plt.rc('font', size =18)
 #plt.rc('lines', markersize=12)
-plt.rc('font', size = 11)
+#plt.rc('font', size = 11)
 plt.rc('lines', markersize = 5)
 plotting_offset = 0.0005
 #p0_list = [-100, 300, 0]
@@ -33,7 +33,8 @@ header = fits.getheader(filename)
 ra = header['RA']
 dec = header['DEC']
 target_coord = coord.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
-rv_file = 'rv_plot.txt'
+#rv_file = 'rv_plot.txt'
+rv_file = 'rv_plot_filled_in.txt'
 photometry_t0 = 2458231.5950237 #BJD_TDB, so need to convert to MJD
 photometry_t0= Time(photometry_t0, format = 'jd', scale = 'tdb')
 photometry_file = 'psrj1431m4715_lightcurve.dat'
@@ -182,7 +183,9 @@ harmonic_strings = make_value_strings(fitted_photo_curve, fitted_photo_cov)
 fig = plt.figure()
 #ax = fig.add_subplot(311)
 ax = plt.subplot2grid((6, 1), (0,0), rowspan = 2)
-ax.axhline(y= fitted_curve_all[0], color = 'r', linestyle = ':', alpha = 0.4, label= str(np.round(fitted_curve_all[0],precision))+' km/s')
+#ax.axhline(y= fitted_curve_all[0], color = 'r', linestyle = ':', alpha = 0.4, label= str(np.round(fitted_curve_all[0],precision))+' km/s')
+ax.axhline(y= fitted_curve_all[0], color = 'r', linestyle = ':', alpha = 1, label= str(np.round(fitted_curve_all[0],precision))+' km/s')
+
 #ax.scatter(folded_times, rv_array, color = 'b', label = '3/18/18')
 #ax.plot(folded_times, rv_array, color = 'b', marker = 'o', linestyle = 'none', label = '3/18/18')
 ax.errorbar(folded_times, rv_array, yerr= sigma_array, color = 'b', marker = 'o', linestyle = 'none', label = '3/18/18')
@@ -192,10 +195,12 @@ ax.set_xticklabels([])
 ax.set_xlim([0,1])
 #ax.set_xlabel('Phase')
 ax.set_ylabel('RV (km/s)')
-ax.set_title(str(np.round(1.4/all_mratio,precision)) + ' M_sun companion assuming 1.4Msun NS')
+ax.set_title(str(np.round(1.4/all_mratio,precision2)) + ' M_sun companion assuming 1.4Msun NS')
 props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 text_string =  r'$K_c =$ ' +str(np.round(fitted_curve_all[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_cov_all[1,1]),precision)) + 'km/s' +'\n'+ r'$v_{sys}=$' +str(np.round(fitted_curve_all[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_cov_all[0,0]),precision))+ ' km/s'
-ax.text(0.2, 0.05,text_string, transform=ax.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
+#ax.text(0.2, 0.05,text_string, transform=ax.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
+ax.text(0.2, 0.05,text_string, transform=ax.transAxes, verticalalignment='bottom', bbox=props)
+
 ax.legend()
 
 #plt.show()
@@ -217,7 +222,9 @@ ax2.axhline(y=0, color = 'k', linestyle = '--')
 ax2.set_xticklabels([])
 ax2.set_xlim([0,1])
 #ax2.set_xlabel('Phase')
-ax2.set_ylabel('Residuals (km/s)')
+#ax2.set_ylabel('Residuals (km/s)')
+ax2.set_ylabel('Residuals')
+
 #ax2.set_title(str(np.round(1.4/all_mratio,precision)) + ' M_sun companion assuming 1.4Msun NS')
 #props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 #text_string =  r'$K_c =$ ' +str(np.round(fitted_curve_all[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_cov_all[1,1]),precision)) + 'km/s' +'\n'+ r'$v_{sys}=$' +str(np.round(fitted_curve_all[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_cov_all[0,0]),precision))+ ' km/s'
@@ -231,7 +238,9 @@ ax2.set_ylabel('Residuals (km/s)')
 #fig = plt.figure()
 #ax3 = fig.add_subplot(313)
 ax3 = plt.subplot2grid((6,1), (3, 0), rowspan=2)
-ax3.axhline(y= fitted_photo_curve[0], color = 'r', linestyle = ':', alpha = 0.4, label= str(np.round(fitted_photo_curve[0],precision2)))
+#ax3.axhline(y= fitted_photo_curve[0], color = 'r', linestyle = ':', alpha = 0.4, label= str(np.round(fitted_photo_curve[0],precision2)))
+ax3.axhline(y= fitted_photo_curve[0], color = 'r', linestyle = ':', alpha = 1, label= str(np.round(fitted_photo_curve[0],precision2)))
+
 ax3.errorbar(photo_folded_times, photometry_flux, photometry_error, color = 'b', label = '4/22/18', linestyle= 'None', marker = 'o')
 #ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
 #ax3.plot(x_vals, photo_sine_vals, color = 'k', linestyle = '--', label = 'Model')
@@ -246,9 +255,12 @@ props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 #text_string =  r'$A =$ ' +str(np.round(fitted_photo_curve[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_photo_cov[1,1]),precision)) + '' +'\n'+ r'$b=$' +str(np.round(fitted_photo_curve[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_photo_cov[0,0]),precision))+ '' + '\n' + 'phase = ' + str(np.round(fitted_photo_curve[2], precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_photo_cov[2,2]), precision))
 #text_string =  harmonic_strings[1] + r'$*\sin(2*\pi*t + $' +harmonic_strings[5]+ r'$) +$' + harmonic_strings[2] + r'$*\cos(2*\pi*t + $' +harmonic_strings[6] +  r'$) +$' + harmonic_strings[3]+ r'$*\sin(4*\pi*t + $' +harmonic_strings[7]+  r'$) +$ ' + harmonic_strings[4] + r'$*\cos(4*\pi*t + $'+ harmonic_strings[8]+ r'$) + $' + harmonic_strings[0]
 #text_string =  harmonic_strings[1] + r'$*\sin(2*\pi*t/P) +$' + harmonic_strings[2] + r'$*\cos(2*\pi*t/P) +$' + harmonic_strings[3]+ r'$*\sin(4*\pi*t/P) +$ ' + harmonic_strings[4] + r'$*\cos(4*\pi*t/P) + $' + harmonic_strings[0]
-text_string =   harmonic_strings[1] + r'$*\cos(2*\pi*t/P) +$' + harmonic_strings[2] + r'$*\cos(4*\pi*t/P) + $' + harmonic_strings[0]
+#text_string =   harmonic_strings[1] + r'$*\cos(2*\pi*t/P) +$' + harmonic_strings[2] + r'$*\cos(4*\pi*t/P) + $' + harmonic_strings[0]
+text_string =   "F= " + harmonic_strings[1] + r'$*\cos(2*\pi*t/P) +$' + harmonic_strings[2] + r'$*\cos(4*\pi*t/P) + $' + harmonic_strings[0]
+
 #ax3.text(0.2, 0.05,text_string, transform=ax3.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
-ax3.text(0.05, 0.05,text_string, transform=ax3.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
+#ax3.text(0.05, 0.05,text_string, transform=ax3.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
+ax3.text(0.05, 0.05,text_string, transform=ax3.transAxes, verticalalignment='bottom', bbox=props)
 
 ax3.legend()
 
@@ -277,7 +289,7 @@ ax4.set_ylabel('Residuals')
 #text_string =  r'$K_c =$ ' +str(np.round(fitted_curve_all[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_cov_all[1,1]),precision)) + 'km/s' +'\n'+ r'$v_{sys}=$' +str(np.round(fitted_curve_all[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_cov_all[0,0]),precision))+ ' km/s'
 #ax.text(0.05, 0.05,text_string, transform=ax.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
 #ax.legend()
-plt.subplots_adjust(wspace = 0, hspace = 0, top = 0.95, bottom = 0.05, left = 0.05, right = 0.95)
+plt.subplots_adjust(wspace = 0, hspace = 0, top = 0.93, bottom = 0.07, left = 0.07, right = 0.93)
 
 plt.show()
 

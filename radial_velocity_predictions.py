@@ -36,9 +36,13 @@ parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 28
 cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
 #times = ['2018-03-19T02:19:00', '2018-03-19T10:11:00']
-times =['2018-04-23T02:00:00','2018-04-23T10:20:00']
+#times =['2018-04-23T02:00:00','2018-04-23T10:20:00']
 #times =['2018-04-24T02:00:00','2018-04-24T10:20:00']
 #times = ['2018-03-27T01:45:00', '2018-03-27T10:04:00']
+times =['2018-07-3T23:00:00','2018-07-04T06:20:00']
+#times =['2018-07-08T23:00:00','2018-07-09T06:00:00']
+
+
 obs_times= Time(times, format = 'isot', scale='utc', location = cerro_pachon_location)
 target_coord = coord.SkyCoord(ra, dec, unit= (u.deg, u.deg), frame= 'icrs')
 
@@ -46,37 +50,58 @@ def to_barycenter(input_times):
     bary_corr =input_times.tdb.light_travel_time(target_coord)
     return (input_times.tdb+ bary_corr.tdb).mjd
 
-
+q_value = 0.88/1.35
 lam_rest = 6562.81*u.angstrom #angstroms
 #m1 = (0.14 *u.Msun).si
 #m2 = (1.4 *u.Msun).si
-m1 = (1.4*u.Msun).si
+#m1 = (1.4*u.Msun).si
+m1= (1.4*u.Msun).si
 #m2 = (0.14*u.Msun).si #switched the masses to change the phase by 180 degrees.
-m2=( 1.58 *u.Msun).si
+#m2=( 1.58 *u.Msun).si
+m2 = (m1*q_value).si
 #m2 = (0.12*u.Msun).si #switched the masses to change the phase by 180 degrees.
 
+#e=1e-5
+e = 0.000010 #PSR J1435-6100
 #e = 0.000023# median
 #e = 0.000031# max
 #e=0.5
-e=0.0011494 #1227
-omega = 97 * u.degree
+#e=0.0011494 #1227
+#omega = 97 * u.degree
+#omega = 10 *u.degree #PSR J1435-6100
+omega = 4 *u.degree #PSR J1435-6100
+
 #period = (0.4497391377 * u.day).to(u.second) #median
 #period = (0.449739137 * u.day).to(u.second) #low
 #period = (0.4497391384 * u.day).to(u.second) #high
-period = (6.721013337  *u.day).to(u.second)# for a different target
+#period = (6.721013337  *u.day).to(u.second)# for a different target
+period = (1.354885217 *u.day).to(u.second)  #PSR J1435-6100
 
-t0 = Time(55756.23, format = 'mjd', scale= 'utc', location = parkes_location)
-tasc = Time(55756.1047771, format = 'mjd', scale= 'utc', location = parkes_location) #median
+#t0 = Time(55756.23, format = 'mjd', scale= 'utc', location = parkes_location)
+#tasc = Time(55756.1047771, format = 'mjd', scale= 'utc', location = parkes_location) #median
+##tasc = Time(55756.1047767, format = 'mjd', scale= 'utc', location = parkes_location) #min
+#tconj= Time(55756.21712, format = 'mjd', scale ='utc', location = parkes_location)
+
+#PSR J1435-6100
+#t0 = Time(55756.23, format = 'mjd', scale= 'utc', location = parkes_location)
+tasc = Time(51270.6084449, format = 'mjd', scale= 'utc', location = parkes_location) #median
 #tasc = Time(55756.1047767, format = 'mjd', scale= 'utc', location = parkes_location) #min
-tconj= Time(55756.21712, format = 'mjd', scale ='utc', location = parkes_location)
+#tconj= Time(55756.21712, format = 'mjd', scale ='utc', location = parkes_location)
 
+def get_tconj(tasc, pb, e, omega):
+    omega = omega.to(u.radian)
+    return tasc + pb/4. + 2*(e*np.cos(omega))/(2*np.pi/pb)
+
+tconj= get_tconj(tasc, period, e, omega)
+print "tconj: ", tconj
+print "tasc: ", tasc
 #epoch_difference = obs_times[0].mjd-tasc.mjd
 epoch_difference = obs_times[0].mjd-tconj.mjd
 print "epoch difference: ", epoch_difference
 
 
 bmjd_obs = to_barycenter(obs_times) #corrected to barycenter to use against the rv curve
-bmjd_t0 = to_barycenter(t0) #corrected initial epoch
+#bmjd_t0 = to_barycenter(t0) #corrected initial epoch
 bmjd_tasc= to_barycenter(tasc)
 bmjd_tconj = to_barycenter(tconj)
 
@@ -110,7 +135,7 @@ def x1(th,a,e,m1,m2):
 #set the range to plot
 th_max =(bmjd_obs[1]-nearest_time)/period.to(u.day).value*2*np.pi
 print ("max phase:", th_max)
-N= 3000
+N= 10000
 #th= np.linspace(0.,th_max,N)
 th= np.linspace(0, 4*np.pi, N)
 a_thing=get_a(period,m1,m2)
