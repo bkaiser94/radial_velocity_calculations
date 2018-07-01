@@ -27,8 +27,13 @@ import spec_plot_tools as spt
 #plt.rc('lines', markersize = 12)
 
 
+#teff = 7250
+#logg = 5.25
+
+
 teff = 7250
-logg = 5.25
+logg = 6.0
+
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
 model = wd(Teff = teff, logg = logg)
@@ -45,7 +50,8 @@ slit_width = slit_width/pixel_scale #slit width in pixels
 plot_fit = False
 
 mc_jump = 1 #number of layers of velocity grid to skip for the Monte Carlo evaluation. Probably want to be >0
-num_mc = 100 #number of randomized spectra to produce for each target spectrum
+#num_mc = 100 #number of randomized spectra to produce for each target spectrum
+num_mc = 1 #number of randomized spectra to produce for each target spectrum
 poly_degree = 5
 
 first_conv_bin = 0.1 #width in angstroms of the first interpolation of the model to then be used in the convolution.
@@ -449,7 +455,9 @@ plt.xlabel("BMJD_TDB")
 plt.show()
 
 out_array = np.vstack([time_array,rv_array, sigma_array])
-np.savetxt('rv_plot.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
+#np.savetxt('rv_plot.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)', overwrite=True)
+
+np.savetxt('rv_plot_second_iteration.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)', overwrite=True)
 
 #print "Difference: ", stop-start
 #hours = int(difference) / 3600
