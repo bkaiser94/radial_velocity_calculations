@@ -51,7 +51,7 @@ plot_fit = False
 
 mc_jump = 1 #number of layers of velocity grid to skip for the Monte Carlo evaluation. Probably want to be >0
 #num_mc = 100 #number of randomized spectra to produce for each target spectrum
-num_mc = 1 #number of randomized spectra to produce for each target spectrum
+num_mc = 2 #number of randomized spectra to produce for each target spectrum
 poly_degree = 5
 
 first_conv_bin = 0.1 #width in angstroms of the first interpolation of the model to then be used in the convolution.
@@ -281,6 +281,9 @@ def remove_bad_noise(target_spec, noise_spec, scaled_noise):
     whatever reason and reassigns them as a positive value that is really large so that they are ignored in chi-
     squared fitting. 
     """
+    return
+
+
 
 def minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_center, velocity_tests, plot_fit = False):
     """
@@ -439,6 +442,14 @@ print rv_array
 print time_array
 stop = time.time()
 
+
+out_array = np.vstack([time_array,rv_array, sigma_array])
+print "Saving the data... hopefull"
+#np.savetxt('rv_plot.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
+np.savetxt('rv_plot_second_iteration.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
+print "Saved the data"
+
+
 print "Start:", start
 print "Stop:", stop
 #difference = stop-start
@@ -453,11 +464,6 @@ plt.errorbar(time_array, rv_array, yerr = sigma_array, color = 'b', marker= 'o',
 plt.ylabel('RV (km/s)')
 plt.xlabel("BMJD_TDB")
 plt.show()
-
-out_array = np.vstack([time_array,rv_array, sigma_array])
-#np.savetxt('rv_plot.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)', overwrite=True)
-
-np.savetxt('rv_plot_second_iteration.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)', overwrite=True)
 
 #print "Difference: ", stop-start
 #hours = int(difference) / 3600
