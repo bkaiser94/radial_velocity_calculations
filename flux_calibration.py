@@ -19,6 +19,7 @@ import cosmics
 from astropy.time import Time
 from astropy import coordinates as coords
 from astropy import units as u
+import scipy.interp as scinterp
 
 
 import spec_plot_tools as spt
@@ -113,7 +114,9 @@ plt.legend()
 plt.show()
 
 plt.title('interpolated model versus standard model')
-interp_model_flux = np.interp(obs_waves1, stand_waves1, stand_flux1) #
+#interp_model_flux = np.interp(obs_waves1, stand_waves1, stand_flux1) #
+interpolator = scinterp.CubicSpline(stand_waves1, stand_flux1)
+interp_model_flux= interpolator(obs_waves1)
 plt.plot(obs_waves1, interp_model_flux, label = 'interpolated')
 plt.plot(stand_waves1, stand_flux1, label = 'model')
 plt.legend()

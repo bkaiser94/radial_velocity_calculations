@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
+percentile= 80
+
 def trim_spec(input_spec, min_wave, max_wave):
     lower_indices = np.where(input_spec[0]< max_wave)
     trimmed_waves= input_spec[0][lower_indices]
@@ -63,9 +65,14 @@ def get_med_val(input_spec, wave_range):
         sub_spec = sub_spec[:, :-1] #trim off the last point
     
     #med_val = np.nanmedian(sub_spec, axis =1)
-    med_flux = np.nanmedian(sub_spec[1])
+    #med_flux = np.nanmedian(sub_spec[1])
+    med_flux = np.percentile(sub_spec[1], percentile)
     med_index = np.where(sub_spec[1] == med_flux)[0]
-    med_wave = sub_spec[0, med_index][0]
+    try:
+        med_wave = sub_spec[0, med_index][0]
+    except IndexError:
+        min_index = np.argmin(np.abs(med_flux-sub_spec[1]))
+        med_wave = sub_spec[0][min_index]
     med_val =[med_wave, med_flux]
     #print med_val
     return med_val
@@ -125,3 +132,21 @@ def retrieve_spec(filename):
     file_noise_spec[1] = file_spec[1]*file_noise_spec[1]
     return file_spec, header, file_noise_spec
 
+def rescale_spectrum(input_spec, reference_spec, scale_range):
+    input_value = get_med_val(input_spec, scale_range)[1]
+    reference_value = get_med_val(reference_spec, scale_range)[1]
+    scale_factor = reference_value/np.float_(input_value)
+    input_spec[1] = input_spec[1]*scale_factor
+    return input_spec
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
