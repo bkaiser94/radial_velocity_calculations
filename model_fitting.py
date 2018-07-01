@@ -244,8 +244,8 @@ def plot_overlays(spec1, spec2, model_string = 'model'):
     #plt.plot(spec2[0], spec2[1], label = model_string, linestyle ='none', marker = 'o')
     plt.legend(numpoints=1, fontsize=14, loc='best' )
     plt.xlabel(r'Wavelength ($\AA$)')
-    plt.ylabel('Flux (cgs units)')
-    plt.title(target_file )
+    plt.ylabel('Flux (Arbitrary Units)')
+    #plt.title(target_file )
     plt.show()
     return ''
 
@@ -254,14 +254,15 @@ def plot_overlays_convolve(spec1, spec2, model_string = 'model'):
     plt.plot(spec1[0], conv.convolve(spec1[1], conv.Gaussian1DKernel(3)), label = 'observed convolved')
     #plt.errorbar(spec1[0],spec1[1], yerr = errors[1], label='observed')
     #spec2conv = conv.convolve(spec2[1], conv.convolve(conv.Gaussian1DKernel(2.2), conv.Gaussian1DKernel(3)))
-    spec2conv =conv.convolve( conv.convolve(spec2[1], conv.Gaussian1DKernel(2.2)), conv.Gaussian1DKernel(5))
+    #spec2conv =conv.convolve( conv.convolve(spec2[1], conv.Gaussian1DKernel(2.2)), conv.Gaussian1DKernel(5))
+    spec2conv =conv.convolve(spec2[1], conv.Gaussian1DKernel(3))
     #plt.plot(spec2[0], spec2[1], label= model_string, color = 'r')
     plt.plot(spec2[0], spec2conv, label = model_string)
     #plt.plot(spec2[0], spec2conv, label = model_string, linestyle ='none', marker = 'o')
 
     plt.legend(numpoints=1, fontsize=14, loc='best' )
     plt.xlabel(r'Wavelength ($\AA$)')
-    plt.ylabel('Flux (cgs units)')
+    plt.ylabel('Flux (Arbitrary Units)')
     #plt.title(target_file )
     plt.show()
     return ''
