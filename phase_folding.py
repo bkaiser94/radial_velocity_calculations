@@ -36,7 +36,9 @@ ra = header['RA']
 dec = header['DEC']
 target_coord = coord.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
 #rv_file = 'rv_plot.txt'
-rv_file = 'rv_plot_filled_in.txt'
+#rv_file = 'rv_plot_filled_in.txt'
+rv_file = 'rv_plot_second_iteration.txt'
+
 photometry_t0 = 2458231.5950237 #BJD_TDB, so need to convert to MJD
 photometry_t0= Time(photometry_t0, format = 'jd', scale = 'tdb')
 photometry_file = 'psrj1431m4715_lightcurve.dat'

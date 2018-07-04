@@ -32,12 +32,18 @@ def get_roche_lobe(m_ns, P, q):
     second_term = (0.49*q**(-2./3))/(0.6*q**(-2./3)+np.log(1+q**(-1./3)))
     return (first_term*second_term).to(u.Rsun)
 
-
+def get_mean_density(period):
+    """
+    return the mean density in g cm^-3
+    """
+    return 107*(period.to(u.hour).value)**(-2)
 
 m_ns_range = np.linspace(1,3.4, 1000)*u.Msun
 
 roche_lobes = get_roche_lobe(m_ns_range, P_orbital, q)
 
+print "Mean density: ", get_mean_density(P_orbital) , " g/cm^3"
+print 0.88/1.35
 
 plt.plot(m_ns_range, roche_lobes)
 plt.xlabel(r"$M_{NS} (M_{\odot})$")

@@ -39,8 +39,8 @@ cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41),
 #times =['2018-04-23T02:00:00','2018-04-23T10:20:00']
 #times =['2018-04-24T02:00:00','2018-04-24T10:20:00']
 #times = ['2018-03-27T01:45:00', '2018-03-27T10:04:00']
-times =['2018-07-3T23:00:00','2018-07-04T06:20:00']
-#times =['2018-07-08T23:00:00','2018-07-09T06:00:00']
+#times =['2018-07-3T22:30:00','2018-07-04T06:10:00']
+times =['2018-07-08T23:00:00','2018-07-09T06:00:00']
 
 
 obs_times= Time(times, format = 'isot', scale='utc', location = cerro_pachon_location)
