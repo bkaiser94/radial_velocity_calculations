@@ -80,6 +80,22 @@ def photo_harmonic_function(times, zeropoint, B, D):
 
 
 
+def calc_chi_square(obs, sigmas, model):
+    return np.sum((obs-model)**2/(sigmas**2))
+
+def calc_red_chi_square(obs, sigmas, model, dof = 0):
+    print "degrees of freedom", obs.shape[0]-dof
+    return calc_chi_square(obs, sigmas, model)/np.float_(obs.shape[0]- dof)
+
+def rescale_errors(red_chi_square, sigmas):
+    """
+    We're supposed to make chi-square equal to one, so we have to resize the errors to make that so.
+    
+    """
+    return np.sqrt(red_chi_square)*sigmas
+
+
+
 def make_value_strings(fitted_coeffs, fitted_cov):
     diagonals = []
     for i in range(fitted_cov.shape[0]):
@@ -113,7 +129,7 @@ tconj= Time(55756.21712, format = 'mjd', scale ='utc', location = parkes_locatio
 all_array = np.genfromtxt(rv_file, names = True, delimiter= ',')
 bmjd_array = all_array['TimesBMJD_TDB']
 rv_array = all_array['RV_kms']
-sigma_array = all_array['Sigma_kms']+0.5
+sigma_array = all_array['Sigma_kms']
 
 #all_arrayB = np.genfromtxt('rv_plotB.txt', names = True, delimiter= ',')
 #bmjd_arrayB = all_arrayB['TimesBMJD_TDB']
@@ -147,6 +163,7 @@ print fitted_photo_curve
 #photo_residuals = photometry_flux - photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2], fitted_photo_curve[3], fitted_photo_curve[4])
 photo_residuals = photometry_flux - photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
 
+model_photo_vals = photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
 
 coeffs = fitted_photo_curve
 
@@ -163,6 +180,34 @@ np.savetxt(output_filename, output_array, delimiter= '\t', header= 'TimesBMJD_TD
 
 #####
 
+
+
+print "RV chi-squared:"
+rv_red_chi_sq = calc_red_chi_square(rv_array, sigma_array, model_rvs, dof=2)
+print rv_red_chi_sq
+new_rv_sigma = rescale_errors(rv_red_chi_sq, sigma_array)
+new_rv_red_chi_sq= calc_red_chi_square(rv_array, new_rv_sigma, model_rvs, dof=2)
+print new_rv_red_chi_sq
+
+####I'm going to redefine the error array of the radial velocities to use the revised sigma values
+sigma_array = new_rv_sigma
+
+##########
+
+print "photo chi-squared:"
+photo_red_chi_sq = calc_red_chi_square(photometry_flux,photometry_error,model_photo_vals, dof=2)
+print photo_red_chi_sq
+new_photo_sigma = rescale_errors(photo_red_chi_sq, photometry_error)
+new_photo_red_chi_sq= calc_red_chi_square(photometry_flux, new_photo_sigma, model_photo_vals, dof=2)
+print new_photo_red_chi_sq
+
+####I'm going to redefine the error array of the radial velocities to use the revised sigma values
+sigma_array = new_rv_sigma
+photometry_error= new_photo_sigma
+
+
+
+#####################
 def get_mass_ratio(K_c, P_B, x_psr):
     """
     Mass ratio M_psr/M_companion
@@ -173,7 +218,7 @@ def get_mass_ratio(K_c, P_B, x_psr):
 period_wunits = period*u.day
 
 all_mratio= get_mass_ratio(fitted_curve_all[1]*(u.km/u.second),period_wunits, x_psr)
-
+print "q=", all_mratio
 x_vals = np.linspace(0,1,1000)
 #sine_vals = sine_function(x_vals, fitted_curve_all[0], fitted_curve_all[1], fitted_curve_all[2])
 sine_vals = sine_function(x_vals, fitted_curve_all[0], fitted_curve_all[1])
@@ -206,7 +251,7 @@ ax.set_xticklabels([])
 ax.set_xlim([0,1])
 #ax.set_xlabel('Phase')
 ax.set_ylabel('RV (km/s)')
-ax.set_title(str(np.round(1.4/all_mratio,precision2)) + ' M_sun companion assuming 1.4Msun NS')
+ax.set_title(str(np.round(1.4/all_mratio,precision2)) + ' M_sun companion assuming 1.4 M_sun NS')
 props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 text_string =  r'$K_c =$ ' +str(np.round(fitted_curve_all[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_cov_all[1,1]),precision)) + 'km/s' +'\n'+ r'$v_{sys}=$' +str(np.round(fitted_curve_all[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_cov_all[0,0]),precision))+ ' km/s'
 #ax.text(0.2, 0.05,text_string, transform=ax.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
