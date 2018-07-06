@@ -42,6 +42,7 @@ cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41),
 #times =['2018-07-3T22:30:00','2018-07-04T06:10:00']
 times =['2018-07-08T23:00:00','2018-07-09T06:00:00']
 
+time_of_interest=[['2018-07-08T23:30:00','2018-07-09T00:45:00'],['2018-07-09T04:45:00','2018-07-09T06:00:00']]
 
 obs_times= Time(times, format = 'isot', scale='utc', location = cerro_pachon_location)
 target_coord = coord.SkyCoord(ra, dec, unit= (u.deg, u.deg), frame= 'icrs')
@@ -171,12 +172,29 @@ v1 = v1.to(u.km/u.s)
 v2= v(th, a_thing , e, m1, m2, dt, 2)
 v2 = v2.to(u.km/u.s)
 
-
 print ("Maximum radial velocity companion:", np.nanmax(v2))
 bmjd_times =Time(nearest_time+ days.value,  format = 'mjd', scale='tdb', location = cerro_pachon_location)
 mjd_times= bmjd_times+ bmjd_times.light_travel_time(target_coord)
 utc_times = mjd_times.utc.mjd
 utc_difs =((utc_times-obs_times[0].mjd)*u.day).to(u.hour)
+
+
+def get_points_of_interest(time_of_interest=time_of_interest):
+    utc_ranges= []
+    v2_ranges = []
+    for times1 in time_of_interest:
+        times1= Time(times1, format = 'isot', scale='utc', location = cerro_pachon_location)
+        allowed= np.where(utc_times < times1[1].utc.mjd)
+        utc_times_interest= np.copy(utc_times[allowed])
+        v2_interest = np.copy(v2[allowed])
+        allowed2= np.where(utc_times_interest > times1[0].utc.mjd)
+        utc_times_interest= utc_times_interest[allowed2]
+        utc_times_interest =((utc_times_interest-obs_times[0].mjd)*u.day).to(u.hour)
+        v2_interest= v2_interest[allowed2]
+        utc_ranges.append([utc_times_interest])
+        v2_ranges.append([v2_interest])
+    return utc_ranges, v2_ranges
+
 
 quad_points = get_quad_points(v2)
 quad_days = utc_times[quad_points]
@@ -187,11 +205,27 @@ for plusmin,actual_time, day_value  in zip(quad_hours, quad_times, quad_days):
     print plusmin, actual_time, day_value
 plt.xlabel(r't (hours)')
 plt.ylabel(r'v ('+str(v1.unit)+')')
-plt.axvline(x =( (obs_times[0].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'k', label = times[0])
-plt.axvline(x=( (obs_times[1].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'r', label = times[1])
+plt.axvline(x =( (obs_times[0].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'k', label = times[0], linestyle = '--')
+plt.axvline(x=( (obs_times[1].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'r', label = times[1], linestyle = '--')
 plt.plot(utc_difs,v1,label='NS');
 plt.plot(utc_difs,v2,label= 'Comp');
 plt.plot(utc_difs[quad_points], v2[quad_points], marker = '*', color ='k', linestyle = 'None')
+
+
+utc_times_of_interest, v2_of_interest= get_points_of_interest()
+#print("utc_times_of_interest[0]", utc_times_of_interest[0])
+#print(utc_times_of_interest)
+for this_time, this_v2 in zip(utc_times_of_interest[0], v2_of_interest[0]):
+    plt.plot(this_time, this_v2, label = 'Time of Interest', color = 'r')
+    print("Max v2: ", np.nanmax(this_v2), " in ", this_time[0], this_time[-1])
+    print("Min v2: ", np.nanmin(this_v2), " in ", this_time[0], this_time[-1])
+    
+for this_time, this_v2 in zip(utc_times_of_interest[1], v2_of_interest[1]):
+    plt.plot(this_time, this_v2, label = 'Time of Interest', color = 'r')
+    print("Max v2: ", np.nanmax(this_v2), " in ", this_time[0], this_time[-1])
+    print("Min v2: ", np.nanmin(this_v2), " in ", this_time[0], this_time[-1])
+
+
 plt.legend();
 plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun)))
 plt.show()
