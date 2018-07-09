@@ -49,9 +49,11 @@ def to_barycenter(header):
     return header
 
 ####
-trace_band_mid= 100   #y-pixel that's about the center of the trace
+trace_band_mid= 85   #y-pixel that's about the center of the trace
 trace_band_width = 40 #pixel width to determine the center of the trace
-core_sides=  5
+#core_sides=  5
+core_sides=  7
+
 y_trace_width= core_sides*2+1 #the actual number of pixels in the vertical direction that are in the trace (or background)
 poly_degree = 3 #polynomial degree of the fit to the trace
 bkg_shift= 25
@@ -157,10 +159,15 @@ def get_trace_waves(target_med, lamp_im):
     print polynomial_fit
     print polynomial_fit.shape
     poly_curve_y = np.polyval(polynomial_fit, x_positions)
-
+    std_dev = np.std(poly_curve_y-y_positions)
     plt.imshow(np.log(img_data),cmap = 'hot', interpolation = 'none')
     plt.plot(x_positions, poly_curve_y, color = 'blue', label  = 'polynomial fit')
     plt.plot(x_positions,y_positions, color = 'black', label = 'max values', linestyle = 'none', marker = '*')
+    plt.plot(x_positions, poly_curve_y+core_sides, color = 'blue', linestyle = '--')
+    plt.plot(x_positions, poly_curve_y-core_sides, color = 'blue', linestyle= '--')
+    plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift), color = 'cyan', label = 'background')
+    plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift-core_sides), color = 'cyan', linestyle= '--')
+    plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift+core_sides), color = 'cyan', linestyle = '--')
     plt.legend()
     plt.show()
         
@@ -386,14 +393,19 @@ for counter, img in enumerate(speclist):
             target_light= np.append(target_light,[xsum])
             bkg_sum= np.sum(img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
             bkg_light= np.append(bkg_light,[bkg_sum])
+        #plt.plot(x_positions,target_light,'-')
+        #plt.xlabel('x (pixel)')
+        #plt.ylabel('Counts')
+        #plt.title('Target Spectrum')
+        #plt.show()
+        noise_spectrum = np.copy(np.sqrt(target_light + bkg_light + y_trace_width*header['RDNOISE']))
+        target_light= target_light-bkg_light
+        noise_spectrum = noise_spectrum/target_light #normalized noise values by the target spectrum, so now unitless.
         plt.plot(x_positions,target_light,'-')
         plt.xlabel('x (pixel)')
         plt.ylabel('Counts')
         plt.title('Target Spectrum')
         plt.show()
-        noise_spectrum = np.copy(np.sqrt(target_light + bkg_light + y_trace_width*header['RDNOISE']))
-        target_light= target_light-bkg_light
-        noise_spectrum = noise_spectrum/target_light #normalized noise values by the target spectrum, so now unitless.
         header= to_barycenter(header) #append the BMJD_TDB value
         header.append(card= ("pix_scal", 0.3, ' "/pixel'))
         header.append(card = ('see_sig', seeing_sig, 'Sigma of Gauss seeing fit (pixels)'))

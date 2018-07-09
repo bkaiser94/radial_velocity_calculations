@@ -39,8 +39,8 @@ logg = 6.0
 
 #teff = 7250
 #logg = 5.50
-teff = 14750
-logg = 3.75
+#teff = 14750
+#logg = 3.75
 #logg = 6.25
 
 #teff = 6000
@@ -162,17 +162,17 @@ continuum_list = [[3809,3812],
                   #[5045,5070],
                   #[5110,5130]]
 
-#target_continuum_list = [[3861,3864],
-                  #[3900,3915],
-                  #[4014,4034],
-                  #[4183, 4214],
-                  #[4589,4608],
-                  #[4645,4680],
-                  #[4740,4760],
-                  #[4930,4935],
-                  #[5045,5070],
-                  #[5110,5130],
-                  #[5187,5192]]#old one before 2018-07-01
+target_continuum_list = [[3861,3864],
+                  [3900,3915],
+                  [4014,4034],
+                  [4183, 4214],
+                  [4589,4608],
+                  [4645,4680],
+                  [4740,4760],
+                  [4930,4935],
+                  [5045,5070],
+                  [5110,5130],
+                  [5187,5192]]#old one before 2018-07-01
                   
                   
 
@@ -189,7 +189,7 @@ continuum_list = [[3809,3812],
                 #[5110,5130],
                 #[5187,5192]]
 
-target_continuum_list= continuum_list
+#target_continuum_list= continuum_list
 
 
 ######
@@ -197,9 +197,10 @@ target_continuum_list= continuum_list
 
 flux_stack = []
 noise_stack = []
-for index in range(25,31):
+#for index in range(25,31):
 #for index in range(3,9):
 #for index in range(0,6):
+for index in range(3,6):
     filename = target_list[index]
     print filename
     i=fits.open(filename)
@@ -228,9 +229,9 @@ print target_file
 #target_waves= i[0].data
 ##target_flux = i[1].data
 #target_spec, header, noise_spec = spt.retrieve_spec('combined_PSRJ1431m4715.fits')
-target_spec, header, noise_spec = spt.retrieve_spec('combined_PSRJ1431m4715_new.fits')
-target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
-noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
+#target_spec, header, noise_spec = spt.retrieve_spec('combined_PSRJ1431m4715_new.fits')
+#target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+#noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
 #######
 
 def get_doppler_shifted(wavelengths, radial_velocity):

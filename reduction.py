@@ -16,19 +16,20 @@ from glob import glob
 import scipy.optimize as sciop
 import cosmics
 from astropy.time import Time
+from astropy import convolution as conv
 from astropy import coordinates as coords
 from astropy import units as u
 #plt.rc('font', size =18)
 #plt.rc('lines', markersize=12) #presentation fonts and markersize
 plt.rc('font', size = 11) #paper fonts and marker size
 plt.rc('lines', markersize = 5)
-n_randoms = 100
+n_randoms = 5
 c= 2.998E5  #km/s
 zerolistname= 'listZero'
 flatlistname = 'listFlat'
 speclistname= 'listSpec'
 
-output_filename = 'radial_velocities.txt'
+output_filename = 'radial_velocities_gauss.txt'
 
 #response_filename = 'GD108_sensitivity_curve.txt'
 response_filename= 'Feige67_sensitivity_curve.txt'
@@ -47,12 +48,12 @@ slit_yend= 199     #The end of the image with same
 trace_xstart = 9
 trace_xend = 2055
 #bkg_width= 10   #How many pixel rows should be sampled on each edge of the slit
-trace_band_mid= 105   #y-pixel that's about the center of the bulge of the galaxy
+trace_band_mid= 85   #y-pixel that's about the center of the bulge of the galaxy
 trace_band_width = 20 #pixel width to determine the centroid of the galaxy
 poly_degree= 3
 core_sides=  5
 bkg_width= core_sides
-bkg_shift= 50
+bkg_shift= 25
 
 #lamp_lines= np.array([4358.3, 5460.7, 5769., 5790.6, 6965.4]) #HgAr wavelengths in angstroms
 #line_sides= np.array([4,4,4,4,4])
@@ -140,7 +141,7 @@ lamp_lines = np.copy(fear_array['User'])
 line_sides = np.ones(line_x_checks.shape[0])*line_search_width
 
 
-def make_image_stack(imagelist, times= True):
+def make_image_stack(imagelist, times= True, cosmic = False):
     """
     
     """
@@ -153,9 +154,17 @@ def make_image_stack(imagelist, times= True):
         i= fits.open(img)
         header = fits.getheader(img)
         img_data= i[0].data
-        images.append(img_data)
+        target_frame = np.copy(img_data)
         gain =header['GAIN']
         readnoise = header['RDNOISE']
+        if cosmic:
+            target_cosmic= cosmics.cosmicsimage(target_frame, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
+            target_cosmic.run(maxiter= 4)
+            target_frame= target_cosmic.cleanarray
+        images.append(target_frame)
+        #images.append(img_data)
+        #gain =header['GAIN']
+        #readnoise = header['RDNOISE']
         if times:
             #starttime = header['OPENTIME']
             #startdate = header['OPENDATE']
@@ -191,7 +200,7 @@ bias_med = np.nanmedian(bias_stack, axis=0)
 #flat_norm = flat_med/np.nanmedian(flat_med)
 
 
-target_stack, gain, readnoise, target_times = make_image_stack(speclist)
+target_stack, gain, readnoise, target_times = make_image_stack(speclist, cosmic = True)
 print target_stack.shape
 target_stack = target_stack - bias_med #bias subtraction
 #target_stack = target_stack/flat_norm
@@ -252,7 +261,10 @@ plt.title('Target Spectrum')
 plt.show()
 
 target_light= target_light-bkg_light
-
+#smooth_kernel = conv.Box1DKernel(width = 3, mode = 'oversample')
+smooth_kernel = conv.Gaussian1DKernel(1, model= 'oversample')
+smooth_kernel.normalize()
+target_light= conv.convolve(target_light, smooth_kernel)
 #plt.plot(x_positions,target_light,'-')
 #plt.xlabel('x (pixel)')
 #plt.ylabel('Counts')

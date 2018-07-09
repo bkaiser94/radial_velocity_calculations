@@ -93,7 +93,9 @@ for img in speclist:
     header.append(card =( 'Counts', 'True', 'if spectrum in counts'))
     new_file_list.append(new_filename)
     new_hdu = fits.PrimaryHDU(img_data, header = header)
-    new_hdu.writeto(new_filename, overwrite = True)
+    #new_hdu.verify('fix')
+    #new_hdu.writeto(new_filename, overwrite = True)
+    new_hdu.writeto(new_filename, output_verify= 'fix', overwrite = True)
     
 new_file_array = np.array(new_file_list)
 print new_file_array
