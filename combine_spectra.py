@@ -50,15 +50,17 @@ trimmed_waves = trimmed_first[0] #These are the wavelength values that all of th
 
 for target_file in target_list:
     target_spec, header, target_noise = spt.retrieve_spec(target_file)
-    interpolator = scinterp.CubicSpline(target_spec[0], target_spec[1])
-    interp_flux = interpolator(trimmed_waves)
+    #interpolator = scinterp.CubicSpline(target_spec[0], target_spec[1])
+    #interp_flux = interpolator(trimmed_waves)
+    interp_flux= np.interp(trimmed_waves, target_spec[0], target_spec[1])
     print "max",  np.max(target_noise[1])
     bad_noise = np.isnan(target_noise[1])
     target_noise[1][bad_noise]= 1e6
     other_noise = np.isinf(target_noise[1])
     target_noise[1][other_noise]= 1e6
-    interpolator_noise = scinterp.CubicSpline(target_noise[0], target_noise[1])
-    interp_noise = interpolator_noise(trimmed_waves)
+    #interpolator_noise = scinterp.CubicSpline(target_noise[0], target_noise[1])
+    #interp_noise = interpolator_noise(trimmed_waves)
+    interp_noise= np.interp(trimmed_waves, target_noise[0], target_noise[1])
     flux_list.append(interp_flux)
     noise_list.append(interp_noise)
     #plt.plot(target_spec[0], target_spec[1], label = target_file)

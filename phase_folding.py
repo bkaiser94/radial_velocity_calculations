@@ -25,7 +25,7 @@ parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 28
 cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 c= 2.998E8 *u.m/u.s
 
-output_filename = "model_rvs.txt"
+output_filename = "model_rvs_new.txt"
 
 #open one of the original files and get the RA and Dec from it
 listnames = np.genfromtxt('listFWCTB', dtype ='str')
@@ -218,7 +218,11 @@ def get_mass_ratio(K_c, P_B, x_psr):
 period_wunits = period*u.day
 
 all_mratio= get_mass_ratio(fitted_curve_all[1]*(u.km/u.second),period_wunits, x_psr)
-print "q=", all_mratio
+mratio_hi = get_mass_ratio((fitted_curve_all[1]+np.sqrt(fitted_cov_all[1,1]))*(u.km/u.second),period_wunits, x_psr)
+mratio_lo = get_mass_ratio((fitted_curve_all[1]-np.sqrt(fitted_cov_all[1,1]))*(u.km/u.second),period_wunits, x_psr)
+mratio_lo_err= all_mratio-mratio_lo
+mratio_hi_err= mratio_hi- all_mratio
+print "q=", all_mratio, "-/+", mratio_lo_err, mratio_hi_err
 x_vals = np.linspace(0,1,1000)
 #sine_vals = sine_function(x_vals, fitted_curve_all[0], fitted_curve_all[1], fitted_curve_all[2])
 sine_vals = sine_function(x_vals, fitted_curve_all[0], fitted_curve_all[1])
@@ -244,16 +248,16 @@ ax.axhline(y= fitted_curve_all[0], color = 'r', linestyle = ':', alpha = 1, labe
 
 #ax.scatter(folded_times, rv_array, color = 'b', label = '3/18/18')
 #ax.plot(folded_times, rv_array, color = 'b', marker = 'o', linestyle = 'none', label = '3/18/18')
-ax.errorbar(folded_times, rv_array, yerr= sigma_array, color = 'b', marker = 'o', linestyle = 'none', label = '3/18/18')
+ax.errorbar(folded_times, rv_array, yerr= sigma_array, color = 'b', marker = 'o', linestyle = 'none', label = 'RVs')
 #ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
 ax.plot(x_vals, sine_vals, color = 'k', linestyle = '--', label = 'Model')
 ax.set_xticklabels([])
 ax.set_xlim([0,1])
 #ax.set_xlabel('Phase')
 ax.set_ylabel('RV (km/s)')
-ax.set_title(str(np.round(1.4/all_mratio,precision2)) + ' M_sun companion assuming 1.4 M_sun NS')
+#ax.set_title(str(np.round(1.4/all_mratio,precision2)) + ' M_sun companion assuming 1.4 M_sun NS')
 props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-text_string =  r'$K_c =$ ' +str(np.round(fitted_curve_all[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_cov_all[1,1]),precision)) + 'km/s' +'\n'+ r'$v_{sys}=$' +str(np.round(fitted_curve_all[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_cov_all[0,0]),precision))+ ' km/s'
+text_string =  r'$K_c =$ ' +str(np.round(fitted_curve_all[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_cov_all[1,1]),precision)) + 'km/s' +'\n'+ r'$\gamma=$' +str(np.round(fitted_curve_all[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_cov_all[0,0]),precision))+ ' km/s'
 #ax.text(0.2, 0.05,text_string, transform=ax.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
 ax.text(0.2, 0.05,text_string, transform=ax.transAxes, verticalalignment='bottom', bbox=props)
 
@@ -269,7 +273,7 @@ ax2 =plt.subplot2grid((6,1), (2, 0), rowspan= 1)
 
 #ax2.scatter(folded_times, residuals, color = 'b', label = '3/18/18')
 #ax2.plot(folded_times, residuals, color = 'b', label = '3/18/18', marker = 'o', linestyle = 'none')
-ax2.errorbar(folded_times, residuals, yerr= sigma_array, color = 'b', label = '3/18/18', marker = 'o', linestyle = 'none')
+ax2.errorbar(folded_times, residuals, yerr= sigma_array, color = 'b', label = 'RVs', marker = 'o', linestyle = 'none')
 
 #ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
 #ax.plot(x_vals, sine_vals, color = 'k', linestyle = '--', label = 'Model')
@@ -295,16 +299,16 @@ ax2.set_ylabel('Residuals')
 #ax3 = fig.add_subplot(313)
 ax3 = plt.subplot2grid((6,1), (3, 0), rowspan=2)
 #ax3.axhline(y= fitted_photo_curve[0], color = 'r', linestyle = ':', alpha = 0.4, label= str(np.round(fitted_photo_curve[0],precision2)))
-ax3.axhline(y= fitted_photo_curve[0], color = 'r', linestyle = ':', alpha = 1, label= str(np.round(fitted_photo_curve[0],precision2)))
+#ax3.axhline(y= fitted_photo_curve[0], color = 'r', linestyle = ':', alpha = 1, label= str(np.round(fitted_photo_curve[0],precision2)))
 
-ax3.errorbar(photo_folded_times, photometry_flux, photometry_error, color = 'b', label = '4/22/18', linestyle= 'None', marker = 'o')
+ax3.errorbar(photo_folded_times, photometry_flux, photometry_error, color = 'b', label = 'Photometry', linestyle= 'None', marker = 'o')
 #ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
 #ax3.plot(x_vals, photo_sine_vals, color = 'k', linestyle = '--', label = 'Model')
 ax3.plot(x_vals, photo_harmonic_vals, color = 'k', linestyle = '--', label = 'Model')
 ax3.set_xticklabels([])
 ax3.set_xlim([0,1])
 #ax3.set_xlabel('Phase')
-ax3.set_ylabel('Normalized Flux')
+ax3.set_ylabel('Relative Flux')
 #ax3.set_title(str(np.round(1.4/all_mratio,precision)) + ' M_sun companion assuming 1.4Msun NS')
 props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 #text_string =  r'$A =$ ' +str(np.round(fitted_photo_curve[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_photo_cov[1,1]),precision)) + '' +'\n'+ r'$b=$' +str(np.round(fitted_photo_curve[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_photo_cov[0,0]),precision))+ ''

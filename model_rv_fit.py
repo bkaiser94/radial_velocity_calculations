@@ -185,9 +185,9 @@ def chi_squared(observed, actual):
     return (observed - actual)**2/actual
 
 def calc_sq_dist(target_spec, model_spec, error_spec = np.array([])):
-    #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
-    interpolator= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    interp_model_flux = interpolator(target_spec[0])
+    interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
+    #interpolator= scinterp.CubicSpline(model_spec[0], model_spec[1])
+    #interp_model_flux = interpolator(target_spec[0])
     interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
     #print "interp_model.shape", interp_model.shape
     if error_spec.shape[0] != 0:
@@ -212,9 +212,9 @@ def convolve_model(model_spec, target_spec, header):
     """
     wavelengths = np.arange(np.nanmin(model_spec[0]), np.nanmax(model_spec[0]), first_conv_bin)
     #fluxes = scinterp.interp1d(wavelengths)
-    #fluxes = np.interp(wavelengths, model_spec[0], model_spec[1])
-    interpolator = scinterp.CubicSpline(model_spec[0], model_spec[1])
-    fluxes= interpolator(wavelengths)
+    fluxes = np.interp(wavelengths, model_spec[0], model_spec[1])
+    #interpolator = scinterp.CubicSpline(model_spec[0], model_spec[1])
+    #fluxes= interpolator(wavelengths)
     dlam = target_spec[0][test_loc+1]-target_spec[0][test_loc] #angstroms per pixel at this location in the target
     see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
     see_sig = see_sig*dlam/first_conv_bin #seeing value in units of indices of the model

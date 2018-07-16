@@ -34,9 +34,14 @@ slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
-teff = 7250
-logg = 6.0
 
+output_names = "teff, logg, rv, chi_square"
+output_filename= 'chi_square_values.csv'
+#teff = 7250
+#logg = 6.0
+
+teff = 7500
+logg = 5.0
 #teff = 7250
 #logg = 5.50
 #teff = 14750
@@ -50,6 +55,8 @@ plot_fit = True
 poly_degree = 5
 
 first_conv_bin = 0.1 #width in angstroms of the first interpolation of the model to then be used in the convolution.
+#first_conv_bin = 0.01  #width in angstroms of the first interpolation of the model to then be used in the convolution.
+
 test_loc = 1200 #pixel location in the target spectrum to look to get a pixel to wavelength value to use for the seeing
 
 #velocity_bound = 400 #km/s
@@ -162,17 +169,17 @@ continuum_list = [[3809,3812],
                   #[5045,5070],
                   #[5110,5130]]
 
-target_continuum_list = [[3861,3864],
-                  [3900,3915],
-                  [4014,4034],
-                  [4183, 4214],
-                  [4589,4608],
-                  [4645,4680],
-                  [4740,4760],
-                  [4930,4935],
-                  [5045,5070],
-                  [5110,5130],
-                  [5187,5192]]#old one before 2018-07-01
+#target_continuum_list = [[3861,3864],
+                  #[3900,3915],
+                  #[4014,4034],
+                  #[4183, 4214],
+                  #[4589,4608],
+                  #[4645,4680],
+                  #[4740,4760],
+                  #[4930,4935],
+                  #[5045,5070],
+                  #[5110,5130],
+                  #[5187,5192]]#old one before 2018-07-01
                   
                   
 
@@ -189,7 +196,7 @@ target_continuum_list = [[3861,3864],
                 #[5110,5130],
                 #[5187,5192]]
 
-#target_continuum_list= continuum_list
+target_continuum_list= continuum_list
 
 
 ######
@@ -199,8 +206,8 @@ flux_stack = []
 noise_stack = []
 #for index in range(25,31):
 #for index in range(3,9):
-#for index in range(0,6):
-for index in range(3,6):
+for index in range(0,6):
+#for index in range(3,6):
     filename = target_list[index]
     print filename
     i=fits.open(filename)
@@ -216,8 +223,8 @@ for index in range(3,6):
 target_waves = file_waves
 target_flux= np.nanmedian(flux_stack, axis=0)[0]
 target_noise = np.nanmedian(noise_stack, axis=0)[0]
-print target_waves.shape
-print target_flux.shape
+#print target_waves.shape
+#print target_flux.shape
 target_spec = np.vstack([target_waves, target_flux])
 noise_spec = np.vstack([target_waves, target_noise])
 target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
@@ -229,9 +236,9 @@ print target_file
 #target_waves= i[0].data
 ##target_flux = i[1].data
 #target_spec, header, noise_spec = spt.retrieve_spec('combined_PSRJ1431m4715.fits')
-#target_spec, header, noise_spec = spt.retrieve_spec('combined_PSRJ1431m4715_new.fits')
-#target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
-#noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
+target_spec, header, noise_spec = spt.retrieve_spec('combined_PSRJ1431m4715_new.fits')
+target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
 #######
 
 def get_doppler_shifted(wavelengths, radial_velocity):
@@ -251,9 +258,9 @@ def chi_squared(observed, actual):
     return (observed - actual)**2/actual
 
 def calc_sq_dist(target_spec, model_spec, error_spec = np.array([])):
-    #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
-    interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    interp_model_flux= interpolator3(target_spec[0])
+    interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
+    #interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
+    #interp_model_flux= interpolator3(target_spec[0])
     interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
     #print "interp_model.shape", interp_model.shape
     if error_spec.shape[0] != 0:
@@ -290,9 +297,9 @@ def plot_overlays(spec1, spec2, model_string = 'model'):
     plt.plot(spec1[0], spec1[1], label = 'observed')
     #plt.errorbar(spec1[0],spec1[1], yerr = errors[1], label='observed')
     plt.plot(spec2[0], spec2[1], label= model_string, color = 'r')
-    plt.axhline(y=1, label = 'y=1', color = 'cyan')
+    #plt.axhline(y=1, label = 'y=1', color = 'cyan')
     #plt.plot(spec2[0], spec2[1], label = model_string, linestyle ='none', marker = 'o')
-    plt.legend(numpoints=1, fontsize=14, loc='best' )
+    #plt.legend(numpoints=1, fontsize=14, loc='best' )
     plt.xlabel(r'Wavelength ($\AA$)')
     plt.ylabel('Flux (Arbitrary Units)')
     #plt.title(target_file )
@@ -323,9 +330,9 @@ def convolve_model(model_spec, target_spec, header):
     """
     wavelengths = np.arange(np.nanmin(model_spec[0]), np.nanmax(model_spec[0]), first_conv_bin)
     #fluxes = scinterp.interp1d(wavelengths)
-    #fluxes = np.interp(wavelengths, model_spec[0], model_spec[1])
-    interpolator= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    fluxes = interpolator(wavelengths)
+    fluxes = np.interp(wavelengths, model_spec[0], model_spec[1])
+    #interpolator= scinterp.CubicSpline(model_spec[0], model_spec[1])
+    #fluxes = interpolator(wavelengths)
     dlam = target_spec[0][test_loc+1]-target_spec[0][test_loc] #angstroms per pixel at this location in the target
     see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
     see_sig = see_sig*dlam/first_conv_bin #seeing value in units of indices of the model
@@ -362,8 +369,8 @@ wd=wdatmos.wdmodel(filename='ELM.hdf5')
 teff_array=wd.Teffs
 logg_array = wd.loggs
 model = wd(Teff = teff, logg = logg)
-print wd.Teffs
-print wd.loggs
+#print wd.Teffs
+#print wd.loggs
 model_num =0
 
 #####
@@ -387,7 +394,8 @@ for radial_velocity in velocity_tests:
     dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
     #test_model = poly_norm_spec(test_model, continuum_list = dopp_cont_list)
     #### Here's the model normalization step==============================
-    test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree, plot_all = plot_fit)
+    #test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree, plot_all = plot_fit)
+    test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree, plot_all = False)
     #test_model = spt.rescale_spectrum(test_model, target_spec, scaling_range)
     new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
     rv_dist_list.append(new_rv_dist)
@@ -411,13 +419,13 @@ min_model = wd(Teff= teff, logg = logg)
 #plt.show()
 model_spec = np.vstack([min_model['w'], min_model['flux']])
 model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
-#model_spec = spt.trim_spec(model_spec, np.min(target_spec[0]), np.max(target_spec[0]))
+####model_spec = spt.trim_spec(model_spec, np.min(target_spec[0]), np.max(target_spec[0]))
 model_spec = convolve_model(model_spec, target_spec, header)
-#model_spec= poly_norm_spec(model_spec)
+####model_spec= poly_norm_spec(model_spec)
 dopp_cont_list= dopp_shift_continuum_list(min_rv)
-#model normalization ==========================
+#######model normalization ==========================
 model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
-#model_spec = spt.rescale_spectrum(model_spec, target_spec, scaling_range)
+#######model_spec = spt.rescale_spectrum(model_spec, target_spec, scaling_range)
 model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
 plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(min_rv)+'km/s')
 #plt.plot(model_waves, scale_model_flux, label = 'model'+str(teff) + ' ' + str(logg))
@@ -467,6 +475,18 @@ def run_model_grid(target_spec):
     rv_array = np.array(rv_list)
     for teff,logg, dist_mod, rv in zip(teff_array, logg_array, dist_list, rv_list):
         print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv
+    output_array= np.vstack([teff_array, logg_array, rv_array, dist_array]).T
+    print "Saving "+ output_filename
+    np.savetxt(output_filename, output_array, header = output_names, delimiter= ',')
+    print "Saved " + output_filename
+    sorted_indices = np.argsort(dist_list)
+    sorted_teff = teff_array[sorted_indices]
+    sorted_logg= logg_array[sorted_indices]
+    sorted_dist = dist_array[sorted_indices]
+    sorted_rv = rv_array[sorted_indices]
+    print "======== Sorted  by chi-squared =========="
+    for teff,logg, dist_mod, rv in zip(sorted_teff, sorted_logg, sorted_dist, sorted_rv):
+        print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv
     min_index = np.argmin(dist_list)
     #min_model = model_file_list[min_index]
     min_teff = teff_array[min_index]
@@ -495,15 +515,25 @@ def run_model_grid(target_spec):
     #model_spec = spt.rescale_spectrum(model_spec, target_spec, scaling_range)
     model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
     plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
-    #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
-    interpolator2= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    interp_model_flux = interpolator2(target_spec[0])
+    interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
+    #interpolator2= scinterp.CubicSpline(model_spec[0], model_spec[1])
+    #interp_model_flux = interpolator2(target_spec[0])
     interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
     plot_overlays(target_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
     plot_overlays(target_spec, noise_spec, model_string = 'noise')
     plot_overlays(model_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
     plot_overlays_convolve(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg))
     chi_square_countours(teff_array,logg_array, dist_array)
+    plt.scatter(teff_array, dist_array)
+    plt.xlabel("Teff (K)")
+    plt.ylabel(r"red $\chi^2$")
+    plt.show()
+    
+    teff_scale = -1*(teff_array-np.min(teff_array))
+    plt.scatter(logg_array+np.random.rand(logg_array.shape[0]), dist_array, c = teff_scale)
+    plt.xlabel("log(g)")
+    plt.ylabel(r"red $\chi^2$")
+    plt.show()
     #output_array = np.vstack([target_spec[0], target_spec[1], target_err[1]]).T
     #np.savetxt( 'output_spectrum.csv',output_array, header = 'Wavelength, Flux (cgs units), Error', delimiter = ',')
 
