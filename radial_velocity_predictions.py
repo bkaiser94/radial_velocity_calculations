@@ -43,6 +43,9 @@ cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41),
 #times =['2018-07-08T23:00:00','2018-07-09T06:00:00']
 times =['2018-08-07T23:00:00','2018-08-08T04:15:00']
 #times =['2018-08-16T23:00:00','2018-08-17T06:00:00']
+#times =['2018-08-07T23:00:00','2018-08-08T04:15:00']
+times =['2018-08-16T23:29:00','2018-08-17T03:00:00']
+
 
 
 #time_of_interest=[['2018-07-08T23:30:00','2018-07-09T00:45:00'],['2018-07-09T04:15:00','2018-07-09T05:30:00']]
@@ -220,17 +223,19 @@ plt.plot(utc_difs[quad_points], v2[quad_points], marker = '*', color ='k', lines
 
 utc_times_of_interest, v2_of_interest= get_points_of_interest()
 #print("utc_times_of_interest[0]", utc_times_of_interest[0])
-#print(utc_times_of_interest)
-for this_time, this_v2 in zip(utc_times_of_interest[0], v2_of_interest[0]):
-    plt.plot(this_time, this_v2, label = 'Time of Interest', color = 'r')
-    print("Max v2: ", np.nanmax(this_v2), " in ", this_time[0], this_time[-1])
-    print("Min v2: ", np.nanmin(this_v2), " in ", this_time[0], this_time[-1])
-    
-for this_time, this_v2 in zip(utc_times_of_interest[1], v2_of_interest[1]):
-    plt.plot(this_time, this_v2, label = 'Time of Interest', color = 'r')
-    print("Max v2: ", np.nanmax(this_v2), " in ", this_time[0], this_time[-1])
-    print("Min v2: ", np.nanmin(this_v2), " in ", this_time[0], this_time[-1])
-
+##print(utc_times_of_interest)
+try:
+    for this_time, this_v2 in zip(utc_times_of_interest[0], v2_of_interest[0]):
+        plt.plot(this_time, this_v2, label = 'Time of Interest', color = 'r')
+        print("Max v2: ", np.nanmax(this_v2), " in ", this_time[0], this_time[-1])
+        print("Min v2: ", np.nanmin(this_v2), " in ", this_time[0], this_time[-1])
+        
+    for this_time, this_v2 in zip(utc_times_of_interest[1], v2_of_interest[1]):
+        plt.plot(this_time, this_v2, label = 'Time of Interest', color = 'r')
+        print("Max v2: ", np.nanmax(this_v2), " in ", this_time[0], this_time[-1])
+        print("Min v2: ", np.nanmin(this_v2), " in ", this_time[0], this_time[-1])
+except ValueError:
+    pass
 
 plt.legend();
 plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun)))

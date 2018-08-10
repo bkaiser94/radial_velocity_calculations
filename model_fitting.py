@@ -29,14 +29,22 @@ plt.rc('lines', markersize = 5)
 
 target_list_name = 'listFWCTB'
 target_list = np.genfromtxt(target_list_name, dtype = 'str')
+combined_spec_file = 'combined_PSRJ1431m4715_new.fits'
 scaling_range = [4600,4650]
 slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
+spectrum_type= 'combined'
+#options are 'combined', 'single run'
+
+ca_mask = [3920,3946]
+red_metal_mask= [5162,5192]
 
 output_names = "teff, logg, rv, chi_square"
-output_filename= 'chi_square_values.csv'
+#output_filename= 'chi_square_values.csv'
+output_filename= 'chi_square_values_noca.csv'
+
 #teff = 7250
 #logg = 6.0
 
@@ -95,6 +103,34 @@ high_wave_cut= 5200
                   #[5275,5290]]
                   
                   
+#continuum_list = [[3809,3812],
+                  #[3861,3864],
+                  #[3907,3911],
+                  #[4014,4017],
+                  #[4036,4040],
+                  #[4183, 4214],
+                  #[4422,4427],
+                  #[4427,4432],
+                  #[4432,4437],
+                  #[4589,4608],
+                  #[4645, 4650],
+                  #[4655, 4660],
+                  #[4665, 4670],
+                  #[4675,4680],
+                  #[4720,4725],
+                  #[4730,4735],
+                  #[4740,4745],
+                  #[4750,4755],
+                  #[4760,4765],
+                  #[4770,4775],
+                  #[4970,4975],
+                  #[5045, 5050],
+                  #[5055,5060],
+                  #[5065,5070],
+                  #[5110,5130],
+                  #[5175,5180],
+                  #[5190,5195]]#Best one there is. Before 2018-08-10
+
 continuum_list = [[3809,3812],
                   [3861,3864],
                   [3907,3911],
@@ -120,9 +156,7 @@ continuum_list = [[3809,3812],
                   [5055,5060],
                   [5065,5070],
                   [5110,5130],
-                  [5175,5180],
-                  [5190,5195]]#Best one there is.
-
+                  [5190,5195]]#Best one there is. Removed a range that fell in red_metal_mask
 
 #continuum_list = [[3678,3682],
                   #[3689,3692],
@@ -182,63 +216,112 @@ continuum_list = [[3809,3812],
                   #[5187,5192]]#old one before 2018-07-01
                   
                   
+if spectrum_type== 'single run':
+    mask_metals= False
+        
+    if mask_metals==False:
+        mask_list = []
+    elif mask_metals == True:
+        mask_list = [ca_mask]+[red_metal_mask]
+        print "\n******************"
+        print "WARNING: INDIVIDUAL RUN SPECTRA DON'T ACTUALLY HAVE METAL LINES MASKED!!"
+        print "******************\n"
+    target_continuum_list = [[3814,3820],
+                    [3863,3870],
+                    [3909,3924],
+                    [4014,4034],
+                    [4183, 4214],
+                    [4589,4608],
+                    [4645,4680],
+                    [4740,4760],
+                    [4930,4935],
+                    [5045,5070],
+                    [5110,5130],
+                    [5187,5192]]
+        
+    flux_stack = []
+    noise_stack = []
+    #for index in range(25,31):
+    #for index in range(3,9):
+    for index in range(0,6):
+    #for index in range(3,6):
+        filename = target_list[index]
+        print filename
+        i=fits.open(filename)
+        header = fits.getheader(filename)
+        file_waves= i[0].data
+        file_flux = i[1].data
+        file_noise = i[3].data
+        noise = file_noise #don't want to scale it yet since there will be the normalization later
+        #noise = file_flux*file_noise
+        flux_stack.append([file_flux])
+        noise_stack.append([noise])
+        
+    target_waves = file_waves
+    target_flux= np.nanmedian(flux_stack, axis=0)[0]
+    target_noise = np.nanmedian(noise_stack, axis=0)[0]
+    #print target_waves.shape
+    #print target_flux.shape
+    target_spec = np.vstack([target_waves, target_flux])
+    noise_spec = np.vstack([target_waves, target_noise])
+    target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+    noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
+    target_file = target_list[0]
+    print target_file
 
-#target_continuum_list = [[3814,3820],
-                #[3863,3870],
-                #[3909,3924],
-                #[4014,4034],
-                #[4183, 4214],
-                #[4589,4608],
-                #[4645,4680],
-                #[4740,4760],
-                #[4930,4935],
-                #[5045,5070],
-                #[5110,5130],
-                #[5187,5192]]
-
-target_continuum_list= continuum_list
-
+elif spectrum_type == 'combined':
+    mask_metals = True
+    if mask_metals==False:
+        mask_list = []
+    elif mask_metals == True:
+        mask_list = [ca_mask]+[red_metal_mask]
+    target_continuum_list= continuum_list
+    target_spec, header, noise_spec = spt.retrieve_spec(combined_spec_file)
+    target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+    noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
+    target_spec= spt.clean_spectrum(target_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
+    noise_spec= spt.clean_spectrum(noise_spec, np.min(noise_spec[0]), np.max(noise_spec[0]), mask_list)
 
 ######
 
 
-flux_stack = []
-noise_stack = []
-#for index in range(25,31):
-#for index in range(3,9):
-for index in range(0,6):
-#for index in range(3,6):
-    filename = target_list[index]
-    print filename
-    i=fits.open(filename)
-    header = fits.getheader(filename)
-    file_waves= i[0].data
-    file_flux = i[1].data
-    file_noise = i[3].data
-    noise = file_noise #don't want to scale it yet since there will be the normalization later
-    #noise = file_flux*file_noise
-    flux_stack.append([file_flux])
-    noise_stack.append([noise])
+#flux_stack = []
+#noise_stack = []
+##for index in range(25,31):
+##for index in range(3,9):
+#for index in range(0,6):
+##for index in range(3,6):
+    #filename = target_list[index]
+    #print filename
+    #i=fits.open(filename)
+    #header = fits.getheader(filename)
+    #file_waves= i[0].data
+    #file_flux = i[1].data
+    #file_noise = i[3].data
+    #noise = file_noise #don't want to scale it yet since there will be the normalization later
+    ##noise = file_flux*file_noise
+    #flux_stack.append([file_flux])
+    #noise_stack.append([noise])
     
-target_waves = file_waves
-target_flux= np.nanmedian(flux_stack, axis=0)[0]
-target_noise = np.nanmedian(noise_stack, axis=0)[0]
-#print target_waves.shape
-#print target_flux.shape
-target_spec = np.vstack([target_waves, target_flux])
-noise_spec = np.vstack([target_waves, target_noise])
-target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
-noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
-target_file = target_list[0]
-print target_file
+#target_waves = file_waves
+#target_flux= np.nanmedian(flux_stack, axis=0)[0]
+#target_noise = np.nanmedian(noise_stack, axis=0)[0]
+##print target_waves.shape
+##print target_flux.shape
+#target_spec = np.vstack([target_waves, target_flux])
+#noise_spec = np.vstack([target_waves, target_noise])
+#target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+#noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
+#target_file = target_list[0]
+#print target_file
 #i= fits.open(target_file)
 #header = fits.getheader(target_file)
 #target_waves= i[0].data
 ##target_flux = i[1].data
 #target_spec, header, noise_spec = spt.retrieve_spec('combined_PSRJ1431m4715.fits')
-target_spec, header, noise_spec = spt.retrieve_spec('combined_PSRJ1431m4715_new.fits')
-target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
-noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
+#target_spec, header, noise_spec = spt.retrieve_spec('combined_PSRJ1431m4715_new.fits')
+#target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+#noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
 #######
 
 def get_doppler_shifted(wavelengths, radial_velocity):
@@ -406,7 +489,7 @@ min_index = np.argmin(rv_dist_array)
 #min_logg = logg_array[min_index]
 #min_dist = dist_array[min_index]
 min_rv = velocity_tests[min_index]
-mask_list=[]
+#mask_list=[]
 #model_spec= get_model_fromfile(min_model)
 min_model = wd(Teff= teff, logg = logg)
 
