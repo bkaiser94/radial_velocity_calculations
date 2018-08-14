@@ -29,7 +29,9 @@ import spec_plot_tools as spt
 import kernel_builder
 
 
-input_filename= 'chi_square_values.csv'
+#input_filename= 'chi_square_values.csv'
+input_filename= 'chi_square_values_noca.csv'
+
 #clevels= np.arange(0,1.5, 0.01)
 clevels= np.arange(0,1.5, 0.05)
 input_array = np.genfromtxt(input_filename, names= True, delimiter= ',')

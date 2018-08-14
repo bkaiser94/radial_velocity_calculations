@@ -26,6 +26,7 @@ cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41),
 c= 2.998E8 *u.m/u.s
 
 output_filename = "model_rvs_new.txt"
+#output_filename= 'model_rvs_teff7500_logg550.txt'
 
 #open one of the original files and get the RA and Dec from it
 listnames = np.genfromtxt('listFWCTB', dtype ='str')
@@ -38,6 +39,7 @@ target_coord = coord.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg
 #rv_file = 'rv_plot.txt'
 #rv_file = 'rv_plot_filled_in.txt'
 rv_file = 'rv_plot_second_iteration.txt'
+#rv_file= 'rv_plot_teff7500_logg550.txt'
 
 photometry_t0 = 2458231.5950237 #BJD_TDB, so need to convert to MJD
 photometry_t0= Time(photometry_t0, format = 'jd', scale = 'tdb')
@@ -130,6 +132,8 @@ all_array = np.genfromtxt(rv_file, names = True, delimiter= ',')
 bmjd_array = all_array['TimesBMJD_TDB']
 rv_array = all_array['RV_kms']
 sigma_array = all_array['Sigma_kms']
+
+sigma_array = sigma_array + 1e-8 #this should make the fit not just choke if the error is literally zero, but needs to be removed in the future for any actual fitting attempt.
 
 #all_arrayB = np.genfromtxt('rv_plotB.txt', names = True, delimiter= ',')
 #bmjd_arrayB = all_arrayB['TimesBMJD_TDB']

@@ -39,7 +39,11 @@ spectrum_type= 'combined'
 #options are 'combined', 'single run'
 
 ca_mask = [3920,3946]
+weird2_mask= [4485,4507]
+weird_mask=[4563,4576]
 red_metal_mask= [5162,5192]
+
+
 
 output_names = "teff, logg, rv, chi_square"
 #output_filename= 'chi_square_values.csv'
@@ -49,7 +53,7 @@ output_filename= 'chi_square_values_noca.csv'
 #logg = 6.0
 
 teff = 7500
-logg = 5.0
+logg = 5.5
 #teff = 7250
 #logg = 5.50
 #teff = 14750
@@ -58,7 +62,7 @@ logg = 5.0
 
 #teff = 6000
 #logg = 3.75
-plot_fit = True
+plot_fit = False
 
 poly_degree = 5
 
@@ -76,7 +80,8 @@ velocity_high_bound = 300 #km/s
 velocity_tests = np.arange(velocity_low_bound, velocity_high_bound+velocity_step, velocity_step)
 
 low_wave_cut= 3800
-high_wave_cut= 5200
+#high_wave_cut= 5200
+high_wave_cut= 5050
 
 
 #low_wave_cut= 3670
@@ -87,20 +92,6 @@ high_wave_cut= 5200
 
 
 #####
-#continuum_list = [[3597,3603],
-                  #[3670,3678],
-                  #[3782,3785],
-                  #[3861,3864],
-                  #[4014,4034],
-                  #[4183, 4214],
-                  #[4589,4608],
-                  #[4645,4680],
-                  #[4740,4760],
-                  #[4930,4935],
-                  #[5045,5070],
-                  #[5110,5130],
-                  #[5220,5240],
-                  #[5275,5290]]
                   
                   
 #continuum_list = [[3809,3812],
@@ -131,6 +122,34 @@ high_wave_cut= 5200
                   #[5175,5180],
                   #[5190,5195]]#Best one there is. Before 2018-08-10
 
+#continuum_list = [[3809,3812],
+                  #[3861,3864],
+                  #[3907,3911],
+                  #[4014,4017],
+                  #[4036,4040],
+                  #[4183, 4214],
+                  #[4422,4427],
+                  #[4427,4432],
+                  #[4432,4437],
+                  #[4589,4608],
+                  #[4645, 4650],
+                  #[4655, 4660],
+                  #[4665, 4670],
+                  #[4675,4680],
+                  #[4720,4725],
+                  #[4730,4735],
+                  #[4740,4745],
+                  #[4750,4755],
+                  #[4760,4765],
+                  #[4770,4775],
+                  #[4970,4975],
+                  #[5045, 5050],
+                  #[5055,5060],
+                  #[5065,5070],
+                  #[5110,5130],
+                  #[5190,5195]]#Best one there is. Removed a range that fell in red_metal_mask
+
+
 continuum_list = [[3809,3812],
                   [3861,3864],
                   [3907,3911],
@@ -140,6 +159,8 @@ continuum_list = [[3809,3812],
                   [4422,4427],
                   [4427,4432],
                   [4432,4437],
+                  [4450,4455],
+                  [4455,4460],
                   [4589,4608],
                   [4645, 4650],
                   [4655, 4660],
@@ -151,12 +172,13 @@ continuum_list = [[3809,3812],
                   [4750,4755],
                   [4760,4765],
                   [4770,4775],
+                  [4930,4935],
+                  [4940,4945],
+                  [4945,4950],
                   [4970,4975],
-                  [5045, 5050],
-                  [5055,5060],
-                  [5065,5070],
-                  [5110,5130],
-                  [5190,5195]]#Best one there is. Removed a range that fell in red_metal_mask
+                  [5035,5040],
+                  [5040,5045],
+                  [5045, 5050]]#Best one there is. shortened red side
 
 #continuum_list = [[3678,3682],
                   #[3689,3692],
@@ -193,15 +215,7 @@ continuum_list = [[3809,3812],
                   #[5110,5130],
                   #[5175,5180],
                   #[5190,5195]] #extended wavelength range
-                  
-#continuum_list = [[4014,4034],
-                  #[4183, 4214],
-                  #[4589,4608],
-                  #[4645,4680],
-                  #[4740,4760],
-                  #[4930,4935],
-                  #[5045,5070],
-                  #[5110,5130]]
+   
 
 #target_continuum_list = [[3861,3864],
                   #[3900,3915],
@@ -222,7 +236,7 @@ if spectrum_type== 'single run':
     if mask_metals==False:
         mask_list = []
     elif mask_metals == True:
-        mask_list = [ca_mask]+[red_metal_mask]
+        mask_list = [ca_mask]+[weird2_mask]+[weird_mask]+[red_metal_mask]
         print "\n******************"
         print "WARNING: INDIVIDUAL RUN SPECTRA DON'T ACTUALLY HAVE METAL LINES MASKED!!"
         print "******************\n"
@@ -274,7 +288,7 @@ elif spectrum_type == 'combined':
     if mask_metals==False:
         mask_list = []
     elif mask_metals == True:
-        mask_list = [ca_mask]+[red_metal_mask]
+        mask_list = [ca_mask]+[weird2_mask]+[weird_mask]+[red_metal_mask]
     target_continuum_list= continuum_list
     target_spec, header, noise_spec = spt.retrieve_spec(combined_spec_file)
     target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
@@ -341,9 +355,9 @@ def chi_squared(observed, actual):
     return (observed - actual)**2/actual
 
 def calc_sq_dist(target_spec, model_spec, error_spec = np.array([])):
-    interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
-    #interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    #interp_model_flux= interpolator3(target_spec[0])
+    #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
+    interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
+    interp_model_flux= interpolator3(target_spec[0])
     interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
     #print "interp_model.shape", interp_model.shape
     if error_spec.shape[0] != 0:
@@ -380,9 +394,9 @@ def plot_overlays(spec1, spec2, model_string = 'model'):
     plt.plot(spec1[0], spec1[1], label = 'observed')
     #plt.errorbar(spec1[0],spec1[1], yerr = errors[1], label='observed')
     plt.plot(spec2[0], spec2[1], label= model_string, color = 'r')
-    #plt.axhline(y=1, label = 'y=1', color = 'cyan')
+    plt.axhline(y=1, label = 'y=1', color = 'cyan')
     #plt.plot(spec2[0], spec2[1], label = model_string, linestyle ='none', marker = 'o')
-    #plt.legend(numpoints=1, fontsize=14, loc='best' )
+    plt.legend(numpoints=1, fontsize=14, loc='best' )
     plt.xlabel(r'Wavelength ($\AA$)')
     plt.ylabel('Flux (Arbitrary Units)')
     #plt.title(target_file )
@@ -413,9 +427,9 @@ def convolve_model(model_spec, target_spec, header):
     """
     wavelengths = np.arange(np.nanmin(model_spec[0]), np.nanmax(model_spec[0]), first_conv_bin)
     #fluxes = scinterp.interp1d(wavelengths)
-    fluxes = np.interp(wavelengths, model_spec[0], model_spec[1])
-    #interpolator= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    #fluxes = interpolator(wavelengths)
+    #fluxes = np.interp(wavelengths, model_spec[0], model_spec[1])
+    interpolator= scinterp.CubicSpline(model_spec[0], model_spec[1])
+    fluxes = interpolator(wavelengths)
     dlam = target_spec[0][test_loc+1]-target_spec[0][test_loc] #angstroms per pixel at this location in the target
     see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
     see_sig = see_sig*dlam/first_conv_bin #seeing value in units of indices of the model
@@ -464,7 +478,7 @@ model_flux = model['flux'] #since we'll be arbitrarily-ish scaling this it won't
 model_spec  = np.vstack([model_waves, model_flux])
 #target_spec = poly_norm_spec(target_spec, continuum_list=target_continuum_list)
 #### Here's the target normalization step=========================
-target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree, plot_all = plot_fit)
+target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree, plot_all = True)
 
 noise_spec[1]= noise_spec[1]*target_spec[1] #scale the noise spectrum with the flattened target spectrum.
 
@@ -519,7 +533,7 @@ plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' lo
 #plt.show()
 
 def run_model_grid(target_spec):
-    mask_list = []
+    #mask_list = []
     #target_spec = spt.clean_spectrum(target_spec, min_wave, max_wave, mask_list)
     dist_list = []
     rv_list = []
@@ -551,7 +565,14 @@ def run_model_grid(target_spec):
         min_rv_index= np.argmin(rv_dist_array)
         new_dist = np.copy(rv_dist_array[min_rv_index])
         new_rv = np.copy(velocity_tests[min_rv_index])
-        #new_dist = calc_sq_dist(target_spec, model_spec)
+        if plot_fit:
+            model_spec[0] = get_doppler_shifted(model_spec[0], new_rv)
+            model_spec = convolve_model(model_spec, target_spec, header)
+            dopp_cont_list= dopp_shift_continuum_list(new_rv)
+            model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
+            model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
+            plt.title(r'$\chi^2=$'+str(new_dist))
+            plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(new_rv)+'km/s')
         rv_list.append(new_rv)
         dist_list.append(new_dist)
     dist_array = np.array(dist_list)
@@ -598,9 +619,9 @@ def run_model_grid(target_spec):
     #model_spec = spt.rescale_spectrum(model_spec, target_spec, scaling_range)
     model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
     plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
-    interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
-    #interpolator2= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    #interp_model_flux = interpolator2(target_spec[0])
+    #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
+    interpolator2= scinterp.CubicSpline(model_spec[0], model_spec[1])
+    interp_model_flux = interpolator2(target_spec[0])
     interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
     plot_overlays(target_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
     plot_overlays(target_spec, noise_spec, model_string = 'noise')

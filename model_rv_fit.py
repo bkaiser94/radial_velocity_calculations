@@ -31,8 +31,15 @@ import spec_plot_tools as spt
 #logg = 5.25
 
 
-teff = 7250
-logg = 6.0
+#teff = 7250
+#logg = 6.0
+
+
+teff = 7500
+logg = 5.5
+
+#output_filename= 'rv_plot_second_iteration.txt'
+output_filename= 'rv_plot_teff7500_logg550.txt'
 
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
@@ -50,8 +57,8 @@ slit_width = slit_width/pixel_scale #slit width in pixels
 plot_fit = False
 
 mc_jump = 1 #number of layers of velocity grid to skip for the Monte Carlo evaluation. Probably want to be >0
-num_mc = 100 #number of randomized spectra to produce for each target spectrum
-#num_mc = 2 #number of randomized spectra to produce for each target spectrum
+#num_mc = 100 #number of randomized spectra to produce for each target spectrum
+num_mc = 5 #number of randomized spectra to produce for each target spectrum
 poly_degree = 5
 
 first_conv_bin = 0.1 #width in angstroms of the first interpolation of the model to then be used in the convolution.
@@ -446,7 +453,7 @@ stop = time.time()
 out_array = np.vstack([time_array,rv_array, sigma_array])
 print "Saving the data... hopefull"
 #np.savetxt('rv_plot.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
-np.savetxt('rv_plot_second_iteration.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
+np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
 print "Saved the data"
 
 
