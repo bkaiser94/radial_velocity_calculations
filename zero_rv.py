@@ -27,6 +27,7 @@ cds.enable()
 
 import spec_plot_tools as spt
 
+plot_skips= 20
 
 listfile = 'listFWCTB'
 target_list = np.genfromtxt(listfile, dtype ='str')
@@ -43,6 +44,7 @@ def rv_correct(wavelengths, radial_velocity):
 
 
 count = 0
+plots = 0
 for rv, target_file in zip(model_rvs, target_list):
     new_name = 'z'+target_file
     #output_list.append(new_name)
@@ -52,6 +54,13 @@ for rv, target_file in zip(model_rvs, target_list):
     file_flux = i[1].data
     file_bkg_flux = i[2].data
     file_noise = i[3].data
+    #plt.plot(file_waves, file_flux+count, label = target_file)
+    #if count==0:
+        #plt.plot(file_waves, file_flux+plots, label = target_file)
+        #plots+=1
+    #elif count % plot_skips== 0:
+        #plt.plot(file_waves, file_flux+plots, label = target_file)
+        #plots+=1
     file_waves = rv_correct(file_waves, rv)
     header.append(card = ('RVused', rv, '(km/s) (used to change wavelengths)'))
     hdu=fits.PrimaryHDU(file_waves, header = header)
