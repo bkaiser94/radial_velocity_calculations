@@ -30,10 +30,16 @@ import kernel_builder
 
 
 #input_filename= 'chi_square_values.csv'
-input_filename= 'chi_square_values_noca.csv'
+#input_filename= 'chi_square_values_noca.csv'
+input_filename= 'chi_square_values_quad.csv'
+
 
 #clevels= np.arange(0,1.5, 0.01)
 clevels= np.arange(0,1.5, 0.05)
+clevels= np.arange(0,100, 1)
+
+dclevels= np.array([1,2.3, 3.53,4.72,5.89,7.04])
+
 input_array = np.genfromtxt(input_filename, names= True, delimiter= ',')
 teff_array = input_array['teff']
 logg_array = input_array['logg']
@@ -55,7 +61,7 @@ def chi_square_dots(teff_array, logg_array, dist_array):
     plt.ylabel('logg')
     plt.show()
     
-def chi_square_contours(teff_array, logg_array, dist_array):
+def chi_square_contours(teff_array, logg_array, dist_array, clevels= clevels):
     min_index = np.argmin(dist_array)
     print "Teff and logg min chi-squared values: ", teff_array[min_index],logg_array[min_index], "|chi-sq:", dist_array[min_index]
     #contour_array = np.vstack([teff_array,logg_array, dist_array])
@@ -87,6 +93,7 @@ print logg_array.shape[0] / 11.
 #plt.show()
 chi_square_contours(teff_array, logg_array, dist_array)
 chi_square_dots(teff_array,logg_array, dist_array)
+chi_square_contours(teff_array, logg_array, dist_array-np.min(dist_array), clevels= dclevels)
 
 marker_scale = (logg_array-logg_array.min())*10
 plt.scatter(teff_array+(np.random.rand(teff_array.shape[0])*50), dist_array, s=marker_scale)
