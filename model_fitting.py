@@ -43,11 +43,13 @@ weird2_mask= [4485,4507]
 weird_mask=[4563,4576]
 red_metal_mask= [5162,5192]
 
-
+free_parameters= 2
 
 output_names = "teff, logg, rv, chi_square"
 #output_filename= 'chi_square_values.csv'
-output_filename= 'chi_square_values_noca.csv'
+#output_filename= 'chi_square_values_noca.csv'
+output_filename= 'chi_square_values_modeldiv.csv'
+
 
 #teff = 7250
 #logg = 6.0
@@ -295,6 +297,10 @@ elif spectrum_type == 'combined':
     noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
     target_spec= spt.clean_spectrum(target_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
     noise_spec= spt.clean_spectrum(noise_spec, np.min(noise_spec[0]), np.max(noise_spec[0]), mask_list)
+    print "\n*************"
+    print "Combined spectrum, so only using RV=0; no RV stepping actually done."
+    print "**************\n"
+    velocity_tests= np.arange(0,velocity_step/2.,velocity_step) #this makes the only velocity that is used be 0 km/s, but you don't have to eliminate the for-loop.... I think/hope.
 
 ######
 
@@ -354,7 +360,11 @@ def dopp_shift_continuum_list(radial_velocity):
 def chi_squared(observed, actual):
     return (observed - actual)**2/actual
 
-def calc_sq_dist(target_spec, model_spec, error_spec = np.array([])):
+def calc_sq_dist(target_spec, model_spec, error_spec = np.array([]), free_parameters= free_parameters):
+    """
+    Return the reduced chi-square value if provided using the error spectrum (already rescaled to the spectrum values) if provided; otherwise it will return the reduced chi-square values using the model values for the denominator.
+    
+    """
     #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
     interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
     interp_model_flux= interpolator3(target_spec[0])
@@ -371,8 +381,9 @@ def calc_sq_dist(target_spec, model_spec, error_spec = np.array([])):
 
     nan_remove = np.isinf(norm_difs)
     norm_difs= norm_difs[~nan_remove]
-    dif = np.sum(norm_difs)/norm_difs.shape[0]
-    
+    #dif = np.sum(norm_difs)/norm_difs.shape[0]
+    dif = np.sum(norm_difs)/(norm_difs.shape[0]-1-free_parameters) #based on Numerical Recipes in C page 621. (Section 14.3)
+
     return dif
 
 
@@ -559,7 +570,9 @@ def run_model_grid(target_spec):
             test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
             #test_model= spt.rescale_spectrum(test_model, target_spec, scaling_range)
             #new_rv_dist= calc_sq_dist(target_spec, test_model)
-            new_rv_dist = calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+            #new_rv_dist = calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+            new_rv_dist = calc_sq_dist(target_spec, test_model) #for error-free chi-square; uses model division
+
             rv_dist_list.append(new_rv_dist)
         rv_dist_array = np.array(rv_dist_list)
         min_rv_index= np.argmin(rv_dist_array)
