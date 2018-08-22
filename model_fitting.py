@@ -29,7 +29,9 @@ plt.rc('lines', markersize = 5)
 
 target_list_name = 'listFWCTB'
 target_list = np.genfromtxt(target_list_name, dtype = 'str')
-combined_spec_file = 'combined_PSRJ1431m4715_new.fits'
+#combined_spec_file = 'combined_PSRJ1431m4715_new.fits'
+combined_spec_file = 'combined_PSRJ1431m4715_quad.fits'
+
 scaling_range = [4600,4650]
 slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
@@ -48,7 +50,8 @@ free_parameters= 2
 output_names = "teff, logg, rv, chi_square"
 #output_filename= 'chi_square_values.csv'
 #output_filename= 'chi_square_values_noca.csv'
-output_filename= 'chi_square_values_modeldiv.csv'
+output_filename= 'chi_square_values_quad.csv'
+
 
 
 #teff = 7250
@@ -295,6 +298,8 @@ elif spectrum_type == 'combined':
     target_spec, header, noise_spec = spt.retrieve_spec(combined_spec_file)
     target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
     noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
+    #now undo the de-normalization of the noise spectrum that is done by retrieve_spec
+    noise_spec[1]= noise_spec[1]/target_spec[1]
     target_spec= spt.clean_spectrum(target_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
     noise_spec= spt.clean_spectrum(noise_spec, np.min(noise_spec[0]), np.max(noise_spec[0]), mask_list)
     print "\n*************"
@@ -570,8 +575,8 @@ def run_model_grid(target_spec):
             test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
             #test_model= spt.rescale_spectrum(test_model, target_spec, scaling_range)
             #new_rv_dist= calc_sq_dist(target_spec, test_model)
-            #new_rv_dist = calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
-            new_rv_dist = calc_sq_dist(target_spec, test_model) #for error-free chi-square; uses model division
+            new_rv_dist = calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+            #new_rv_dist = calc_sq_dist(target_spec, test_model) #for error-free chi-square; uses model division
 
             rv_dist_list.append(new_rv_dist)
         rv_dist_array = np.array(rv_dist_list)
@@ -638,6 +643,13 @@ def run_model_grid(target_spec):
     interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
     plot_overlays(target_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
     plot_overlays(target_spec, noise_spec, model_string = 'noise')
+    
+    plt.plot(noise_spec[0], 1/noise_spec[1])
+    plt.plot(noise_spec[0], target_spec[1]/noise_spec[1])
+    plt.ylabel('S/N')
+    plt.xlabel(r'Wavelength ($\AA$)')
+    plt.show()
+    
     plot_overlays(model_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
     plot_overlays_convolve(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg))
     chi_square_countours(teff_array,logg_array, dist_array)

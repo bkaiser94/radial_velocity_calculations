@@ -34,6 +34,8 @@ import spec_plot_tools as spt
 listfile = 'listZFWCTB'
 target_list = np.genfromtxt(listfile, dtype ='str')
 
+output_filename='combined_PSRJ1431m4715_quad.fits'
+
 wavelength_range= [3600, 5290]
 flux_list = []
 noise_list = []
@@ -63,6 +65,7 @@ for target_file in target_list:
     interp_noise= np.interp(trimmed_waves, target_noise[0], target_noise[1])
     flux_list.append(interp_flux)
     noise_list.append(interp_noise)
+    #noise_list.append(np.copy(target_noise[1]))
     #plt.plot(target_spec[0], target_spec[1], label = target_file)
     #plt.plot(trimmed_waves, interp_flux, label = 'interpolated')
     #plt.legend()
@@ -74,7 +77,9 @@ print flux_array.shape
 plt.title('median_combined')
 med_comb = np.nanmedian(flux_array, axis = 0)
 avg_comb = np.nanmean(flux_array, axis=0)
-noise_comb = np.nanmedian(noise_list, axis= 0)
+#noise_comb = np.nanmedian(noise_list, axis= 0) #median combining the noises for each spectrum
+noise_comb = np.sqrt(np.sum(noise_array**2, axis=0)) #sum in quadrature of the noises for each spectrum
+noise_comb= noise_comb/noise_array.shape[0]
 weights = 1./noise_array
 weight_comb= np.average(flux_array, axis= 0, weights = weights)
 combined_noise= np.sqrt(np.average(noise_array**2, axis=0))
@@ -87,8 +92,9 @@ plt.ylabel(r'Flux (ergs/cm/cm/s/A 10**-16)')
 plt.legend()
 plt.show()
 
-plt.plot(trimmed_waves, noise_comb, label = 'med')
-plt.plot(trimmed_waves, combined_noise, label = 'quad')
+plt.plot(trimmed_waves, noise_comb, label = 'quad')
+#plt.plot(trimmed_waves, combined_noise, label = 'quad')
+plt.plot(trimmed_waves, np.median(noise_array, axis=0), label='median')
 plt.legend()
 plt.show()
 
@@ -99,3 +105,4 @@ hdu3 = fits.ImageHDU(noise_comb/weight_comb)
 hdulist= fits.HDUList([hdu,hdu1,hdu2,hdu3])
 #hdulist.writeto('combined_PSRJ1431m4715_new.fits', overwrite= True)
 #hdulist.writeto('combined_PSRJ1431m4715_new.fits', overwrite= True)
+hdulist.writeto(output_filename, overwrite= True)
