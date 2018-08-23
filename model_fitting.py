@@ -50,7 +50,9 @@ free_parameters= 2
 output_names = "teff, logg, rv, chi_square"
 #output_filename= 'chi_square_values.csv'
 #output_filename= 'chi_square_values_noca.csv'
-output_filename= 'chi_square_values_quad.csv'
+#output_filename= 'chi_square_values_quad.csv'
+output_filename= 'chi_square_values_balm.csv'
+
 
 
 
@@ -235,7 +237,21 @@ continuum_list = [[3809,3812],
                   #[5187,5192]]#old one before 2018-07-01
                   
                   
+#################
+#These are different from continuum_list because these are the large segments of the spectrum that should be ignored during the model minimization
+continuum_masks = [[3500,3815],
+                   [4008,4068],
+                   [4141,4293],
+                   [4363,4821],
+                   [4917,6000]]
+
+
+
+###################
+                  
+                  
 if spectrum_type== 'single run':
+    balmer_only= False
     mask_metals= False
         
     if mask_metals==False:
@@ -289,6 +305,7 @@ if spectrum_type== 'single run':
     print target_file
 
 elif spectrum_type == 'combined':
+    balmer_only = True
     mask_metals = True
     if mask_metals==False:
         mask_list = []
@@ -297,6 +314,7 @@ elif spectrum_type == 'combined':
     target_continuum_list= continuum_list
     target_spec, header, noise_spec = spt.retrieve_spec(combined_spec_file)
     target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+    
     noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
     #now undo the de-normalization of the noise spectrum that is done by retrieve_spec
     noise_spec[1]= noise_spec[1]/target_spec[1]
@@ -498,6 +516,12 @@ target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_li
 
 noise_spec[1]= noise_spec[1]*target_spec[1] #scale the noise spectrum with the flattened target spectrum.
 
+if balmer_only:
+    print "\n*************\nOnly using the Balmer lines.\n****************\n"
+    line_spec= spt.clean_spectrum(target_spec, np.min(target_spec[0]), np.max(target_spec[0]), continuum_masks) #the spectrum only including the balmer lines
+    line_noise_spec= spt.clean_spectrum(noise_spec, np.min(noise_spec[0]), np.max(noise_spec[0]), continuum_masks)
+else:
+    pass
 
 rv_dist_list=[]
 for radial_velocity in velocity_tests:
@@ -510,7 +534,10 @@ for radial_velocity in velocity_tests:
     #test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree, plot_all = plot_fit)
     test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree, plot_all = False)
     #test_model = spt.rescale_spectrum(test_model, target_spec, scaling_range)
-    new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+    if balmer_only:
+        new_rv_dist= calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec)
+    else:
+        new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
     rv_dist_list.append(new_rv_dist)
 rv_dist_array = np.array(rv_dist_list)
 min_index = np.argmin(rv_dist_array)
@@ -540,7 +567,11 @@ dopp_cont_list= dopp_shift_continuum_list(min_rv)
 model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
 #######model_spec = spt.rescale_spectrum(model_spec, target_spec, scaling_range)
 model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
-plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(min_rv)+'km/s')
+if balmer_only:
+    model_spec = spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), continuum_masks)
+    plot_overlays(line_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(min_rv)+'km/s')
+else:
+    plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(min_rv)+'km/s')
 #plt.plot(model_waves, scale_model_flux, label = 'model'+str(teff) + ' ' + str(logg))
 #plt.plot(target_waves, target_flux, label = 'Target')
 #plt.legend()
@@ -575,7 +606,10 @@ def run_model_grid(target_spec):
             test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
             #test_model= spt.rescale_spectrum(test_model, target_spec, scaling_range)
             #new_rv_dist= calc_sq_dist(target_spec, test_model)
-            new_rv_dist = calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+            if balmer_only:
+                new_rv_dist = calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec)
+            else:
+                new_rv_dist = calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
             #new_rv_dist = calc_sq_dist(target_spec, test_model) #for error-free chi-square; uses model division
 
             rv_dist_list.append(new_rv_dist)
@@ -588,8 +622,12 @@ def run_model_grid(target_spec):
             model_spec = convolve_model(model_spec, target_spec, header)
             dopp_cont_list= dopp_shift_continuum_list(new_rv)
             model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
-            model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
             plt.title(r'$\chi^2=$'+str(new_dist))
+            model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
+            if balmer_only:
+                model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), continuum_masks)
+                plot_overlays(line_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(new_rv)+'km/s')
+            model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
             plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(new_rv)+'km/s')
         rv_list.append(new_rv)
         dist_list.append(new_dist)
@@ -636,7 +674,11 @@ def run_model_grid(target_spec):
     model_spec= spt.poly_norm_spec(model_spec, continuum_list=dopp_cont_list, poly_degree = poly_degree)
     #model_spec = spt.rescale_spectrum(model_spec, target_spec, scaling_range)
     model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
-    plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
+    if balmer_only:
+        temp_model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), continuum_masks)
+        plot_overlays(line_spec, temp_model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
+    else:
+        plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
     #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
     interpolator2= scinterp.CubicSpline(model_spec[0], model_spec[1])
     interp_model_flux = interpolator2(target_spec[0])

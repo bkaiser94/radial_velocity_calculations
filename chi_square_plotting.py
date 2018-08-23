@@ -31,7 +31,9 @@ import kernel_builder
 
 #input_filename= 'chi_square_values.csv'
 #input_filename= 'chi_square_values_noca.csv'
-input_filename= 'chi_square_values_quad.csv'
+#input_filename= 'chi_square_values_quad.csv'
+input_filename= 'chi_square_values_balm.csv'
+
 
 
 #clevels= np.arange(0,1.5, 0.01)
