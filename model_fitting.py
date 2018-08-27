@@ -40,6 +40,8 @@ slit_width = slit_width/pixel_scale #slit width in pixels
 spectrum_type= 'combined'
 #options are 'combined', 'single run'
 
+chi_norm= True
+
 ca_mask = [3920,3946]
 weird2_mask= [4485,4507]
 weird_mask=[4563,4576]
@@ -51,7 +53,9 @@ output_names = "teff, logg, rv, chi_square"
 #output_filename= 'chi_square_values.csv'
 #output_filename= 'chi_square_values_noca.csv'
 #output_filename= 'chi_square_values_quad.csv'
-output_filename= 'chi_square_values_balm.csv'
+#output_filename= 'chi_square_values_noerr.csv'
+#output_filename= 'chi_square_values_norm.csv'
+output_filename= 'chi_square_values_norm_.csv'
 
 
 
@@ -243,7 +247,15 @@ continuum_masks = [[3500,3815],
                    [4008,4068],
                    [4141,4293],
                    [4363,4821],
-                   [4917,6000]]
+                   [4917,6000]] #from 8/23/18
+
+#continuum_masks=[[3500,3815],
+                 #[3845,3874],
+                 #[3897,3962],
+                 #[3980,4090],
+                 #[4110,4329],
+                 #[4346,4850],
+                 #[4884,6000]]
 
 
 
@@ -383,16 +395,27 @@ def dopp_shift_continuum_list(radial_velocity):
 def chi_squared(observed, actual):
     return (observed - actual)**2/actual
 
-def calc_sq_dist(target_spec, model_spec, error_spec = np.array([]), free_parameters= free_parameters):
+def calc_sq_dist(in_target_spec, in_model_spec, in_error_spec = np.array([]), free_parameters= free_parameters, norm=chi_norm):
     """
     Return the reduced chi-square value if provided using the error spectrum (already rescaled to the spectrum values) if provided; otherwise it will return the reduced chi-square values using the model values for the denominator.
     
     """
+    target_spec= np.copy(in_target_spec)
+    model_spec= np.copy(in_model_spec)
+    error_spec= np.copy(in_error_spec)
     #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
     interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
     interp_model_flux= interpolator3(target_spec[0])
     interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
     #print "interp_model.shape", interp_model.shape
+    if norm:
+        if error_spec.shape[0] != 0:
+            #have to rescale the errors to the normalized values
+            error_spec[1]= np.copy(error_spec[1]/np.sum(target_spec[1]))
+        target_spec[1]= np.float_(target_spec[1])/np.sum(target_spec[1])
+        interp_model[1]= np.float_(interp_model[1])/np.sum(interp_model[1])
+    else:
+        pass
     if error_spec.shape[0] != 0:
         #norm_difs = np.abs(interp_model[1]-target_spec[1])/np.float_(error_spec[1])
         norm_difs = (interp_model[1]-target_spec[1])**2/np.float_(error_spec[1])**2
@@ -535,9 +558,9 @@ for radial_velocity in velocity_tests:
     test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree, plot_all = False)
     #test_model = spt.rescale_spectrum(test_model, target_spec, scaling_range)
     if balmer_only:
-        new_rv_dist= calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec)
+        new_rv_dist= calc_sq_dist(line_spec, test_model, in_error_spec = line_noise_spec)
     else:
-        new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+        new_rv_dist= calc_sq_dist(target_spec, test_model, in_error_spec = noise_spec)
     rv_dist_list.append(new_rv_dist)
 rv_dist_array = np.array(rv_dist_list)
 min_index = np.argmin(rv_dist_array)
@@ -607,9 +630,11 @@ def run_model_grid(target_spec):
             #test_model= spt.rescale_spectrum(test_model, target_spec, scaling_range)
             #new_rv_dist= calc_sq_dist(target_spec, test_model)
             if balmer_only:
-                new_rv_dist = calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec)
+                new_rv_dist = calc_sq_dist(line_spec, test_model, in_error_spec = line_noise_spec)
+                #new_rv_dist = calc_sq_dist(line_spec, test_model)
+
             else:
-                new_rv_dist = calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+                new_rv_dist = calc_sq_dist(target_spec, test_model, in_error_spec = noise_spec)
             #new_rv_dist = calc_sq_dist(target_spec, test_model) #for error-free chi-square; uses model division
 
             rv_dist_list.append(new_rv_dist)

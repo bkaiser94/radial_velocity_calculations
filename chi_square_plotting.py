@@ -32,7 +32,9 @@ import kernel_builder
 #input_filename= 'chi_square_values.csv'
 #input_filename= 'chi_square_values_noca.csv'
 #input_filename= 'chi_square_values_quad.csv'
-input_filename= 'chi_square_values_balm.csv'
+#input_filename= 'chi_square_values_balm.csv'
+#input_filename= 'chi_square_values_noerr.csv'
+input_filename= 'chi_square_values_norm_.csv'
 
 
 
@@ -47,6 +49,10 @@ teff_array = input_array['teff']
 logg_array = input_array['logg']
 rv_array = input_array['rv']
 dist_array = input_array['chi_square']
+
+def rescale_chi_square(chi_square_vals):
+    chi_square_min = np.min(chi_square_vals)
+    chi_square_vals= chi_square_vals/chi_square_min
 
 
 def chi_square_dots(teff_array, logg_array, dist_array):
@@ -77,6 +83,8 @@ def chi_square_contours(teff_array, logg_array, dist_array, clevels= clevels):
     dist_array_d2= np.copy(dist_array.reshape(11,36))
     #plt.contour(teff_array, logg_array, dist_array)
     contours= plt.contour(teff_array_d2, logg_array_d2, dist_array_d2, levels = clevels, colors= 'black')
+    print contours.__doc__
+    print contours.collections
     plt.clabel(contours, inline=True)
     plt.plot(teff_array[min_index],logg_array[min_index], marker = '*', markersize = 14)
     plt.xlabel('T_eff')

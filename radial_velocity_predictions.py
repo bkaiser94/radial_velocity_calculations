@@ -29,8 +29,16 @@ cds.enable()
 plt.rc('font', size = 12)
 plt.rc('lines', markersize = 12)
 
-ra = float(sys.argv[1]) #values in decimal degrees
-dec = float(sys.argv[2])
+#17:55:35.4462  -37:16:10.78
+try:
+    ra = float(sys.argv[1]) #values in decimal degrees
+    dec = float(sys.argv[2])
+    target_coord = coord.SkyCoord(ra, dec, unit= (u.deg, u.deg), frame= 'icrs')
+except ValueError:
+    ra= sys.argv[1]
+    dec= sys.argv[2]
+    target_coord = coord.SkyCoord(ra, dec, unit= (u.hourangle, u.deg), frame= 'icrs')
+
 
 parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
@@ -44,7 +52,9 @@ cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41),
 times =['2018-08-07T23:00:00','2018-08-08T04:15:00']
 #times =['2018-08-16T23:00:00','2018-08-17T06:00:00']
 #times =['2018-08-07T23:00:00','2018-08-08T04:15:00']
-times =['2018-08-16T23:29:00','2018-08-17T03:00:00']
+#times =['2018-08-16T23:29:00','2018-08-17T03:00:00']
+times =['2018-08-30T23:29:00','2018-08-31T05:00:00']
+
 
 
 
@@ -54,13 +64,13 @@ time_of_interest=[['2018-08-08T00:15:00','2018-08-08T01:15:00'],['2018-08-08T04:
 
 
 obs_times= Time(times, format = 'isot', scale='utc', location = cerro_pachon_location)
-target_coord = coord.SkyCoord(ra, dec, unit= (u.deg, u.deg), frame= 'icrs')
+#target_coord = coord.SkyCoord(ra, dec, unit= (u.deg, u.deg), frame= 'icrs')
 
 def to_barycenter(input_times):
     bary_corr =input_times.tdb.light_travel_time(target_coord)
     return (input_times.tdb+ bary_corr.tdb).mjd
 
-q_value = 0.88/1.35
+#q_value = 0.88/1.35
 lam_rest = 6562.81*u.angstrom #angstroms
 #m1 = (0.14 *u.Msun).si
 #m2 = (1.4 *u.Msun).si
@@ -68,8 +78,25 @@ lam_rest = 6562.81*u.angstrom #angstroms
 m1= (1.4*u.Msun).si
 #m2 = (0.14*u.Msun).si #switched the masses to change the phase by 180 degrees.
 #m2=( 1.58 *u.Msun).si
-m2 = (m1*q_value).si
+#m2 = (m1*q_value).si
 #m2 = (0.12*u.Msun).si #switched the masses to change the phase by 180 degrees.
+
+#m2= (0.147*u.Msun).si #J1056-7117
+#period = (9.138 *u.day).to(u.second)  #PSR J1056-7117
+#tasc = Time(57436.53532, format = 'mjd', scale= 'utc', location = parkes_location)
+
+#m2= (0.328*u.Msun).si #J1125-6014
+#period = (8.753 *u.day).to(u.second)  #J1125-6014
+#tasc = Time(53171.5856408, format = 'mjd', scale= 'utc', location = parkes_location)
+
+
+#m2= (0.262*u.Msun).si #J1543-5149
+#period = (8.06 *u.day).to(u.second)  #J1543-5149
+#tasc = Time(54929.0678261, format = 'mjd', scale= 'utc', location = parkes_location)
+
+m2= (0.352*u.Msun).si #J1755-3716
+period = (11.515 *u.day).to(u.second)  #J1755-3716
+tasc = Time(55958.790341, format = 'mjd', scale= 'utc', location = parkes_location)
 
 #e=1e-5
 e = 0.000010 #PSR J1435-6100
@@ -85,7 +112,8 @@ omega = 4 *u.degree #PSR J1435-6100
 #period = (0.449739137 * u.day).to(u.second) #low
 #period = (0.4497391384 * u.day).to(u.second) #high
 #period = (6.721013337  *u.day).to(u.second)# for a different target
-period = (1.354885217 *u.day).to(u.second)  #PSR J1435-6100
+#period = (1.354885217 *u.day).to(u.second)  #PSR J1435-6100
+
 
 #t0 = Time(55756.23, format = 'mjd', scale= 'utc', location = parkes_location)
 #tasc = Time(55756.1047771, format = 'mjd', scale= 'utc', location = parkes_location) #median
@@ -94,7 +122,7 @@ period = (1.354885217 *u.day).to(u.second)  #PSR J1435-6100
 
 #PSR J1435-6100
 #t0 = Time(55756.23, format = 'mjd', scale= 'utc', location = parkes_location)
-tasc = Time(51270.6084449, format = 'mjd', scale= 'utc', location = parkes_location) #median
+#tasc = Time(51270.6084449, format = 'mjd', scale= 'utc', location = parkes_location) #median
 #tasc = Time(55756.1047767, format = 'mjd', scale= 'utc', location = parkes_location) #min
 #tconj= Time(55756.21712, format = 'mjd', scale ='utc', location = parkes_location)
 
@@ -183,7 +211,7 @@ v2 = v2.to(u.km/u.s)
 
 print ("Maximum radial velocity companion:", np.nanmax(v2))
 bmjd_times =Time(nearest_time+ days.value,  format = 'mjd', scale='tdb', location = cerro_pachon_location)
-mjd_times= bmjd_times+ bmjd_times.light_travel_time(target_coord)
+mjd_times= bmjd_times- bmjd_times.light_travel_time(target_coord)
 utc_times = mjd_times.utc.mjd
 utc_difs =((utc_times-obs_times[0].mjd)*u.day).to(u.hour)
 
