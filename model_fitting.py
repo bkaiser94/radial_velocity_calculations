@@ -55,7 +55,9 @@ output_names = "teff, logg, rv, chi_square"
 #output_filename= 'chi_square_values_quad.csv'
 #output_filename= 'chi_square_values_noerr.csv'
 #output_filename= 'chi_square_values_norm.csv'
-output_filename= 'chi_square_values_norm_.csv'
+#output_filename= 'chi_square_values_norm_.csv'
+output_filename= 'chi_square_values_norm_metalmask.csv'
+
 
 
 
@@ -317,7 +319,9 @@ if spectrum_type== 'single run':
     print target_file
 
 elif spectrum_type == 'combined':
-    balmer_only = True
+    #balmer_only = True 
+    balmer_only = False
+
     mask_metals = True
     if mask_metals==False:
         mask_list = []

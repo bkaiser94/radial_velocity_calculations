@@ -39,9 +39,14 @@ except ValueError:
     dec= sys.argv[2]
     target_coord = coord.SkyCoord(ra, dec, unit= (u.hourangle, u.deg), frame= 'icrs')
 
-
 parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
+
+
+num_zeros= 6
+num_mins= 3
+num_maxs= 3
+
 
 #times = ['2018-03-19T02:19:00', '2018-03-19T10:11:00']
 #times =['2018-04-23T02:00:00','2018-04-23T10:20:00']
@@ -149,6 +154,14 @@ time_dif = bmjd_obs[0]-bmjd_tconj
 #nearest_time = int(time_dif/period.to(u.day).value)*period.to(u.day).value+bmjd_tasc #beginning of the orbital cycle
 nearest_time = int(time_dif/period.to(u.day).value)*period.to(u.day).value+bmjd_tconj #beginning of the orbital cycle
 
+
+def get_mass_function(mc_min, m_psr=(1.4*u.Msun).si):
+    """
+    Obtain the mass function from a minimum companion mass and the 
+    """
+    return mc_min**3/(m_psr+mc_min)**2
+
+
 print ("obs start", bmjd_obs[0])
 print ("nearest start time", nearest_time)
 G = u.cds.G.si
@@ -199,10 +212,22 @@ def v(th,a,e,m1,m2,dt, body_num):
     return vel
     
 def get_quad_points(velocities):
-    zeros = np.argsort(velocities**2)[0:6]
-    first_max = np.argsort(velocities)[-3:]
-    first_min= np.argsort(velocities)[0:3]
-    return np.hstack([zeros,first_max, first_min])
+    #zeros = np.argsort(velocities**2)[0:6]
+    #first_max = np.argsort(velocities)[-3:]
+    #first_min= np.argsort(velocities)[0:3]
+    zeros = np.argsort(velocities**2)[0:num_zeros]
+    first_max = np.argsort(velocities)[-1*num_maxs:]
+    first_min= np.argsort(velocities)[0:num_mins]
+    def make_names(name_fill, num_thing ):
+        name_array= np.array([])
+        for i in range(0,num_thing):
+            name_array= np.append(name_array, [name_fill])
+        return name_array
+    zero_names= make_names('zero', num_zeros)
+    min_names= make_names('min', num_mins)
+    max_names= make_names('max', num_maxs)
+    return np.hstack([zeros,first_max, first_min]),np.hstack([zero_names, max_names, min_names])
+
 
 v1= v(th, a_thing, e, m1, m2, dt, 1)
 v1 = v1.to(u.km/u.s)
@@ -233,13 +258,13 @@ def get_points_of_interest(time_of_interest=time_of_interest):
     return utc_ranges, v2_ranges
 
 
-quad_points = get_quad_points(v2)
+quad_points, quad_names = get_quad_points(v2)
 quad_days = utc_times[quad_points]
 quad_hours = utc_difs[quad_points]
 quad_times = Time(((quad_hours.to(u.day) +obs_times[0].mjd*u.day).to(u.day)).value, format='mjd', scale= 'utc').iso
 
-for plusmin,actual_time, day_value  in zip(quad_hours, quad_times, quad_days):
-    print plusmin, actual_time, day_value
+for quad_name, plusmin,actual_time, day_value  in zip(quad_names, quad_hours, quad_times, quad_days):
+    print quad_name, plusmin, actual_time, day_value
 plt.xlabel(r't (hours)')
 plt.ylabel(r'v ('+str(v1.unit)+')')
 plt.axvline(x =( (obs_times[0].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'k', label = times[0], linestyle = '--')

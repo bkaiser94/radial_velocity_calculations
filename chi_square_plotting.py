@@ -34,7 +34,8 @@ import kernel_builder
 #input_filename= 'chi_square_values_quad.csv'
 #input_filename= 'chi_square_values_balm.csv'
 #input_filename= 'chi_square_values_noerr.csv'
-input_filename= 'chi_square_values_norm_.csv'
+#input_filename= 'chi_square_values_norm_.csv'
+input_filename= 'chi_square_values_norm_metalmask.csv'
 
 
 
@@ -67,9 +68,9 @@ def chi_square_dots(teff_array, logg_array, dist_array):
     plt.plot(teff_array[min_index],logg_array[min_index], marker = '*', markersize = 14)
     plt.xlabel('T_eff')
     plt.ylabel('logg')
-    plt.show()
+    #plt.show()
     
-def chi_square_contours(teff_array, logg_array, dist_array, clevels= clevels):
+def chi_square_contours(teff_array, logg_array, dist_array, clevels= clevels, get_bounds= False):
     min_index = np.argmin(dist_array)
     print "Teff and logg min chi-squared values: ", teff_array[min_index],logg_array[min_index], "|chi-sq:", dist_array[min_index]
     #contour_array = np.vstack([teff_array,logg_array, dist_array])
@@ -83,13 +84,34 @@ def chi_square_contours(teff_array, logg_array, dist_array, clevels= clevels):
     dist_array_d2= np.copy(dist_array.reshape(11,36))
     #plt.contour(teff_array, logg_array, dist_array)
     contours= plt.contour(teff_array_d2, logg_array_d2, dist_array_d2, levels = clevels, colors= 'black')
-    print contours.__doc__
-    print contours.collections
+    
+        #print thing.get_segments()
+       
     plt.clabel(contours, inline=True)
     plt.plot(teff_array[min_index],logg_array[min_index], marker = '*', markersize = 14)
     plt.xlabel('T_eff')
     plt.ylabel('logg')
     plt.show()
+    if get_bounds:
+        print "\n************\nOnly works for a single level input\n*************\n"
+        for thing in contours.collections:
+            segments = thing.get_segments() #tuple of the line segments that comprise each layer
+            try:
+                total_array=np.vstack([segments[0],segments[1],segments[2]])
+            except IndexError:
+                try:
+                    total_array=np.vstack([segments[0],segments[1]])
+                except IndexError:
+                    total_array= segments
+            uppers=np.max(total_array, axis=0)
+            lowers= np.min(total_array, axis=0)
+            return uppers, lowers
+            #for seg in segments:
+                #print seg.shape
+                #print seg
+                #uppers= np.max(seg, axis=0)
+                #lowers = np.min(seg, axis=0)
+                #return uppers, lowers
 
 print logg_array.shape[0] / 11.
 #logg_array_d2 = np.copy(logg_array.reshape(11,36))
@@ -101,9 +123,13 @@ print logg_array.shape[0] / 11.
 #plt.xlabel('T_eff')
 #plt.ylabel('logg')
 #plt.show()
-chi_square_contours(teff_array, logg_array, dist_array)
+#chi_square_contours(teff_array, logg_array, dist_array, get_bounds= True)
 chi_square_dots(teff_array,logg_array, dist_array)
-chi_square_contours(teff_array, logg_array, dist_array-np.min(dist_array), clevels= dclevels)
+#chi_square_contours(teff_array, logg_array, dist_array-np.min(dist_array), clevels= dclevels)
+upper_bound, lower_bound= chi_square_contours(teff_array, logg_array, dist_array-np.min(dist_array), clevels= [1], get_bounds= True)
+print "Upper bounds: ", upper_bound
+print "Lower bounds: ", lower_bound
+
 
 marker_scale = (logg_array-logg_array.min())*10
 plt.scatter(teff_array+(np.random.rand(teff_array.shape[0])*50), dist_array, s=marker_scale)
