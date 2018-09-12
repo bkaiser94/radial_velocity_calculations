@@ -54,11 +54,18 @@ num_maxs= 3
 #times = ['2018-03-27T01:45:00', '2018-03-27T10:04:00']
 #times =['2018-07-3T22:30:00','2018-07-04T06:10:00']
 #times =['2018-07-08T23:00:00','2018-07-09T06:00:00']
-times =['2018-08-07T23:00:00','2018-08-08T04:15:00']
+#times =['2018-08-07T23:00:00','2018-08-08T04:15:00']
 #times =['2018-08-16T23:00:00','2018-08-17T06:00:00']
 #times =['2018-08-07T23:00:00','2018-08-08T04:15:00']
 #times =['2018-08-16T23:29:00','2018-08-17T03:00:00']
-times =['2018-08-30T23:29:00','2018-08-31T05:00:00']
+#times =['2018-08-30T23:29:00','2018-08-31T05:00:00']
+#times =['2018-09-07T23:29:00','2018-09-08T05:00:00']
+#times =['2018-09-08T23:29:00','2018-09-09T05:00:00']
+#times =['2018-09-09T23:29:00','2018-09-10T05:00:00']
+times =['2018-09-14T23:29:00','2018-09-15T05:00:00']
+
+
+
 
 
 
@@ -95,13 +102,14 @@ m1= (1.4*u.Msun).si
 #tasc = Time(53171.5856408, format = 'mjd', scale= 'utc', location = parkes_location)
 
 
-#m2= (0.262*u.Msun).si #J1543-5149
-#period = (8.06 *u.day).to(u.second)  #J1543-5149
-#tasc = Time(54929.0678261, format = 'mjd', scale= 'utc', location = parkes_location)
+m2= (0.262*u.Msun).si #J1543-5149
+#m2= (2. *u.Msun).si
+period = (8.06 *u.day).to(u.second)  #J1543-5149
+tasc = Time(54929.0678261, format = 'mjd', scale= 'utc', location = parkes_location)
 
-m2= (0.352*u.Msun).si #J1755-3716
-period = (11.515 *u.day).to(u.second)  #J1755-3716
-tasc = Time(55958.790341, format = 'mjd', scale= 'utc', location = parkes_location)
+#m2= (0.352*u.Msun).si #J1755-3716
+#period = (11.515 *u.day).to(u.second)  #J1755-3716
+#tasc = Time(55958.790341, format = 'mjd', scale= 'utc', location = parkes_location)
 
 #e=1e-5
 e = 0.000010 #PSR J1435-6100
@@ -354,21 +362,21 @@ def calc_lam_obs(velocity, lam_rest):
 lam_obs= calc_lam_obs(v2,lam_rest)
 print ("rest wavelength:", lam_rest)
 print ("Maximum wavelength observed (neglecting Earth-induced shifts and systemic velocity): ", np.nanmax(lam_obs))
-plt.xlabel(r't (hours)')
-plt.ylabel(r'$\lambda_{obs}$ ('+str(lam_obs.unit)+')')
-plt.axvline(x =( (obs_times[0].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'k', label = times[0])
-plt.axvline(x=( (obs_times[1].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'r', label = times[1])
-plt.plot(utc_difs,lam_obs,label='Comp');
-plt.legend();
-plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun))+ r' $\lambda_{rest}$ = ' + str(lam_rest))
-plt.show()
+#plt.xlabel(r't (hours)')
+#plt.ylabel(r'$\lambda_{obs}$ ('+str(lam_obs.unit)+')')
+#plt.axvline(x =( (obs_times[0].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'k', label = times[0])
+#plt.axvline(x=( (obs_times[1].mjd-obs_times[0].mjd)*u.day).to(u.hour).value, color = 'r', label = times[1])
+#plt.plot(utc_difs,lam_obs,label='Comp');
+#plt.legend();
+#plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun))+ r' $\lambda_{rest}$ = ' + str(lam_rest))
+#plt.show()
 
 
-lam_range = np.linspace(3000., 7000, 8000)*u.angstrom
-all_lams = calc_lam_obs(np.max(v2), lam_range)
-plt.xlabel(r'$\lambda_{rest}$ ('+ str(lam_range.unit)+')')
-plt.ylabel(r'$\lambda_{obs}$ ('+str(all_lams.unit)+') at max velocity of'+ str(np.max(v2)))
-plt.plot(lam_range, all_lams, label = 'wavelengths');
-plt.legend();
-plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun))+ r'$v_{companion}$' + str(np.max(v2) ))
-plt.show()
+#lam_range = np.linspace(3000., 7000, 8000)*u.angstrom
+#all_lams = calc_lam_obs(np.max(v2), lam_range)
+#plt.xlabel(r'$\lambda_{rest}$ ('+ str(lam_range.unit)+')')
+#plt.ylabel(r'$\lambda_{obs}$ ('+str(all_lams.unit)+') at max velocity of'+ str(np.max(v2)))
+#plt.plot(lam_range, all_lams, label = 'wavelengths');
+#plt.legend();
+#plt.title('e= '+ str(e)+ ',  a= '+str(a_thing.to(u.au))+ ',  $m_1$= '+str(m1.to(u.Msun))+',  $m_2$= '+str(m2.to(u.Msun))+ r'$v_{companion}$' + str(np.max(v2) ))
+#plt.show()

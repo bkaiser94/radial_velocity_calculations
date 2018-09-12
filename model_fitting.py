@@ -40,7 +40,8 @@ slit_width = slit_width/pixel_scale #slit width in pixels
 spectrum_type= 'combined'
 #options are 'combined', 'single run'
 
-chi_norm= True
+chi_norm= False
+raw_chi= True
 
 ca_mask = [3920,3946]
 weird2_mask= [4485,4507]
@@ -56,7 +57,12 @@ output_names = "teff, logg, rv, chi_square"
 #output_filename= 'chi_square_values_noerr.csv'
 #output_filename= 'chi_square_values_norm.csv'
 #output_filename= 'chi_square_values_norm_.csv'
-output_filename= 'chi_square_values_norm_metalmask.csv'
+#output_filename= 'chi_square_values_norm_metalmask.csv'
+#output_filename= 'chi_square_values_norm_wholespec.csv'
+#output_filename= 'chi_square_values_davchange.csv'
+#output_filename= 'chi_square_values_20180910.csv'
+
+output_filename= 'chi_square_values_20180911small.csv'
 
 
 
@@ -66,7 +72,7 @@ output_filename= 'chi_square_values_norm_metalmask.csv'
 #logg = 6.0
 
 teff = 7500
-logg = 5.5
+logg = 5.25
 #teff = 7250
 #logg = 5.50
 #teff = 14750
@@ -245,19 +251,19 @@ continuum_list = [[3809,3812],
                   
 #################
 #These are different from continuum_list because these are the large segments of the spectrum that should be ignored during the model minimization
-continuum_masks = [[3500,3815],
-                   [4008,4068],
-                   [4141,4293],
-                   [4363,4821],
-                   [4917,6000]] #from 8/23/18
+#continuum_masks = [[3500,3815],
+                   #[4008,4068],
+                   #[4141,4293],
+                   #[4363,4821],
+                   #[4917,6000]] #from 8/23/18
 
-#continuum_masks=[[3500,3815],
-                 #[3845,3874],
-                 #[3897,3962],
-                 #[3980,4090],
-                 #[4110,4329],
-                 #[4346,4850],
-                 #[4884,6000]]
+continuum_masks=[[3500,3815],
+                 [3845,3874],
+                 [3897,3962],
+                 [3980,4090],
+                 [4110,4329],
+                 [4346,4850],
+                 [4884,6000]]
 
 
 
@@ -320,9 +326,10 @@ if spectrum_type== 'single run':
 
 elif spectrum_type == 'combined':
     #balmer_only = True 
-    balmer_only = False
+    balmer_only = True
 
     mask_metals = True
+    #mask_metals=False
     if mask_metals==False:
         mask_list = []
     elif mask_metals == True:
@@ -399,14 +406,14 @@ def dopp_shift_continuum_list(radial_velocity):
 def chi_squared(observed, actual):
     return (observed - actual)**2/actual
 
-def calc_sq_dist(in_target_spec, in_model_spec, in_error_spec = np.array([]), free_parameters= free_parameters, norm=chi_norm):
+def calc_sq_dist(target_spec, model_spec, error_spec = np.array([]), free_parameters= free_parameters, norm=chi_norm, raw_chi= raw_chi):
     """
     Return the reduced chi-square value if provided using the error spectrum (already rescaled to the spectrum values) if provided; otherwise it will return the reduced chi-square values using the model values for the denominator.
     
     """
-    target_spec= np.copy(in_target_spec)
-    model_spec= np.copy(in_model_spec)
-    error_spec= np.copy(in_error_spec)
+    #target_spec= np.copy(in_target_spec)
+    #model_spec= np.copy(in_model_spec)
+    #error_spec= np.copy(in_error_spec)
     #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
     interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
     interp_model_flux= interpolator3(target_spec[0])
@@ -432,7 +439,10 @@ def calc_sq_dist(in_target_spec, in_model_spec, in_error_spec = np.array([]), fr
     nan_remove = np.isinf(norm_difs)
     norm_difs= norm_difs[~nan_remove]
     #dif = np.sum(norm_difs)/norm_difs.shape[0]
-    dif = np.sum(norm_difs)/(norm_difs.shape[0]-1-free_parameters) #based on Numerical Recipes in C page 621. (Section 14.3)
+    if raw_chi:
+        dif = np.sum(norm_difs)/norm_difs.shape[0]
+    else:
+        dif = np.sum(norm_difs)/(norm_difs.shape[0]-1-free_parameters) #based on Numerical Recipes in C page 621. (Section 14.3)
 
     return dif
 
@@ -562,9 +572,9 @@ for radial_velocity in velocity_tests:
     test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree, plot_all = False)
     #test_model = spt.rescale_spectrum(test_model, target_spec, scaling_range)
     if balmer_only:
-        new_rv_dist= calc_sq_dist(line_spec, test_model, in_error_spec = line_noise_spec)
+        new_rv_dist= calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec)
     else:
-        new_rv_dist= calc_sq_dist(target_spec, test_model, in_error_spec = noise_spec)
+        new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
     rv_dist_list.append(new_rv_dist)
 rv_dist_array = np.array(rv_dist_list)
 min_index = np.argmin(rv_dist_array)
@@ -634,11 +644,11 @@ def run_model_grid(target_spec):
             #test_model= spt.rescale_spectrum(test_model, target_spec, scaling_range)
             #new_rv_dist= calc_sq_dist(target_spec, test_model)
             if balmer_only:
-                new_rv_dist = calc_sq_dist(line_spec, test_model, in_error_spec = line_noise_spec)
+                new_rv_dist = calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec)
                 #new_rv_dist = calc_sq_dist(line_spec, test_model)
 
             else:
-                new_rv_dist = calc_sq_dist(target_spec, test_model, in_error_spec = noise_spec)
+                new_rv_dist = calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
             #new_rv_dist = calc_sq_dist(target_spec, test_model) #for error-free chi-square; uses model division
 
             rv_dist_list.append(new_rv_dist)

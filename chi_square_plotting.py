@@ -35,8 +35,12 @@ import kernel_builder
 #input_filename= 'chi_square_values_balm.csv'
 #input_filename= 'chi_square_values_noerr.csv'
 #input_filename= 'chi_square_values_norm_.csv'
-input_filename= 'chi_square_values_norm_metalmask.csv'
-
+#input_filename= 'chi_square_values_norm_metalmask.csv'
+#input_filename=  'chi_square_values_norm_wholespec.csv'
+#input_filename= 'chi_square_values_davchange.csv'
+#input_filename='chi_square_values_20180910.csv'
+input_filename= 'chi_square_values_20180911small.csv'
+#input_filename= 'chi_square_values_20180911.csv'
 
 
 #clevels= np.arange(0,1.5, 0.01)
@@ -126,7 +130,8 @@ print logg_array.shape[0] / 11.
 #chi_square_contours(teff_array, logg_array, dist_array, get_bounds= True)
 chi_square_dots(teff_array,logg_array, dist_array)
 #chi_square_contours(teff_array, logg_array, dist_array-np.min(dist_array), clevels= dclevels)
-upper_bound, lower_bound= chi_square_contours(teff_array, logg_array, dist_array-np.min(dist_array), clevels= [1], get_bounds= True)
+#upper_bound, lower_bound= chi_square_contours(teff_array, logg_array, dist_array-np.min(dist_array), clevels= [1], get_bounds= True)
+upper_bound, lower_bound= chi_square_contours(teff_array, logg_array, dist_array-np.min(dist_array), clevels= [2.3], get_bounds= True)
 print "Upper bounds: ", upper_bound
 print "Lower bounds: ", lower_bound
 
