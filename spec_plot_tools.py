@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
+import balmer_line_ranges.py as blr
 
 percentile= 50
 
