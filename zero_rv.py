@@ -54,7 +54,7 @@ for rv, target_file in zip(model_rvs, target_list):
     file_flux = i[1].data
     file_bkg_flux = i[2].data
     file_noise = i[3].data
-    #plt.plot(file_waves, file_flux+count, label = target_file)
+    plt.plot(file_waves, file_flux+(count*2), label = target_file)
     #if count==0:
         #plt.plot(file_waves, file_flux+plots, label = target_file)
         #plots+=1
@@ -69,7 +69,7 @@ for rv, target_file in zip(model_rvs, target_list):
     hdu3 = fits.ImageHDU(file_noise)
     hdulist = fits.HDUList([hdu, hdu1, hdu2, hdu3])
     hdulist.writeto(new_name, overwrite = True)
-    plt.plot(file_waves, file_flux+count, label = target_file)
+    #plt.plot(file_waves, file_flux+count, label = target_file)
     #plt.plot(file_waves, file_flux+count, label = target_file, linestyle = 'none', marker = '.')
     #plt.plot(file_waves, linestyle = 'none', marker = 'o')
     count+=1

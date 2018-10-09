@@ -8,6 +8,7 @@ import sys
 from astropy.io import fits
 from glob import glob
 import scipy.optimize as sciop
+import scipy.stats as scistats
 import cosmics
 from astropy.time import Time
 from astropy import coordinates as coords
@@ -38,6 +39,7 @@ pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
 spectrum_type= 'combined'
+#spectrum_type= 'single run'
 #options are 'combined', 'single run'
 
 chi_norm= False
@@ -62,7 +64,10 @@ output_names = "teff, logg, rv, chi_square"
 #output_filename= 'chi_square_values_davchange.csv'
 #output_filename= 'chi_square_values_20180910.csv'
 
-output_filename= 'chi_square_values_20180911small.csv'
+#output_filename= 'chi_square_values_20180911small.csv'
+#output_filename= 'run2_attempt.csv'
+output_filename= '20181008_run1.csv'
+
 
 
 
@@ -296,10 +301,11 @@ if spectrum_type== 'single run':
         
     flux_stack = []
     noise_stack = []
-    #for index in range(25,31):
+    for index in range(25,31):
     #for index in range(3,9):
-    for index in range(0,6):
+    #for index in range(0,6):
     #for index in range(3,6):
+    #for index in range(10,21):
         filename = target_list[index]
         print filename
         i=fits.open(filename)
@@ -326,7 +332,7 @@ if spectrum_type== 'single run':
 
 elif spectrum_type == 'combined':
     #balmer_only = True 
-    balmer_only = True
+    balmer_only = False
 
     mask_metals = True
     #mask_metals=False
@@ -406,6 +412,23 @@ def dopp_shift_continuum_list(radial_velocity):
 def chi_squared(observed, actual):
     return (observed - actual)**2/actual
 
+def interpolate_model(target_spec, model_spec):
+    #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
+    interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
+    interp_model_flux= interpolator3(target_spec[0])
+    interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
+    #print "interp_model.shape", interp_model.shape
+    return interp_model
+
+def calc_residuals(target_spec, model_spec):
+    """
+    model_spec should NOT already be convolved an interpolated!!!
+    returns a residual spectrum with the wavelengths of target_spec[0]
+    """
+    interp_model= interpolate_model(target_spec, model_spec)
+    residuals= target_spec[1]-interp_model[1]
+    return np.vstack([target_spec[0], residuals])
+
 def calc_sq_dist(target_spec, model_spec, error_spec = np.array([]), free_parameters= free_parameters, norm=chi_norm, raw_chi= raw_chi):
     """
     Return the reduced chi-square value if provided using the error spectrum (already rescaled to the spectrum values) if provided; otherwise it will return the reduced chi-square values using the model values for the denominator.
@@ -415,10 +438,11 @@ def calc_sq_dist(target_spec, model_spec, error_spec = np.array([]), free_parame
     #model_spec= np.copy(in_model_spec)
     #error_spec= np.copy(in_error_spec)
     #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
-    interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    interp_model_flux= interpolator3(target_spec[0])
-    interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
+    #interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
+    #interp_model_flux= interpolator3(target_spec[0])
+    #interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
     #print "interp_model.shape", interp_model.shape
+    interp_model= interpolate_model(target_spec, model_spec)
     if norm:
         if error_spec.shape[0] != 0:
             #have to rescale the errors to the normalized values
@@ -616,7 +640,7 @@ else:
 #plt.ylabel('Flux in cgs 10**-16')
 #plt.show()
 
-def run_model_grid(target_spec):
+def run_model_grid(target_spec, error_spec=error_spec):
     #mask_list = []
     #target_spec = spt.clean_spectrum(target_spec, min_wave, max_wave, mask_list)
     dist_list = []
@@ -719,15 +743,91 @@ def run_model_grid(target_spec):
     else:
         plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
     #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
-    interpolator2= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    interp_model_flux = interpolator2(target_spec[0])
-    interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
+    #interpolator2= scinterp.CubicSpline(model_spec[0], model_spec[1])
+    #interp_model_flux = interpolator2(target_spec[0])
+    #interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
+    interp_model = interpolate_model(target_spec, model_spec)
     plot_overlays(target_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
     plot_overlays(target_spec, noise_spec, model_string = 'noise')
     
-    plt.plot(noise_spec[0], 1/noise_spec[1])
-    plt.plot(noise_spec[0], target_spec[1]/noise_spec[1])
+    residual_spec= calc_residuals(target_spec, model_spec)
+    chi_sq_singles= residual_spec[1]**2/noise_spec[1]**2
+    chi_sq_spec= np.vstack([target_spec[0], chi_sq_singles])
+    
+    plt.plot(residual_spec[0], residual_spec[1])
+    plt.xlabel('Wavelength')
+    plt.ylabel('data-model')
+    plt.title('Residuals')
+    plt.show()
+    
+    #plt.plot(chi_sq_spec[0], chi_sq_spec[1])
+    #plt.xlabel('Wavelength')
+    #plt.ylabel('chi-square')
+    #plt.title('chi-square values by wavelength bin')
+    #plt.show()
+    f, (ax1, ax2,ax3)= plt.subplots(3,1, sharex=True)
+    ax1.plot(target_spec[0], target_spec[1])
+    ax1.plot(interp_model[0], interp_model[1])
+    ax1.set_ylabel('Spectrum Flux')
+    ax3.plot(chi_sq_spec[0], chi_sq_spec[1])
+    ax3.set_ylabel('Chi-square')
+    ax3.set_xlabel('Wavelength')
+    ax2.plot(residual_spec[0], residual_spec[1])
+    ax2.set_ylabel('residuals')
+    ax2.axhline(y=0,color='k')
+    f.subplots_adjust(wspace=0)
+    f.subplots_adjust(hspace = 0)  
+    plt.show()
+    
+    med_resid= np.nanmedian(residual_spec[1])
+    mean_resid= np.nanmean(residual_spec[1])
+    print "\n**************\nmedian residual:"+str(med_resid) + "\n***********"
+    print "\n**************\nmean residual:"+str(mean_resid) + "\n***********"
+
+    plt.hist(residual_spec[1], bins=20)
+    plt.axvline(x=med_resid, color= 'r')
+    plt.axvline(x=med_resid, color= 'g')
+    plt.xlabel('data-model')
+    plt.ylabel('N')
+    plt.title('Residual Distribution')
+    plt.show()
+    
+    med_chisq= np.nanmedian(chi_sq_spec[1])
+    mean_chisq= np.nanmean(chi_sq_spec[1])
+    print "\n**************\nmedian chi-square:"+str(med_chisq) + "\n***********"
+    print "\n**************\nmean chi-square:"+str(mean_chisq) + "\n***********"
+    
+    #df= chi_sq_spec[1].shape[0]
+    #chi2_dist= scistats.chi2(df)
+    #print chi_sq_spec[1].shape[0]
+    #print df
+    #print type(df)
+    #print chi2_dist.ppf(0.001, df)
+    ##chi2_linspace= np.linspace(chi2_dist.ppf(0.001,df ), chi2_dist.ppf(0.999,df), 100)
+    #chi2_linspace= np.linspace(0,3000, 10000)
+    
+    
+    
+    plt.hist(chi_sq_spec[1], bins=100, normed=1)
+    plt.axvline(x=np.nanmedian(chi_sq_spec[1]), color= 'r', label='median')
+    plt.axvline(x=np.nanmean(chi_sq_spec[1]), color= 'g', label='mean')
+    #plt.plot(chi2_linspace, chi2_dist.pdf(chi2_linspace), label = 'chi-square')
+    plt.xlabel('chi-square')
+    plt.ylabel('N')
+    plt.title('chi-square distribution')
+    plt.legend()
+    plt.show()
+    
+    plt.plot(noise_spec[0], 1/noise_spec[1], color='b', label = '1/noise_spec')
+    plt.plot(noise_spec[0], target_spec[1]/noise_spec[1], color = 'r', label= 'target_spec/noise_spec')
     plt.ylabel('S/N')
+    plt.xlabel(r'Wavelength ($\AA$)')
+    plt.legend()
+    plt.show()
+    
+    plt.errorbar(target_spec[0], target_spec[1], noise_spec[1], color = 'b', label = 'target')
+    plt.plot(interp_model[0],interp_model[1], color = 'r', label = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
+    plt.ylabel('Flux (arbitrary units of /angstrom)')
     plt.xlabel(r'Wavelength ($\AA$)')
     plt.show()
     

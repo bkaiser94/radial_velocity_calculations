@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
-percentile= 80
+percentile= 50
 
 def trim_spec(input_spec, min_wave, max_wave):
     lower_indices = np.where(input_spec[0]< max_wave)
@@ -81,9 +81,12 @@ def make_continuum(input_spec, continuum_list= []):
     waves= []
     flux = []
     for ranges in continuum_list:
-        new_vals = get_med_val(input_spec, ranges)
-        waves.append(new_vals[0])
-        flux.append(new_vals[1])
+        try:
+            new_vals = get_med_val(input_spec, ranges)
+            waves.append(new_vals[0])
+            flux.append(new_vals[1])
+        except IndexError as error:
+            print error
     wave_array = np.array(waves)
     flux_array = np.array(flux)
     continuum_spec = np.vstack([wave_array, flux_array])
