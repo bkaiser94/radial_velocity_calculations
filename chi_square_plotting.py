@@ -41,7 +41,8 @@ import kernel_builder
 #input_filename='chi_square_values_20180910.csv'
 input_filename= 'chi_square_values_20180911small.csv'
 #input_filename= 'chi_square_values_20180911.csv'
-
+#input_filename='20181008_run1.csv'
+input_filename='20181009_run4.csv'
 
 #clevels= np.arange(0,1.5, 0.01)
 clevels= np.arange(0,1.5, 0.05)
@@ -54,6 +55,7 @@ teff_array = input_array['teff']
 logg_array = input_array['logg']
 rv_array = input_array['rv']
 dist_array = input_array['chi_square']
+rescale_dist= input_array['revised_chi_square']
 
 def rescale_chi_square(chi_square_vals):
     chi_square_min = np.min(chi_square_vals)
@@ -131,13 +133,15 @@ print logg_array.shape[0] / 11.
 chi_square_dots(teff_array,logg_array, dist_array)
 #chi_square_contours(teff_array, logg_array, dist_array-np.min(dist_array), clevels= dclevels)
 #upper_bound, lower_bound= chi_square_contours(teff_array, logg_array, dist_array-np.min(dist_array), clevels= [1], get_bounds= True)
-upper_bound, lower_bound= chi_square_contours(teff_array, logg_array, dist_array-np.min(dist_array), clevels= [2.3], get_bounds= True)
+#upper_bound, lower_bound= chi_square_contours(teff_array, logg_array, dist_array-np.min(dist_array), clevels= [2.3], get_bounds= True)
+upper_bound, lower_bound= chi_square_contours(teff_array, logg_array, rescale_dist-np.min(rescale_dist), clevels= [2.3], get_bounds= True)
 print "Upper bounds: ", upper_bound
 print "Lower bounds: ", lower_bound
 
 
 marker_scale = (logg_array-logg_array.min())*10
-plt.scatter(teff_array+(np.random.rand(teff_array.shape[0])*50), dist_array, s=marker_scale)
+#plt.scatter(teff_array+(np.random.rand(teff_array.shape[0])*50), dist_array, s=marker_scale)
+plt.scatter(teff_array+(np.random.rand(teff_array.shape[0])*50), rescale_dist, s=marker_scale)
 plt.xlabel("Teff (K)")
 plt.ylabel(r"red $\chi^2$")
 plt.show()

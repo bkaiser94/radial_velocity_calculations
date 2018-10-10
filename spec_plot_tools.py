@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
-import balmer_line_ranges.py as blr
+import balmer_line_ranges as blr
+
 
 percentile= 50
 
@@ -99,10 +100,14 @@ def make_continuum(input_spec, continuum_list= []):
 
 def get_norm_polynomial(input_spec, continuum_list = [], poly_degree = 3, plot_all = False):
     continuum_spec = make_continuum(input_spec, continuum_list = continuum_list)
+    #continuum_spec= clean_spectrum(input_spec, np.nanmin(input_spec[0]), np.nanmin(input_spec[0]).max, blr.balmer_norm_masks )
+    #continuum_spec= clean_spectrum(input_spec, np.nanmin(input_spec[0]), np.nanmax(input_spec[0]), blr.balmer_fit_ranges )
+    #print continuum_spec.shape
     poly_coeffs= np.polyfit(continuum_spec[0], continuum_spec[1], poly_degree)
     if plot_all:
         plt.plot(input_spec[0], input_spec[1], label = 'input_spec')
-        plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum', color = 'r')
+        #plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum', color = 'r')
+        plt.plot(continuum_spec[0], continuum_spec[1], label = 'continuum', color = 'r')
         plt.plot(input_spec[0], np.polyval(poly_coeffs, input_spec[0]), label = 'fit')
         plt.title(continuum_list[0])
         plt.legend()

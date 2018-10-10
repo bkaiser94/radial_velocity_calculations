@@ -34,7 +34,7 @@ import spec_plot_tools as spt
 listfile = 'listZFWCTB'
 target_list = np.genfromtxt(listfile, dtype ='str')
 
-output_filename='combined_PSRJ1431m4715_quad.fits'
+output_filename='combined_PSRJ1431m4715_20181010.fits'
 
 wavelength_range= [3600, 5290]
 flux_list = []
@@ -78,8 +78,8 @@ plt.title('median_combined')
 med_comb = np.nanmedian(flux_array, axis = 0)
 avg_comb = np.nanmean(flux_array, axis=0)
 #noise_comb = np.nanmedian(noise_list, axis= 0) #median combining the noises for each spectrum
-noise_comb = np.sqrt(np.sum(noise_array**2, axis=0)) #sum in quadrature of the noises for each spectrum
-noise_comb= noise_comb/noise_array.shape[0]
+noise_comb = np.sqrt(np.sum(noise_array**2, axis=0)/noise_array.shape[0]) #sum in quadrature of the noises for each spectrum
+#noise_comb= noise_comb/noise_array.shape[0] #per David, this should be done inside the square root
 weights = 1./noise_array
 weight_comb= np.average(flux_array, axis= 0, weights = weights)
 combined_noise= np.sqrt(np.average(noise_array**2, axis=0))

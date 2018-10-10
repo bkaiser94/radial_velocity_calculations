@@ -32,6 +32,7 @@ target_list_name = 'listFWCTB'
 target_list = np.genfromtxt(target_list_name, dtype = 'str')
 #combined_spec_file = 'combined_PSRJ1431m4715_new.fits'
 combined_spec_file = 'combined_PSRJ1431m4715_quad.fits'
+combined_spec_file='combined_PSRJ1431m4715_20181010.fits'
 
 scaling_range = [4600,4650]
 slit_width = 1.0 #arcseconds
@@ -43,7 +44,7 @@ spectrum_type= 'combined'
 #options are 'combined', 'single run'
 
 chi_norm= False
-raw_chi= True
+raw_chi= False
 
 ca_mask = [3920,3946]
 weird2_mask= [4485,4507]
@@ -52,7 +53,8 @@ red_metal_mask= [5162,5192]
 
 free_parameters= 2
 
-output_names = "teff, logg, rv, chi_square"
+#output_names = "teff, logg, rv, chi_square"
+output_names = "teff, logg, rv, chi_square, revised_chi_square"
 #output_filename= 'chi_square_values.csv'
 #output_filename= 'chi_square_values_noca.csv'
 #output_filename= 'chi_square_values_quad.csv'
@@ -66,7 +68,8 @@ output_names = "teff, logg, rv, chi_square"
 
 #output_filename= 'chi_square_values_20180911small.csv'
 #output_filename= 'run2_attempt.csv'
-output_filename= '20181008_run1.csv'
+#output_filename= '20181009_run4.csv'
+output_filename= '20181010_run1.csv'
 
 
 
@@ -104,6 +107,7 @@ velocity_high_bound = 300 #km/s
 velocity_tests = np.arange(velocity_low_bound, velocity_high_bound+velocity_step, velocity_step)
 
 low_wave_cut= 3800
+#low_wave_cut=3600
 #high_wave_cut= 5200
 high_wave_cut= 5050
 
@@ -465,6 +469,7 @@ def calc_sq_dist(target_spec, model_spec, error_spec = np.array([]), free_parame
     #dif = np.sum(norm_difs)/norm_difs.shape[0]
     if raw_chi:
         dif = np.sum(norm_difs)/norm_difs.shape[0]
+        #dif =np.sum(norm_difs)
     else:
         dif = np.sum(norm_difs)/(norm_difs.shape[0]-1-free_parameters) #based on Numerical Recipes in C page 621. (Section 14.3)
 
@@ -640,7 +645,7 @@ else:
 #plt.ylabel('Flux in cgs 10**-16')
 #plt.show()
 
-def run_model_grid(target_spec, error_spec=error_spec):
+def run_model_grid(target_spec):
     #mask_list = []
     #target_spec = spt.clean_spectrum(target_spec, min_wave, max_wave, mask_list)
     dist_list = []
@@ -664,6 +669,7 @@ def run_model_grid(target_spec, error_spec=error_spec):
             dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
             #test_model = poly_norm_spec(test_model)
             #model normalization =================================
+            test_model= spt.clean_spectrum(test_model, np.min(target_spec[0]), np.max(target_spec[0]),mask_list)
             test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
             #test_model= spt.rescale_spectrum(test_model, target_spec, scaling_range)
             #new_rv_dist= calc_sq_dist(target_spec, test_model)
@@ -684,9 +690,10 @@ def run_model_grid(target_spec, error_spec=error_spec):
             model_spec[0] = get_doppler_shifted(model_spec[0], new_rv)
             model_spec = convolve_model(model_spec, target_spec, header)
             dopp_cont_list= dopp_shift_continuum_list(new_rv)
+            model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
             model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
             plt.title(r'$\chi^2=$'+str(new_dist))
-            model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
+            
             if balmer_only:
                 model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), continuum_masks)
                 plot_overlays(line_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(new_rv)+'km/s')
@@ -696,9 +703,36 @@ def run_model_grid(target_spec, error_spec=error_spec):
         dist_list.append(new_dist)
     dist_array = np.array(dist_list)
     rv_array = np.array(rv_list)
-    for teff,logg, dist_mod, rv in zip(teff_array, logg_array, dist_list, rv_list):
-        print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv
-    output_array= np.vstack([teff_array, logg_array, rv_array, dist_array]).T
+    ##########################
+    ###Rescale the chi-square values and make them actually be the version that's not divided by N
+    #in both cases
+    min_index = np.argmin(dist_list)
+    #min_model = model_file_list[min_index]
+    min_teff = teff_array[min_index]
+    min_logg = logg_array[min_index]
+    min_dist = np.copy(dist_array[min_index])
+    min_rv = rv_array[min_index]
+    print 'rescaling shenanigans'
+    print "target_spec.shape[1]:",target_spec.shape[1]
+    print "min_dist:",min_dist
+    #dist_array= dist_array*target_spec.shape[1] #undoing the division by N
+    dist_array= dist_array*(target_spec.shape[1]-free_parameters) #undoing the division by N
+    print "np.nanmin(dist_array):",np.nanmin(dist_array)
+    rescale_dist= np.copy(dist_array/min_dist) #dividing all of the values by the minimum pseudo-reduced chi-square value
+    
+    min_rescale_dist= rescale_dist[min_index]
+    print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s, rescaled chi-square:', min_rescale_dist
+    
+    
+    
+    
+    
+    ###################
+    #for teff,logg, dist_mod, rv, resc_chisq in zip(teff_array, logg_array, dist_list, rv_list, rescale_dist):
+    for teff,logg, dist_mod, rv, resc_chisq in zip(teff_array, logg_array, dist_array, rv_list, rescale_dist):
+        print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv, "rescaled chi-square:", resc_chisq
+    #output_array= np.vstack([teff_array, logg_array, rv_array, dist_array]).T
+    output_array= np.vstack([teff_array, logg_array, rv_array, dist_array, rescale_dist]).T
     print "Saving "+ output_filename
     np.savetxt(output_filename, output_array, header = output_names, delimiter= ',')
     print "Saved " + output_filename
@@ -707,16 +741,18 @@ def run_model_grid(target_spec, error_spec=error_spec):
     sorted_logg= logg_array[sorted_indices]
     sorted_dist = dist_array[sorted_indices]
     sorted_rv = rv_array[sorted_indices]
+    sorted_resc_chisq = rescale_dist[sorted_indices]
     print "======== Sorted  by chi-squared =========="
-    for teff,logg, dist_mod, rv in zip(sorted_teff, sorted_logg, sorted_dist, sorted_rv):
-        print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv
-    min_index = np.argmin(dist_list)
-    #min_model = model_file_list[min_index]
-    min_teff = teff_array[min_index]
-    min_logg = logg_array[min_index]
-    min_dist = dist_array[min_index]
-    min_rv = rv_array[min_index]
-    print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s'
+    for teff,logg, dist_mod, rv, resc_chisq in zip(sorted_teff, sorted_logg, sorted_dist, sorted_rv, sorted_resc_chisq):
+        print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv, "rescaled chi-square:", resc_chisq
+    #min_index = np.argmin(dist_list)
+    ##min_model = model_file_list[min_index]
+    #min_teff = teff_array[min_index]
+    #min_logg = logg_array[min_index]
+    #min_dist = dist_array[min_index]
+    #min_rv = rv_array[min_index]
+    #print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s'
+    print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s, rescaled chi-square:', min_rescale_dist
     #model_spec= get_model_fromfile(min_model)
     min_model = wd(Teff= min_teff, logg = min_logg)
     
