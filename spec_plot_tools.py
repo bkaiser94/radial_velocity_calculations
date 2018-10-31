@@ -62,9 +62,9 @@ def clean_spectrum(input_spec, min_wave, max_wave, mask_list):
 def get_med_val(input_spec, wave_range):
     sub_spec = trim_spec(input_spec, wave_range[0], wave_range[1])
     length = sub_spec[0].shape[0]
-    if length%2 == 0:
-        #even number
-        sub_spec = sub_spec[:, :-1] #trim off the last point
+    #if length%2 == 0:
+        ##even number
+        #sub_spec = sub_spec[:, :-1] #trim off the last point
     
     #med_val = np.nanmedian(sub_spec, axis =1)
     #med_flux = np.nanmedian(sub_spec[1])
@@ -83,12 +83,15 @@ def make_continuum(input_spec, continuum_list= []):
     waves= []
     flux = []
     for ranges in continuum_list:
+        #print ranges
         try:
             new_vals = get_med_val(input_spec, ranges)
             waves.append(new_vals[0])
             flux.append(new_vals[1])
         except IndexError as error:
-            print error
+            #print "Continuum construction point outside spectrum, so ignoring: ", ranges
+            #print error
+            pass
     wave_array = np.array(waves)
     flux_array = np.array(flux)
     continuum_spec = np.vstack([wave_array, flux_array])
@@ -106,8 +109,8 @@ def get_norm_polynomial(input_spec, continuum_list = [], poly_degree = 3, plot_a
     poly_coeffs= np.polyfit(continuum_spec[0], continuum_spec[1], poly_degree)
     if plot_all:
         plt.plot(input_spec[0], input_spec[1], label = 'input_spec')
-        #plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum', color = 'r')
-        plt.plot(continuum_spec[0], continuum_spec[1], label = 'continuum', color = 'r')
+        plt.plot(continuum_spec[0], continuum_spec[1], linestyle = 'none', marker = 'o', label = 'continuum', color = 'r')
+        #plt.plot(continuum_spec[0], continuum_spec[1], label = 'continuum', color = 'r')
         plt.plot(input_spec[0], np.polyval(poly_coeffs, input_spec[0]), label = 'fit')
         plt.title(continuum_list[0])
         plt.legend()

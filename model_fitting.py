@@ -33,8 +33,11 @@ target_list = np.genfromtxt(target_list_name, dtype = 'str')
 #combined_spec_file = 'combined_PSRJ1431m4715_new.fits'
 combined_spec_file = 'combined_PSRJ1431m4715_quad.fits'
 combined_spec_file='combined_PSRJ1431m4715_20181010.fits'
+combined_spec_file='combined_PSRJ1431m4715_20181017.fits'
+combined_spec_file='combined_PSRJ1431m4715_20181021B_10.fits'
 
-scaling_range = [4600,4650]
+#scaling_range = [4600,4650]
+rms_range= [4600,4650]
 slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
@@ -69,7 +72,10 @@ output_names = "teff, logg, rv, chi_square, revised_chi_square"
 #output_filename= 'chi_square_values_20180911small.csv'
 #output_filename= 'run2_attempt.csv'
 #output_filename= '20181009_run4.csv'
-output_filename= '20181010_run1.csv'
+#output_filename= '20181011_run1.csv'
+#output_filename= '20181017_run1.csv'
+output_filename= '20181021B_31spec.csv'
+output_filename= '20181021B_test.csv'
 
 
 
@@ -305,7 +311,10 @@ if spectrum_type== 'single run':
         
     flux_stack = []
     noise_stack = []
-    for index in range(25,31):
+    #for index in range(25,31):
+    for index in range(8,10):
+    #for index in range(4,9):
+    #for index in range(2,4):
     #for index in range(3,9):
     #for index in range(0,6):
     #for index in range(3,6):
@@ -321,14 +330,19 @@ if spectrum_type== 'single run':
         #noise = file_flux*file_noise
         flux_stack.append([file_flux])
         noise_stack.append([noise])
-        
+    noise_stack=np.array(noise_stack)
     target_waves = file_waves
     target_flux= np.nanmedian(flux_stack, axis=0)[0]
-    target_noise = np.nanmedian(noise_stack, axis=0)[0]
+    #target_noise = np.nanmedian(noise_stack, axis=0)[0]
+    target_noise = np.sum(noise_stack**2,axis=0)[0]
+    print target_noise.shape
+    target_noise= np.copy(np.sqrt(target_noise/np.float_(noise_stack.shape[0])))
+    
     #print target_waves.shape
     #print target_flux.shape
     target_spec = np.vstack([target_waves, target_flux])
     noise_spec = np.vstack([target_waves, target_noise])
+    noise_spec[1]=noise_spec[1]/target_spec[1]
     target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
     noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
     target_file = target_list[0]
@@ -460,13 +474,14 @@ def calc_sq_dist(target_spec, model_spec, error_spec = np.array([]), free_parame
         norm_difs = (interp_model[1]-target_spec[1])**2/np.float_(error_spec[1])**2
         #norm_difs = np.abs(interp_model[1]-target_spec[1])/np.float_(interp_model[1])
     else:
-        #print "no uncertainties provided"
+        print "no uncertainties provided"
         norm_difs =(interp_model[1]-target_spec[1])**2/np.float_(interp_model[1])
     #norm_difs = np.abs(interp_model[1]-target_spec[1])
 
-    nan_remove = np.isinf(norm_difs)
-    norm_difs= norm_difs[~nan_remove]
+    #nan_remove = np.isinf(norm_difs)
+    #norm_difs= norm_difs[~nan_remove]
     #dif = np.sum(norm_difs)/norm_difs.shape[0]
+    #print "norm_difs.shape[0]:", norm_difs.shape[0]
     if raw_chi:
         dif = np.sum(norm_difs)/norm_difs.shape[0]
         #dif =np.sum(norm_difs)
@@ -678,6 +693,7 @@ def run_model_grid(target_spec):
                 #new_rv_dist = calc_sq_dist(line_spec, test_model)
 
             else:
+                #print "not balmer_only"
                 new_rv_dist = calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
             #new_rv_dist = calc_sq_dist(target_spec, test_model) #for error-free chi-square; uses model division
 
@@ -715,8 +731,10 @@ def run_model_grid(target_spec):
     print 'rescaling shenanigans'
     print "target_spec.shape[1]:",target_spec.shape[1]
     print "min_dist:",min_dist
-    #dist_array= dist_array*target_spec.shape[1] #undoing the division by N
-    dist_array= dist_array*(target_spec.shape[1]-free_parameters) #undoing the division by N
+    if not raw_chi:
+        dist_array= dist_array*(target_spec.shape[1]-1-free_parameters) #undoing the division by N
+    else:
+        dist_array= dist_array*target_spec.shape[1] #undoing the division by N
     print "np.nanmin(dist_array):",np.nanmin(dist_array)
     rescale_dist= np.copy(dist_array/min_dist) #dividing all of the values by the minimum pseudo-reduced chi-square value
     
@@ -786,10 +804,26 @@ def run_model_grid(target_spec):
     plot_overlays(target_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
     plot_overlays(target_spec, noise_spec, model_string = 'noise')
     
+    
+    
     residual_spec= calc_residuals(target_spec, model_spec)
+    
+    rms_spec= spt.clean_spectrum(residual_spec, rms_range[0], rms_range[1],mask_list)
+    rms_scatter= np.sqrt(np.nanmean(rms_spec[1]**2))
+    rms_noise_spec= spt.clean_spectrum(noise_spec, rms_range[0], rms_range[1],mask_list)
+    mean_noise= np.nanmean(rms_noise_spec[1])
+    rms_target= spt.clean_spectrum(target_spec, rms_range[0],rms_range[1],mask_list)
+    rms_about_mean= np.sqrt(np.nanmean((rms_target[1]-np.nanmean(rms_target[1]))**2))
+    rms_about_median= np.sqrt(np.nanmean((rms_target[1]-np.nanmedian(rms_target[1]))**2))
+    print "RMS in", rms_range, ":", rms_scatter, "compared to model"
+    print "Mean sigma of", rms_range,":", mean_noise
+    print "RMS in", rms_range,":", rms_about_mean, "compared to mean:", np.nanmean(rms_target[1])
+    print "RMS in",rms_range,":", rms_about_median, "compared to median:", np.nanmedian(rms_target[1])
+    print "max noise in", rms_range, ":", np.nanmax(rms_noise_spec[1])
     chi_sq_singles= residual_spec[1]**2/noise_spec[1]**2
     chi_sq_spec= np.vstack([target_spec[0], chi_sq_singles])
-    
+    print "Sum of residual chi-square:", np.sum(chi_sq_spec[1])
+    print "chi-square values:", dist_array[min_index]
     plt.plot(residual_spec[0], residual_spec[1])
     plt.xlabel('Wavelength')
     plt.ylabel('data-model')

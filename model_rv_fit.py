@@ -39,7 +39,8 @@ teff = 7500
 logg = 5.5
 
 #output_filename= 'rv_plot_second_iteration.txt'
-output_filename= 'rv_plot_teff7500_logg550.txt'
+#output_filename= 'rv_plot_teff7500_logg550.txt'
+output_filename= 'rv_plot_teff7500_logg550_20181011.txt'
 
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')

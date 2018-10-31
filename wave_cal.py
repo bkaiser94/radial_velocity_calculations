@@ -25,11 +25,13 @@ from astropy import coordinates as coords
 from astropy import units as u
 from astropy import constants as const
 
+zerolistname= 'listZero'
 
 speclistname = 'listCTB'
 linefilename = 'JJ_FeAr_lines.txt'
-
-
+zerolist = np.genfromtxt(zerolistname, dtype ='str')
+print "zerolist.shape",zerolist.shape
+n_biases= zerolist.shape[0]
 parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
@@ -49,11 +51,12 @@ def to_barycenter(header):
     return header
 
 ####
-trace_band_mid= 85   #y-pixel that's about the center of the trace
+#trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
+trace_band_mid= 95   #y-pixel that's about the center of the trace
 trace_band_width = 40 #pixel width to determine the center of the trace
 #core_sides=  5
 core_sides=  7
-
+bkg_core_sides= core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 y_trace_width= core_sides*2+1 #the actual number of pixels in the vertical direction that are in the trace (or background)
 poly_degree = 3 #polynomial degree of the fit to the trace
 bkg_shift= 25
@@ -64,7 +67,8 @@ lamp_bounds = ([0,-np.inf,0,0],[30000,np.inf,20,5000 ])
 seeing_range = [1200, 1220]
 #seeing_p0= [1000, trace_band_width/2, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
 #seeing_p0= [1000, 5, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
-seeing_p0= [1000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
+#seeing_p0= [1000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
+seeing_p0= [2000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
 see_fit_bounds = ([50, 0, 0.7, 0],[18000, 1000, trace_band_width, 2000]) #(lower, upper) bounds on the fit for the seeing.
 
 #####
@@ -385,20 +389,37 @@ for counter, img in enumerate(speclist):
         band_inds= np.indices(img_data.shape)
         x_positions= band_inds[1,1]
         target_light= np.array([])
+        target_noise2_list= np.array([])
         bkg_light= np.array([])
+        bkg_noise2_list= np.array([])
         poly_curve_y = np.polyval(polynomials[0], x_positions)
         poly_curve_wavelength= np.polyval(polynomials[1], x_positions)
         for x_pos in x_positions:
-            xsum= np.sum(img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
+            trace_vals=img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos]
+            xsum= np.sum(trace_vals)
+            #xsum= np.sum(img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos]) #old way 2018-10-31
             target_light= np.append(target_light,[xsum])
-            bkg_sum= np.sum(img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
+            target_noise2 = np.copy(xsum+trace_vals.shape[0]*header['RDNOISE']**2+trace_vals.shape[0]*header['RDNOISE']**2/n_biases)
+            target_noise2_list= np.append(target_noise2_list, [target_noise2])
+            up_bkg=img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+bkg_core_sides+1),x_pos]
+            down_bkg= img_data[np.int_(poly_curve_y[x_pos]-bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]-bkg_shift+bkg_core_sides+1),x_pos]
+            bkg_comb= np.append(up_bkg, down_bkg)
+            print "trace_vals.shape", trace_vals.shape
+            print "bkg_comb.shape", bkg_comb.shape
+            bkg_noise2= trace_vals.shape[0]*np.copy(np.mean(bkg_comb)/bkg_comb.shape[0]+header['RDNOISE']**2/bkg_comb.shape[0]+header['RDNOISE']**2/(bkg_comb.shape[0]*n_biases))
+            #bkg_sum= np.sum(img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
+            bkg_sum= trace_vals.shape[0]*np.copy(np.mean(bkg_comb)) #take the mean of the bkg portion of the sky
             bkg_light= np.append(bkg_light,[bkg_sum])
+            bkg_noise2_list= np.append(bkg_noise2_list, [bkg_noise2]) #list of noise values for a single pixel (resulting from the mean of the sky) for a given column
+            
         #plt.plot(x_positions,target_light,'-')
         #plt.xlabel('x (pixel)')
         #plt.ylabel('Counts')
         #plt.title('Target Spectrum')
         #plt.show()
-        noise_spectrum = np.copy(np.sqrt(target_light + bkg_light + y_trace_width*header['RDNOISE']))
+        #noise_spectrum = np.copy(np.sqrt(target_light + bkg_light + y_trace_width*header['RDNOISE'])) #old way 2018-10-31
+        noise_spectrum= np.copy(np.sqrt(target_noise2_list+bkg_noise2_list)) #combination of noises of the background pixels and the target trace pixels.
+        print "noise_spectrum.shape", noise_spectrum.shape
         target_light= target_light-bkg_light
         noise_spectrum = noise_spectrum/target_light #normalized noise values by the target spectrum, so now unitless.
         plt.plot(x_positions,target_light,'-')

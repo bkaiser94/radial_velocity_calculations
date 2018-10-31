@@ -34,12 +34,14 @@ import spec_plot_tools as spt
 listfile = 'listZFWCTB'
 target_list = np.genfromtxt(listfile, dtype ='str')
 
-output_filename='combined_PSRJ1431m4715_20181010.fits'
+#output_filename='combined_PSRJ1431m4715_20181017.fits'
+output_filename='combined_PSRJ1431m4715_20181021B_test.fits'
 
 wavelength_range= [3600, 5290]
 flux_list = []
 noise_list = []
-first=fits.open(target_list[-4])
+#first=fits.open(target_list[-4])
+first=fits.open(target_list[0])
 #header = fits.getheader(target_file)
 standard_waves= first[0].data
 standard_flux = first[1].data
@@ -48,20 +50,35 @@ first_spec = np.vstack([standard_waves, standard_flux])
 trimmed_first = spt.trim_spec(first_spec, wavelength_range[0], wavelength_range[1])
 trimmed_waves = trimmed_first[0] #These are the wavelength values that all of the other spectra should be interpolated to
 
-
+def deal_with_bad_vals(input_spec, noise_spec):
+    bad_noise = np.isnan(noise_spec[1])
+    print "sum bad_noise:", np.sum(bad_noise)
+    print "Bad Pixel:" ,input_spec[0][bad_noise], input_spec[1][bad_noise], noise_spec[1][bad_noise]
+    #noise_spec[1][bad_noise]= 1.
+    input_spec[1][bad_noise]= 0. #setting the flux of the pixels that have messed up things equal to zero
+    other_noise = np.isinf(noise_spec[1])
+    print "sum other_noise:", np.sum(other_noise)
+    #noise_spec[1][other_noise]= 1.
+    input_spec[1][other_noise]=0. #setting the flux to zero
+    return input_spec, noise_spec
 
 for target_file in target_list:
     target_spec, header, target_noise = spt.retrieve_spec(target_file)
     #interpolator = scinterp.CubicSpline(target_spec[0], target_spec[1])
     #interp_flux = interpolator(trimmed_waves)
-    interp_flux= np.interp(trimmed_waves, target_spec[0], target_spec[1])
+    #interp_flux= np.interp(trimmed_waves, target_spec[0], target_spec[1])
     print "max",  np.max(target_noise[1])
-    bad_noise = np.isnan(target_noise[1])
-    target_noise[1][bad_noise]= 1e6
-    other_noise = np.isinf(target_noise[1])
-    target_noise[1][other_noise]= 1e6
+    #bad_noise = np.isnan(target_noise[1])
+    #target_noise[1][bad_noise]= 1e6
+    #other_noise = np.isinf(target_noise[1])
+    #target_noise[1][other_noise]= 1e6
+    
+    target_spec, target_noise= deal_with_bad_vals(target_spec, target_noise)
     #interpolator_noise = scinterp.CubicSpline(target_noise[0], target_noise[1])
     #interp_noise = interpolator_noise(trimmed_waves)
+    print "new max", np.max(target_noise[1])
+    print "---------------"
+    interp_flux= np.interp(trimmed_waves, target_spec[0], target_spec[1])
     interp_noise= np.interp(trimmed_waves, target_noise[0], target_noise[1])
     flux_list.append(interp_flux)
     noise_list.append(interp_noise)
@@ -77,16 +94,36 @@ print flux_array.shape
 plt.title('median_combined')
 med_comb = np.nanmedian(flux_array, axis = 0)
 avg_comb = np.nanmean(flux_array, axis=0)
+print "noise_array", noise_array
+print "avg_comb", avg_comb
 #noise_comb = np.nanmedian(noise_list, axis= 0) #median combining the noises for each spectrum
-noise_comb = np.sqrt(np.sum(noise_array**2, axis=0)/noise_array.shape[0]) #sum in quadrature of the noises for each spectrum
+#noise_comb = np.sqrt(np.sum(noise_array**2, axis=0)/noise_array.shape[0]) #sum in quadrature of the noises for each spectrum
+noise_comb = np.sqrt(np.sum(noise_array**2, axis=0))/noise_array.shape[0] #sum in quadrature of the noises for each spectrum'
+print "noise_array.shape[0]:", noise_array.shape[0]
+for value in noise_array:
+    print "sigma", value[0]
+print "combined sigma in quad for that:", noise_comb[0]
+print "np.nanmean(noise_array, axis=0)[0]", np.nanmean(noise_array, axis=0)[0]
+print "array**2", (noise_array**2)[1][2]
+print "array[0][0]**2", noise_array[1][2]**2
+print "noise_comb", noise_comb
 #noise_comb= noise_comb/noise_array.shape[0] #per David, this should be done inside the square root
-weights = 1./noise_array
+#weights = 1./noise_array
+weights = 1./(noise_array**2) #weight should be 1 over square of sigma
+#for weight in weights:
+    #print "weight", weight
 weight_comb= np.average(flux_array, axis= 0, weights = weights)
-combined_noise= np.sqrt(np.average(noise_array**2, axis=0))
+#combined_noise= np.sqrt(np.average(noise_array**2, axis=0))
 plt.plot(trimmed_waves, med_comb, label = 'median')
 plt.plot(trimmed_waves, avg_comb, label ='mean')
 plt.plot(trimmed_waves, weight_comb, label= 'weighted')
 
+plt.xlabel(r'Wavelength $(\AA)$')
+plt.ylabel(r'Flux (ergs/cm/cm/s/A 10**-16)')
+plt.legend()
+plt.show()
+
+plt.plot(trimmed_waves, weight_comb/avg_comb, label= "weight_comb/avg_comb")
 plt.xlabel(r'Wavelength $(\AA)$')
 plt.ylabel(r'Flux (ergs/cm/cm/s/A 10**-16)')
 plt.legend()
