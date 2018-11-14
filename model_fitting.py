@@ -31,10 +31,14 @@ plt.rc('lines', markersize = 5)
 target_list_name = 'listFWCTB'
 target_list = np.genfromtxt(target_list_name, dtype = 'str')
 #combined_spec_file = 'combined_PSRJ1431m4715_new.fits'
-combined_spec_file = 'combined_PSRJ1431m4715_quad.fits'
-combined_spec_file='combined_PSRJ1431m4715_20181010.fits'
-combined_spec_file='combined_PSRJ1431m4715_20181017.fits'
-combined_spec_file='combined_PSRJ1431m4715_20181021B_10.fits'
+#combined_spec_file = 'combined_PSRJ1431m4715_quad.fits'
+#combined_spec_file='combined_PSRJ1431m4715_20181010.fits'
+#combined_spec_file='combined_PSRJ1431m4715_20181017.fits'
+#combined_spec_file='combined_PSRJ1431m4715_20181021B_10.fits'
+#combined_spec_file='combined_PSRJ1431m4715_20181031.fits'
+#combined_spec_file='combined_PSRJ1431m4715_20181031_2spec.fits'
+combined_spec_file='combined_PSRJ1431m4715_20181031_cube_interp.fits'
+combined_spec_file= 'combined_PSRJ1431m4715_20181105.fits'
 
 #scaling_range = [4600,4650]
 rms_range= [4600,4650]
@@ -50,9 +54,11 @@ chi_norm= False
 raw_chi= False
 
 ca_mask = [3920,3946]
+#ca_mask=[1,1]
 weird2_mask= [4485,4507]
 weird_mask=[4563,4576]
 red_metal_mask= [5162,5192]
+#red_metal_mask= [1,1]
 
 free_parameters= 2
 
@@ -74,9 +80,11 @@ output_names = "teff, logg, rv, chi_square, revised_chi_square"
 #output_filename= '20181009_run4.csv'
 #output_filename= '20181011_run1.csv'
 #output_filename= '20181017_run1.csv'
-output_filename= '20181021B_31spec.csv'
-output_filename= '20181021B_test.csv'
-
+#output_filename= '20181021B_31spec.csv'
+#output_filename= '20181021B_test.csv'
+#output_filename= '20181031_oldrvs_2spec.csv'
+#output_filename= '20181031_oldrvs_cube_spline.csv'
+output_filename= '20181106_oldrvs_cube_spline.csv'
 
 
 
@@ -820,6 +828,12 @@ def run_model_grid(target_spec):
     print "RMS in", rms_range,":", rms_about_mean, "compared to mean:", np.nanmean(rms_target[1])
     print "RMS in",rms_range,":", rms_about_median, "compared to median:", np.nanmedian(rms_target[1])
     print "max noise in", rms_range, ":", np.nanmax(rms_noise_spec[1])
+    rms_model= spt.clean_spectrum(interp_model, rms_range[0], rms_range[1], mask_list)
+    stat_std_dev = np.sqrt(np.sum(rms_target[1]**2-rms_model[1]**2)/rms_target[1].shape[0])
+    print "statistical std dev (around model):", stat_std_dev
+    mean_std_dev= np.std(rms_target[1])
+    print "statistical std dev (around mean):", mean_std_dev
+    
     chi_sq_singles= residual_spec[1]**2/noise_spec[1]**2
     chi_sq_spec= np.vstack([target_spec[0], chi_sq_singles])
     print "Sum of residual chi-square:", np.sum(chi_sq_spec[1])

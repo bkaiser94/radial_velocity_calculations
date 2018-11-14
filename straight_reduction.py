@@ -22,10 +22,12 @@ from astropy import constants as const
 
 zerolistname= 'listZero'
 speclistname = 'listSpec'
+flatlistname= 'listFlat'
 
 
 zerolist = np.genfromtxt(zerolistname, dtype ='str')
 speclist= np.genfromtxt(speclistname, dtype = 'str')
+flatlist= np.genfromtxt(flatlistname, dtype='str')
 
 ####
 slit_ystart = 1   #The beginning of the image that has light from outside
@@ -102,7 +104,35 @@ print new_file_array
 
 np.savetxt('listCTB', new_file_array, fmt = '%s')
 
+########## Now doing the flats
+
+new_file_list= []
+for img in flatlist:
+    filename= glob(img)[0]
+    print filename
+    i = fits.open(img)
+    header= fits.getheader(img)
+    gain =header['GAIN']
+    readnoise = header['RDNOISE']
+    img_data= i[0].data
+    img_data= img_data-bias_med #bias subtraction
+    img_data = img_data[slit_ystart:slit_yend,im_xstart:im_xend] #trimming the edges
+    target_cosmic= cosmics.cosmicsimage(img_data, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
+    target_cosmic.run(maxiter= 4)
+    img_data= target_cosmic.cleanarray
+    new_filename= 'ctb.' + filename
+    img_data = img_data * gain
+    header.append(card =( 'Counts', 'True', 'if spectrum in counts'))
+    new_file_list.append(new_filename)
+    new_hdu = fits.PrimaryHDU(img_data, header = header)
+    #new_hdu.verify('fix')
+    #new_hdu.writeto(new_filename, overwrite = True)
+    new_hdu.writeto(new_filename, output_verify= 'fix', overwrite = True)
     
+new_file_array = np.array(new_file_list)
+print new_file_array
+
+np.savetxt('listCTBflat', new_file_array, fmt = '%s')
     
     
     

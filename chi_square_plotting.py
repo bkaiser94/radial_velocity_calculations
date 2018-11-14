@@ -43,7 +43,8 @@ input_filename= 'chi_square_values_20180911small.csv'
 #input_filename= 'chi_square_values_20180911.csv'
 #input_filename='20181008_run1.csv'
 #input_filename= '20181010_run1.csv'
-input_filename= '20181021B_31spec.csv'
+#input_filename= '20181021B_31spec.csv'
+input_filename='20181106_oldrvs_cube_spline.csv'
 
 #clevels= np.arange(0,1.5, 0.01)
 clevels= np.arange(0,1.5, 0.05)

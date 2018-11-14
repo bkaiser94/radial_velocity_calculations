@@ -28,6 +28,7 @@ from astropy import constants as const
 zerolistname= 'listZero'
 
 speclistname = 'listCTB'
+flatlistname='listCTBflat'
 linefilename = 'JJ_FeAr_lines.txt'
 zerolist = np.genfromtxt(zerolistname, dtype ='str')
 print "zerolist.shape",zerolist.shape
@@ -143,7 +144,13 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
     return popt, pcov
 
 
-
+def normalize_flat():
+    """
+    Normalize the master flat file by 
+    
+    """
+    
+    return
 
 ######
 def get_trace_waves(target_med, lamp_im):

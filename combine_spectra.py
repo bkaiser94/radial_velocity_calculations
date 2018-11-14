@@ -35,9 +35,14 @@ listfile = 'listZFWCTB'
 target_list = np.genfromtxt(listfile, dtype ='str')
 
 #output_filename='combined_PSRJ1431m4715_20181017.fits'
-output_filename='combined_PSRJ1431m4715_20181021B_test.fits'
+#output_filename='combined_PSRJ1431m4715_20181031_2spec.fits'
+#output_filename='combined_PSRJ1431m4715_20181031_cube_interp.fits'
+output_filename='combined_PSRJ1431m4715_20181105.fits'
 
 wavelength_range= [3600, 5290]
+rms_range= [4600,4650]
+
+
 flux_list = []
 noise_list = []
 #first=fits.open(target_list[-4])
@@ -56,6 +61,7 @@ def deal_with_bad_vals(input_spec, noise_spec):
     print "Bad Pixel:" ,input_spec[0][bad_noise], input_spec[1][bad_noise], noise_spec[1][bad_noise]
     #noise_spec[1][bad_noise]= 1.
     input_spec[1][bad_noise]= 0. #setting the flux of the pixels that have messed up things equal to zero
+    noise_spec[1][bad_noise]=1.
     other_noise = np.isinf(noise_spec[1])
     print "sum other_noise:", np.sum(other_noise)
     #noise_spec[1][other_noise]= 1.
@@ -72,14 +78,45 @@ for target_file in target_list:
     #target_noise[1][bad_noise]= 1e6
     #other_noise = np.isinf(target_noise[1])
     #target_noise[1][other_noise]= 1e6
-    
+    mask_list=[]
+    rms_target= np.copy(spt.clean_spectrum(target_spec, rms_range[0],rms_range[1],mask_list))
+    rms_noise_spec= np.copy(spt.clean_spectrum(target_noise, rms_range[0], rms_range[1],mask_list))
+    mean_noise = np.nanmean(rms_noise_spec[1])
+    rms_about_mean= np.sqrt(np.nanmean((rms_target[1]-np.nanmean(rms_target[1]))**2))
+    rms_about_median= np.sqrt(np.nanmean((rms_target[1]-np.nanmedian(rms_target[1]))**2))
+    print "============="
+    print "Pre-interpolation"
+    print "Mean sigma of", rms_range,":", mean_noise
+    print "RMS in", rms_range,":", rms_about_mean, "compared to mean:", np.nanmean(rms_target[1])
+    print "RMS in",rms_range,":", rms_about_median, "compared to median:", np.nanmedian(rms_target[1])
+    print "max noise in", rms_range, ":", np.nanmax(rms_noise_spec[1])
+    print "statistical std dev:", np.std(rms_target[1])
+    print "-------------------"
+    print "Post-interpolation"
     target_spec, target_noise= deal_with_bad_vals(target_spec, target_noise)
-    #interpolator_noise = scinterp.CubicSpline(target_noise[0], target_noise[1])
-    #interp_noise = interpolator_noise(trimmed_waves)
-    print "new max", np.max(target_noise[1])
+    interpolator_noise = scinterp.CubicSpline(target_noise[0], target_noise[1])
+    interp_noise = interpolator_noise(trimmed_waves)
+    
     print "---------------"
-    interp_flux= np.interp(trimmed_waves, target_spec[0], target_spec[1])
-    interp_noise= np.interp(trimmed_waves, target_noise[0], target_noise[1])
+    #interp_flux= np.interp(trimmed_waves, target_spec[0], target_spec[1])
+    interpolator= scinterp.CubicSpline(target_spec[0], target_spec[1])
+    interp_flux = interpolator(trimmed_waves)
+    #interp_flux= np.interp(trimmed_waves, target_spec[0], target_spec[1])
+    #interp_noise= np.interp(trimmed_waves, target_noise[0], target_noise[1])
+    rms_target=np.copy(np.vstack([trimmed_waves,interp_flux]))
+    rms_noise_spec= np.copy(np.vstack([trimmed_waves, interp_noise]))
+    rms_target= spt.clean_spectrum(rms_target, rms_range[0], rms_range[1], mask_list)
+    rms_noise_spec= spt.clean_spectrum(rms_noise_spec, rms_range[0],rms_range[1], mask_list)
+    mean_noise = np.nanmean(rms_noise_spec[1])
+    rms_about_mean= np.sqrt(np.nanmean((rms_target[1]-np.nanmean(rms_target[1]))**2))
+    rms_about_median= np.sqrt(np.nanmean((rms_target[1]-np.nanmedian(rms_target[1]))**2))
+    print "Mean sigma of", rms_range,":", mean_noise
+    print "RMS in", rms_range,":", rms_about_mean, "compared to mean:", np.nanmean(rms_target[1])
+    print "RMS in",rms_range,":", rms_about_median, "compared to median:", np.nanmedian(rms_target[1])
+    print "max noise in", rms_range, ":", np.nanmax(rms_noise_spec[1])
+    print "statistical std dev:", np.std(rms_target[1])
+    print "new max", np.max(target_noise[1])
+    print "================"
     flux_list.append(interp_flux)
     noise_list.append(interp_noise)
     #noise_list.append(np.copy(target_noise[1]))
