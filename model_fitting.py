@@ -37,8 +37,9 @@ target_list = np.genfromtxt(target_list_name, dtype = 'str')
 #combined_spec_file='combined_PSRJ1431m4715_20181021B_10.fits'
 #combined_spec_file='combined_PSRJ1431m4715_20181031.fits'
 #combined_spec_file='combined_PSRJ1431m4715_20181031_2spec.fits'
-combined_spec_file='combined_PSRJ1431m4715_20181031_cube_interp.fits'
-combined_spec_file= 'combined_PSRJ1431m4715_20181105.fits'
+#combined_spec_file='combined_PSRJ1431m4715_20181031_cube_interp.fits'
+#combined_spec_file= 'combined_PSRJ1431m4715_20181105.fits'
+combined_spec_file='combined_PSRJ1431m4715_20181114_new.fits'
 
 #scaling_range = [4600,4650]
 rms_range= [4600,4650]
@@ -84,8 +85,11 @@ output_names = "teff, logg, rv, chi_square, revised_chi_square"
 #output_filename= '20181021B_test.csv'
 #output_filename= '20181031_oldrvs_2spec.csv'
 #output_filename= '20181031_oldrvs_cube_spline.csv'
-output_filename= '20181106_oldrvs_cube_spline.csv'
-
+#output_filename= '20181106_oldrvs_cube_spline.csv'
+#output_filename= '20181115_oldrvs_cube_spline.csv'
+#output_filename= '20181114_oldtest.csv'
+#output_filename= '20181114_poly7_x2.csv'
+output_filename= '20181114_x2_new.csv'
 
 
 
@@ -106,6 +110,7 @@ logg = 5.25
 plot_fit = False
 
 poly_degree = 5
+#poly_degree = 7
 
 first_conv_bin = 0.1 #width in angstroms of the first interpolation of the model to then be used in the convolution.
 #first_conv_bin = 0.01  #width in angstroms of the first interpolation of the model to then be used in the convolution.
@@ -601,8 +606,10 @@ model_flux = model['flux'] #since we'll be arbitrarily-ish scaling this it won't
 model_spec  = np.vstack([model_waves, model_flux])
 #target_spec = poly_norm_spec(target_spec, continuum_list=target_continuum_list)
 #### Here's the target normalization step=========================
+rescale_model= np.vstack([model_spec[0], model_spec[1]*(np.nanmax(target_spec[1])/np.nanmax(model_spec[1]))])
+plot_overlays_convolve(target_spec, rescale_model)
 target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree, plot_all = True)
-
+#target_spec[1]= target_spec[1]/np.nanmax(target_spec[1]) #changed 2018-11-14
 noise_spec[1]= noise_spec[1]*target_spec[1] #scale the noise spectrum with the flattened target spectrum.
 
 if balmer_only:
@@ -694,6 +701,7 @@ def run_model_grid(target_spec):
             #model normalization =================================
             test_model= spt.clean_spectrum(test_model, np.min(target_spec[0]), np.max(target_spec[0]),mask_list)
             test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
+            #test_model[1]= test_model[1]/np.nanmax(test_model[1]) #changed 2018-11-14
             #test_model= spt.rescale_spectrum(test_model, target_spec, scaling_range)
             #new_rv_dist= calc_sq_dist(target_spec, test_model)
             if balmer_only:
@@ -716,6 +724,7 @@ def run_model_grid(target_spec):
             dopp_cont_list= dopp_shift_continuum_list(new_rv)
             model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
             model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
+            #model_spec[1]= model_spec[1]/np.nanmax(model_spec[1])
             plt.title(r'$\chi^2=$'+str(new_dist))
             
             if balmer_only:
@@ -723,6 +732,7 @@ def run_model_grid(target_spec):
                 plot_overlays(line_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(new_rv)+'km/s')
             model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
             plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(new_rv)+'km/s')
+            #plot_overlays_convolve(target_spec, model_spec,  model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(new_rv)+'km/s')
         rv_list.append(new_rv)
         dist_list.append(new_dist)
     dist_array = np.array(dist_list)

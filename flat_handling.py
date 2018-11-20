@@ -54,13 +54,15 @@ def make_masterflat(flatlistname):
     flatsum= np.sum(flatstack, axis=0) #summed the flats across all frames
     flatstack_err2= flatstack+ readnoise**2 #creating the variance version of the flatstack
     flatsum_err= np.copy(np.sqrt(np.sum(flatstack_err2,axis=0))) #summed errors
-    
+    frame_sums = np.sum(np.sum(flatstack, axis=-1),axis=-1)
     if plot_all:
         projection = flatsum[100]
         plt.plot(projection)
         plt.show()
         projection_err= flatsum_err[100]
         plt.plot(projection_err)
+        plt.show()
+        plt.plot(frame_sums, marker = 'o', linestyle = 'none')
         plt.show()
     else:
         pass

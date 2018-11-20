@@ -29,6 +29,7 @@ zerolistname= 'listZero'
 
 speclistname = 'listCTB'
 flatlistname='listCTBflat'
+masterflatfile= 'mctb.master_flat.fits'
 linefilename = 'JJ_FeAr_lines.txt'
 zerolist = np.genfromtxt(zerolistname, dtype ='str')
 print "zerolist.shape",zerolist.shape
@@ -60,6 +61,7 @@ core_sides=  7
 bkg_core_sides= core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 y_trace_width= core_sides*2+1 #the actual number of pixels in the vertical direction that are in the trace (or background)
 poly_degree = 3 #polynomial degree of the fit to the trace
+flat_poly= 7
 bkg_shift= 25
 lamp_sigma_guess= 2
 line_search_width = 3
@@ -69,9 +71,10 @@ seeing_range = [1200, 1220]
 #seeing_p0= [1000, trace_band_width/2, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
 #seeing_p0= [1000, 5, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
 #seeing_p0= [1000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
+#seeing_p0= [2000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
+#see_fit_bounds = ([50, 0, 0.7, 0],[18000, 1000, trace_band_width, 2000]) #(lower, upper) bounds on the fit for the seeing.
 seeing_p0= [2000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
-see_fit_bounds = ([50, 0, 0.7, 0],[18000, 1000, trace_band_width, 2000]) #(lower, upper) bounds on the fit for the seeing.
-
+see_fit_bounds = ([50, 0, 0.7, 0],[1e8, 40, trace_band_width, 1e8]) #(lower, upper) bounds on the fit for the seeing.
 #####
 
 fear_array= np.genfromtxt(linefilename, names = True)
@@ -144,13 +147,47 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
     return popt, pcov
 
 
-def normalize_flat():
+def normalize_flat(masterflatfile=masterflatfile, plot_all = False):
     """
-    Normalize the master flat file by 
+    Normalize the master flat file by fitting a polynomial to the trace-extraction region to remove the spectral features of the lamp
+    
+    Assumes it's a Quartz lamp, but I would think this should work for any lamp...
+    
+    I'M NOT DEALING WITH FLAT UNCERTAINTIES SINCE IT'S GOING TO BE A DIVISION, WHICH MEANS ASYMMETRIC ERRORS AND THEY ARE SMALL ENOUGH TO START WITH THAT I'M NOT TRACKING THEM FOR NOW
     
     """
-    
-    return
+    i= fits.open(masterflatfile)
+    header = fits.getheader(masterflatfile)
+    master_flat= i[0].data
+    master_flat_err= i[1].data #normalized sigma values to the original counts values. 
+    readnoise = header['RDNOISE']
+    roi= master_flat[trace_band_mid-trace_band_width/2:trace_band_mid+trace_band_width/2,:] #region for searching for the trace in the future. we're using it to determine the spectrum polynomial of the flat lamp
+    band_inds= np.indices(roi.shape)
+    x_positions= band_inds[1,1]
+    summed_roi= np.mean(roi, axis=0)
+    polynomial_fit = np.polyfit(x_positions,summed_roi, flat_poly)
+    poly_curve= np.polyval(polynomial_fit, x_positions)
+    if plot_all:
+        plt.plot(x_positions, summed_roi, color ='b', label= 'data')
+        plt.plot(x_positions, poly_curve, color = 'r', label= 'polynomial fit')
+        plt.title('Flat polynomial fit')
+        plt.legend()
+        plt.show()
+        plt.plot(x_positions, summed_roi/poly_curve)
+        plt.title('Divided by polynomial fit')
+        plt.show()
+        plt.plot(x_positions, roi[0]/poly_curve)
+        plt.title('single row Divided by polynomial fit')
+        plt.show()
+        plt.plot(x_positions, summed_roi-poly_curve)
+        plt.title('Residuals of  polynomial fit')
+        plt.show()
+    else:
+        pass
+    normed_flat = master_flat/poly_curve
+    print "max value in normalized flat" , np.max(normed_flat)
+    print "min value in normalized flat", np.min(normed_flat)
+    return normed_flat
 
 ######
 def get_trace_waves(target_med, lamp_im):
@@ -161,11 +198,11 @@ def get_trace_waves(target_med, lamp_im):
     print 'xpositionsshape', x_positions.shape
     y_positions= np.argmax(target_band,axis=0)+(trace_band_mid-trace_band_width/2)
     print 'yshape', y_positions.shape
-    seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
-    seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds)
-    seeing_sigma = seeing_popt[2]
-    print seeing_popt
-    print "Seeing sigma: ", seeing_popt[2]
+    #seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
+    #seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds)
+    #seeing_sigma = seeing_popt[2]
+    #print seeing_popt
+    #print "Seeing sigma: ", seeing_popt[2]
     polynomial_fit= np.polyfit(x_positions,y_positions,poly_degree)
     print polynomial_fit
     print polynomial_fit.shape
@@ -181,7 +218,11 @@ def get_trace_waves(target_med, lamp_im):
     plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift+core_sides), color = 'cyan', linestyle = '--')
     plt.legend()
     plt.show()
-        
+    seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
+    seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds)
+    seeing_sigma = seeing_popt[2]
+    print seeing_popt
+    print "Seeing sigma: ", seeing_popt[2]
     target_light= np.array([])
     bkg_light= np.array([])
     lamp_light= np.array([])
@@ -212,8 +253,10 @@ def get_trace_waves(target_med, lamp_im):
     plt.show()
     #offset = 0
 
-    dotted_pixel = float(raw_input("dotted line pixel>>>"))
-    emission_pixel= float(raw_input("emission line pixel>>>"))
+    #dotted_pixel = float(raw_input("dotted line pixel>>>"))
+    #emission_pixel= float(raw_input("emission line pixel>>>"))
+    dotted_pixel=0
+    emission_pixel=0
     offset = emission_pixel-dotted_pixel
     print "skipping offsetting. Change lines 148 and 150 if you want otherwise."
    
@@ -295,6 +338,12 @@ def get_trace_waves(target_med, lamp_im):
 #######3
 
 
+######3 Flat handling
+
+
+normed_flat= normalize_flat(plot_all = True)
+
+
 #####
 
 last_file_lamp = False
@@ -306,7 +355,8 @@ seeing_list = []
 #need to determine if the given image is a lamp or a target spectrum
 for counter, img in enumerate(speclist):
     filename= glob(img)[0]
-    if '_fe' in filename.lower():
+    #if '_fe' in filename.lower():
+    if '_fe.' in filename.lower():
         print 'Lamp file detected: ', filename
         print 'Updating lamp reference image.'
         lamp_i = fits.open(filename)
@@ -329,10 +379,12 @@ for counter, img in enumerate(speclist):
         print "Target file detected: ", filename
         i= fits.open(filename)
         header = fits.getheader(filename)
-        img_data= i[0].data
+        img_data= np.copy(i[0].data)
+        img_data= img_data/normed_flat #division by the flat. The noise from the flat is not accounted for currently
         target_stack.append(img_data)
         last_file_lamp = False
-        if '_fe' in speclist[counter+1].lower():
+        #if '_fe' in speclist[counter+1].lower():
+        if '_fe.' in speclist[counter+1].lower():
             print "Next file is a lamp, so we're going to do the trace and wavelength calibration."
             target_med = np.nanmedian(target_stack, axis = 0)
             new_coeffs, seeing_sig= get_trace_waves(target_med, lamp_im)
@@ -366,7 +418,8 @@ new_filelist =[]
 #need to determine if the given image is a lamp or a target spectrum
 for counter, img in enumerate(speclist):
     filename= glob(img)[0]
-    if '_fe' in filename.lower():
+    #if '_fe' in filename.lower():
+    if '_fe.' in filename.lower():
         print 'Lamp file detected: ', filename
         
         if last_file_lamp:
@@ -387,7 +440,8 @@ for counter, img in enumerate(speclist):
         
         i= fits.open(filename)
         header = fits.getheader(filename)
-        img_data= i[0].data
+        img_data= np.copy(i[0].data)
+        img_data= img_data/normed_flat #also have to divide it here... since the other place was for seeing
         filename = 'w' + filename
         new_filelist.append(filename)
         polynomials = polynomial_list[association_index]
@@ -411,8 +465,8 @@ for counter, img in enumerate(speclist):
             up_bkg=img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+bkg_core_sides+1),x_pos]
             down_bkg= img_data[np.int_(poly_curve_y[x_pos]-bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]-bkg_shift+bkg_core_sides+1),x_pos]
             bkg_comb= np.append(up_bkg, down_bkg)
-            print "trace_vals.shape", trace_vals.shape
-            print "bkg_comb.shape", bkg_comb.shape
+            #print "trace_vals.shape", trace_vals.shape
+            #print "bkg_comb.shape", bkg_comb.shape
             bkg_noise2= trace_vals.shape[0]*np.copy(np.mean(bkg_comb)/bkg_comb.shape[0]+header['RDNOISE']**2/bkg_comb.shape[0]+header['RDNOISE']**2/(bkg_comb.shape[0]*n_biases))
             #bkg_sum= np.sum(img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
             bkg_sum= trace_vals.shape[0]*np.copy(np.mean(bkg_comb)) #take the mean of the bkg portion of the sky

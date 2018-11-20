@@ -32,12 +32,27 @@ import spec_plot_tools as spt
 
 
 listfile = 'listZFWCTB'
-target_list = np.genfromtxt(listfile, dtype ='str')
 
 #output_filename='combined_PSRJ1431m4715_20181017.fits'
 #output_filename='combined_PSRJ1431m4715_20181031_2spec.fits'
 #output_filename='combined_PSRJ1431m4715_20181031_cube_interp.fits'
-output_filename='combined_PSRJ1431m4715_20181105.fits'
+#output_filename='combined_PSRJ1431m4715_20181105.fits'
+output_filename='combined_PSRJ1431m4715_20181114_new.fits'
+
+#output_filename = "wcmtb.GD108930blue.fits"
+#listfile= 'listGD108'
+
+#output_filename = 'wcmtb.feige67930blue.fits'
+#listfile = 'listFeige67'
+
+#output_filename  = 'wcmtb.ltt6248930blue.fits'
+#listfile= 'listLtt6248'
+
+#output_filename = 'wcmtb.eg274930blue.fits'
+#listfile= 'listEg274'
+
+
+target_list = np.genfromtxt(listfile, dtype ='str')
 
 wavelength_range= [3600, 5290]
 rms_range= [4600,4650]
