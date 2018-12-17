@@ -47,8 +47,8 @@ slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
-spectrum_type= 'combined'
-#spectrum_type= 'single run'
+#spectrum_type= 'combined'
+spectrum_type= 'single run'
 #options are 'combined', 'single run'
 
 chi_norm= False
@@ -89,7 +89,8 @@ output_names = "teff, logg, rv, chi_square, revised_chi_square"
 #output_filename= '20181115_oldrvs_cube_spline.csv'
 #output_filename= '20181114_oldtest.csv'
 #output_filename= '20181114_poly7_x2.csv'
-output_filename= '20181114_x2_new.csv'
+#output_filename= '20181114_x2_new.csv'
+output_filename= '20181123_x2_new.csv'
 
 
 
@@ -125,10 +126,12 @@ velocity_low_bound = -500 #km/s
 velocity_high_bound = 300 #km/s
 velocity_tests = np.arange(velocity_low_bound, velocity_high_bound+velocity_step, velocity_step)
 
-low_wave_cut= 3800
+#low_wave_cut= 3800
 #low_wave_cut=3600
+low_wave_cut= 2000
+high_wave_cut= 5500
 #high_wave_cut= 5200
-high_wave_cut= 5050
+#high_wave_cut= 5050
 
 
 #low_wave_cut= 3670
@@ -325,11 +328,11 @@ if spectrum_type== 'single run':
     flux_stack = []
     noise_stack = []
     #for index in range(25,31):
-    for index in range(8,10):
+    #for index in range(8,10):
     #for index in range(4,9):
     #for index in range(2,4):
     #for index in range(3,9):
-    #for index in range(0,6):
+    for index in range(0,6):
     #for index in range(3,6):
     #for index in range(10,21):
         filename = target_list[index]

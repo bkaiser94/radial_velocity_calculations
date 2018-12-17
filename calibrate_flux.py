@@ -1,8 +1,7 @@
 """
 This is the file that actually applies the sensitivity curve to the target spectra. The sensitivity curves need to
-already be produced by flux_calibration.py. The barycentric velocity correctionactually needs to occur after the
-flux-calibration step as the measured wavelengths are the ones that correspond to the given transmissivity of the
-atmosphere and instrument.
+already be produced by flux_calibration.py. The barycentric velocity correction actually needs to occur after the
+flux-calibration step as the measured wavelengths are the ones that correspond to the given transmissivity of the atmosphere and instrument.
 
 You have to manually (-ish) generate the 'listWCTB' file that includes the target spectra in the first column (whose 
 prefixes are wctb.*) and then in the column beside each one, you should insert the flux standard spectrum that
@@ -38,6 +37,7 @@ sens_curve_list = speclist[1]
 
 bad_noise_sub = 100
 
+do_rv_barycorr=False
 
 parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
@@ -88,9 +88,13 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     header.append(card = ('Flux', 1, 'in flux units extension for target flux values'))
     header.append(card = ('Bkg', 2, 'in flux units extension for bkg flux values'))
     header.append(card = ('Noise', 3, 'unitless. Normalized'))
-    header.append(card = ('barycorr', True, 'wavelengths corrected to barycenter'))
+    if do_rv_barycorr:
+        header.append(card = ('barycorr', True, 'wavelengths corrected to barycenter'))
+        wavelengths = barycentric_vel_corr(header, wavelengths)
+    else:
+        header.append(card = ('barycorr', False, 'wavelengths corrected to barycenter'))
+    
     target_file = 'f'+target_file
-    wavelengths = barycentric_vel_corr(header, wavelengths)
     bkg_flux = bkg_counts/sens_curve
     hdu=fits.PrimaryHDU(wavelengths, header = header)
     hdu1= fits.ImageHDU(flux)

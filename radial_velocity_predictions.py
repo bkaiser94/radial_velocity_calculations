@@ -87,7 +87,7 @@ lam_rest = 6562.81*u.angstrom #angstroms
 #m1 = (0.14 *u.Msun).si
 #m2 = (1.4 *u.Msun).si
 #m1 = (1.4*u.Msun).si
-m1= (1.4*u.Msun).si
+m1= (2.4*u.Msun).si
 #m2 = (0.14*u.Msun).si #switched the masses to change the phase by 180 degrees.
 #m2=( 1.58 *u.Msun).si
 #m2 = (m1*q_value).si
@@ -102,9 +102,14 @@ m1= (1.4*u.Msun).si
 #tasc = Time(53171.5856408, format = 'mjd', scale= 'utc', location = parkes_location)
 
 
-m2= (0.262*u.Msun).si #J1543-5149
+#m2= (0.262*u.Msun).si #J1543-5149
 #m2= (2. *u.Msun).si
-period = (8.06 *u.day).to(u.second)  #J1543-5149
+#period = (8.06 *u.day).to(u.second)  #J1543-5149
+#tasc = Time(54929.0678261, format = 'mjd', scale= 'utc', location = parkes_location)
+
+#hypothetical small orbit (but probably would need general relativistic effects at this point)
+m2=(0.8*u.Msun).si
+period=(43.*u.minute).to(u.second)
 tasc = Time(54929.0678261, format = 'mjd', scale= 'utc', location = parkes_location)
 
 #m2= (0.352*u.Msun).si #J1755-3716
@@ -112,7 +117,8 @@ tasc = Time(54929.0678261, format = 'mjd', scale= 'utc', location = parkes_locat
 #tasc = Time(55958.790341, format = 'mjd', scale= 'utc', location = parkes_location)
 
 #e=1e-5
-e = 0.000010 #PSR J1435-6100
+e= 0.7
+#e = 0.000010 #PSR J1435-6100
 #e = 0.000023# median
 #e = 0.000031# max
 #e=0.5
