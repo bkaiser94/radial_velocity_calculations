@@ -9,7 +9,7 @@ from astropy.io import fits
 from glob import glob
 import scipy.optimize as sciop
 import scipy.stats as scistats
-import cosmics
+#import cosmics
 from astropy.time import Time
 from astropy import coordinates as coords
 from astropy import units as u
@@ -39,7 +39,8 @@ target_list = np.genfromtxt(target_list_name, dtype = 'str')
 #combined_spec_file='combined_PSRJ1431m4715_20181031_2spec.fits'
 #combined_spec_file='combined_PSRJ1431m4715_20181031_cube_interp.fits'
 #combined_spec_file= 'combined_PSRJ1431m4715_20181105.fits'
-combined_spec_file='combined_PSRJ1431m4715_20181114_new.fits'
+#combined_spec_file='combined_PSRJ1431m4715_20181114_new.fits'
+combined_spec_file='fwctb.0220_J1431m4715_930_blue.fits'
 
 #scaling_range = [4600,4650]
 rms_range= [4600,4650]
@@ -47,8 +48,8 @@ slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
-#spectrum_type= 'combined'
-spectrum_type= 'single run'
+spectrum_type= 'combined'
+#spectrum_type= 'single run'
 #options are 'combined', 'single run'
 
 chi_norm= False
@@ -90,7 +91,8 @@ output_names = "teff, logg, rv, chi_square, revised_chi_square"
 #output_filename= '20181114_oldtest.csv'
 #output_filename= '20181114_poly7_x2.csv'
 #output_filename= '20181114_x2_new.csv'
-output_filename= '20181123_x2_new.csv'
+#output_filename= '20181123_x2_new.csv'
+output_filename= '20181218_x2csv'
 
 
 
@@ -126,12 +128,12 @@ velocity_low_bound = -500 #km/s
 velocity_high_bound = 300 #km/s
 velocity_tests = np.arange(velocity_low_bound, velocity_high_bound+velocity_step, velocity_step)
 
-#low_wave_cut= 3800
+low_wave_cut= 3800
 #low_wave_cut=3600
-low_wave_cut= 2000
-high_wave_cut= 5500
+#low_wave_cut= 2000
+#high_wave_cut= 5500
 #high_wave_cut= 5200
-#high_wave_cut= 5050
+high_wave_cut= 5050
 
 
 #low_wave_cut= 3670
@@ -447,9 +449,9 @@ def chi_squared(observed, actual):
     return (observed - actual)**2/actual
 
 def interpolate_model(target_spec, model_spec):
-    #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
-    interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    interp_model_flux= interpolator3(target_spec[0])
+    interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
+    #interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
+    #interp_model_flux= interpolator3(target_spec[0])
     interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
     #print "interp_model.shape", interp_model.shape
     return interp_model
