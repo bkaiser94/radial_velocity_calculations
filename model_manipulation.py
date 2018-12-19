@@ -1,7 +1,7 @@
 """
 Created by Ben Kaiser (UNC-Chapel Hill) 2018-12-18
 
-This should contain the chi-square functions and model convolution functions that are needed by both model_fitting.py and model_rv_fit.py, so that we guarantee they are using the same methods to calculate the chi-square values and do fits.
+This should contain the chi-square functions and model convolution functions that are needed by both model_fitting.py and model_rv_fit.py, so that we guarantee they are using the same methods to calculate the chi-square values and do fits. Hopefully they are the correct methods of doing those calculations, but they will certainly be the same methods.
 
 
 """
@@ -45,7 +45,7 @@ def calc_residuals(target_spec, model_spec):
     residuals= target_spec[1]-interp_model[1]
     return np.vstack([target_spec[0], residuals])
 
-def calc_sq_dist(target_spec, model_spec, error_spec = np.array([]), free_parameters= free_parameters, norm=chi_norm, raw_chi= raw_chi):
+def calc_sq_dist(target_spec, model_spec, error_spec = np.array([]), free_parameters= 2, norm=False, raw_chi= False):
     """
     Return the reduced chi-square value if provided using the error spectrum (already rescaled to the spectrum values) if provided; otherwise it will return the reduced chi-square values using the model values for the denominator.
     

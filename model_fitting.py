@@ -22,6 +22,7 @@ import scipy.interpolate as scinterp
 import wdatmos
 import spec_plot_tools as spt
 import kernel_builder
+import model_manipulation as mm
 
 plt.rc('font', size =18)
 #plt.rc('lines', markersize=12)
@@ -30,16 +31,7 @@ plt.rc('lines', markersize = 5)
 
 target_list_name = 'listFWCTB'
 target_list = np.genfromtxt(target_list_name, dtype = 'str')
-#combined_spec_file = 'combined_PSRJ1431m4715_new.fits'
-#combined_spec_file = 'combined_PSRJ1431m4715_quad.fits'
-#combined_spec_file='combined_PSRJ1431m4715_20181010.fits'
-#combined_spec_file='combined_PSRJ1431m4715_20181017.fits'
-#combined_spec_file='combined_PSRJ1431m4715_20181021B_10.fits'
-#combined_spec_file='combined_PSRJ1431m4715_20181031.fits'
-#combined_spec_file='combined_PSRJ1431m4715_20181031_2spec.fits'
-#combined_spec_file='combined_PSRJ1431m4715_20181031_cube_interp.fits'
-#combined_spec_file= 'combined_PSRJ1431m4715_20181105.fits'
-#combined_spec_file='combined_PSRJ1431m4715_20181114_new.fits'
+
 combined_spec_file='fwctb.0220_J1431m4715_930_blue.fits'
 
 #scaling_range = [4600,4650]
@@ -66,32 +58,7 @@ free_parameters= 2
 
 #output_names = "teff, logg, rv, chi_square"
 output_names = "teff, logg, rv, chi_square, revised_chi_square"
-#output_filename= 'chi_square_values.csv'
-#output_filename= 'chi_square_values_noca.csv'
-#output_filename= 'chi_square_values_quad.csv'
-#output_filename= 'chi_square_values_noerr.csv'
-#output_filename= 'chi_square_values_norm.csv'
-#output_filename= 'chi_square_values_norm_.csv'
-#output_filename= 'chi_square_values_norm_metalmask.csv'
-#output_filename= 'chi_square_values_norm_wholespec.csv'
-#output_filename= 'chi_square_values_davchange.csv'
-#output_filename= 'chi_square_values_20180910.csv'
 
-#output_filename= 'chi_square_values_20180911small.csv'
-#output_filename= 'run2_attempt.csv'
-#output_filename= '20181009_run4.csv'
-#output_filename= '20181011_run1.csv'
-#output_filename= '20181017_run1.csv'
-#output_filename= '20181021B_31spec.csv'
-#output_filename= '20181021B_test.csv'
-#output_filename= '20181031_oldrvs_2spec.csv'
-#output_filename= '20181031_oldrvs_cube_spline.csv'
-#output_filename= '20181106_oldrvs_cube_spline.csv'
-#output_filename= '20181115_oldrvs_cube_spline.csv'
-#output_filename= '20181114_oldtest.csv'
-#output_filename= '20181114_poly7_x2.csv'
-#output_filename= '20181114_x2_new.csv'
-#output_filename= '20181123_x2_new.csv'
 output_filename= '20181218_x2csv'
 
 
@@ -390,48 +357,6 @@ elif spectrum_type == 'combined':
     print "**************\n"
     velocity_tests= np.arange(0,velocity_step/2.,velocity_step) #this makes the only velocity that is used be 0 km/s, but you don't have to eliminate the for-loop.... I think/hope.
 
-######
-
-
-#flux_stack = []
-#noise_stack = []
-##for index in range(25,31):
-##for index in range(3,9):
-#for index in range(0,6):
-##for index in range(3,6):
-    #filename = target_list[index]
-    #print filename
-    #i=fits.open(filename)
-    #header = fits.getheader(filename)
-    #file_waves= i[0].data
-    #file_flux = i[1].data
-    #file_noise = i[3].data
-    #noise = file_noise #don't want to scale it yet since there will be the normalization later
-    ##noise = file_flux*file_noise
-    #flux_stack.append([file_flux])
-    #noise_stack.append([noise])
-    
-#target_waves = file_waves
-#target_flux= np.nanmedian(flux_stack, axis=0)[0]
-#target_noise = np.nanmedian(noise_stack, axis=0)[0]
-##print target_waves.shape
-##print target_flux.shape
-#target_spec = np.vstack([target_waves, target_flux])
-#noise_spec = np.vstack([target_waves, target_noise])
-#target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
-#noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
-#target_file = target_list[0]
-#print target_file
-#i= fits.open(target_file)
-#header = fits.getheader(target_file)
-#target_waves= i[0].data
-##target_flux = i[1].data
-#target_spec, header, noise_spec = spt.retrieve_spec('combined_PSRJ1431m4715.fits')
-#target_spec, header, noise_spec = spt.retrieve_spec('combined_PSRJ1431m4715_new.fits')
-#target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
-#noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
-#######
-
 def get_doppler_shifted(wavelengths, radial_velocity):
     #print "doppler shifting by ", radial_velocity
     lambda_obs = wavelengths * (radial_velocity*u.km/u.s + const.c.to(u.km/u.s)) / const.c.to(u.km/u.s)
@@ -448,65 +373,6 @@ def dopp_shift_continuum_list(radial_velocity):
 def chi_squared(observed, actual):
     return (observed - actual)**2/actual
 
-def interpolate_model(target_spec, model_spec):
-    interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
-    #interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    #interp_model_flux= interpolator3(target_spec[0])
-    interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
-    #print "interp_model.shape", interp_model.shape
-    return interp_model
-
-def calc_residuals(target_spec, model_spec):
-    """
-    model_spec should NOT already be convolved an interpolated!!!
-    returns a residual spectrum with the wavelengths of target_spec[0]
-    """
-    interp_model= interpolate_model(target_spec, model_spec)
-    residuals= target_spec[1]-interp_model[1]
-    return np.vstack([target_spec[0], residuals])
-
-def calc_sq_dist(target_spec, model_spec, error_spec = np.array([]), free_parameters= free_parameters, norm=chi_norm, raw_chi= raw_chi):
-    """
-    Return the reduced chi-square value if provided using the error spectrum (already rescaled to the spectrum values) if provided; otherwise it will return the reduced chi-square values using the model values for the denominator.
-    
-    """
-    #target_spec= np.copy(in_target_spec)
-    #model_spec= np.copy(in_model_spec)
-    #error_spec= np.copy(in_error_spec)
-    #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
-    #interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    #interp_model_flux= interpolator3(target_spec[0])
-    #interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
-    #print "interp_model.shape", interp_model.shape
-    interp_model= interpolate_model(target_spec, model_spec)
-    if norm:
-        if error_spec.shape[0] != 0:
-            #have to rescale the errors to the normalized values
-            error_spec[1]= np.copy(error_spec[1]/np.sum(target_spec[1]))
-        target_spec[1]= np.float_(target_spec[1])/np.sum(target_spec[1])
-        interp_model[1]= np.float_(interp_model[1])/np.sum(interp_model[1])
-    else:
-        pass
-    if error_spec.shape[0] != 0:
-        #norm_difs = np.abs(interp_model[1]-target_spec[1])/np.float_(error_spec[1])
-        norm_difs = (interp_model[1]-target_spec[1])**2/np.float_(error_spec[1])**2
-        #norm_difs = np.abs(interp_model[1]-target_spec[1])/np.float_(interp_model[1])
-    else:
-        print "no uncertainties provided"
-        norm_difs =(interp_model[1]-target_spec[1])**2/np.float_(interp_model[1])
-    #norm_difs = np.abs(interp_model[1]-target_spec[1])
-
-    #nan_remove = np.isinf(norm_difs)
-    #norm_difs= norm_difs[~nan_remove]
-    #dif = np.sum(norm_difs)/norm_difs.shape[0]
-    #print "norm_difs.shape[0]:", norm_difs.shape[0]
-    if raw_chi:
-        dif = np.sum(norm_difs)/norm_difs.shape[0]
-        #dif =np.sum(norm_difs)
-    else:
-        dif = np.sum(norm_difs)/(norm_difs.shape[0]-1-free_parameters) #based on Numerical Recipes in C page 621. (Section 14.3)
-
-    return dif
 
 
 def chi_square_countours(teff_array, logg_array, dist_array):
@@ -636,28 +502,19 @@ for radial_velocity in velocity_tests:
     test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree, plot_all = False)
     #test_model = spt.rescale_spectrum(test_model, target_spec, scaling_range)
     if balmer_only:
-        new_rv_dist= calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec)
+        #new_rv_dist= calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec)
+        new_rv_dist= mm.calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec, free_parameters= 2, norm=chi_norm, raw_chi= raw_chi)
     else:
-        new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+        #new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+        new_rv_dist= mm.calc_sq_dist(target_spec, test_model, error_spec = noise_spec, free_parameters=free_parameters, norm= chi_norm, raw_chi = raw_chi)
     rv_dist_list.append(new_rv_dist)
 rv_dist_array = np.array(rv_dist_list)
 min_index = np.argmin(rv_dist_array)
-#min_model = model_file_list[min_index]
-#min_teff = teff_array[min_index]
-#min_logg = logg_array[min_index]
-#min_dist = dist_array[min_index]
+
 min_rv = velocity_tests[min_index]
-#mask_list=[]
-#model_spec= get_model_fromfile(min_model)
+
 min_model = wd(Teff= teff, logg = logg)
 
-#model_waves= np.array(min_model['w'])
-#print 'Model_waves'
-#print model_waves
-#wave_difs = model_waves-np.roll(model_waves, 1)
-#print wave_difs
-#plt.plot(model_waves, wave_difs)
-#plt.show()
 model_spec = np.vstack([min_model['w'], min_model['flux']])
 model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
 ####model_spec = spt.trim_spec(model_spec, np.min(target_spec[0]), np.max(target_spec[0]))
@@ -673,24 +530,13 @@ if balmer_only:
     plot_overlays(line_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(min_rv)+'km/s')
 else:
     plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(min_rv)+'km/s')
-#plt.plot(model_waves, scale_model_flux, label = 'model'+str(teff) + ' ' + str(logg))
-#plt.plot(target_waves, target_flux, label = 'Target')
-#plt.legend()
-#plt.xlabel('Angstroms')
-#plt.ylabel('Flux in cgs 10**-16')
-#plt.show()
 
 def run_model_grid(target_spec):
     #mask_list = []
     #target_spec = spt.clean_spectrum(target_spec, min_wave, max_wave, mask_list)
     dist_list = []
     rv_list = []
-    #for teff,logg in zip(teff_array, logg_array):
-        #model = wd(Teff = teff , logg = logg)
-        #model_spec = np.vstack([model['w'], model['flux']])
-        #model_spec = convolve_model(model_spec, target_spec, header)
-        #new_dist = calc_sq_dist(target_spec, model_spec)
-        #dist_list.append(new_dist)
+    
     for teff,logg in zip(teff_array, logg_array):
         print "Teff:", teff, "logg:", logg
         model = wd(Teff = teff , logg = logg)
@@ -706,16 +552,16 @@ def run_model_grid(target_spec):
             #model normalization =================================
             test_model= spt.clean_spectrum(test_model, np.min(target_spec[0]), np.max(target_spec[0]),mask_list)
             test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
-            #test_model[1]= test_model[1]/np.nanmax(test_model[1]) #changed 2018-11-14
-            #test_model= spt.rescale_spectrum(test_model, target_spec, scaling_range)
-            #new_rv_dist= calc_sq_dist(target_spec, test_model)
+            
             if balmer_only:
-                new_rv_dist = calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec)
+                #new_rv_dist = calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec)
                 #new_rv_dist = calc_sq_dist(line_spec, test_model)
+                new_rv_dist = mm.calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec, free_parameters=free_parameters, norm=chi_norm, raw_chi = raw_chi)
 
             else:
                 #print "not balmer_only"
-                new_rv_dist = calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+                #new_rv_dist = calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+                new_rv_dist = mm.calc_sq_dist(target_spec, test_model, error_spec = noise_spec, free_parameters=free_parameters, norm= chi_norm, raw_chi= raw_chi)
             #new_rv_dist = calc_sq_dist(target_spec, test_model) #for error-free chi-square; uses model division
 
             rv_dist_list.append(new_rv_dist)
@@ -786,24 +632,11 @@ def run_model_grid(target_spec):
     print "======== Sorted  by chi-squared =========="
     for teff,logg, dist_mod, rv, resc_chisq in zip(sorted_teff, sorted_logg, sorted_dist, sorted_rv, sorted_resc_chisq):
         print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv, "rescaled chi-square:", resc_chisq
-    #min_index = np.argmin(dist_list)
-    ##min_model = model_file_list[min_index]
-    #min_teff = teff_array[min_index]
-    #min_logg = logg_array[min_index]
-    #min_dist = dist_array[min_index]
-    #min_rv = rv_array[min_index]
-    #print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s'
+    
     print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s, rescaled chi-square:', min_rescale_dist
     #model_spec= get_model_fromfile(min_model)
     min_model = wd(Teff= min_teff, logg = min_logg)
     
-    #model_waves= np.array(min_model['w'])
-    #print 'Model_waves'
-    #print model_waves
-    #wave_difs = model_waves-np.roll(model_waves, 1)
-    #print wave_difs
-    #plt.plot(model_waves, wave_difs)
-    #plt.show()
     dopp_cont_list= dopp_shift_continuum_list(min_rv)
     model_spec = np.vstack([min_model['w'], min_model['flux']])
     model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
@@ -819,17 +652,15 @@ def run_model_grid(target_spec):
         plot_overlays(line_spec, temp_model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
     else:
         plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
-    #interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
-    #interpolator2= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    #interp_model_flux = interpolator2(target_spec[0])
-    #interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
-    interp_model = interpolate_model(target_spec, model_spec)
+    
+    interp_model= mm.interpolate_model(target_spec, model_spec)
     plot_overlays(target_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
     plot_overlays(target_spec, noise_spec, model_string = 'noise')
     
     
     
-    residual_spec= calc_residuals(target_spec, model_spec)
+    #residual_spec= calc_residuals(target_spec, model_spec)
+    residual_spec= mm.calc_residuals(target_spec, model_spec)
     
     rms_spec= spt.clean_spectrum(residual_spec, rms_range[0], rms_range[1],mask_list)
     rms_scatter= np.sqrt(np.nanmean(rms_spec[1]**2))
@@ -895,18 +726,7 @@ def run_model_grid(target_spec):
     mean_chisq= np.nanmean(chi_sq_spec[1])
     print "\n**************\nmedian chi-square:"+str(med_chisq) + "\n***********"
     print "\n**************\nmean chi-square:"+str(mean_chisq) + "\n***********"
-    
-    #df= chi_sq_spec[1].shape[0]
-    #chi2_dist= scistats.chi2(df)
-    #print chi_sq_spec[1].shape[0]
-    #print df
-    #print type(df)
-    #print chi2_dist.ppf(0.001, df)
-    ##chi2_linspace= np.linspace(chi2_dist.ppf(0.001,df ), chi2_dist.ppf(0.999,df), 100)
-    #chi2_linspace= np.linspace(0,3000, 10000)
-    
-    
-    
+   
     plt.hist(chi_sq_spec[1], bins=100, normed=1)
     plt.axvline(x=np.nanmedian(chi_sq_spec[1]), color= 'r', label='median')
     plt.axvline(x=np.nanmean(chi_sq_spec[1]), color= 'g', label='mean')
