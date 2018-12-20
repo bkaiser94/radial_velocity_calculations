@@ -77,7 +77,7 @@ logg = 5.25
 
 #teff = 6000
 #logg = 3.75
-plot_fit = False
+plot_fit = True
 
 poly_degree = 5
 #poly_degree = 7
@@ -111,35 +111,6 @@ high_wave_cut= 5050
 
 
 #####
-                  
-                  
-#continuum_list = [[3809,3812],
-                  #[3861,3864],
-                  #[3907,3911],
-                  #[4014,4017],
-                  #[4036,4040],
-                  #[4183, 4214],
-                  #[4422,4427],
-                  #[4427,4432],
-                  #[4432,4437],
-                  #[4589,4608],
-                  #[4645, 4650],
-                  #[4655, 4660],
-                  #[4665, 4670],
-                  #[4675,4680],
-                  #[4720,4725],
-                  #[4730,4735],
-                  #[4740,4745],
-                  #[4750,4755],
-                  #[4760,4765],
-                  #[4770,4775],
-                  #[4970,4975],
-                  #[5045, 5050],
-                  #[5055,5060],
-                  #[5065,5070],
-                  #[5110,5130],
-                  #[5175,5180],
-                  #[5190,5195]]#Best one there is. Before 2018-08-10
 
 #continuum_list = [[3809,3812],
                   #[3861,3864],
@@ -236,19 +207,6 @@ continuum_list = [[3809,3812],
                   #[5190,5195]] #extended wavelength range
    
 
-#target_continuum_list = [[3861,3864],
-                  #[3900,3915],
-                  #[4014,4034],
-                  #[4183, 4214],
-                  #[4589,4608],
-                  #[4645,4680],
-                  #[4740,4760],
-                  #[4930,4935],
-                  #[5045,5070],
-                  #[5110,5130],
-                  #[5187,5192]]#old one before 2018-07-01
-                  
-                  
 #################
 #These are different from continuum_list because these are the large segments of the spectrum that should be ignored during the model minimization
 #continuum_masks = [[3500,3815],
@@ -312,19 +270,14 @@ if spectrum_type== 'single run':
         file_flux = i[1].data
         file_noise = i[3].data
         noise = file_noise #don't want to scale it yet since there will be the normalization later
-        #noise = file_flux*file_noise
         flux_stack.append([file_flux])
         noise_stack.append([noise])
     noise_stack=np.array(noise_stack)
     target_waves = file_waves
     target_flux= np.nanmedian(flux_stack, axis=0)[0]
-    #target_noise = np.nanmedian(noise_stack, axis=0)[0]
     target_noise = np.sum(noise_stack**2,axis=0)[0]
     print target_noise.shape
     target_noise= np.copy(np.sqrt(target_noise/np.float_(noise_stack.shape[0])))
-    
-    #print target_waves.shape
-    #print target_flux.shape
     target_spec = np.vstack([target_waves, target_flux])
     noise_spec = np.vstack([target_waves, target_noise])
     noise_spec[1]=noise_spec[1]/target_spec[1]
@@ -338,7 +291,7 @@ elif spectrum_type == 'combined':
     balmer_only = False
 
     mask_metals = True
-    #mask_metals=False
+    
     if mask_metals==False:
         mask_list = []
     elif mask_metals == True:
@@ -368,12 +321,6 @@ def dopp_shift_continuum_list(radial_velocity):
         shift_waves = get_doppler_shifted(waves, radial_velocity)
         dopp_cont_list.append(shift_waves)
     return dopp_cont_list
-
-
-def chi_squared(observed, actual):
-    return (observed - actual)**2/actual
-
-
 
 def chi_square_countours(teff_array, logg_array, dist_array):
     min_index = np.argmin(dist_array)
@@ -427,13 +374,10 @@ wd=wdatmos.wdmodel(filename='ELM.hdf5')
 
 ####3
 
-#teff_array = np.arange(6000, 15000, 250)
-#logg_array = np.arange(3.75, 6.5, 0.25)
 teff_array=wd.Teffs
 logg_array = wd.loggs
 model = wd(Teff = teff, logg = logg)
-#print wd.Teffs
-#print wd.loggs
+
 model_num =0
 
 #####
@@ -442,12 +386,10 @@ model_waves = model['w']
 model_flux = model['flux'] #since we'll be arbitrarily-ish scaling this it won't work.
 
 model_spec  = np.vstack([model_waves, model_flux])
-#target_spec = poly_norm_spec(target_spec, continuum_list=target_continuum_list)
 #### Here's the target normalization step=========================
 rescale_model= np.vstack([model_spec[0], model_spec[1]*(np.nanmax(target_spec[1])/np.nanmax(model_spec[1]))])
 plot_overlays_convolve(target_spec, rescale_model)
 target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree, plot_all = True)
-#target_spec[1]= target_spec[1]/np.nanmax(target_spec[1]) #changed 2018-11-14
 noise_spec[1]= noise_spec[1]*target_spec[1] #scale the noise spectrum with the flattened target spectrum.
 
 if balmer_only:
@@ -461,19 +403,13 @@ rv_dist_list=[]
 for radial_velocity in velocity_tests:
     test_model = np.copy(model_spec)
     test_model[0]=get_doppler_shifted(test_model[0], radial_velocity)
-    #test_model = convolve_model(test_model, target_spec, header)
     test_model = mm.convolve_model(test_model, target_spec, header)
     dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
-    #test_model = poly_norm_spec(test_model, continuum_list = dopp_cont_list)
     #### Here's the model normalization step==============================
-    #test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree, plot_all = plot_fit)
     test_model = spt.poly_norm_spec(test_model, continuum_list = dopp_cont_list, poly_degree = poly_degree, plot_all = False)
-    #test_model = spt.rescale_spectrum(test_model, target_spec, scaling_range)
     if balmer_only:
-        #new_rv_dist= calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec)
         new_rv_dist= mm.calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec, free_parameters= 2, norm=chi_norm, raw_chi= raw_chi)
     else:
-        #new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
         new_rv_dist= mm.calc_sq_dist(target_spec, test_model, error_spec = noise_spec, free_parameters=free_parameters, norm= chi_norm, raw_chi = raw_chi)
     rv_dist_list.append(new_rv_dist)
 rv_dist_array = np.array(rv_dist_list)
@@ -485,14 +421,10 @@ min_model = wd(Teff= teff, logg = logg)
 
 model_spec = np.vstack([min_model['w'], min_model['flux']])
 model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
-####model_spec = spt.trim_spec(model_spec, np.min(target_spec[0]), np.max(target_spec[0]))
-#model_spec = convolve_model(model_spec, target_spec, header)
 model_spec = mm.convolve_model(model_spec, target_spec, header)
-####model_spec= poly_norm_spec(model_spec)
 dopp_cont_list= dopp_shift_continuum_list(min_rv)
 #######model normalization ==========================
 model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
-#######model_spec = spt.rescale_spectrum(model_spec, target_spec, scaling_range)
 model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
 if balmer_only:
     model_spec = spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), continuum_masks)
@@ -501,8 +433,7 @@ else:
     plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(min_rv)+'km/s')
 
 def run_model_grid(target_spec):
-    #mask_list = []
-    #target_spec = spt.clean_spectrum(target_spec, min_wave, max_wave, mask_list)
+    
     dist_list = []
     rv_list = []
     
@@ -515,17 +446,14 @@ def run_model_grid(target_spec):
         for radial_velocity in velocity_tests:
             test_model = np.copy(model_spec)
             test_model[0]=get_doppler_shifted(test_model[0], radial_velocity)
-            #test_model = convolve_model(test_model, target_spec, header)
             test_model = mm.convolve_model(test_model, target_spec, header)
             dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
-            #test_model = poly_norm_spec(test_model)
             #model normalization =================================
             test_model= spt.clean_spectrum(test_model, np.min(target_spec[0]), np.max(target_spec[0]),mask_list)
             test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
             
             if balmer_only:
-                #new_rv_dist = calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec)
-                #new_rv_dist = calc_sq_dist(line_spec, test_model)
+                
                 new_rv_dist = mm.calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec, free_parameters=free_parameters, norm=chi_norm, raw_chi = raw_chi)
 
             else:
@@ -541,12 +469,10 @@ def run_model_grid(target_spec):
         new_rv = np.copy(velocity_tests[min_rv_index])
         if plot_fit:
             model_spec[0] = get_doppler_shifted(model_spec[0], new_rv)
-            #model_spec = convolve_model(model_spec, target_spec, header)
             model_spec = mm.convolve_model(model_spec, target_spec, header)
             dopp_cont_list= dopp_shift_continuum_list(new_rv)
             model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
             model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
-            #model_spec[1]= model_spec[1]/np.nanmax(model_spec[1])
             plt.title(r'$\chi^2=$'+str(new_dist))
             
             if balmer_only:
@@ -611,13 +537,10 @@ def run_model_grid(target_spec):
     dopp_cont_list= dopp_shift_continuum_list(min_rv)
     model_spec = np.vstack([min_model['w'], min_model['flux']])
     model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
-    #model_spec = spt.trim_spec(model_spec, np.min(target_spec[0]), np.max(target_spec[0]))
-    #model_spec = convolve_model(model_spec, target_spec, header)
+    
     model_spec = mm.convolve_model(model_spec, target_spec, header)
-    #model_spec= poly_norm_spec(model_spec)
     #normalization of the spectrum================
     model_spec= spt.poly_norm_spec(model_spec, continuum_list=dopp_cont_list, poly_degree = poly_degree)
-    #model_spec = spt.rescale_spectrum(model_spec, target_spec, scaling_range)
     model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
     if balmer_only:
         temp_model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), continuum_masks)
@@ -631,7 +554,6 @@ def run_model_grid(target_spec):
     
     
     
-    #residual_spec= calc_residuals(target_spec, model_spec)
     residual_spec= mm.calc_residuals(target_spec, model_spec)
     
     rms_spec= spt.clean_spectrum(residual_spec, rms_range[0], rms_range[1],mask_list)
