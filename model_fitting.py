@@ -21,7 +21,7 @@ import scipy.interpolate as scinterp
 
 import wdatmos
 import spec_plot_tools as spt
-import kernel_builder
+#import kernel_builder
 import model_manipulation as mm
 
 plt.rc('font', size =18)
@@ -420,39 +420,6 @@ def plot_overlays_convolve(spec1, spec2, model_string = 'model'):
     plt.show()
     return ''
 
-def convolve_model(model_spec, target_spec, header):
-    """
-    receive the fits file input of the target because you need a number of things from the header.
-    """
-    wavelengths = np.arange(np.nanmin(model_spec[0]), np.nanmax(model_spec[0]), first_conv_bin)
-    #fluxes = scinterp.interp1d(wavelengths)
-    #fluxes = np.interp(wavelengths, model_spec[0], model_spec[1])
-    interpolator= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    fluxes = interpolator(wavelengths)
-    dlam = target_spec[0][test_loc+1]-target_spec[0][test_loc] #angstroms per pixel at this location in the target
-    see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
-    see_sig = see_sig*dlam/first_conv_bin #seeing value in units of indices of the model
-    pix_slit_width = slit_width*dlam/first_conv_bin  #slit width value in units of indices of the model
-    #print "pix_slit_width", pix_slit_width, int(pix_slit_width)
-    try:
-        see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(pix_slit_width), mode = 'oversample')
-        see_kernel.normalize()
-        model_conv = conv.convolve(fluxes, see_kernel)
-    except ValueError as error:
-        #print error
-        #print "so making it odd"
-        pix_slit_width= pix_slit_width+1
-        see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(pix_slit_width), mode = 'oversample')
-        see_kernel.normalize()
-        model_conv = conv.convolve(fluxes, see_kernel)
-    pix_width = dlam/first_conv_bin #width in pixels of model of a pixel from the original spectrum
-    #print "pix_width", pix_width
-    pix_kernel = conv.Box1DKernel(width = int(pix_width), mode = 'oversample')
-    pix_kernel.normalize()
-    model_conv = conv.convolve(model_conv, pix_kernel)
-    model_out = np.vstack([wavelengths, model_conv])
-    return model_out
-
 ######
 
 #David's instructions for loading the model
@@ -494,7 +461,8 @@ rv_dist_list=[]
 for radial_velocity in velocity_tests:
     test_model = np.copy(model_spec)
     test_model[0]=get_doppler_shifted(test_model[0], radial_velocity)
-    test_model = convolve_model(test_model, target_spec, header)
+    #test_model = convolve_model(test_model, target_spec, header)
+    test_model = mm.convolve_model(test_model, target_spec, header)
     dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
     #test_model = poly_norm_spec(test_model, continuum_list = dopp_cont_list)
     #### Here's the model normalization step==============================
@@ -518,7 +486,8 @@ min_model = wd(Teff= teff, logg = logg)
 model_spec = np.vstack([min_model['w'], min_model['flux']])
 model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
 ####model_spec = spt.trim_spec(model_spec, np.min(target_spec[0]), np.max(target_spec[0]))
-model_spec = convolve_model(model_spec, target_spec, header)
+#model_spec = convolve_model(model_spec, target_spec, header)
+model_spec = mm.convolve_model(model_spec, target_spec, header)
 ####model_spec= poly_norm_spec(model_spec)
 dopp_cont_list= dopp_shift_continuum_list(min_rv)
 #######model normalization ==========================
@@ -546,7 +515,8 @@ def run_model_grid(target_spec):
         for radial_velocity in velocity_tests:
             test_model = np.copy(model_spec)
             test_model[0]=get_doppler_shifted(test_model[0], radial_velocity)
-            test_model = convolve_model(test_model, target_spec, header)
+            #test_model = convolve_model(test_model, target_spec, header)
+            test_model = mm.convolve_model(test_model, target_spec, header)
             dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
             #test_model = poly_norm_spec(test_model)
             #model normalization =================================
@@ -571,7 +541,8 @@ def run_model_grid(target_spec):
         new_rv = np.copy(velocity_tests[min_rv_index])
         if plot_fit:
             model_spec[0] = get_doppler_shifted(model_spec[0], new_rv)
-            model_spec = convolve_model(model_spec, target_spec, header)
+            #model_spec = convolve_model(model_spec, target_spec, header)
+            model_spec = mm.convolve_model(model_spec, target_spec, header)
             dopp_cont_list= dopp_shift_continuum_list(new_rv)
             model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
             model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
@@ -641,7 +612,8 @@ def run_model_grid(target_spec):
     model_spec = np.vstack([min_model['w'], min_model['flux']])
     model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
     #model_spec = spt.trim_spec(model_spec, np.min(target_spec[0]), np.max(target_spec[0]))
-    model_spec = convolve_model(model_spec, target_spec, header)
+    #model_spec = convolve_model(model_spec, target_spec, header)
+    model_spec = mm.convolve_model(model_spec, target_spec, header)
     #model_spec= poly_norm_spec(model_spec)
     #normalization of the spectrum================
     model_spec= spt.poly_norm_spec(model_spec, continuum_list=dopp_cont_list, poly_degree = poly_degree)
