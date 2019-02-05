@@ -59,7 +59,7 @@ plot_fit = False
 
 mc_jump = 1 #number of layers of velocity grid to skip for the Monte Carlo evaluation. Probably want to be >0
 #num_mc = 100 #number of randomized spectra to produce for each target spectrum
-num_mc = 5 #number of randomized spectra to produce for each target spectrum
+num_mc = 2 #number of randomized spectra to produce for each target spectrum
 poly_degree = 5
 
 first_conv_bin = 0.1 #width in angstroms of the first interpolation of the model to then be used in the convolution.
@@ -306,7 +306,8 @@ def minimize_velocity(model_spec, target_spec, noise_spec, target_header, veloci
         dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
         #test_model = poly_norm_spec(test_model)
         test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
-        new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+        #new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+        new_rv_dist= mm.calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
         rv_dist_list.append(new_rv_dist)
     rv_dist_array = np.array(rv_dist_list)
     
