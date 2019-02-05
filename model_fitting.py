@@ -77,7 +77,7 @@ logg = 5.25
 
 #teff = 6000
 #logg = 3.75
-plot_fit = True
+plot_fit = False
 
 poly_degree = 5
 #poly_degree = 7
