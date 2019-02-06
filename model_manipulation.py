@@ -85,8 +85,8 @@ def calc_sq_dist(target_spec, model_spec, error_spec = np.array([]), free_parame
     #dif = np.sum(norm_difs)/norm_difs.shape[0]
     #print "norm_difs.shape[0]:", norm_difs.shape[0]
     if raw_chi:
-        dif = np.sum(norm_difs)/norm_difs.shape[0]
-        #dif =np.sum(norm_difs)
+        #dif = np.sum(norm_difs)/norm_difs.shape[0]
+        dif =np.sum(norm_difs)
     else:
         dif = np.sum(norm_difs)/(norm_difs.shape[0]-1-free_parameters) #based on Numerical Recipes in C page 621. (Section 14.3)
 
@@ -156,3 +156,10 @@ def convolve_model(model_spec, target_spec, header):
     model_conv = conv.convolve(model_conv, pix_kernel)
     model_out = np.vstack([wavelengths, model_conv])
     return model_out
+
+#def parabola_func(xvals, a, b,xoff):
+    #"""
+    #A parabola to be fitted with another function that calls curve_fit to fit this function to data and its chi2 vals
+    #"""
+    
+    #return a*(xvals-xoff)**2+

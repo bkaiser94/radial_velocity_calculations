@@ -8,6 +8,7 @@ import sys
 from astropy.io import fits
 from glob import glob
 import scipy.optimize as sciop
+from astropy.table import Table
 import cosmics
 from astropy.time import Time
 from astropy import coordinates as coords
@@ -20,7 +21,7 @@ start = time.time()
 #print start
 import wdatmos
 import spec_plot_tools as spt
-
+import model_manipulation as mm
 #plt.rc('font', size =18)
 #plt.rc('lines', markersize=12)
 #plt.rc('font', size = 12)
@@ -40,8 +41,8 @@ logg = 5.5
 
 #output_filename= 'rv_plot_second_iteration.txt'
 #output_filename= 'rv_plot_teff7500_logg550.txt'
-output_filename= 'rv_plot_teff7500_logg550_20181011.txt'
-
+#output_filename= 'rv_plot_teff7500_logg550_20181011.txt'
+output_filename= 'rv_rand_teff7500_logg550_20190204.txt'
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
 model = wd(Teff = teff, logg = logg)
@@ -55,7 +56,7 @@ slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
-plot_fit = False
+plot_fit = True
 
 mc_jump = 1 #number of layers of velocity grid to skip for the Monte Carlo evaluation. Probably want to be >0
 #num_mc = 100 #number of randomized spectra to produce for each target spectrum
@@ -68,13 +69,16 @@ test_loc = 1200 #pixel location in the target spectrum to look to get a pixel to
 #velocity_bound = 400 #km/s
 velocity_step  = 100 #km
 first_prev_velocity_step = 200
-velocity_step_list = [200., 100., 10., 1., 0.1] #km/s (the first one doesn't actually get used except to set the outer bounds of the grid)
+#velocity_step_list = [200., 100., 10., 1., 0.1] #km/s (the first one doesn't actually get used except to set the outer bounds of the grid)
+velocity_step_list = [200., 100., 10.]#km/s (the first one doesn't actually get used except to set the outer bounds of the grid)
 velocity_center = -100 #km/s
 velocity_grid_radius = 8 #number of gridpoints away from the central one to include
 overlap_radius = 4 #was 18
 velocity_low_bound = -500 #km/s
 velocity_high_bound = 300 #km/s
 velocity_tests = np.arange(velocity_low_bound, velocity_high_bound+velocity_step, velocity_step)
+
+sample_points=1000
 
 low_wave_cut= 3800
 high_wave_cut= 5200
@@ -170,6 +174,20 @@ def make_velocity_grid(velocity_center, velocity_step, prev_velocity_step, overl
     grid = np.arange(low_bound, high_bound, velocity_step)
     return grid
 
+def make_rand_velocity_grid(velocity_center,  prev_velocity_step, overlap_radius= overlap_radius, sample_points=sample_points):
+    """
+    generate a random distribution of velocities to test in a certain range. Actually, this should only take bounds
+    or something as arguments
+    """
+    low_bound = velocity_center - prev_velocity_step*overlap_radius
+    high_bound= velocity_center +prev_velocity_step *(overlap_radius)
+    print "high_bound", high_bound, "low_bound", low_bound
+    scaling_factor= high_bound-low_bound
+    grid = np.random.rand(sample_points)*scaling_factor+low_bound
+    print "min in rand grid", np.min(grid)
+    print "max in rand grid", np.max(grid)
+    return grid
+
 def get_doppler_shifted(wavelengths, radial_velocity):
     #print "doppler shifting by ", radial_velocity
     lambda_obs = wavelengths * (radial_velocity*u.km/u.s + const.c.to(u.km/u.s)) / const.c.to(u.km/u.s)
@@ -191,28 +209,6 @@ def dopp_shift_continuum_list(radial_velocity):
 
 def chi_squared(observed, actual):
     return (observed - actual)**2/actual
-
-def calc_sq_dist(target_spec, model_spec, error_spec = np.array([])):
-    interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
-    #interpolator= scinterp.CubicSpline(model_spec[0], model_spec[1])
-    #interp_model_flux = interpolator(target_spec[0])
-    interp_model= np.vstack([np.copy(target_spec[0]),interp_model_flux])
-    #print "interp_model.shape", interp_model.shape
-    if error_spec.shape[0] != 0:
-        #norm_difs = np.abs(interp_model[1]-target_spec[1])/np.float_(error_spec[1])
-        norm_difs = (interp_model[1]-target_spec[1])**2/np.float_(error_spec[1])**2
-        #norm_difs = np.abs(interp_model[1]-target_spec[1])/np.float_(interp_model[1])
-    else:
-        #print "no uncertainties provided"
-        norm_difs =(interp_model[1]-target_spec[1])**2/np.float_(interp_model[1])
-    #norm_difs = np.abs(interp_model[1]-target_spec[1])
-
-    nan_remove = np.isinf(norm_difs)
-    norm_difs= norm_difs[~nan_remove]
-    dif = np.sum(norm_difs)/norm_difs.shape[0]
-    
-    return dif
-
 
 def convolve_model(model_spec, target_spec, header):
     """
@@ -293,73 +289,97 @@ def remove_bad_noise(target_spec, noise_spec, scaled_noise):
 
 
 
-def minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_center, velocity_tests, plot_fit = False):
+def minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_tests, plot_fit = False, last_test= False):
     """
     Test the whole grid and output the optimal radial velocity for the given target spectrum at the specified grid resolution
     """
     rv_dist_list=[]
+    red_rv_dist_list=[]
     #print velocity_tests
     for radial_velocity in velocity_tests:
         test_model = np.copy(model_spec)
         test_model[0]=get_doppler_shifted(test_model[0], radial_velocity)
-        test_model = convolve_model(test_model, target_spec, target_header)
+        test_model = mm.convolve_model(test_model, target_spec, target_header)
         dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
         #test_model = poly_norm_spec(test_model)
         test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
         #new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
-        new_rv_dist= mm.calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+        #new_red_rv_dist= mm.calc_sq_dist(target_spec, test_model, error_spec = noise_spec, free_parameters= 1, raw_chi=False)
+        new_rv_dist= mm.calc_sq_dist(target_spec, test_model, error_spec = noise_spec, free_parameters= 1, raw_chi=True)
         rv_dist_list.append(new_rv_dist)
     rv_dist_array = np.array(rv_dist_list)
     
     min_rv_index= np.argmin(rv_dist_array)
-    
+    if last_test:
+        test_model = np.copy(model_spec)
+        test_model[0]=get_doppler_shifted(test_model[0], velocity_tests[min_rv_index])
+        test_model = mm.convolve_model(test_model, target_spec, target_header)
+        dopp_cont_list= dopp_shift_continuum_list(velocity_tests[min_rv_index])
+        #test_model = poly_norm_spec(test_model)
+        test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
+        #new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
+        #new_red_rv_dist= mm.calc_sq_dist(target_spec, test_model, error_spec = noise_spec, free_parameters= 1, raw_chi=False)
+        chi_factor= mm.calc_sq_dist(target_spec, test_model, error_spec = noise_spec, free_parameters= 1, raw_chi=False) #this is the minimum reduced chi-square value that we'll use to scale the raw chi^2 values
+        #rescale chi-squared values
+        print "Dividing raw chi2 values by", chi_factor
+        rv_dist_array= rv_dist_array/chi_factor
+        plot_fit= True
     new_dist = np.copy(rv_dist_array[min_rv_index])
     new_rv = np.copy(velocity_tests[min_rv_index])
+    print "new_rv:", new_rv, "new_dist", new_dist
     if plot_fit:
-        
-        plt.plot(velocity_tests, rv_dist_array)
+        in_range= np.where(np.abs(velocity_tests-new_rv)<velocity_step_list[-1])
+        fit_params= np.polyfit(velocity_tests[in_range], rv_dist_array[in_range], 2)
+        xvals = np.linspace(np.min(velocity_tests[in_range]), np.max(velocity_tests[in_range]), 1000)
+        yvals= np.polyval(fit_params, xvals)
+        #plt.plot(velocity_tests, rv_dist_array)
+        plt.scatter(velocity_tests, rv_dist_array)
+        plt.plot(xvals, yvals, color='r')
         plt.plot(new_rv, new_dist,marker = 'o', linestyle ='none', color = 'r')
+        plt.xlabel('Radial Velocity (km/s)')
+        plt.ylabel(r'$\chi^2$')
         plt.show()
     return new_rv
+    #return 
 
-def iterate_MC(model_spec, target_file, original_rv):
-    target_spec, target_header, noise_spec = retrieve_target_spec(target_file) 
-    wave_vals = target_spec[0]
-    scaled_noise = np.copy(noise_spec[1]*target_spec[1])
-    scaled_noise = np.abs(scaled_noise)
-    mc_rvs = []
-    print np.sort(noise_spec[1])[:5]
-    print np.sort(scaled_noise)[:5]
-    for jindex in range(0, num_mc):
-        best_rv = original_rv
-        random_flux = np.random.normal(target_spec[1], scaled_noise)
-        random_spec = np.vstack([wave_vals, random_flux])
-        for index in range(1+mc_jump, len(velocity_step_list)):
-            prev_velocity_step = velocity_step_list[index-1]
-            velocity_step = velocity_step_list[index]
-            velocity_tests= make_velocity_grid(best_rv, velocity_step, prev_velocity_step)
-            if index == len(velocity_step_list)-1:
-                best_rv = minimize_velocity(model_spec, random_spec, noise_spec, target_header, best_rv, velocity_tests, plot_fit = plot_fit)
-            else:
-                best_rv = minimize_velocity(model_spec, random_spec, noise_spec, target_header, best_rv, velocity_tests, plot_fit = False)
-            #print "==========="
-            #print target_file, "best_rv: ", best_rv
-        if plot_fit:
-            test_model = np.copy(model_spec)
-            test_model[0]=get_doppler_shifted(test_model[0], best_rv)
-            test_model = convolve_model(test_model, random_spec, target_header)
-            dopp_cont_list= dopp_shift_continuum_list(best_rv)
-            #test_model = poly_norm_spec(test_model)
-            test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
-            test_model= spt.clean_spectrum(test_model, np.min(random_spec[0]), np.max(random_spec[0]), mask_list)
-            #norm_target_spec = spt.poly_norm_spec(target_spec, continuum_list = target_continuum_list, poly_degree = poly_degree)
-            plt.title("RV: " + str(best_rv) + str(" km/s ") + target_file)
-            plt.plot(random_spec[0], random_spec[1], color = 'b', label = "Target")
-            plt.plot(test_model[0], test_model[1], color = 'r', label = "Model")
-            plt.legend()
-            plt.show()
-        mc_rvs.append(best_rv)
-    return mc_rvs
+#def iterate_MC(model_spec, target_file, original_rv):
+    #target_spec, target_header, noise_spec = retrieve_target_spec(target_file) 
+    #wave_vals = target_spec[0]
+    #scaled_noise = np.copy(noise_spec[1]*target_spec[1])
+    #scaled_noise = np.abs(scaled_noise)
+    #mc_rvs = []
+    #print np.sort(noise_spec[1])[:5]
+    #print np.sort(scaled_noise)[:5]
+    #for jindex in range(0, num_mc):
+        #best_rv = original_rv
+        #random_flux = np.random.normal(target_spec[1], scaled_noise)
+        #random_spec = np.vstack([wave_vals, random_flux])
+        #for index in range(1+mc_jump, len(velocity_step_list)):
+            #prev_velocity_step = velocity_step_list[index-1]
+            #velocity_step = velocity_step_list[index]
+            #velocity_tests= make_velocity_grid(best_rv, velocity_step, prev_velocity_step)
+            #if index == len(velocity_step_list)-1:
+                #best_rv = minimize_velocity(model_spec, random_spec, noise_spec, target_header, best_rv, velocity_tests, plot_fit = plot_fit)
+            #else:
+                #best_rv = minimize_velocity(model_spec, random_spec, noise_spec, target_header, best_rv, velocity_tests, plot_fit = False)
+            ##print "==========="
+            ##print target_file, "best_rv: ", best_rv
+        #if plot_fit:
+            #test_model = np.copy(model_spec)
+            #test_model[0]=get_doppler_shifted(test_model[0], best_rv)
+            #test_model = mm.convolve_model(test_model, random_spec, target_header)
+            #dopp_cont_list= dopp_shift_continuum_list(best_rv)
+            ##test_model = poly_norm_spec(test_model)
+            #test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
+            #test_model= spt.clean_spectrum(test_model, np.min(random_spec[0]), np.max(random_spec[0]), mask_list)
+            ##norm_target_spec = spt.poly_norm_spec(target_spec, continuum_list = target_continuum_list, poly_degree = poly_degree)
+            #plt.title("RV: " + str(best_rv) + str(" km/s ") + target_file)
+            #plt.plot(random_spec[0], random_spec[1], color = 'b', label = "Target")
+            #plt.plot(test_model[0], test_model[1], color = 'r', label = "Model")
+            #plt.legend()
+            #plt.show()
+        #mc_rvs.append(best_rv)
+    #return mc_rvs
 
 def iterate_resolutions(model_spec, target_file ):
     target_spec, target_header, noise_spec = retrieve_target_spec(target_file) 
@@ -373,15 +393,20 @@ def iterate_resolutions(model_spec, target_file ):
         velocity_step = velocity_step_list[index]
         velocity_tests= make_velocity_grid(best_rv, velocity_step, prev_velocity_step)
         if index == len(velocity_step_list)-1:
-            best_rv = minimize_velocity(model_spec, target_spec, noise_spec, target_header, best_rv, velocity_tests, plot_fit = plot_fit)
+            #best_rv = minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_tests, plot_fit = plot_fit)
+            best_rv = minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_tests, plot_fit = False)
         else:
-            best_rv = minimize_velocity(model_spec, target_spec, noise_spec, target_header, best_rv, velocity_tests, plot_fit = False)
+            best_rv = minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_tests, plot_fit = False)
         print "==========="
         print target_file, "best_rv: ", best_rv
+    #now we do it for the random sampling...
+    velocity_tests= make_rand_velocity_grid(best_rv, velocity_step_list[-1]) #it's just the very last step
+    best_rv= minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_tests, last_test= True)
+    
     if plot_fit:
         test_model = np.copy(model_spec)
         test_model[0]=get_doppler_shifted(test_model[0], best_rv)
-        test_model = convolve_model(test_model, target_spec, target_header)
+        test_model = mm.convolve_model(test_model, target_spec, target_header)
         dopp_cont_list= dopp_shift_continuum_list(best_rv)
         #test_model = poly_norm_spec(test_model)
         test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
@@ -397,7 +422,7 @@ def iterate_resolutions(model_spec, target_file ):
 
 rv_list = []
 time_list= []
-sigma_list = []
+#sigma_list = []
 for target_file in target_list:
     very_begin = time.time()
     begin = time.time()
@@ -406,19 +431,20 @@ for target_file in target_list:
     find_time_difference(begin, end)
     #i=fits.open(target_file)
     begin= time.time()
-    mc_rvs = iterate_MC(model_spec, target_file, best_rv)
-    sigma = np.std(mc_rvs)
+    #mc_rvs = iterate_MC(model_spec, target_file, best_rv)
+    #sigma = np.std(mc_rvs)
     end = time.time()
     find_time_difference(begin,end)
     print "###############"
-    print target_file, " best_rv:", best_rv, '+/-', sigma
+    #print target_file, " best_rv:", best_rv, '+/-', sigma
+    print target_file, " best_rv:", best_rv
     very_end = time.time()
     find_time_difference(very_begin, very_end)
     print "###############"
     header = fits.getheader(target_file)
     rv_list.append(best_rv)
     time_list.append(header['BMJD_TDB'])
-    sigma_list.append(sigma)
+    #sigma_list.append(sigma)
     
     #target_spec, target_header = retrieve_target_spec(target_file) #first spectrum in the list for testing.
     ##rv_dist_list=[]
@@ -446,16 +472,17 @@ for target_file in target_list:
     
 rv_array = np.array(rv_list)
 time_array = np.array(time_list)
-sigma_array = np.array(sigma_list)
+#sigma_array = np.array(sigma_list)
 print rv_array
 print time_array
 stop = time.time()
 
-
-out_array = np.vstack([time_array,rv_array, sigma_array])
+out_array = np.vstack([time_array, rv_array])
+#out_array = np.vstack([time_array,rv_array, sigma_array])
 print "Saving the data... hopefull"
 #np.savetxt('rv_plot.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
-np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
+#np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
+np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s)') 
 print "Saved the data"
 
 
@@ -468,8 +495,8 @@ find_time_difference(start,stop)
 print "\n#################"
 print "Scaled noise has absolute value used, so that needs to be fixed"
 print "##################\n"
-#plt.scatter(time_array, rv_array)
-plt.errorbar(time_array, rv_array, yerr = sigma_array, color = 'b', marker= 'o', linestyle='none')
+plt.scatter(time_array, rv_array)
+#plt.errorbar(time_array, rv_array, yerr = sigma_array, color = 'b', marker= 'o', linestyle='none')
 plt.ylabel('RV (km/s)')
 plt.xlabel("BMJD_TDB")
 plt.show()
