@@ -42,7 +42,7 @@ logg = 5.5
 #output_filename= 'rv_plot_second_iteration.txt'
 #output_filename= 'rv_plot_teff7500_logg550.txt'
 #output_filename= 'rv_plot_teff7500_logg550_20181011.txt'
-output_filename= 'rv_rand_teff7500_logg550_20190204.txt'
+output_filename= '20190206_rv_rand_teff7500_logg550.txt'
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
 model = wd(Teff = teff, logg = logg)
@@ -56,7 +56,7 @@ slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
-plot_fit = True
+plot_fit = False
 
 mc_jump = 1 #number of layers of velocity grid to skip for the Monte Carlo evaluation. Probably want to be >0
 #num_mc = 100 #number of randomized spectra to produce for each target spectrum
@@ -319,27 +319,36 @@ def minimize_velocity(model_spec, target_spec, noise_spec, target_header, veloci
         test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
         #new_rv_dist= calc_sq_dist(target_spec, test_model, error_spec = noise_spec)
         #new_red_rv_dist= mm.calc_sq_dist(target_spec, test_model, error_spec = noise_spec, free_parameters= 1, raw_chi=False)
-        chi_factor= mm.calc_sq_dist(target_spec, test_model, error_spec = noise_spec, free_parameters= 1, raw_chi=False) #this is the minimum reduced chi-square value that we'll use to scale the raw chi^2 values
-        #rescale chi-squared values
+        chi_factor= mm.calc_sq_dist(target_spec, test_model, error_spec = noise_spec, free_parameters= 1, raw_chi=False) #this is the minimum reduced chi-square value that we'll use to scale the raw chi^2 values rescale chi-squared values
         print "Dividing raw chi2 values by", chi_factor
         rv_dist_array= rv_dist_array/chi_factor
-        plot_fit= True
+        #plot_fit= True
     new_dist = np.copy(rv_dist_array[min_rv_index])
     new_rv = np.copy(velocity_tests[min_rv_index])
     print "new_rv:", new_rv, "new_dist", new_dist
     if plot_fit:
-        in_range= np.where(np.abs(velocity_tests-new_rv)<velocity_step_list[-1])
-        fit_params= np.polyfit(velocity_tests[in_range], rv_dist_array[in_range], 2)
-        xvals = np.linspace(np.min(velocity_tests[in_range]), np.max(velocity_tests[in_range]), 1000)
-        yvals= np.polyval(fit_params, xvals)
-        #plt.plot(velocity_tests, rv_dist_array)
-        plt.scatter(velocity_tests, rv_dist_array)
-        plt.plot(xvals, yvals, color='r')
-        plt.plot(new_rv, new_dist,marker = 'o', linestyle ='none', color = 'r')
+        #in_range= np.where(np.abs(velocity_tests-new_rv)<velocity_step_list[-1])
+        #fit_params= np.polyfit(velocity_tests[in_range], rv_dist_array[in_range], 2)
+        #fit_params= np.polyfit(velocity_tests, rv_dist_array, 2)
+        ##xvals = np.linspace(np.min(velocity_tests[in_range]), np.max(velocity_tests[in_range]), 1000)
+        #xvals = np.linspace(np.min(velocity_tests), np.max(velocity_tests), 1000)
+        #yvals= np.polyval(fit_params, xvals)
+        ##plt.plot(velocity_tests, rv_dist_array)
+        #plt.scatter(velocity_tests, rv_dist_array)
+        #plt.plot(xvals, yvals, color='r')
+        #plt.plot(new_rv, new_dist,marker = 'o', linestyle ='none', color = 'r')
         plt.xlabel('Radial Velocity (km/s)')
         plt.ylabel(r'$\chi^2$')
-        plt.show()
-    return new_rv
+        #mm.fit_fixed_parabola(velocity_tests, rv_dist_array)
+        #plt.show()
+    if last_test:
+        sigma = mm.fit_fixed_parabola(velocity_tests, rv_dist_array, plot_fit= plot_fit, dof=1)
+    
+    if last_test:
+        return new_rv, sigma
+    else:
+        return new_rv
+    #return new_rv
     #return 
 
 #def iterate_MC(model_spec, target_file, original_rv):
@@ -401,8 +410,9 @@ def iterate_resolutions(model_spec, target_file ):
         print target_file, "best_rv: ", best_rv
     #now we do it for the random sampling...
     velocity_tests= make_rand_velocity_grid(best_rv, velocity_step_list[-1]) #it's just the very last step
-    best_rv= minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_tests, last_test= True)
-    
+    best_rv= minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_tests, last_test= False)
+    velocity_tests= make_rand_velocity_grid(best_rv, velocity_step_list[-1]) #it's just the very last step
+    best_rv, sigma= minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_tests, last_test= True)
     if plot_fit:
         test_model = np.copy(model_spec)
         test_model[0]=get_doppler_shifted(test_model[0], best_rv)
@@ -417,16 +427,16 @@ def iterate_resolutions(model_spec, target_file ):
         plt.plot(test_model[0], test_model[1], color = 'r', label = "Model")
         plt.legend()
         plt.show()
-    return best_rv
+    return best_rv, sigma
 
 
 rv_list = []
 time_list= []
-#sigma_list = []
+sigma_list = []
 for target_file in target_list:
     very_begin = time.time()
     begin = time.time()
-    best_rv = iterate_resolutions(model_spec, target_file)
+    best_rv, sigma = iterate_resolutions(model_spec, target_file)
     end= time.time()
     find_time_difference(begin, end)
     #i=fits.open(target_file)
@@ -436,15 +446,15 @@ for target_file in target_list:
     end = time.time()
     find_time_difference(begin,end)
     print "###############"
-    #print target_file, " best_rv:", best_rv, '+/-', sigma
-    print target_file, " best_rv:", best_rv
+    print target_file, " best_rv:", best_rv, '+/-', sigma
+    #print target_file, " best_rv:", best_rv
     very_end = time.time()
     find_time_difference(very_begin, very_end)
     print "###############"
     header = fits.getheader(target_file)
     rv_list.append(best_rv)
     time_list.append(header['BMJD_TDB'])
-    #sigma_list.append(sigma)
+    sigma_list.append(sigma)
     
     #target_spec, target_header = retrieve_target_spec(target_file) #first spectrum in the list for testing.
     ##rv_dist_list=[]
@@ -472,17 +482,17 @@ for target_file in target_list:
     
 rv_array = np.array(rv_list)
 time_array = np.array(time_list)
-#sigma_array = np.array(sigma_list)
+sigma_array = np.array(sigma_list)
 print rv_array
 print time_array
 stop = time.time()
 
-out_array = np.vstack([time_array, rv_array])
-#out_array = np.vstack([time_array,rv_array, sigma_array])
+#out_array = np.vstack([time_array, rv_array])
+out_array = np.vstack([time_array,rv_array, sigma_array])
 print "Saving the data... hopefull"
 #np.savetxt('rv_plot.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
-#np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
-np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s)') 
+np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
+#np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s)') 
 print "Saved the data"
 
 
@@ -495,8 +505,8 @@ find_time_difference(start,stop)
 print "\n#################"
 print "Scaled noise has absolute value used, so that needs to be fixed"
 print "##################\n"
-plt.scatter(time_array, rv_array)
-#plt.errorbar(time_array, rv_array, yerr = sigma_array, color = 'b', marker= 'o', linestyle='none')
+#plt.scatter(time_array, rv_array)
+plt.errorbar(time_array, rv_array, yerr = sigma_array, color = 'b', marker= 'o', linestyle='none')
 plt.ylabel('RV (km/s)')
 plt.xlabel("BMJD_TDB")
 plt.show()

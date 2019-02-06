@@ -32,6 +32,14 @@ slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
+
+delta_chi2= np.array(
+    [np.nan,
+     1.,
+     2.30,
+     3.53,
+     4.72,
+     5.82])
 def interpolate_model(target_spec, model_spec):
     interp_model_flux = np.interp(target_spec[0], model_spec[0], model_spec[1])
     #interpolator3= scinterp.CubicSpline(model_spec[0], model_spec[1])
@@ -157,9 +165,43 @@ def convolve_model(model_spec, target_spec, header):
     model_out = np.vstack([wavelengths, model_conv])
     return model_out
 
-#def parabola_func(xvals, a, b,xoff):
-    #"""
-    #A parabola to be fitted with another function that calls curve_fit to fit this function to data and its chi2 vals
-    #"""
+
+def fit_fixed_parabola(xvals, yvals, dof=1, plot_fit= False):
+    """
+    Fit a parabola to the data after first affixing its minimum to be at the same location as the minimum of whatever data you're looking at.
     
-    #return a*(xvals-xoff)**2+
+    Should return the uncertainty values...
+    """
+    #first find the actual minimum of the data you're looking at...
+    min_index= np.argmin(yvals)
+    minx= xvals[min_index]
+    miny= yvals[min_index]
+    def parabola_func(xvals, a):
+        """
+        A parabola to be fitted with another function that calls curve_fit to fit this function to data and its chi2 vals
+        """
+        return a*(xvals-minx)**2+miny
+    popt, pcov= sciop.curve_fit(parabola_func, xvals, yvals)
+    sigma= np.sqrt(delta_chi2[dof]/popt[0])
+    if plot_fit:
+        plt.scatter(xvals, yvals)
+        x_line= np.linspace(np.min(xvals), np.max(xvals), 1000)
+        y_line= parabola_func(x_line, popt)
+        plt.plot(x_line, y_line, color= 'r')
+        plt.plot(minx,miny, marker='o', color='r')
+        plt.show()
+        #plt.scatter(xvals, yvals)
+        x_line= np.linspace(np.min(xvals), np.max(xvals), 1000)
+        y_line= parabola_func(x_line, popt)-miny-1
+        plt.plot(x_line, y_line, color= 'r')
+        plt.axhline(y=0, color = 'k', linestyle='--')
+        bound_points= np.array([minx-sigma, minx, minx+sigma])
+        calc_bounds= parabola_func(bound_points, popt)-miny-1
+        print "calc_bounds", calc_bounds
+        plt.plot(bound_points, calc_bounds, color='b')
+        plt.scatter(bound_points, [0, -1*delta_chi2[dof], 0], color='b')
+        #plt.plot(minx,miny, marker='o', color='r')
+        plt.show()
+    else:
+        pass
+    return sigma
