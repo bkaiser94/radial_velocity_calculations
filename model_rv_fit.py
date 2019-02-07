@@ -8,7 +8,7 @@ import sys
 from astropy.io import fits
 from glob import glob
 import scipy.optimize as sciop
-from astropy.table import Table
+from astropy.table import Table, Column
 import cosmics
 from astropy.time import Time
 from astropy import coordinates as coords
@@ -42,7 +42,8 @@ logg = 5.5
 #output_filename= 'rv_plot_second_iteration.txt'
 #output_filename= 'rv_plot_teff7500_logg550.txt'
 #output_filename= 'rv_plot_teff7500_logg550_20181011.txt'
-output_filename= '20190206_rv_rand_teff7500_logg550.txt'
+#output_filename= '20190206_rv_rand_teff7500_logg550.txt'
+output_filename= '20190207_rv_teff7500_logg550.csv'
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
 model = wd(Teff = teff, logg = logg)
@@ -151,7 +152,26 @@ target_continuum_list = [[3861,3864],
                   [5045,5070],
                   [5110,5130],
                   [5187,5192]]
+##########################
+col_names= ['filename',
+            'bmjd_tdb', 
+            'rv',
+            'rv_error',
+            'teff_used',
+            'logg_used']
 
+dtype_list=['S75',
+            'f',
+            'f',
+            'f',
+            'i',
+            'f']
+unit_list= ['none',
+            'days',
+            'km/s',
+            'km/s',
+            'K',
+            'log in cgs']
 
 
 
@@ -433,6 +453,8 @@ def iterate_resolutions(model_spec, target_file ):
 rv_list = []
 time_list= []
 sigma_list = []
+teff_list=[]
+logg_list=[]
 for target_file in target_list:
     very_begin = time.time()
     begin = time.time()
@@ -455,6 +477,8 @@ for target_file in target_list:
     rv_list.append(best_rv)
     time_list.append(header['BMJD_TDB'])
     sigma_list.append(sigma)
+    teff_list.append(teff)
+    logg_list.append(logg)
     
     #target_spec, target_header = retrieve_target_spec(target_file) #first spectrum in the list for testing.
     ##rv_dist_list=[]
@@ -483,15 +507,29 @@ for target_file in target_list:
 rv_array = np.array(rv_list)
 time_array = np.array(time_list)
 sigma_array = np.array(sigma_list)
+teff_array = np.array(teff_list)
+logg_array = np.array(logg_list)
+target_name_array= np.array(target_list)
+array_list= [target_name_array,
+             time_array,
+             rv_array,
+             sigma_array,
+             teff_array,
+             logg_array]
+
+out_table = Table(array_list, names= col_names, dtype=dtype_list, units= unit_list)
+
 print rv_array
 print time_array
 stop = time.time()
 
 #out_array = np.vstack([time_array, rv_array])
-out_array = np.vstack([time_array,rv_array, sigma_array])
-print "Saving the data... hopefull"
+#out_array = np.vstack([time_array,rv_array, sigma_array])
+
+print "Saving the data... hopefully"
 #np.savetxt('rv_plot.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
-np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
+#np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
+out_table.write(output_filename, format='ascii.csv')
 #np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s)') 
 print "Saved the data"
 
