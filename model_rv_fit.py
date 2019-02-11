@@ -43,7 +43,7 @@ logg = 5.5
 #output_filename= 'rv_plot_teff7500_logg550.txt'
 #output_filename= 'rv_plot_teff7500_logg550_20181011.txt'
 #output_filename= '20190206_rv_rand_teff7500_logg550.txt'
-output_filename= '20190207_rv_teff7500_logg550.csv'
+output_filename= '20190210_rv_teff7500_logg550.csv'
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
 model = wd(Teff = teff, logg = logg)
@@ -432,7 +432,7 @@ def iterate_resolutions(model_spec, target_file ):
     velocity_tests= make_rand_velocity_grid(best_rv, velocity_step_list[-1]) #it's just the very last step
     best_rv= minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_tests, last_test= False)
     velocity_tests= make_rand_velocity_grid(best_rv, velocity_step_list[-1]) #it's just the very last step
-    best_rv, sigma= minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_tests, last_test= True)
+    best_rv, sigma= minimize_velocity(model_spec, target_spec, noise_spec, target_header, velocity_tests, last_test= True, plot_fit= plot_fit)
     if plot_fit:
         test_model = np.copy(model_spec)
         test_model[0]=get_doppler_shifted(test_model[0], best_rv)
@@ -462,11 +462,11 @@ for target_file in target_list:
     end= time.time()
     find_time_difference(begin, end)
     #i=fits.open(target_file)
-    begin= time.time()
+    #begin= time.time()
     #mc_rvs = iterate_MC(model_spec, target_file, best_rv)
     #sigma = np.std(mc_rvs)
-    end = time.time()
-    find_time_difference(begin,end)
+    #end = time.time()
+    #find_time_difference(begin,end)
     print "###############"
     print target_file, " best_rv:", best_rv, '+/-', sigma
     #print target_file, " best_rv:", best_rv
@@ -516,13 +516,16 @@ array_list= [target_name_array,
              sigma_array,
              teff_array,
              logg_array]
+for thing in array_list:
+    print thing
 
-out_table = Table(array_list, names= col_names, dtype=dtype_list, units= unit_list)
 
+out_table = Table(array_list, names= col_names, dtype=dtype_list)
+#out_table.meta['comments']=[','.join(unit_list)]
 print rv_array
 print time_array
 stop = time.time()
-
+out_table.pprint()
 #out_array = np.vstack([time_array, rv_array])
 #out_array = np.vstack([time_array,rv_array, sigma_array])
 
@@ -540,6 +543,8 @@ print "Stop:", stop
 
 #print "Difference: ", stop-start
 find_time_difference(start,stop)
+#except:
+    #print 'astropy table failed.'
 print "\n#################"
 print "Scaled noise has absolute value used, so that needs to be fixed"
 print "##################\n"
