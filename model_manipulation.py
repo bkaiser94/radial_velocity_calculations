@@ -192,11 +192,13 @@ def fit_fixed_parabola(xvals, yvals, dof=1, plot_fit= False):
         plt.show()
         #plt.scatter(xvals, yvals)
         x_line= np.linspace(np.min(xvals), np.max(xvals), 1000)
-        y_line= parabola_func(x_line, popt)-miny-1
+        #y_line= parabola_func(x_line, popt)-miny-1
+        y_line= parabola_func(x_line, popt)-miny-delta_chi2[dof]
         plt.plot(x_line, y_line, color= 'r')
         plt.axhline(y=0, color = 'k', linestyle='--')
         bound_points= np.array([minx-sigma, minx, minx+sigma])
-        calc_bounds= parabola_func(bound_points, popt)-miny-1
+        #calc_bounds= parabola_func(bound_points, popt)-miny-1
+        calc_bounds= parabola_func(bound_points, popt)-miny-delta_chi2[dof]
         print "calc_bounds", calc_bounds
         plt.plot(bound_points, calc_bounds, color='b')
         plt.scatter(bound_points, [0, -1*delta_chi2[dof], 0], color='b')

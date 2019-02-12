@@ -15,6 +15,7 @@ from astropy import coordinates as coords
 from astropy import units as u
 from astropy import constants as const
 from astropy import convolution as conv
+from astropy.table import Table, Column
 import scipy.interpolate as scinterp
 
 
@@ -33,19 +34,19 @@ target_list_name = 'listFWCTB'
 target_list = np.genfromtxt(target_list_name, dtype = 'str')
 
 combined_spec_file='fwctb.0220_J1431m4715_930_blue.fits'
-
+astropy_input= '20190210_rv_teff7500_logg550_full.csv'
 #scaling_range = [4600,4650]
 rms_range= [4600,4650]
 slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
-spectrum_type= 'combined'
+spectrum_type= 'individual'
 #spectrum_type= 'single run'
-#options are 'combined', 'single run'
+#options are 'combined', 'single run', 'individual'
 
 chi_norm= False
-raw_chi= False
+raw_chi= True
 
 ca_mask = [3920,3946]
 #ca_mask=[1,1]
@@ -59,8 +60,7 @@ free_parameters= 2
 #output_names = "teff, logg, rv, chi_square"
 output_names = "teff, logg, rv, chi_square, revised_chi_square"
 
-output_filename= '20181218_x2csv'
-
+output_filename= '20190211_x2.csv'
 
 
 
@@ -78,7 +78,7 @@ logg = 5.25
 #teff = 6000
 #logg = 3.75
 plot_fit = False
-
+output_grid= True
 poly_degree = 5
 #poly_degree = 7
 
@@ -111,6 +111,10 @@ high_wave_cut= 5050
 
 
 #####
+
+#David's instructions for loading the model
+wd=wdatmos.wdmodel(filename='ELM.hdf5')
+
 
 #continuum_list = [[3809,3812],
                   #[3861,3864],
@@ -226,6 +230,31 @@ continuum_masks=[[3500,3815],
 
 
 ###################
+col_names= ['filename',
+            'bmjd_tdb', 
+            'rv_used',
+            'teff',
+            'teff_error',
+            'logg',
+            'logg_error']
+
+dtype_list=['S75',
+            'f',
+            'f',
+            'i',
+            'f',
+            'f',
+            'f']
+unit_list= ['none',
+            'days',
+            'km/s',
+            'K',
+            'K',
+            'log in cgs',
+            'log in cgs']
+
+
+##################
                   
                   
 if spectrum_type== 'single run':
@@ -309,6 +338,29 @@ elif spectrum_type == 'combined':
     print "Combined spectrum, so only using RV=0; no RV stepping actually done."
     print "**************\n"
     velocity_tests= np.arange(0,velocity_step/2.,velocity_step) #this makes the only velocity that is used be 0 km/s, but you don't have to eliminate the for-loop.... I think/hope.
+    
+elif spectrum_type == 'individual':
+    #balmer_only = True 
+    balmer_only = False
+    output_grid= False
+    mask_metals = True
+    if mask_metals==False:
+        mask_list = []
+    elif mask_metals == True:
+        mask_list = [ca_mask]+[weird2_mask]+[weird_mask]+[red_metal_mask]
+    target_continuum_list= continuum_list
+    target_spec, header, noise_spec = spt.retrieve_spec(combined_spec_file)
+    target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+    
+    noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
+    #now undo the de-normalization of the noise spectrum that is done by retrieve_spec
+    noise_spec[1]= noise_spec[1]/target_spec[1]
+    target_spec= spt.clean_spectrum(target_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
+    noise_spec= spt.clean_spectrum(noise_spec, np.min(noise_spec[0]), np.max(noise_spec[0]), mask_list)
+    print "\n*************"
+    print "individual spectra, so  using single RV provided in astropy file."
+    print "**************\n"
+    velocity_tests= np.arange(0,velocity_step/2.,velocity_step) #this makes the only velocity that is used be 0 km/s, but you don't have to eliminate the for-loop.... I think/hope.
 
 def get_doppler_shifted(wavelengths, radial_velocity):
     #print "doppler shifting by ", radial_velocity
@@ -367,10 +419,51 @@ def plot_overlays_convolve(spec1, spec2, model_string = 'model'):
     plt.show()
     return ''
 
+def create_test_model(target_spec, header, logg, teff, radial_velocity):
+    """
+    
+    """
+    full_model= np.copy(wd(Teff=teff, logg=logg))
+    test_waves= np.copy(full_model['w'])
+    test_flux= np.copy(full_model['flux'])
+    test_model=np.vstack([test_waves, test_flux])
+    test_model[0]=get_doppler_shifted(test_model[0], radial_velocity)
+    test_model = mm.convolve_model(test_model, target_spec, header)
+    
+    return
+
+def extract_match_param(dist_array, min_index, param_array, other_param_array):
+    """
+    Make the row/column of the grid to be fit for the delta chi square parabola
+    """
+    try:
+        param_array= param_array.value #make sure not a quantity
+    except AttributeError:
+        print "param_array didn't have value"
+    try:
+        other_param_array = other_param_array.value
+    except:
+        print "other_param_array didn't have value"
+    min_param= param_array[min_index]
+    matched_inds= np.where(param_array==min_param)
+    other_param_row= np.copy(other_param_array[matched_inds])
+    dist_row= np.copy(dist_array[matched_inds])
+    if plot_fit:
+        plt.plot(other_param_row, dist_row)
+        plt.title(min_param)
+        plt.show()
+    else:
+        pass
+    return other_param_row, dist_row
+
+def process_target_spec():
+    
+    return
+
 ######
 
-#David's instructions for loading the model
-wd=wdatmos.wdmodel(filename='ELM.hdf5')
+##David's instructions for loading the model
+#wd=wdatmos.wdmodel(filename='ELM.hdf5')
 
 ####3
 
@@ -432,13 +525,13 @@ if balmer_only:
 else:
     plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(min_rv)+'km/s')
 
-def run_model_grid(target_spec):
+def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.array([]), plot_all = True):
     
     dist_list = []
     rv_list = []
     
     for teff,logg in zip(teff_array, logg_array):
-        print "Teff:", teff, "logg:", logg
+        #print "Teff:", teff, "logg:", logg
         model = wd(Teff = teff , logg = logg)
         model_spec = np.vstack([model['w'], model['flux']])
         #insert the doppler shifting
@@ -494,32 +587,53 @@ def run_model_grid(target_spec):
     min_logg = logg_array[min_index]
     min_dist = np.copy(dist_array[min_index])
     min_rv = rv_array[min_index]
+    model = wd(Teff= min_teff, logg= min_logg)
+    model_waves= model['w']
+    model_flux= model['flux']
+    radial_velocity= min_rv
+    model_waves = get_doppler_shifted(model_waves, radial_velocity)
+    model_spec= np.vstack([model_waves, model_flux])
+    model_spec = mm.convolve_model(model_spec, target_spec, header)
+    dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
+    model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]),mask_list)
+    model_spec = spt.poly_norm_spec(model_spec, continuum_list=dopp_cont_list, poly_degree= poly_degree)
+    min_red_chi2= mm.calc_sq_dist(target_spec, model_spec, error_spec= noise_spec, free_parameters= free_parameters, raw_chi=False)
     print 'rescaling shenanigans'
     print "target_spec.shape[1]:",target_spec.shape[1]
     print "min_dist:",min_dist
     if not raw_chi:
         dist_array= dist_array*(target_spec.shape[1]-1-free_parameters) #undoing the division by N
     else:
-        dist_array= dist_array*target_spec.shape[1] #undoing the division by N
+        pass
+        #dist_array= dist_array*target_spec.shape[1] #undoing the division by N
     print "np.nanmin(dist_array):",np.nanmin(dist_array)
-    rescale_dist= np.copy(dist_array/min_dist) #dividing all of the values by the minimum pseudo-reduced chi-square value
-    
+    #rescale_dist= np.copy(dist_array/min_dist) #dividing all of the values by the minimum pseudo-reduced chi-square value
+    rescale_dist= np.copy(dist_array/min_red_chi2)
     min_rescale_dist= rescale_dist[min_index]
     print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s, rescaled chi-square:', min_rescale_dist
-    
+    logg_teff, logg_dist = extract_match_param(rescale_dist, min_index, logg_array, teff_array) #row of Teffs around logg min
+    logg_teff_lims= np.where(logg_teff < logg_teff[np.argmax(logg_dist)])
+    logg_teff= logg_teff[logg_teff_lims]
+    logg_dist = logg_dist[logg_teff_lims]
+    teff_logg, teff_dist= extract_match_param(rescale_dist, min_index, teff_array, logg_array) #row of loggs around Teff min
+    teff_sigma= mm.fit_fixed_parabola(logg_teff, logg_dist, dof = free_parameters, plot_fit= plot_all)
+    logg_sigma= mm.fit_fixed_parabola(teff_logg, teff_dist, dof= free_parameters, plot_fit= plot_all)
     
     
     
     
     ###################
     #for teff,logg, dist_mod, rv, resc_chisq in zip(teff_array, logg_array, dist_list, rv_list, rescale_dist):
-    for teff,logg, dist_mod, rv, resc_chisq in zip(teff_array, logg_array, dist_array, rv_list, rescale_dist):
-        print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv, "rescaled chi-square:", resc_chisq
+    #for teff,logg, dist_mod, rv, resc_chisq in zip(teff_array, logg_array, dist_array, rv_list, rescale_dist):
+        #print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv, "rescaled chi-square:", resc_chisq
     #output_array= np.vstack([teff_array, logg_array, rv_array, dist_array]).T
-    output_array= np.vstack([teff_array, logg_array, rv_array, dist_array, rescale_dist]).T
-    print "Saving "+ output_filename
-    np.savetxt(output_filename, output_array, header = output_names, delimiter= ',')
-    print "Saved " + output_filename
+    if output_grid:
+        output_array= np.vstack([teff_array, logg_array, rv_array, dist_array, rescale_dist]).T
+        print "Saving "+ output_filename
+        np.savetxt(output_filename, output_array, header = output_names, delimiter= ',')
+        print "Saved " + output_filename
+    else:
+        pass
     sorted_indices = np.argsort(dist_list)
     sorted_teff = teff_array[sorted_indices]
     sorted_logg= logg_array[sorted_indices]
@@ -527,10 +641,10 @@ def run_model_grid(target_spec):
     sorted_rv = rv_array[sorted_indices]
     sorted_resc_chisq = rescale_dist[sorted_indices]
     print "======== Sorted  by chi-squared =========="
-    for teff,logg, dist_mod, rv, resc_chisq in zip(sorted_teff, sorted_logg, sorted_dist, sorted_rv, sorted_resc_chisq):
-        print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv, "rescaled chi-square:", resc_chisq
+    #for teff,logg, dist_mod, rv, resc_chisq in zip(sorted_teff, sorted_logg, sorted_dist, sorted_rv, sorted_resc_chisq):
+        #print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv, "rescaled chi-square:", resc_chisq
     
-    print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s, rescaled chi-square:', min_rescale_dist
+    print "best fit model:", "Teff", min_teff,"+/-", teff_sigma, "logg", min_logg, "+/-", logg_sigma, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s, rescaled chi-square:', min_rescale_dist
     #model_spec= get_model_fromfile(min_model)
     min_model = wd(Teff= min_teff, logg = min_logg)
     
@@ -547,122 +661,150 @@ def run_model_grid(target_spec):
         plot_overlays(line_spec, temp_model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
     else:
         plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
+        
+    if plot_all:
+        interp_model= mm.interpolate_model(target_spec, model_spec)
+        plot_overlays(target_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
+        plot_overlays(target_spec, noise_spec, model_string = 'noise')
+        
+        
+        
+        residual_spec= mm.calc_residuals(target_spec, model_spec)
+        
+        rms_spec= spt.clean_spectrum(residual_spec, rms_range[0], rms_range[1],mask_list)
+        rms_scatter= np.sqrt(np.nanmean(rms_spec[1]**2))
+        rms_noise_spec= spt.clean_spectrum(noise_spec, rms_range[0], rms_range[1],mask_list)
+        mean_noise= np.nanmean(rms_noise_spec[1])
+        rms_target= spt.clean_spectrum(target_spec, rms_range[0],rms_range[1],mask_list)
+        rms_about_mean= np.sqrt(np.nanmean((rms_target[1]-np.nanmean(rms_target[1]))**2))
+        rms_about_median= np.sqrt(np.nanmean((rms_target[1]-np.nanmedian(rms_target[1]))**2))
+        print "RMS in", rms_range, ":", rms_scatter, "compared to model"
+        print "Mean sigma of", rms_range,":", mean_noise
+        print "RMS in", rms_range,":", rms_about_mean, "compared to mean:", np.nanmean(rms_target[1])
+        print "RMS in",rms_range,":", rms_about_median, "compared to median:", np.nanmedian(rms_target[1])
+        print "max noise in", rms_range, ":", np.nanmax(rms_noise_spec[1])
+        rms_model= spt.clean_spectrum(interp_model, rms_range[0], rms_range[1], mask_list)
+        stat_std_dev = np.sqrt(np.sum(rms_target[1]**2-rms_model[1]**2)/rms_target[1].shape[0])
+        print "statistical std dev (around model):", stat_std_dev
+        mean_std_dev= np.std(rms_target[1])
+        print "statistical std dev (around mean):", mean_std_dev
     
-    interp_model= mm.interpolate_model(target_spec, model_spec)
-    plot_overlays(target_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
-    plot_overlays(target_spec, noise_spec, model_string = 'noise')
     
-    
-    
-    residual_spec= mm.calc_residuals(target_spec, model_spec)
-    
-    rms_spec= spt.clean_spectrum(residual_spec, rms_range[0], rms_range[1],mask_list)
-    rms_scatter= np.sqrt(np.nanmean(rms_spec[1]**2))
-    rms_noise_spec= spt.clean_spectrum(noise_spec, rms_range[0], rms_range[1],mask_list)
-    mean_noise= np.nanmean(rms_noise_spec[1])
-    rms_target= spt.clean_spectrum(target_spec, rms_range[0],rms_range[1],mask_list)
-    rms_about_mean= np.sqrt(np.nanmean((rms_target[1]-np.nanmean(rms_target[1]))**2))
-    rms_about_median= np.sqrt(np.nanmean((rms_target[1]-np.nanmedian(rms_target[1]))**2))
-    print "RMS in", rms_range, ":", rms_scatter, "compared to model"
-    print "Mean sigma of", rms_range,":", mean_noise
-    print "RMS in", rms_range,":", rms_about_mean, "compared to mean:", np.nanmean(rms_target[1])
-    print "RMS in",rms_range,":", rms_about_median, "compared to median:", np.nanmedian(rms_target[1])
-    print "max noise in", rms_range, ":", np.nanmax(rms_noise_spec[1])
-    rms_model= spt.clean_spectrum(interp_model, rms_range[0], rms_range[1], mask_list)
-    stat_std_dev = np.sqrt(np.sum(rms_target[1]**2-rms_model[1]**2)/rms_target[1].shape[0])
-    print "statistical std dev (around model):", stat_std_dev
-    mean_std_dev= np.std(rms_target[1])
-    print "statistical std dev (around mean):", mean_std_dev
-    
-    chi_sq_singles= residual_spec[1]**2/noise_spec[1]**2
-    chi_sq_spec= np.vstack([target_spec[0], chi_sq_singles])
-    print "Sum of residual chi-square:", np.sum(chi_sq_spec[1])
-    print "chi-square values:", dist_array[min_index]
-    plt.plot(residual_spec[0], residual_spec[1])
-    plt.xlabel('Wavelength')
-    plt.ylabel('data-model')
-    plt.title('Residuals')
-    plt.show()
-    
-    #plt.plot(chi_sq_spec[0], chi_sq_spec[1])
-    #plt.xlabel('Wavelength')
-    #plt.ylabel('chi-square')
-    #plt.title('chi-square values by wavelength bin')
-    #plt.show()
-    f, (ax1, ax2,ax3)= plt.subplots(3,1, sharex=True)
-    ax1.plot(target_spec[0], target_spec[1])
-    ax1.plot(interp_model[0], interp_model[1])
-    ax1.set_ylabel('Spectrum Flux')
-    ax3.plot(chi_sq_spec[0], chi_sq_spec[1])
-    ax3.set_ylabel('Chi-square')
-    ax3.set_xlabel('Wavelength')
-    ax2.plot(residual_spec[0], residual_spec[1])
-    ax2.set_ylabel('residuals')
-    ax2.axhline(y=0,color='k')
-    f.subplots_adjust(wspace=0)
-    f.subplots_adjust(hspace = 0)  
-    plt.show()
-    
-    med_resid= np.nanmedian(residual_spec[1])
-    mean_resid= np.nanmean(residual_spec[1])
-    print "\n**************\nmedian residual:"+str(med_resid) + "\n***********"
-    print "\n**************\nmean residual:"+str(mean_resid) + "\n***********"
+        chi_sq_singles= residual_spec[1]**2/noise_spec[1]**2
+        chi_sq_spec= np.vstack([target_spec[0], chi_sq_singles])
+        print "Sum of residual chi-square:", np.sum(chi_sq_spec[1])
+        print "chi-square values:", dist_array[min_index]
+        plt.plot(residual_spec[0], residual_spec[1])
+        plt.xlabel('Wavelength')
+        plt.ylabel('data-model')
+        plt.title('Residuals')
+        plt.show()
+        
+        #plt.plot(chi_sq_spec[0], chi_sq_spec[1])
+        #plt.xlabel('Wavelength')
+        #plt.ylabel('chi-square')
+        #plt.title('chi-square values by wavelength bin')
+        #plt.show()
+        f, (ax1, ax2,ax3)= plt.subplots(3,1, sharex=True)
+        ax1.plot(target_spec[0], target_spec[1])
+        ax1.plot(interp_model[0], interp_model[1])
+        ax1.set_ylabel('Spectrum Flux')
+        ax3.plot(chi_sq_spec[0], chi_sq_spec[1])
+        ax3.set_ylabel('Chi-square')
+        ax3.set_xlabel('Wavelength')
+        ax2.plot(residual_spec[0], residual_spec[1])
+        ax2.set_ylabel('residuals')
+        ax2.axhline(y=0,color='k')
+        f.subplots_adjust(wspace=0)
+        f.subplots_adjust(hspace = 0)  
+        plt.show()
+        
+        med_resid= np.nanmedian(residual_spec[1])
+        mean_resid= np.nanmean(residual_spec[1])
+        print "\n**************\nmedian residual:"+str(med_resid) + "\n***********"
+        print "\n**************\nmean residual:"+str(mean_resid) + "\n***********"
 
-    plt.hist(residual_spec[1], bins=20)
-    plt.axvline(x=med_resid, color= 'r')
-    plt.axvline(x=med_resid, color= 'g')
-    plt.xlabel('data-model')
-    plt.ylabel('N')
-    plt.title('Residual Distribution')
-    plt.show()
+        plt.hist(residual_spec[1], bins=20)
+        plt.axvline(x=med_resid, color= 'r')
+        plt.axvline(x=med_resid, color= 'g')
+        plt.xlabel('data-model')
+        plt.ylabel('N')
+        plt.title('Residual Distribution')
+        plt.show()
+        
+        med_chisq= np.nanmedian(chi_sq_spec[1])
+        mean_chisq= np.nanmean(chi_sq_spec[1])
+        print "\n**************\nmedian chi-square:"+str(med_chisq) + "\n***********"
+        print "\n**************\nmean chi-square:"+str(mean_chisq) + "\n***********"
     
-    med_chisq= np.nanmedian(chi_sq_spec[1])
-    mean_chisq= np.nanmean(chi_sq_spec[1])
-    print "\n**************\nmedian chi-square:"+str(med_chisq) + "\n***********"
-    print "\n**************\nmean chi-square:"+str(mean_chisq) + "\n***********"
-   
-    plt.hist(chi_sq_spec[1], bins=100, normed=1)
-    plt.axvline(x=np.nanmedian(chi_sq_spec[1]), color= 'r', label='median')
-    plt.axvline(x=np.nanmean(chi_sq_spec[1]), color= 'g', label='mean')
-    #plt.plot(chi2_linspace, chi2_dist.pdf(chi2_linspace), label = 'chi-square')
-    plt.xlabel('chi-square')
-    plt.ylabel('N')
-    plt.title('chi-square distribution')
-    plt.legend()
-    plt.show()
-    
-    plt.plot(noise_spec[0], 1/noise_spec[1], color='b', label = '1/noise_spec')
-    plt.plot(noise_spec[0], target_spec[1]/noise_spec[1], color = 'r', label= 'target_spec/noise_spec')
-    plt.ylabel('S/N')
-    plt.xlabel(r'Wavelength ($\AA$)')
-    plt.legend()
-    plt.show()
-    
-    plt.errorbar(target_spec[0], target_spec[1], noise_spec[1], color = 'b', label = 'target')
-    plt.plot(interp_model[0],interp_model[1], color = 'r', label = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
-    plt.ylabel('Flux (arbitrary units of /angstrom)')
-    plt.xlabel(r'Wavelength ($\AA$)')
-    plt.show()
-    
-    plot_overlays(model_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
-    plot_overlays_convolve(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg))
-    chi_square_countours(teff_array,logg_array, dist_array)
-    plt.scatter(teff_array, dist_array)
-    plt.xlabel("Teff (K)")
-    plt.ylabel(r"red $\chi^2$")
-    plt.show()
-    
-    teff_scale = -1*(teff_array-np.min(teff_array))
-    plt.scatter(logg_array+np.random.rand(logg_array.shape[0]), dist_array, c = teff_scale)
-    plt.xlabel("log(g)")
-    plt.ylabel(r"red $\chi^2$")
-    plt.show()
-    #output_array = np.vstack([target_spec[0], target_spec[1], target_err[1]]).T
-    #np.savetxt( 'output_spectrum.csv',output_array, header = 'Wavelength, Flux (cgs units), Error', delimiter = ',')
+        plt.hist(chi_sq_spec[1], bins=100, normed=1)
+        plt.axvline(x=np.nanmedian(chi_sq_spec[1]), color= 'r', label='median')
+        plt.axvline(x=np.nanmean(chi_sq_spec[1]), color= 'g', label='mean')
+        #plt.plot(chi2_linspace, chi2_dist.pdf(chi2_linspace), label = 'chi-square')
+        plt.xlabel('chi-square')
+        plt.ylabel('N')
+        plt.title('chi-square distribution')
+        plt.legend()
+        plt.show()
+        
+        plt.plot(noise_spec[0], 1/noise_spec[1], color='b', label = '1/noise_spec')
+        plt.plot(noise_spec[0], target_spec[1]/noise_spec[1], color = 'r', label= 'target_spec/noise_spec')
+        plt.ylabel('S/N')
+        plt.xlabel(r'Wavelength ($\AA$)')
+        plt.legend()
+        plt.show()
+        
+        plt.errorbar(target_spec[0], target_spec[1], noise_spec[1], color = 'b', label = 'target')
+        plt.plot(interp_model[0],interp_model[1], color = 'r', label = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
+        plt.ylabel('Flux (arbitrary units of /angstrom)')
+        plt.xlabel(r'Wavelength ($\AA$)')
+        plt.show()
+        
+        plot_overlays(model_spec,interp_model, model_string = 'interp Teff ' + str(min_teff) + ' logg ' +str(min_logg))
+        plot_overlays_convolve(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg))
+        chi_square_countours(teff_array,logg_array, dist_array)
+        plt.scatter(teff_array, dist_array)
+        plt.xlabel("Teff (K)")
+        plt.ylabel(r"red $\chi^2$")
+        plt.show()
+        
+        teff_scale = -1*(teff_array-np.min(teff_array))
+        plt.scatter(logg_array+np.random.rand(logg_array.shape[0]), dist_array, c = teff_scale)
+        plt.xlabel("log(g)")
+        plt.ylabel(r"red $\chi^2$")
+        plt.show()
+        #output_array = np.vstack([target_spec[0], target_spec[1], target_err[1]]).T
+        #np.savetxt( 'output_spectrum.csv',output_array, header = 'Wavelength, Flux (cgs units), Error', delimiter = ',')
 
-    #print model['w'][0]
+        #print model['w'][0]
+    else:
+        pass
 
 print get_doppler_shifted(4000, -200)
 
 #target_spec = poly_norm_spec(target_spec)
-run_model_grid(target_spec)
+######################################
+#I can probably just iterate starting all the way down here.
+if spectrum_type=='individual':
+    print "spectrum_type==",spectrum_type
+    print "So, iterating through astropy table:", astropy_input
+    input_table = Table.read(astropy_input, format='ascii.csv')
+    for row in input_table:
+        target_continuum_list= continuum_list
+        target_continuum_list = get_doppler_shifted(target_continuum_list, row['rv'])
+        target_spec, header, noise_spec = spt.retrieve_spec(combined_spec_file)
+        target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+        shift_mask=[]
+        for mask in mask_list:
+            new_mask = get_doppler_shifted(mask, row['rv'])
+            shift_mask.append([new_mask])
+        noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
+        #now undo the de-normalization of the noise spectrum that is done by retrieve_spec
+        noise_spec[1]= noise_spec[1]/target_spec[1]
+        target_spec= spt.clean_spectrum(target_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
+        noise_spec= spt.clean_spectrum(noise_spec, np.min(noise_spec[0]), np.max(noise_spec[0]), mask_list)
+        target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree, plot_all = plot_fit)
+        noise_spec[1]= noise_spec[1]*target_spec[1] #scale the noise spectrum with the flattened target spectrum.
+        run_model_grid(target_spec, velocity_tests= np.array([row['rv']]), noise_spec= noise_spec, plot_all=False)
+else:
+    run_model_grid(target_spec, noise_spec= noise_spec, plot_all= plot_fit)

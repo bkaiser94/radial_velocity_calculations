@@ -43,7 +43,7 @@ logg = 5.5
 #output_filename= 'rv_plot_teff7500_logg550.txt'
 #output_filename= 'rv_plot_teff7500_logg550_20181011.txt'
 #output_filename= '20190206_rv_rand_teff7500_logg550.txt'
-output_filename= '20190210_rv_teff7500_logg550.csv'
+output_filename= '20190211_rv_teff7500_logg550_full.csv'
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
 model = wd(Teff = teff, logg = logg)
@@ -57,7 +57,7 @@ slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
-plot_fit = False
+plot_fit = True
 
 mc_jump = 1 #number of layers of velocity grid to skip for the Monte Carlo evaluation. Probably want to be >0
 #num_mc = 100 #number of randomized spectra to produce for each target spectrum
