@@ -34,7 +34,8 @@ target_list_name = 'listFWCTB'
 target_list = np.genfromtxt(target_list_name, dtype = 'str')
 
 combined_spec_file='fwctb.0220_J1431m4715_930_blue.fits'
-astropy_input= '20190210_rv_teff7500_logg550_full.csv'
+#astropy_input= '20190210_rv_teff7500_logg550_full.csv'
+astropy_input='20190227_rv_teff7500_logg550_full.csv'
 #scaling_range = [4600,4650]
 rms_range= [4600,4650]
 slit_width = 1.0 #arcseconds
@@ -61,8 +62,8 @@ free_parameters= 2
 #output_names = "teff, logg, rv, chi_square"
 output_names = "teff, logg, rv, chi_square, revised_chi_square"
 
-output_filename= '20190227_x2.csv'
-output_astropy= '20190227_model_fits.csv'
+output_filename= '20190227_new_x2.csv'
+output_astropy= '20190227_new_model_fits.csv'
 
 
 #teff = 7250
@@ -246,7 +247,7 @@ dtype_list=['S75',
             'f',
             'f',
             'f',
-            'i',
+            'f',
             'f',
             'f',
             'f']
