@@ -61,14 +61,14 @@ free_parameters= 2
 output_names = "teff, logg, rv, chi_square, revised_chi_square"
 
 output_filename= '20190211_x2.csv'
-
+output_astropy= '20190212_new_model_fits.csv'
 
 
 #teff = 7250
 #logg = 6.0
 
-teff = 7500
-logg = 5.25
+teff = 6000
+logg = 6.25
 #teff = 7250
 #logg = 5.50
 #teff = 14750
@@ -113,8 +113,10 @@ high_wave_cut= 5050
 #####
 
 #David's instructions for loading the model
-wd=wdatmos.wdmodel(filename='ELM.hdf5')
+wd_og=wdatmos.wdmodel(filename='ELM.hdf5')
 
+def wd(Teff= teff, logg= logg):
+    return np.copy(wd_og(Teff=Teff, logg=logg))
 
 #continuum_list = [[3809,3812],
                   #[3861,3864],
@@ -232,7 +234,8 @@ continuum_masks=[[3500,3815],
 ###################
 col_names= ['filename',
             'bmjd_tdb', 
-            'rv_used',
+            'rv',
+            'rv_error',
             'teff',
             'teff_error',
             'logg',
@@ -241,12 +244,14 @@ col_names= ['filename',
 dtype_list=['S75',
             'f',
             'f',
+            'f',
             'i',
             'f',
             'f',
             'f']
 unit_list= ['none',
             'days',
+            'km/s',
             'km/s',
             'K',
             'K',
@@ -467,8 +472,8 @@ def process_target_spec():
 
 ####3
 
-teff_array=wd.Teffs
-logg_array = wd.loggs
+teff_array=wd_og.Teffs
+logg_array = wd_og.loggs
 model = wd(Teff = teff, logg = logg)
 
 model_num =0
@@ -525,7 +530,7 @@ if balmer_only:
 else:
     plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(min_rv)+'km/s')
 
-def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.array([]), plot_all = True):
+def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.array([]), plot_all = True, mask_list= mask_list):
     
     dist_list = []
     rv_list = []
@@ -598,9 +603,9 @@ def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.a
     model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]),mask_list)
     model_spec = spt.poly_norm_spec(model_spec, continuum_list=dopp_cont_list, poly_degree= poly_degree)
     min_red_chi2= mm.calc_sq_dist(target_spec, model_spec, error_spec= noise_spec, free_parameters= free_parameters, raw_chi=False)
-    print 'rescaling shenanigans'
-    print "target_spec.shape[1]:",target_spec.shape[1]
-    print "min_dist:",min_dist
+    #print 'rescaling shenanigans'
+    #print "target_spec.shape[1]:",target_spec.shape[1]
+    #print "min_dist:",min_dist
     if not raw_chi:
         dist_array= dist_array*(target_spec.shape[1]-1-free_parameters) #undoing the division by N
     else:
@@ -610,7 +615,7 @@ def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.a
     #rescale_dist= np.copy(dist_array/min_dist) #dividing all of the values by the minimum pseudo-reduced chi-square value
     rescale_dist= np.copy(dist_array/min_red_chi2)
     min_rescale_dist= rescale_dist[min_index]
-    print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s, rescaled chi-square:', min_rescale_dist
+    #print "best fit model:", "Teff", min_teff, "logg", min_logg, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s, rescaled chi-square:', min_rescale_dist
     logg_teff, logg_dist = extract_match_param(rescale_dist, min_index, logg_array, teff_array) #row of Teffs around logg min
     logg_teff_lims= np.where(logg_teff < logg_teff[np.argmax(logg_dist)])
     logg_teff= logg_teff[logg_teff_lims]
@@ -634,18 +639,19 @@ def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.a
         print "Saved " + output_filename
     else:
         pass
-    sorted_indices = np.argsort(dist_list)
-    sorted_teff = teff_array[sorted_indices]
-    sorted_logg= logg_array[sorted_indices]
-    sorted_dist = dist_array[sorted_indices]
-    sorted_rv = rv_array[sorted_indices]
-    sorted_resc_chisq = rescale_dist[sorted_indices]
-    print "======== Sorted  by chi-squared =========="
+    #sorted_indices = np.argsort(dist_list)
+    #sorted_teff = teff_array[sorted_indices]
+    #sorted_logg= logg_array[sorted_indices]
+    #sorted_dist = dist_array[sorted_indices]
+    #sorted_rv = rv_array[sorted_indices]
+    #sorted_resc_chisq = rescale_dist[sorted_indices]
+    #print "======== Sorted  by chi-squared =========="
     #for teff,logg, dist_mod, rv, resc_chisq in zip(sorted_teff, sorted_logg, sorted_dist, sorted_rv, sorted_resc_chisq):
         #print "Teff:", teff, "logg:", logg, "chi-squared:", dist_mod, "Radial_velocity:", rv, "rescaled chi-square:", resc_chisq
     
     print "best fit model:", "Teff", min_teff,"+/-", teff_sigma, "logg", min_logg, "+/-", logg_sigma, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s, rescaled chi-square:', min_rescale_dist
     #model_spec= get_model_fromfile(min_model)
+    #if plot_all or plot_fit:
     min_model = wd(Teff= min_teff, logg = min_logg)
     
     dopp_cont_list= dopp_shift_continuum_list(min_rv)
@@ -659,7 +665,7 @@ def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.a
     if balmer_only:
         temp_model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), continuum_masks)
         plot_overlays(line_spec, temp_model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
-    else:
+    elif plot_fit:
         plot_overlays(target_spec, model_spec, model_string = 'Teff ' + str(min_teff) + ' logg ' +str(min_logg)+ ' RV '+ str(min_rv)+'km/s')
         
     if plot_all:
@@ -779,7 +785,7 @@ def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.a
         #print model['w'][0]
     else:
         pass
-
+    return min_teff, teff_sigma, min_logg, logg_sigma
 print get_doppler_shifted(4000, -200)
 
 #target_spec = poly_norm_spec(target_spec)
@@ -789,22 +795,64 @@ if spectrum_type=='individual':
     print "spectrum_type==",spectrum_type
     print "So, iterating through astropy table:", astropy_input
     input_table = Table.read(astropy_input, format='ascii.csv')
+    target_name_list=[]
+    time_list= []
+    teff_list=[]
+    logg_list=[]
+    teff_err_list=[]
+    logg_err_list=[]
+    rv_list=[]
+    rv_err_list=[]
+    
     for row in input_table:
-        target_continuum_list= continuum_list
+        target_continuum_list= np.copy(continuum_list)
         target_continuum_list = get_doppler_shifted(target_continuum_list, row['rv'])
-        target_spec, header, noise_spec = spt.retrieve_spec(combined_spec_file)
+        target_spec, header, noise_spec = spt.retrieve_spec(row['filename'])
+        #target_spec, header, noise_spec = spt.retrieve_spec(combined_spec_file)
         target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+        #plt.plot(target_spec[0], target_spec[1])
+        #plt.show()
         shift_mask=[]
+        print "File:", row['filename']
         for mask in mask_list:
             new_mask = get_doppler_shifted(mask, row['rv'])
-            shift_mask.append([new_mask])
+            shift_mask.append(new_mask)
+        shift_mask = mask_list
+        #print "shift_mask", shift_mask
         noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
         #now undo the de-normalization of the noise spectrum that is done by retrieve_spec
         noise_spec[1]= noise_spec[1]/target_spec[1]
-        target_spec= spt.clean_spectrum(target_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
-        noise_spec= spt.clean_spectrum(noise_spec, np.min(noise_spec[0]), np.max(noise_spec[0]), mask_list)
+        target_spec= spt.clean_spectrum(target_spec, np.min(target_spec[0]), np.max(target_spec[0]), shift_mask)
+        #plt.plot(target_spec[0], target_spec[1])
+        #plt.show()
+        noise_spec= spt.clean_spectrum(noise_spec, np.min(noise_spec[0]), np.max(noise_spec[0]), shift_mask)
         target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree, plot_all = plot_fit)
+        #plt.plot(target_spec[0], target_spec[1])
+        #plt.show()
         noise_spec[1]= noise_spec[1]*target_spec[1] #scale the noise spectrum with the flattened target spectrum.
-        run_model_grid(target_spec, velocity_tests= np.array([row['rv']]), noise_spec= noise_spec, plot_all=False)
+        min_teff, teff_sigma, min_logg, logg_sigma= run_model_grid(target_spec, velocity_tests= np.array([row['rv']]), noise_spec= noise_spec, plot_all=False, mask_list= shift_mask)
+        target_name_list.append(row['filename'])
+        time_list.append(header['BMJD_TDB'])
+        logg_list.append(min_logg)
+        logg_err_list.append(logg_sigma)
+        teff_list.append(min_teff.value)
+        teff_err_list.append(teff_sigma)
+        rv_list.append(row['rv'])
+        rv_err_list.append(row['rv_error'])
+    print "Hopefully saving the data"
+    print target_name_list
+    print time_list
+    print logg_list
+    print logg_err_list
+    print teff_list
+    print teff_err_list
+    print rv_list
+    print rv_err_list
+    #array_list= [np.array(target_name_list), np.array(time_list), np.array(rv_list), np.array(rv_err_list), np.array(teff_list), np.array(teff_err_list), np.array(logg_list), np.array(logg_err_list)]
+    array_list= [target_name_list, time_list, rv_list, rv_err_list, teff_list, teff_err_list, logg_list, logg_err_list]
+    out_table= Table(array_list, names=col_names, dtype= dtype_list)
+    out_table.pprint()
+    out_table.write(output_astropy, format='ascii.csv')
+    print "Saved the data"
 else:
     run_model_grid(target_spec, noise_spec= noise_spec, plot_all= plot_fit)

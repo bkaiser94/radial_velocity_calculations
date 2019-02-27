@@ -35,6 +35,7 @@ import model_manipulation as mm
 #teff = 7250
 #logg = 6.0
 
+astropy_in= False #indicator of whether or not the logg and teff are customized for each observation
 
 teff = 7500
 logg = 5.5
@@ -43,7 +44,7 @@ logg = 5.5
 #output_filename= 'rv_plot_teff7500_logg550.txt'
 #output_filename= 'rv_plot_teff7500_logg550_20181011.txt'
 #output_filename= '20190206_rv_rand_teff7500_logg550.txt'
-output_filename= '20190211_rv_teff7500_logg550_full.csv'
+output_filename= '20190213_rv_teff7500_logg550_full.csv'
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
 model = wd(Teff = teff, logg = logg)
@@ -455,30 +456,31 @@ time_list= []
 sigma_list = []
 teff_list=[]
 logg_list=[]
-for target_file in target_list:
-    very_begin = time.time()
-    begin = time.time()
-    best_rv, sigma = iterate_resolutions(model_spec, target_file)
-    end= time.time()
-    find_time_difference(begin, end)
-    #i=fits.open(target_file)
-    #begin= time.time()
-    #mc_rvs = iterate_MC(model_spec, target_file, best_rv)
-    #sigma = np.std(mc_rvs)
-    #end = time.time()
-    #find_time_difference(begin,end)
-    print "###############"
-    print target_file, " best_rv:", best_rv, '+/-', sigma
-    #print target_file, " best_rv:", best_rv
-    very_end = time.time()
-    find_time_difference(very_begin, very_end)
-    print "###############"
-    header = fits.getheader(target_file)
-    rv_list.append(best_rv)
-    time_list.append(header['BMJD_TDB'])
-    sigma_list.append(sigma)
-    teff_list.append(teff)
-    logg_list.append(logg)
+if not astropy_in:
+    for target_file in target_list:
+        very_begin = time.time()
+        begin = time.time()
+        best_rv, sigma = iterate_resolutions(model_spec, target_file)
+        end= time.time()
+        find_time_difference(begin, end)
+        #i=fits.open(target_file)
+        #begin= time.time()
+        #mc_rvs = iterate_MC(model_spec, target_file, best_rv)
+        #sigma = np.std(mc_rvs)
+        #end = time.time()
+        #find_time_difference(begin,end)
+        print "###############"
+        print target_file, " best_rv:", best_rv, '+/-', sigma
+        #print target_file, " best_rv:", best_rv
+        very_end = time.time()
+        find_time_difference(very_begin, very_end)
+        print "###############"
+        header = fits.getheader(target_file)
+        rv_list.append(best_rv)
+        time_list.append(header['BMJD_TDB'])
+        sigma_list.append(sigma)
+        teff_list.append(teff)
+        logg_list.append(logg)
     
     #target_spec, target_header = retrieve_target_spec(target_file) #first spectrum in the list for testing.
     ##rv_dist_list=[]
