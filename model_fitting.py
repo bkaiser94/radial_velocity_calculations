@@ -47,6 +47,7 @@ spectrum_type= 'individual'
 
 chi_norm= False
 raw_chi= True
+fixed_minimum =False
 
 ca_mask = [3920,3946]
 #ca_mask=[1,1]
@@ -60,8 +61,8 @@ free_parameters= 2
 #output_names = "teff, logg, rv, chi_square"
 output_names = "teff, logg, rv, chi_square, revised_chi_square"
 
-output_filename= '20190211_x2.csv'
-output_astropy= '20190212_new_model_fits.csv'
+output_filename= '20190227_x2.csv'
+output_astropy= '20190227_model_fits.csv'
 
 
 #teff = 7250
@@ -588,9 +589,9 @@ def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.a
     #in both cases
     min_index = np.argmin(dist_list)
     #min_model = model_file_list[min_index]
-    min_teff = teff_array[min_index]
-    min_logg = logg_array[min_index]
-    min_dist = np.copy(dist_array[min_index])
+    min_teff = np.copy(teff_array[min_index])
+    min_logg = np.copy(logg_array[min_index])
+    min_dist = np.copy(np.copy(dist_array[min_index]))
     min_rv = rv_array[min_index]
     model = wd(Teff= min_teff, logg= min_logg)
     model_waves= model['w']
@@ -621,8 +622,10 @@ def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.a
     logg_teff= logg_teff[logg_teff_lims]
     logg_dist = logg_dist[logg_teff_lims]
     teff_logg, teff_dist= extract_match_param(rescale_dist, min_index, teff_array, logg_array) #row of loggs around Teff min
-    teff_sigma= mm.fit_fixed_parabola(logg_teff, logg_dist, dof = free_parameters, plot_fit= plot_all)
-    logg_sigma= mm.fit_fixed_parabola(teff_logg, teff_dist, dof= free_parameters, plot_fit= plot_all)
+    #teff_sigma= mm.fit_fixed_parabola(logg_teff, logg_dist, dof = free_parameters, plot_fit= plot_all)
+    #logg_sigma= mm.fit_fixed_parabola(teff_logg, teff_dist, dof= free_parameters, plot_fit= plot_all)
+    min_teff, teff_sigma= mm.fit_parabola(logg_teff, logg_dist, dof = free_parameters, plot_fit= plot_all, fixed_minimum=fixed_minimum)
+    min_logg, logg_sigma= mm.fit_parabola(teff_logg, teff_dist, dof= free_parameters, plot_fit= plot_all, fixed_minimum=fixed_minimum)
     
     
     
@@ -652,7 +655,12 @@ def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.a
     print "best fit model:", "Teff", min_teff,"+/-", teff_sigma, "logg", min_logg, "+/-", logg_sigma, "chi-squared", min_dist, "Radial Velocity:", min_rv, 'km/s, rescaled chi-square:', min_rescale_dist
     #model_spec= get_model_fromfile(min_model)
     #if plot_all or plot_fit:
-    min_model = wd(Teff= min_teff, logg = min_logg)
+    #need to find the nearest model point to our thing
+    nearest_teff= np.copy(teff_array[np.argmin(np.abs(teff_array.value-min_teff))]) #should return nearest teff
+    nearest_logg= np.copy(logg_array[np.argmin(np.abs(logg_array- min_logg))])#should return nearest logg
+    print "nearest model:", "Teff", nearest_teff, "logg", nearest_logg
+    #min_model = wd(Teff= min_teff, logg = min_logg)
+    min_model= wd(Teff=nearest_teff, logg= nearest_logg)
     
     dopp_cont_list= dopp_shift_continuum_list(min_rv)
     model_spec = np.vstack([min_model['w'], min_model['flux']])
@@ -830,12 +838,15 @@ if spectrum_type=='individual':
         #plt.plot(target_spec[0], target_spec[1])
         #plt.show()
         noise_spec[1]= noise_spec[1]*target_spec[1] #scale the noise spectrum with the flattened target spectrum.
-        min_teff, teff_sigma, min_logg, logg_sigma= run_model_grid(target_spec, velocity_tests= np.array([row['rv']]), noise_spec= noise_spec, plot_all=False, mask_list= shift_mask)
+        min_teff, teff_sigma, min_logg, logg_sigma= run_model_grid(target_spec, velocity_tests= np.array([row['rv']]), noise_spec= noise_spec, plot_all=True, mask_list= shift_mask)
         target_name_list.append(row['filename'])
         time_list.append(header['BMJD_TDB'])
         logg_list.append(min_logg)
         logg_err_list.append(logg_sigma)
-        teff_list.append(min_teff.value)
+        try:
+            teff_list.append(min_teff.value)
+        except AttributeError:
+            teff_list.append(min_teff)
         teff_err_list.append(teff_sigma)
         rv_list.append(row['rv'])
         rv_err_list.append(row['rv_error'])

@@ -50,7 +50,8 @@ def get_mean(input_table):
 
 ########################################3
 
-input_file='20190212_new_model_fits.csv'
+#input_file='20190212_new_model_fits.csv'
+input_file='20190227_model_fits.csv'
 print("input_file:", input_file)
 input_table = Table.read(input_file, format='ascii.csv')
 
@@ -69,4 +70,12 @@ plt.show()
 plt.errorbar(input_table['bmjd_tdb'], input_table['rv'], yerr=input_table['rv_error'], linestyle='none', marker='o')
 plt.xlabel('BMJD_TDB')
 plt.ylabel('Radial Velocity (km/s)')
+plt.show()
+
+plt.hist(input_table['teff'])
+plt.xlabel('Teff')
+plt.show()
+
+plt.hist(input_table['logg'])
+plt.xlabel('logg')
 plt.show()

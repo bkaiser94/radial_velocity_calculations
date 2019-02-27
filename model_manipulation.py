@@ -26,6 +26,8 @@ import scipy.interpolate as scinterp
 import spec_plot_tools as spt
 #import kernel_builder
 
+fixed_minimum=False #Determines if delta-chi2 parabola fitting is done with the minimum of the parabola fixed to a gridpoint or if it's allowed to be a free parameter (technically two free parameters since it's the x-position and then the chi2 value of that xpostion)
+
 first_conv_bin = 0.1 #width in angstroms of the first interpolation of the model to then be used in the convolution.
 test_loc = 1200 #pixel location in the target spectrum to look to get a pixel to wavelength value to use for the seeing
 slit_width = 1.0 #arcseconds
@@ -166,7 +168,8 @@ def convolve_model(model_spec, target_spec, header):
     return model_out
 
 
-def fit_fixed_parabola(xvals, yvals, dof=1, plot_fit= False):
+#def fit_fixed_parabola(xvals, yvals, dof=1, plot_fit= False, fixed_minimum=fixed_minimum):
+def fit_parabola(xvals, yvals, dof=1, plot_fit= False, fixed_minimum=fixed_minimum):
     """
     Fit a parabola to the data after first affixing its minimum to be at the same location as the minimum of whatever data you're looking at.
     
@@ -174,31 +177,54 @@ def fit_fixed_parabola(xvals, yvals, dof=1, plot_fit= False):
     """
     #first find the actual minimum of the data you're looking at...
     min_index= np.argmin(yvals)
-    minx= xvals[min_index]
-    miny= yvals[min_index]
-    def parabola_func(xvals, a):
-        """
-        A parabola to be fitted with another function that calls curve_fit to fit this function to data and its chi2 vals
-        """
-        return a*(xvals-minx)**2+miny
-    popt, pcov= sciop.curve_fit(parabola_func, xvals, yvals)
+    minx= np.copy(xvals[min_index])
+    miny= np.copy(yvals[min_index])
+    if fixed_minimum:
+        def parabola_func(xvals, a): #version with fixed minimum at measured values
+            """
+            A parabola to be fitted with another function that calls curve_fit to fit this function to data and its chi2 vals
+            """
+            return a*(xvals-minx)**2+miny #version with fixed minimum at measured values
+        popt, pcov= sciop.curve_fit(parabola_func, xvals, yvals) #version for fixed minimum at measured values
+    else:
+        def parabola_func(xvals, a, x_min, y_min):
+            """
+            A parabola to be fitted with another function that calls curve_fit to fit this function to data and its chi2 vals.
+            Guesses for the fit are the minimum grid point, but it's allowed to vary
+            """
+            return a*(xvals-x_min)**2 + y_min
+        popt, pcov= sciop.curve_fit(parabola_func, xvals, yvals, p0=[1,minx, miny])
+        minx= popt[1]
+        miny=popt[2]
+    #popt, pcov= sciop.curve_fit(parabola_func, xvals, yvals) #version for fixed minimum at measured values
     sigma= np.sqrt(delta_chi2[dof]/popt[0])
+    #Need to change the minimum location to be the minimum of the freely fitted parabola
+    #just redefine minx and miny to be the minimum x and y values from the fitted parabola
     if plot_fit:
         plt.scatter(xvals, yvals)
         x_line= np.linspace(np.min(xvals), np.max(xvals), 1000)
-        y_line= parabola_func(x_line, popt)
+        if fixed_minimum:
+            y_line= parabola_func(x_line, popt)
+        else:
+            y_line= parabola_func(x_line, popt[0], popt[1], popt[2])
         plt.plot(x_line, y_line, color= 'r')
         plt.plot(minx,miny, marker='o', color='r')
         plt.show()
         #plt.scatter(xvals, yvals)
         x_line= np.linspace(np.min(xvals), np.max(xvals), 1000)
         #y_line= parabola_func(x_line, popt)-miny-1
-        y_line= parabola_func(x_line, popt)-miny-delta_chi2[dof]
+        if fixed_minimum:
+            y_line= parabola_func(x_line, popt)-miny-delta_chi2[dof]
+        else:
+            y_line= parabola_func(x_line, popt[0], popt[1], popt[2])-miny-delta_chi2[dof]
         plt.plot(x_line, y_line, color= 'r')
         plt.axhline(y=0, color = 'k', linestyle='--')
         bound_points= np.array([minx-sigma, minx, minx+sigma])
         #calc_bounds= parabola_func(bound_points, popt)-miny-1
-        calc_bounds= parabola_func(bound_points, popt)-miny-delta_chi2[dof]
+        if fixed_minimum:
+            calc_bounds= parabola_func(bound_points, popt)-miny-delta_chi2[dof]
+        else:
+            calc_bounds= parabola_func(bound_points, popt[0],popt[1],popt[2])-miny-delta_chi2[dof]
         print "calc_bounds", calc_bounds
         plt.plot(bound_points, calc_bounds, color='b')
         plt.scatter(bound_points, [0, -1*delta_chi2[dof], 0], color='b')
@@ -206,4 +232,4 @@ def fit_fixed_parabola(xvals, yvals, dof=1, plot_fit= False):
         plt.show()
     else:
         pass
-    return sigma
+    return minx, sigma

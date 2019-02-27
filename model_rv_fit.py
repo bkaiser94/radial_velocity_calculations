@@ -36,7 +36,7 @@ import model_manipulation as mm
 #logg = 6.0
 
 astropy_in= False #indicator of whether or not the logg and teff are customized for each observation
-
+fixed_minimum=False
 teff = 7500
 logg = 5.5
 
@@ -363,7 +363,8 @@ def minimize_velocity(model_spec, target_spec, noise_spec, target_header, veloci
         #mm.fit_fixed_parabola(velocity_tests, rv_dist_array)
         #plt.show()
     if last_test:
-        sigma = mm.fit_fixed_parabola(velocity_tests, rv_dist_array, plot_fit= plot_fit, dof=1)
+        #sigma = mm.fit_fixed_parabola(velocity_tests, rv_dist_array, plot_fit= plot_fit, dof=1)
+        new_rv, sigma = mm.fit_parabola(velocity_tests, rv_dist_array, plot_fit= plot_fit, dof=1, fixed_minimum=fixed_minimum)
     
     if last_test:
         return new_rv, sigma
