@@ -35,7 +35,7 @@ target_list = np.genfromtxt(target_list_name, dtype = 'str')
 
 combined_spec_file='fwctb.0220_J1431m4715_930_blue.fits'
 #astropy_input= '20190210_rv_teff7500_logg550_full.csv'
-astropy_input='20190227_rv_teff7500_logg550_full.csv'
+astropy_input='20190301_rv_teff7500_logg550.csv'
 #scaling_range = [4600,4650]
 rms_range= [4600,4650]
 slit_width = 1.0 #arcseconds
@@ -63,9 +63,11 @@ free_parameters= 2
 #output_names = "teff, logg, rv, chi_square"
 output_names = "teff, logg, rv, chi_square, revised_chi_square"
 
-output_filename= '20190227_new_x2.csv'
-output_astropy= '20190301_model_fits_prec.csv'
+output_filename= '20190301_new_x2.csv'
+output_astropy= '20190301_model_fits_new.csv'
 
+
+cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
 #teff = 7250
 #logg = 6.0
@@ -242,9 +244,11 @@ col_names= ['filename',
             'teff',
             'teff_error',
             'logg',
-            'logg_error']
+            'logg_error',
+            'baryv_corr']
 
 dtype_list=['S75',
+            'f8',
             'f8',
             'f8',
             'f8',
@@ -259,7 +263,8 @@ unit_list= ['none',
             'K',
             'K',
             'log in cgs',
-            'log in cgs']
+            'log in cgs',
+            'km/s']
 
 
 ##################
@@ -381,6 +386,14 @@ def dopp_shift_continuum_list(radial_velocity):
         shift_waves = get_doppler_shifted(waves, radial_velocity)
         dopp_cont_list.append(shift_waves)
     return dopp_cont_list
+
+def barycentric_vel(header):
+    ra = header['RA']
+    dec = header['DEC']
+    radec = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
+    bary_corr = radec.radial_velocity_correction(obstime= Time(header['DATE-OBS'], format = 'isot', scale= 'utc'), location = cerro_pachon_location)
+    bary_corr = bary_corr.to(u.km/u.s)
+    return bary_corr.value
 
 def chi_square_countours(teff_array, logg_array, dist_array):
     min_index = np.argmin(dist_array)
@@ -813,6 +826,7 @@ if spectrum_type=='individual':
     logg_err_list=[]
     rv_list=[]
     rv_err_list=[]
+    baryv_list=[]
     
     for row in input_table:
         target_continuum_list= np.copy(continuum_list)
@@ -841,6 +855,8 @@ if spectrum_type=='individual':
         #plt.show()
         noise_spec[1]= noise_spec[1]*target_spec[1] #scale the noise spectrum with the flattened target spectrum.
         min_teff, teff_sigma, min_logg, logg_sigma= run_model_grid(target_spec, velocity_tests= np.array([row['rv']]), noise_spec= noise_spec, plot_all=plot_fit, mask_list= shift_mask)
+        bary_vcorr= barycentric_vel(header)
+        baryv_list.append(bary_vcorr)
         target_name_list.append(row['filename'])
         time_list.append(header['BMJD_TDB'])
         logg_list.append(min_logg)
@@ -862,7 +878,8 @@ if spectrum_type=='individual':
     print rv_list
     print rv_err_list
     #array_list= [np.array(target_name_list), np.array(time_list), np.array(rv_list), np.array(rv_err_list), np.array(teff_list), np.array(teff_err_list), np.array(logg_list), np.array(logg_err_list)]
-    array_list= [target_name_list, time_list, rv_list, rv_err_list, teff_list, teff_err_list, logg_list, logg_err_list]
+    #array_list= [target_name_list, time_list, rv_list, rv_err_list, teff_list, teff_err_list, logg_list, logg_err_list]
+    array_list= [target_name_list, time_list, rv_list, rv_err_list, teff_list, teff_err_list, logg_list, logg_err_list, baryv_list]
     out_table= Table(array_list, names=col_names, dtype= dtype_list)
     out_table.pprint()
     out_table.write(output_astropy, format='ascii.csv')

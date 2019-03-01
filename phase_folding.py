@@ -41,7 +41,8 @@ target_coord = coord.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg
 #rv_file = 'rv_plot.txt'
 #rv_file = 'rv_plot_filled_in.txt'
 #rv_file = 'rv_plot_second_iteration.txt'
-rv_file='201900301_model_fits_prec.csv'
+rv_file='20190301_model_fits_new.csv'
+#rv_file='strader_rvs.csv'
 #rv_file= 'rv_plot_teff7500_logg550.txt'
 
 photometry_t0 = 2458231.5950237 #BJD_TDB, so need to convert to MJD
@@ -139,7 +140,8 @@ tconj= Time(55756.21712, format = 'mjd', scale ='utc', location = parkes_locatio
 
 all_table = Table.read(rv_file, format='ascii.csv')
 bmjd_array = all_table['bmjd_tdb']
-rv_array = all_table['rv']
+rv_array = all_table['rv']+all_table['baryv_corr']
+#rv_array = all_table['rv']
 sigma_array = all_table['rv_error']
 
 #sigma_array = sigma_array + 1e-8 #this should make the fit not just choke if the error is literally zero, but needs to be removed in the future for any actual fitting attempt.

@@ -51,7 +51,7 @@ def get_mean(input_table):
 ########################################3
 
 #input_file='20190212_new_model_fits.csv'
-input_file='201900301_model_fits_prec.csv'
+input_file='20190227_new_model_fits.csv'
 print("input_file:", input_file)
 input_table = Table.read(input_file, format='ascii.csv')
 
@@ -78,4 +78,20 @@ plt.show()
 
 plt.hist(input_table['logg'])
 plt.xlabel('logg')
+plt.show()
+
+
+plt.errorbar(input_table['bmjd_tdb'], input_table['teff'], yerr=input_table['teff_error'], linestyle='none', marker='o')
+plt.xlabel('BMJD_TDB')
+plt.ylabel(r'$T_{eff} (K)$')
+plt.show()
+
+plt.errorbar(input_table['bmjd_tdb'], input_table['logg'], yerr=input_table['logg_error'], linestyle='none', marker='o')
+plt.xlabel('BMJD_TDB')
+plt.ylabel('log(g)')
+plt.show()
+
+plt.errorbar(input_table['rv'], input_table['teff'], yerr=input_table['teff_error'], xerr=input_table['rv_error'], linestyle='none', marker='o')
+plt.xlabel('RV (km/s)')
+plt.ylabel(r'$T_{eff} (K)$')
 plt.show()

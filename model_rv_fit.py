@@ -45,7 +45,7 @@ logg = 5.5
 #output_filename= 'rv_plot_teff7500_logg550_20181011.txt'
 #output_filename= '20190206_rv_rand_teff7500_logg550.txt'
 #output_filename= '20190213_rv_teff7500_logg550_full.csv'
-output_filename= '20190227_rv_teff7500_logg550_n100.csv'
+output_filename= '20190301_rv_teff7500_logg550.csv'
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
 model = wd(Teff = teff, logg = logg)
@@ -81,7 +81,7 @@ velocity_low_bound = -500 #km/s
 velocity_high_bound = 300 #km/s
 velocity_tests = np.arange(velocity_low_bound, velocity_high_bound+velocity_step, velocity_step)
 
-sample_points=100
+sample_points=1000
 
 low_wave_cut= 3800
 high_wave_cut= 5200
@@ -163,11 +163,11 @@ col_names= ['filename',
             'logg_used']
 
 dtype_list=['S75',
-            'f',
-            'f',
-            'f',
+            'f8',
+            'f8',
+            'f8',
             'i',
-            'f']
+            'f8']
 unit_list= ['none',
             'days',
             'km/s',
