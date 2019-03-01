@@ -40,8 +40,8 @@ max_logg= 6.25
 def get_mean(input_table):
     mean_logg= np.average(input_table['logg'], weights= 1/(input_table['logg_error']**2)) #weighted-average of the values
     mean_teff= np.average(input_table['teff'], weights=1/(input_table['teff_error']**2))
-    mean_logg_error= np.sqrt(np.average(input_table['logg_error']**2))
-    mean_teff_error= np.sqrt(np.average(input_table['teff_error']**2))
+    mean_logg_error= np.sqrt(np.sum(input_table['logg_error']**2)/input_table['logg_error'].shape[0]**2)
+    mean_teff_error= np.sqrt(np.sum(input_table['teff_error']**2)/input_table['teff_error'].shape[0]**2)
     print('Mean Values:')
     print('Teff:', mean_teff, '+/-', mean_teff_error, 'logg:', mean_logg, '+/-', mean_logg_error)
     print('std Teff:', np.std(input_table['teff']), 'std logg', np.std(input_table['logg']))
@@ -51,7 +51,7 @@ def get_mean(input_table):
 ########################################3
 
 #input_file='20190212_new_model_fits.csv'
-input_file='20190227_new_model_fits.csv'
+input_file='201900301_model_fits_prec.csv'
 print("input_file:", input_file)
 input_table = Table.read(input_file, format='ascii.csv')
 

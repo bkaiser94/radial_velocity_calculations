@@ -50,7 +50,8 @@ chi_norm= False
 raw_chi= True
 fixed_minimum =False
 
-ca_mask = [3920,3946]
+#ca_mask = [3920,3946]
+ca_mask = [3920,4006]
 #ca_mask=[1,1]
 weird2_mask= [4485,4507]
 weird_mask=[4563,4576]
@@ -63,18 +64,18 @@ free_parameters= 2
 output_names = "teff, logg, rv, chi_square, revised_chi_square"
 
 output_filename= '20190227_new_x2.csv'
-output_astropy= '20190227_new_model_fits.csv'
+output_astropy= '20190301_model_fits_prec.csv'
 
 
 #teff = 7250
 #logg = 6.0
 
 teff = 6000
-logg = 6.25
+#logg = 6.25
 #teff = 7250
 #logg = 5.50
 #teff = 14750
-#logg = 3.75
+logg = 3.75
 #logg = 6.25
 
 #teff = 6000
@@ -97,12 +98,12 @@ velocity_low_bound = -500 #km/s
 velocity_high_bound = 300 #km/s
 velocity_tests = np.arange(velocity_low_bound, velocity_high_bound+velocity_step, velocity_step)
 
-low_wave_cut= 3800
-#low_wave_cut=3600
+#low_wave_cut= 3800
+low_wave_cut=3600
 #low_wave_cut= 2000
 #high_wave_cut= 5500
-#high_wave_cut= 5200
-high_wave_cut= 5050
+high_wave_cut= 5200
+#high_wave_cut= 5050
 
 
 #low_wave_cut= 3670
@@ -244,13 +245,13 @@ col_names= ['filename',
             'logg_error']
 
 dtype_list=['S75',
-            'f',
-            'f',
-            'f',
-            'f',
-            'f',
-            'f',
-            'f']
+            'f8',
+            'f8',
+            'f8',
+            'f8',
+            'f8',
+            'f8',
+            'f8']
 unit_list= ['none',
             'days',
             'km/s',
@@ -524,7 +525,7 @@ model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
 model_spec = mm.convolve_model(model_spec, target_spec, header)
 dopp_cont_list= dopp_shift_continuum_list(min_rv)
 #######model normalization ==========================
-model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
+model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree, plot_all=plot_fit)
 model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
 if balmer_only:
     model_spec = spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), continuum_masks)
@@ -550,8 +551,8 @@ def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.a
             dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
             #model normalization =================================
             test_model= spt.clean_spectrum(test_model, np.min(target_spec[0]), np.max(target_spec[0]),mask_list)
-            test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
-            
+            #test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree)
+            test_model = spt.poly_norm_spec(test_model, continuum_list=dopp_cont_list, poly_degree= poly_degree, radial_velocity= radial_velocity)
             if balmer_only:
                 
                 new_rv_dist = mm.calc_sq_dist(line_spec, test_model, error_spec = line_noise_spec, free_parameters=free_parameters, norm=chi_norm, raw_chi = raw_chi)
@@ -572,7 +573,7 @@ def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.a
             model_spec = mm.convolve_model(model_spec, target_spec, header)
             dopp_cont_list= dopp_shift_continuum_list(new_rv)
             model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
-            model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree)
+            model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree, radial_velocity=new_rv)
             plt.title(r'$\chi^2=$'+str(new_dist))
             
             if balmer_only:
@@ -603,7 +604,7 @@ def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.a
     model_spec = mm.convolve_model(model_spec, target_spec, header)
     dopp_cont_list= dopp_shift_continuum_list(radial_velocity)
     model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]),mask_list)
-    model_spec = spt.poly_norm_spec(model_spec, continuum_list=dopp_cont_list, poly_degree= poly_degree)
+    model_spec = spt.poly_norm_spec(model_spec, continuum_list=dopp_cont_list, poly_degree= poly_degree, radial_velocity=radial_velocity)
     min_red_chi2= mm.calc_sq_dist(target_spec, model_spec, error_spec= noise_spec, free_parameters= free_parameters, raw_chi=False)
     #print 'rescaling shenanigans'
     #print "target_spec.shape[1]:",target_spec.shape[1]
@@ -669,7 +670,7 @@ def run_model_grid(target_spec, velocity_tests= velocity_tests, noise_spec= np.a
     
     model_spec = mm.convolve_model(model_spec, target_spec, header)
     #normalization of the spectrum================
-    model_spec= spt.poly_norm_spec(model_spec, continuum_list=dopp_cont_list, poly_degree = poly_degree)
+    model_spec= spt.poly_norm_spec(model_spec, continuum_list=dopp_cont_list, poly_degree = poly_degree, radial_velocity=min_rv)
     model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
     if balmer_only:
         temp_model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), continuum_masks)
@@ -835,11 +836,11 @@ if spectrum_type=='individual':
         #plt.plot(target_spec[0], target_spec[1])
         #plt.show()
         noise_spec= spt.clean_spectrum(noise_spec, np.min(noise_spec[0]), np.max(noise_spec[0]), shift_mask)
-        target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree, plot_all = plot_fit)
+        target_spec = spt.poly_norm_spec(target_spec, continuum_list=target_continuum_list, poly_degree = poly_degree, plot_all = plot_fit, radial_velocity=row['rv'])
         #plt.plot(target_spec[0], target_spec[1])
         #plt.show()
         noise_spec[1]= noise_spec[1]*target_spec[1] #scale the noise spectrum with the flattened target spectrum.
-        min_teff, teff_sigma, min_logg, logg_sigma= run_model_grid(target_spec, velocity_tests= np.array([row['rv']]), noise_spec= noise_spec, plot_all=True, mask_list= shift_mask)
+        min_teff, teff_sigma, min_logg, logg_sigma= run_model_grid(target_spec, velocity_tests= np.array([row['rv']]), noise_spec= noise_spec, plot_all=plot_fit, mask_list= shift_mask)
         target_name_list.append(row['filename'])
         time_list.append(header['BMJD_TDB'])
         logg_list.append(min_logg)

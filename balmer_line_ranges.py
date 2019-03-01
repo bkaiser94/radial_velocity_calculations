@@ -54,13 +54,21 @@ balmer_fit_ranges=[
 io_balmer_fit_ranges=make_inside_out(balmer_fit_ranges, 3600, 5200)
 #print "io_balmer_fit_ranges:", io_balmer_fit_ranges
 
+#balmer_norm_ranges=[
+    #[3500.,3782.],
+    #[4191.,4220.],
+    #[4460.,4721.],
+    #[5001.,6413.],
+    #[6713.,7000.]]
+
 balmer_norm_ranges=[
     [3500.,3782.],
+    [4025.,4035.],
     [4191.,4220.],
     [4460.,4721.],
     [5001.,6413.],
-    [6713.,7000.]]
-
+    [6713.,7000.]] #new version as of 20190301. Added a continuum region in he 4000 area
+io_balmer_norm_ranges=make_inside_out(balmer_norm_ranges, 3600, 5200)
 #balmer_norm_masks=[
     #[3782., 4191.],
     #[4220., 4460.],
@@ -71,3 +79,16 @@ balmer_norm_masks=[
     [3782., 4191.],
     [4220., 4460.],
     [4721., 5001.]]
+
+continuum_list = [[3812,3819],
+                  [3858,3864],
+                  [3924,3932],
+                  [4012,4022],
+                  [4034,4040],
+                  [4172, 4260],
+                  [4422,4460],
+                  [4500,4780],
+                  [4950,5010],
+                  [5035, 5200]]#Best one there is. shortened red side
+
+io_continuum_list= make_inside_out(continuum_list, 3600, 5200)

@@ -2,9 +2,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 import balmer_line_ranges as blr
-
+from astropy import units as u
+from astropy import constants as const
 
 percentile= 50
+
+
+def get_doppler_shifted(wavelengths, radial_velocity):
+    #print "doppler shifting by ", radial_velocity
+    lambda_obs = wavelengths * (radial_velocity*u.km/u.s + const.c.to(u.km/u.s)) / const.c.to(u.km/u.s)
+    return lambda_obs.value
+
+def dopp_shift_list(input_list, radial_velocity):
+    dopp_list = []
+    for waves in input_list:
+        shift_waves = get_doppler_shifted(waves, radial_velocity)
+        dopp_list.append(shift_waves)
+    return dopp_list
 
 def trim_spec(input_spec, min_wave, max_wave):
     lower_indices = np.where(input_spec[0]< max_wave)
@@ -101,8 +115,12 @@ def make_continuum(input_spec, continuum_list= []):
     #plt.show()
     return continuum_spec
 
-def get_norm_polynomial(input_spec, continuum_list = [], poly_degree = 3, plot_all = False):
-    continuum_spec = make_continuum(input_spec, continuum_list = continuum_list)
+def get_norm_polynomial(input_spec, continuum_list = [], poly_degree = 3, plot_all = False, radial_velocity=0):
+    #continuum_spec = make_continuum(input_spec, continuum_list = continuum_list)
+    masks= dopp_shift_list(blr.balmer_fit_ranges, radial_velocity)
+    #masks= dopp_shift_list(blr.io_balmer_norm_ranges, radial_velocity)
+    #masks= dopp_shift_list(blr.io_continuum_list, radial_velocity)
+    continuum_spec= clean_spectrum(input_spec, np.nanmin(input_spec[0]), np.nanmax(input_spec[0]),masks)
     #continuum_spec= clean_spectrum(input_spec, np.nanmin(input_spec[0]), np.nanmin(input_spec[0]).max, blr.balmer_norm_masks )
     #continuum_spec= clean_spectrum(input_spec, np.nanmin(input_spec[0]), np.nanmax(input_spec[0]), blr.balmer_fit_ranges )
     #print continuum_spec.shape
@@ -119,8 +137,8 @@ def get_norm_polynomial(input_spec, continuum_list = [], poly_degree = 3, plot_a
         pass
     return poly_coeffs
 
-def poly_norm_spec(input_spec, continuum_list = [], poly_degree = 3, plot_all  = False):
-    poly_coeffs = get_norm_polynomial(input_spec, continuum_list = continuum_list, poly_degree = poly_degree, plot_all = plot_all)
+def poly_norm_spec(input_spec, continuum_list = [], poly_degree = 3, plot_all  = False, radial_velocity=0):
+    poly_coeffs = get_norm_polynomial(input_spec, continuum_list = continuum_list, poly_degree = poly_degree, plot_all = plot_all, radial_velocity=radial_velocity)
     poly_vals = np.polyval(poly_coeffs, input_spec[0])
     input_spec[1]= np.float_(input_spec[1])/poly_vals
     return input_spec
