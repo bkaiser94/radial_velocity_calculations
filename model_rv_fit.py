@@ -37,15 +37,15 @@ import model_manipulation as mm
 
 astropy_in= False #indicator of whether or not the logg and teff are customized for each observation
 fixed_minimum=False
-teff = 7500
-logg = 5.5
+teff = 7000
+logg = 5.0
 
 #output_filename= 'rv_plot_second_iteration.txt'
 #output_filename= 'rv_plot_teff7500_logg550.txt'
 #output_filename= 'rv_plot_teff7500_logg550_20181011.txt'
 #output_filename= '20190206_rv_rand_teff7500_logg550.txt'
 #output_filename= '20190213_rv_teff7500_logg550_full.csv'
-output_filename= '20190301_rv_teff7500_logg550.csv'
+output_filename= '20190303_rv_teff7000_logg500.csv'
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
 model = wd(Teff = teff, logg = logg)
@@ -59,7 +59,7 @@ slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 
-plot_fit = True
+plot_fit = False
 
 mc_jump = 1 #number of layers of velocity grid to skip for the Monte Carlo evaluation. Probably want to be >0
 #num_mc = 100 #number of randomized spectra to produce for each target spectrum
@@ -83,7 +83,7 @@ velocity_tests = np.arange(velocity_low_bound, velocity_high_bound+velocity_step
 
 sample_points=1000
 
-low_wave_cut= 3800
+low_wave_cut= 3600
 high_wave_cut= 5200
 
 #low_wave_cut = 4000

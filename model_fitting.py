@@ -63,8 +63,8 @@ free_parameters= 2
 #output_names = "teff, logg, rv, chi_square"
 output_names = "teff, logg, rv, chi_square, revised_chi_square"
 
-output_filename= '20190301_new_x2.csv'
-output_astropy= '20190301_model_fits_new.csv'
+output_filename= '20190303_new_x2.csv'
+output_astropy= '20190303_model_fits_nomask.csv'
 
 
 cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
@@ -356,7 +356,7 @@ elif spectrum_type == 'individual':
     #balmer_only = True 
     balmer_only = False
     output_grid= False
-    mask_metals = True
+    mask_metals = False
     if mask_metals==False:
         mask_list = []
     elif mask_metals == True:
@@ -538,8 +538,9 @@ model_spec[0] = get_doppler_shifted(model_spec[0], min_rv)
 model_spec = mm.convolve_model(model_spec, target_spec, header)
 dopp_cont_list= dopp_shift_continuum_list(min_rv)
 #######model normalization ==========================
-model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree, plot_all=plot_fit)
 model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
+model_spec= spt.poly_norm_spec(model_spec, continuum_list = dopp_cont_list, poly_degree= poly_degree, plot_all=plot_fit)
+#model_spec= spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), mask_list)
 if balmer_only:
     model_spec = spt.clean_spectrum(model_spec, np.min(target_spec[0]), np.max(target_spec[0]), continuum_masks)
     plot_overlays(line_spec, model_spec, model_string = 'Teff ' + str(teff) + ' logg ' +str(logg)+ ' RV '+ str(min_rv)+'km/s')

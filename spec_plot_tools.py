@@ -120,7 +120,8 @@ def get_norm_polynomial(input_spec, continuum_list = [], poly_degree = 3, plot_a
     masks= dopp_shift_list(blr.balmer_fit_ranges, radial_velocity)
     #masks= dopp_shift_list(blr.io_balmer_norm_ranges, radial_velocity)
     #masks= dopp_shift_list(blr.io_continuum_list, radial_velocity)
-    continuum_spec= clean_spectrum(input_spec, np.nanmin(input_spec[0]), np.nanmax(input_spec[0]),masks)
+    #continuum_spec= clean_spectrum(input_spec, np.nanmin(input_spec[0]), np.nanmax(input_spec[0]),masks)
+    continuum_spec= input_spec
     #continuum_spec= clean_spectrum(input_spec, np.nanmin(input_spec[0]), np.nanmin(input_spec[0]).max, blr.balmer_norm_masks )
     #continuum_spec= clean_spectrum(input_spec, np.nanmin(input_spec[0]), np.nanmax(input_spec[0]), blr.balmer_fit_ranges )
     #print continuum_spec.shape
