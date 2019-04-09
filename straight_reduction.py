@@ -32,8 +32,15 @@ flatlist= np.genfromtxt(flatlistname, dtype='str')
 ####
 slit_ystart = 1   #The beginning of the image that has light from outside
 slit_yend= 199     #The end of the image with same
-im_xstart = 9
-im_xend = 2055
+#im_xstart = 9
+#im_xend = 2055
+
+#red cam
+
+im_params= {'Blue':{'im_xstart': 9, 'im_xend':  2055},'Red':{'im_xstart':26,'im_xend':2071}}
+
+#technically there doesn't appear to be any end trimming neaded with red...
+
 
 
 
@@ -75,6 +82,13 @@ def make_image_stack(imagelist, times= True):
 
 bias_stack,gain, readnoise, bias_times = make_image_stack(zerolist, times= False)
 bias_med = np.nanmedian(bias_stack, axis=0)
+
+filename= glob(speclist[1])[0]
+print filename
+#i = fits.open(speclist[1])
+header= fits.getheader(speclist[1])
+im_xstart=im_params[header['INSTCONF']]['im_xstart']
+im_xend= im_params[header['INSTCONF']]['im_xend']
 
 new_file_list= []
 for img in speclist:

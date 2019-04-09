@@ -37,6 +37,9 @@ test_side = test_width/2
 #filenames = glob.(sys.argv[1])
 filenames= glob('wctb*')
 #print(filenames)
+plot_wavelength=False
+plot_400m2_tell= False
+
 
 def convolve_spectrum(target_spec, header, kernel_type='gaussian'):
     pix_width =3
@@ -60,12 +63,19 @@ def convolve_spectrum(target_spec, header, kernel_type='gaussian'):
 def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian'):
     if smooth:
         spec= convolve_spectrum(spec, header, kernel_type=kernel_type)
+        plt.title(filename+ ' smoothed')
     else:
+        plt.title(filename)
         pass
-    plt.xlabel(r'Wavelength ($\AA$)')
+    if plot_wavelength:
+        plt.xlabel(r'Wavelength ($\AA$)')
+        plt.plot(spec[0], spec[1])
+    else:
+        plt.xlabel('Pixel')
+        plt.plot(spec[1])
     plt.ylabel('Flux')
-    plt.title(filename)
-    plt.plot(spec[0], spec[1])
+    #plt.title(filename)
+    #plt.plot(spec[0], spec[1])
     plt.show()
     return
 
@@ -97,22 +107,42 @@ def plot_SNR(spec, noise, filename):
     plt.hist(sigma_range)
     plt.show()
     
-    plt.xlabel(r'Wavelength ($\AA$)')
+    if plot_wavelength:
+        plt.xlabel(r'Wavelength ($\AA$)')
+        plt.vlines([spec[0][center_pixel-test_side],spec[0][center_pixel+test_side]], np.min(spec[1]/noise[1]), np.max(spec[1]/noise[1]))
+        plt.plot(spec[0], spec[1]/noise[1], color = 'r')
+    else:
+        plt.xlabel('pixel')
+        plt.vlines([center_pixel-test_side,center_pixel+test_side], np.min(spec[1]/noise[1]), np.max(spec[1]/noise[1]))
+        plt.plot( spec[1]/noise[1], color = 'r')
     plt.ylabel('Signal/Noise')
-    plt.vlines([spec[0][center_pixel-test_side],spec[0][center_pixel+test_side]], np.min(spec[1]/noise[1]), np.max(spec[1]/noise[1]))
+    #plt.vlines([spec[0][center_pixel-test_side],spec[0][center_pixel+test_side]], np.min(spec[1]/noise[1]), np.max(spec[1]/noise[1]))
     plt.title(filename)
-    plt.plot(spec[0], spec[1]/noise[1], color = 'r')
+    #plt.plot(spec[0], spec[1]/noise[1], color = 'r')
     plt.show()
     return
+    
+def plot_sky(filename):
+    hdu=fits.open(filename)
+    sky=hdu[2].data
+    plt.plot(sky)
+    plt.xlabel('pixel')
+    plt.title(filename+' sky')
+    plt.show()
     return
+
+
 
 for filename in filenames:
     target_spec, header, target_noise= spt.retrieve_spec(filename)
+    #conv_spec= convolve_spectrum(target_spec, header)
     #plot_spectrum(target_spec, filename, header, smooth=True)
     #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='box')
     plot_spectrum(target_spec, filename, header)
+    plot_spectrum(target_spec, filename, header, smooth=True)
+    plot_sky(filename)
     plot_SNR(target_spec, target_noise, filename)
-    plot_dwavelength(target_spec)
+    #plot_dwavelength(target_spec)
 
     
     

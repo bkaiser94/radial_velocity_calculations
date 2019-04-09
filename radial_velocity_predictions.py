@@ -62,16 +62,20 @@ num_maxs= 3
 #times =['2018-09-07T23:29:00','2018-09-08T05:00:00']
 #times =['2018-09-08T23:29:00','2018-09-09T05:00:00']
 #times =['2018-09-09T23:29:00','2018-09-10T05:00:00']
-times =['2018-09-14T23:29:00','2018-09-15T05:00:00']
+#times =['2018-09-14T23:29:00','2018-09-15T05:00:00']
+#times =['2019-03-24T02:03:00','2019-03-24T10:11:00']
+times =['2019-04-22T02:03:00','2019-04-22T10:11:00']
 
 
 
 
 
 
+#time_of_interest=[['2019-03-24T02:19:00','2019-03-24T10:11:00'],['2019-03-24T02:19:00','2019-03-24T10:11:00']]
+time_of_interest=[times,times]
 
 #time_of_interest=[['2018-07-08T23:30:00','2018-07-09T00:45:00'],['2018-07-09T04:15:00','2018-07-09T05:30:00']]
-time_of_interest=[['2018-08-08T00:15:00','2018-08-08T01:15:00'],['2018-08-08T04:15:00','2018-08-08T04:16:00']]
+#time_of_interest=[['2018-08-08T00:15:00','2018-08-08T01:15:00'],['2018-08-08T04:15:00','2018-08-08T04:16:00']]
 #time_of_interest=[['2018-08-16T23:30:00','2018-08-17T00:45:00'],['2018-08-17T04:15:00','2018-08-17T05:30:00']]
 
 
@@ -86,9 +90,9 @@ def to_barycenter(input_times):
 lam_rest = 6562.81*u.angstrom #angstroms
 #m1 = (0.14 *u.Msun).si
 #m2 = (1.4 *u.Msun).si
-#m1 = (1.4*u.Msun).si
-m1= (2.4*u.Msun).si
-#m2 = (0.14*u.Msun).si #switched the masses to change the phase by 180 degrees.
+m1 = (1.4*u.Msun).si
+#m1= (2.4*u.Msun).si
+m2 = (0.14*u.Msun).si #switched the masses to change the phase by 180 degrees.
 #m2=( 1.58 *u.Msun).si
 #m2 = (m1*q_value).si
 #m2 = (0.12*u.Msun).si #switched the masses to change the phase by 180 degrees.
@@ -108,36 +112,36 @@ m1= (2.4*u.Msun).si
 #tasc = Time(54929.0678261, format = 'mjd', scale= 'utc', location = parkes_location)
 
 #hypothetical small orbit (but probably would need general relativistic effects at this point)
-m2=(0.8*u.Msun).si
-period=(43.*u.minute).to(u.second)
-tasc = Time(54929.0678261, format = 'mjd', scale= 'utc', location = parkes_location)
+#m2=(0.8*u.Msun).si
+#period=(43.*u.minute).to(u.second)
+#tasc = Time(54929.0678261, format = 'mjd', scale= 'utc', location = parkes_location)
 
 #m2= (0.352*u.Msun).si #J1755-3716
 #period = (11.515 *u.day).to(u.second)  #J1755-3716
 #tasc = Time(55958.790341, format = 'mjd', scale= 'utc', location = parkes_location)
 
-#e=1e-5
-e= 0.7
+e=1e-5
+#e= 0.7
 #e = 0.000010 #PSR J1435-6100
 #e = 0.000023# median
 #e = 0.000031# max
 #e=0.5
 #e=0.0011494 #1227
-#omega = 97 * u.degree
+omega = 97 * u.degree
 #omega = 10 *u.degree #PSR J1435-6100
-omega = 4 *u.degree #PSR J1435-6100
+#omega = 4 *u.degree #PSR J1435-6100
 
-#period = (0.4497391377 * u.day).to(u.second) #median
+period = (0.4497391377 * u.day).to(u.second) #median
 #period = (0.449739137 * u.day).to(u.second) #low
 #period = (0.4497391384 * u.day).to(u.second) #high
 #period = (6.721013337  *u.day).to(u.second)# for a different target
 #period = (1.354885217 *u.day).to(u.second)  #PSR J1435-6100
 
 
-#t0 = Time(55756.23, format = 'mjd', scale= 'utc', location = parkes_location)
-#tasc = Time(55756.1047771, format = 'mjd', scale= 'utc', location = parkes_location) #median
-##tasc = Time(55756.1047767, format = 'mjd', scale= 'utc', location = parkes_location) #min
-#tconj= Time(55756.21712, format = 'mjd', scale ='utc', location = parkes_location)
+t0 = Time(55756.23, format = 'mjd', scale= 'utc', location = parkes_location)
+tasc = Time(55756.1047771, format = 'mjd', scale= 'utc', location = parkes_location) #median
+#tasc = Time(55756.1047767, format = 'mjd', scale= 'utc', location = parkes_location) #min
+tconj= Time(55756.21712, format = 'mjd', scale ='utc', location = parkes_location)
 
 #PSR J1435-6100
 #t0 = Time(55756.23, format = 'mjd', scale= 'utc', location = parkes_location)

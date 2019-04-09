@@ -45,7 +45,7 @@ logg = 5.0
 #output_filename= 'rv_plot_teff7500_logg550_20181011.txt'
 #output_filename= '20190206_rv_rand_teff7500_logg550.txt'
 #output_filename= '20190213_rv_teff7500_logg550_full.csv'
-output_filename= '20190303_rv_teff7000_logg500.csv'
+output_filename= '20190408_rv_teff7000_logg500.csv'
 mask_list = []
 wd=wdatmos.wdmodel(filename='ELM.hdf5')
 model = wd(Teff = teff, logg = logg)
@@ -414,7 +414,13 @@ def minimize_velocity(model_spec, target_spec, noise_spec, target_header, veloci
     #return mc_rvs
 
 def iterate_resolutions(model_spec, target_file ):
-    target_spec, target_header, noise_spec = retrieve_target_spec(target_file) 
+    #target_spec, target_header, noise_spec = retrieve_target_spec(target_file) 
+    target_spec, target_header, noise_spec = spt.retrieve_spec(target_file)
+    noise_spec[1]= noise_spec[1]/target_spec[1]
+    target_spec = spt.trim_spec(target_spec, low_wave_cut, high_wave_cut)
+    noise_spec = spt.trim_spec(noise_spec, low_wave_cut, high_wave_cut)
+    target_spec = spt.poly_norm_spec(target_spec, continuum_list = target_continuum_list, poly_degree = poly_degree)
+    noise_spec[1] = target_spec[1]*noise_spec[1]
     best_rv = velocity_center
     for index in range(1, len(velocity_step_list)):
         #if index >0:

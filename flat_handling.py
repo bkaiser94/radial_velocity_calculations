@@ -6,6 +6,8 @@ This script should take all of the flats and generate an overall flat file that 
 straight_reduction.py should already have done the bias-subtraction, cosmic ray removal, and trimming of the overscan regions.
 
 Need to fit a polynomial to the underlying spectral features of the lamp to remove them and leave behind only the low-level variations of the instrument itself.
+
+THIS IS ACTUALLY STEP 2-B FOR THE REDUCTION PROCESS. THIS NEEDS TO BE EXECUTED AFTER straight_reduction.py and before wave_cal.py
 """
 
 import numpy as np

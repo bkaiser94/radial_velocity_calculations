@@ -34,8 +34,12 @@ target_list_name = 'listFWCTB'
 target_list = np.genfromtxt(target_list_name, dtype = 'str')
 
 combined_spec_file='fwctb.0220_J1431m4715_930_blue.fits'
+#combined_spec_file='fwctb.0251_J1431m4715_930_blue_1arcsec.fits'
+
 #astropy_input= '20190210_rv_teff7500_logg550_full.csv'
-astropy_input='20190301_rv_teff7500_logg550.csv'
+#astropy_input='20190301_rv_teff7500_logg550.csv'
+astropy_input='20190320_rv_teff7000_logg500.csv'
+#astropy_input='20190319_rv_teff7000_logg500.csv'
 #scaling_range = [4600,4650]
 rms_range= [4600,4650]
 slit_width = 1.0 #arcseconds
@@ -63,8 +67,8 @@ free_parameters= 2
 #output_names = "teff, logg, rv, chi_square"
 output_names = "teff, logg, rv, chi_square, revised_chi_square"
 
-output_filename= '20190303_new_x2.csv'
-output_astropy= '20190303_model_fits_nomask.csv'
+output_filename= '20190408_new_x2.csv'
+output_astropy= '20190408_model_fits_nomask.csv'
 
 
 cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)

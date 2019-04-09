@@ -37,6 +37,7 @@ n_biases= zerolist.shape[0]
 parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
+skip_flat= True
 
 def to_barycenter(header):
     #input_times = header['DATE-OBS'] #not gps-synched times
@@ -54,15 +55,20 @@ def to_barycenter(header):
 
 ####
 #trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
-trace_band_mid= 95   #y-pixel that's about the center of the trace
-trace_band_width = 40 #pixel width to determine the center of the trace
-#core_sides=  5
-core_sides=  7
+#trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
+trace_band_mid=100 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
+trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
+#trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
+#trace_band_mid=115 #y-pixel for actual wisea0615
+#trace_band_width = 10 #pixel width to determine the center of the trace
+core_sides=  5
+#core_sides=  7
 bkg_core_sides= core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 y_trace_width= core_sides*2+1 #the actual number of pixels in the vertical direction that are in the trace (or background)
 poly_degree = 3 #polynomial degree of the fit to the trace
 flat_poly= 7
-bkg_shift= 25
+#bkg_shift= 25 #2019-03-25 commented out
+bkg_shift = 50
 lamp_sigma_guess= 2
 line_search_width = 3
 lamp_p0 = [1000, 500,  lamp_sigma_guess, 0]
@@ -198,6 +204,7 @@ def get_trace_waves(target_med, lamp_im):
     print 'xpositionsshape', x_positions.shape
     y_positions= np.argmax(target_band,axis=0)+(trace_band_mid-trace_band_width/2)
     print 'yshape', y_positions.shape
+    
     #seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
     #seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds)
     #seeing_sigma = seeing_popt[2]
@@ -218,7 +225,10 @@ def get_trace_waves(target_med, lamp_im):
     plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift+core_sides), color = 'cyan', linestyle = '--')
     plt.legend()
     plt.show()
+    plt.imshow(target_band[:,seeing_range[0]:seeing_range[1]], cmap='hot')
+    plt.show()
     seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
+    seeing_p0[1]=np.argmax(seeing_band)
     seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds)
     seeing_sigma = seeing_popt[2]
     print seeing_popt
@@ -253,12 +263,12 @@ def get_trace_waves(target_med, lamp_im):
     plt.show()
     #offset = 0
 
-    #dotted_pixel = float(raw_input("dotted line pixel>>>"))
-    #emission_pixel= float(raw_input("emission line pixel>>>"))
-    dotted_pixel=0
-    emission_pixel=0
+    dotted_pixel = float(raw_input("dotted line pixel>>>"))
+    emission_pixel= float(raw_input("emission line pixel>>>"))
+    #dotted_pixel=0
+    #emission_pixel=0
     offset = emission_pixel-dotted_pixel
-    print "skipping offsetting. Change lines 148 and 150 if you want otherwise."
+    #print "skipping offsetting. Change lines 261 - 264 if you want otherwise."
    
     line_x_checks2 = np.copy(line_x_checks+offset)
     #for x_spot in line_x_checks2:
@@ -340,8 +350,15 @@ def get_trace_waves(target_med, lamp_im):
 
 ######3 Flat handling
 
-
+print "skip_flat=", skip_flat
 normed_flat= normalize_flat(plot_all = True)
+print "\n==================\n"
+print "skip_flat=", skip_flat
+print "\n\n"
+if skip_flat:
+    normed_flat= np.ones(normed_flat.shape)
+    print "skipping flat-fielding.\nYes, I know it just went to all the trouble of calculating the flat stuff."
+print "\n\n==================\n"
 
 
 #####
@@ -386,6 +403,11 @@ for counter, img in enumerate(speclist):
         #if '_fe' in speclist[counter+1].lower():
         if '_fe.' in speclist[counter+1].lower():
             print "Next file is a lamp, so we're going to do the trace and wavelength calibration."
+            print "Using last lamp file as calibration lamp"
+            filename= speclist[counter+1]
+            lamp_i = fits.open(filename)
+            lamp_header = fits.getheader(filename)
+            lamp_im= lamp_i[0].data
             target_med = np.nanmedian(target_stack, axis = 0)
             new_coeffs, seeing_sig= get_trace_waves(target_med, lamp_im)
             sigma_list.append(seeing_sig)

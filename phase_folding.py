@@ -27,7 +27,7 @@ parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 28
 cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 c= 2.998E8 *u.m/u.s
 
-output_filename = "20190301_model_rvs_new.txt"
+output_filename = "20190408_model_rvs_new.txt"
 #output_filename= 'model_rvs_teff7500_logg550.txt'
 
 #open one of the original files and get the RA and Dec from it
@@ -41,7 +41,10 @@ target_coord = coord.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg
 #rv_file = 'rv_plot.txt'
 #rv_file = 'rv_plot_filled_in.txt'
 #rv_file = 'rv_plot_second_iteration.txt'
-rv_file='20190301_model_fits_new.csv'
+#rv_file='20190301_model_fits_new.csv'
+rv_file='20190320_model_fits_nomask.csv'
+#rv_file='merged_stuff.csv'
+#rv_file='20190303_model_fits_nomask.csv'
 #rv_file='strader_rvs.csv'
 #rv_file= 'rv_plot_teff7500_logg550.txt'
 
@@ -263,7 +266,21 @@ ax.axhline(y= fitted_curve_all[0], color = 'r', linestyle = ':', alpha = 1, labe
 
 #ax.scatter(folded_times, rv_array, color = 'b', label = '3/18/18')
 #ax.plot(folded_times, rv_array, color = 'b', marker = 'o', linestyle = 'none', label = '3/18/18')
-ax.errorbar(folded_times, rv_array, yerr= sigma_array, color = 'b', marker = 'o', linestyle = 'none', label = 'RVs')
+#########This is the original plotting version #################
+#ax.errorbar(folded_times, rv_array, yerr= sigma_array, color = 'b', marker = 'o', linestyle = 'none', label = 'RVs')
+#####################################################
+feb_inds= np.where(bmjd_array < 58180)
+march_inds= np.where(bmjd_array > 58180)
+try:
+    ax.errorbar(folded_times[march_inds], rv_array[march_inds], yerr= sigma_array[march_inds], color = 'b', marker = 'o', linestyle = 'none', label = 'march RVs')
+except IndexError as error:
+    print error
+try:
+    ax.errorbar(folded_times[feb_inds], rv_array[feb_inds], yerr= sigma_array[feb_inds], color = 'r', marker = 'o', linestyle = 'none', label = 'feb RVs')
+except IndexError as error:
+    print error
+
+
 #ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
 ax.plot(x_vals, sine_vals, color = 'k', linestyle = '--', label = 'Model')
 ax.set_xticklabels([])
@@ -276,7 +293,10 @@ text_string =  r'$K_c =$ ' +str(np.round(fitted_curve_all[1], precision)) + r'$\
 #ax.text(0.2, 0.05,text_string, transform=ax.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
 ax.text(0.2, 0.05,text_string, transform=ax.transAxes, verticalalignment='bottom', bbox=props)
 
-ax.legend()
+try:
+    ax.legend()
+except IndexError:
+    pass
 
 #plt.show()
 
@@ -288,8 +308,17 @@ ax2 =plt.subplot2grid((6,1), (2, 0), rowspan= 1)
 
 #ax2.scatter(folded_times, residuals, color = 'b', label = '3/18/18')
 #ax2.plot(folded_times, residuals, color = 'b', label = '3/18/18', marker = 'o', linestyle = 'none')
-ax2.errorbar(folded_times, residuals, yerr= sigma_array, color = 'b', label = 'RVs', marker = 'o', linestyle = 'none')
-
+#########Original plotting 201903020 ################
+#ax2.errorbar(folded_times, residuals, yerr= sigma_array, color = 'b', label = 'RVs', marker = 'o', linestyle = 'none')
+###########################################
+try:
+    ax2.errorbar(folded_times[march_inds], residuals[march_inds], yerr= sigma_array[march_inds], color = 'b', marker = 'o', linestyle = 'none', label = 'march RVs')
+except IndexError as error:
+    print error
+try:
+    ax2.errorbar(folded_times[feb_inds], residuals[feb_inds], yerr= sigma_array[feb_inds], color = 'r', marker = 'o', linestyle = 'none', label = 'feb RVs')
+except IndexError as error:
+    print error
 #ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
 #ax.plot(x_vals, sine_vals, color = 'k', linestyle = '--', label = 'Model')
 #ax2.plot(x_vals, np.zeros(x_vals.shape), color = 'k', linestyle = '--', label = 'Model')

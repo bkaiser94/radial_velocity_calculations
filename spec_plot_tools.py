@@ -146,7 +146,7 @@ def poly_norm_spec(input_spec, continuum_list = [], poly_degree = 3, plot_all  =
 
 
 
-def retrieve_spec(filename):
+def retrieve_spec(filename, scale_noise= True):
     """
     Input: filename for the target spectrum you want to get
     
@@ -155,12 +155,56 @@ def retrieve_spec(filename):
     #print filename
     i=fits.open(filename)
     header = fits.getheader(filename)
-    file_waves= i[0].data
-    file_flux = i[1].data
-    file_noise = i[3].data
+    file_waves= np.copy(i[0].data)
+    file_flux = np.copy(i[1].data)
+    #set flux=0 as a slightly non-zero value to protect against NaNs
+    zero_fluxes= np.where(np.abs(file_flux)<1e-10)
+    print('zero flux indices:',zero_fluxes)
+    #plt.plot(file_waves, file_flux, label='pre fixes', marker='o')
+    try:
+        #if zero_fluxes[0].shape[0] > 0:
+        file_flux[zero_fluxes]=1e-10
+        #else:
+            #pass
+    except IndexError:
+        pass
+    nan_fluxes= np.where(file_flux==np.nan)
+    print('nan flux indices:',nan_fluxes)
+    try:
+        #if nan_fluxes[0].shape[0]> 0:
+        file_flux[nan_fluxes]=1e-10
+        #else:
+            #pass
+    except IndexError:
+        pass
+    #plt.plot(file_waves, file_flux, label='post fixes')
+    #plt.title('spec')
+    #plt.legend()
+    #plt.show()
+    file_noise = np.copy(i[3].data)
+    #plt.plot(file_waves, file_noise, label='pre fixes', marker='o')
+    nan_sigma= np.where(file_noise==np.nan)
+    print('nan sigma', nan_sigma)
+    try:
+        #if nan_sigma[0].shape[0]> 0:
+        file_noise[nan_sigma]=1e10
+        #else:
+            #pass
+    except IndexError:
+        pass
+    #plt.plot(file_waves, file_noise, label='post fixes')
+    #plt.legend()
+    #plt.title('noise')
+    #plt.show()
+    print('zero flux indices:',np.where(file_flux==0))
+    #print(np.sum(np.isnan(file_flux)))
+    #print(np.sum(np.isnan(file_noise)))
     file_spec = np.vstack([file_waves, file_flux])
     file_noise_spec = np.vstack([file_waves, file_noise])
-    file_noise_spec[1] = file_spec[1]*file_noise_spec[1]
+    if scale_noise:
+        file_noise_spec[1] = file_spec[1]*file_noise_spec[1]
+    else:
+        pass
     return file_spec, header, file_noise_spec
 
 def rescale_spectrum(input_spec, reference_spec, scale_range):
