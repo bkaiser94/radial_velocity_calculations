@@ -43,14 +43,16 @@ def to_barycenter(header):
     #input_times = header['DATE-OBS'] #not gps-synched times
     input_year = header['OPENDATE'] #gps-synched date
     input_hours = header['OPENTIME'] #gps-synched time
+    exp_time= header['EXPTIME']*u.s
     input_times = input_year+'T'+input_hours #formatting correctly
     obs_time = Time(input_times, format = 'isot', scale = 'utc',location = cerro_pachon_location)
+    obs_time= obs_time+exp_time/2.
     ra = header['RA']
     dec = header['DEC']
     target_coord = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg), )
     bary_corr =obs_time.tdb.light_travel_time(target_coord)
     bmjd_tdb_val = (obs_time.tdb+ bary_corr.tdb).mjd
-    header.append(card = ('BMJD_TDB', bmjd_tdb_val, "value from OPENDATE and OPENTIME headers"))
+    header.append(card = ('BMJD_TDB', bmjd_tdb_val, "exp. midpoint value from OPENDATE and OPENTIME headers"))
     return header
 
 ####
@@ -514,6 +516,7 @@ for counter, img in enumerate(speclist):
         header.append(card= ("pix_scal", 0.3, ' "/pixel'))
         header.append(card = ('see_sig', seeing_sig, 'Sigma of Gauss seeing fit (pixels)'))
         header.append(card = ('see_FWHM', seeing_FWHM, 'Seeing (pixels)'))
+        header.append(card = ('skipflat', skip_flat, 'flatfielding skipped or not'))
         #poly_curve_wavelength= barycentric_vel_corr(header, poly_curve_wavelength) #correction of Earth's orbital motion
         hdu = fits.PrimaryHDU(poly_curve_wavelength, header = header)
         hdu1= fits.ImageHDU(target_light)

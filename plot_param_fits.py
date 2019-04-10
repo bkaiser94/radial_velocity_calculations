@@ -51,7 +51,9 @@ def get_mean(input_table):
 ########################################3
 
 #input_file='20190212_new_model_fits.csv'
-input_file='20190303_model_fits_nomask.csv'
+#input_file='20190303_model_fits_nomask.csv'
+input_file= '20190408_model_fits_nomask.csv'
+
 print("input_file:", input_file)
 input_table = Table.read(input_file, format='ascii.csv')
 

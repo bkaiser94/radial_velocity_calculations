@@ -23,6 +23,9 @@ p0_list = [-100, 300]
 photo_bounds = ([-np.inf, 0, -np.inf],[np.inf, np.inf, np.inf])
 precision = 1
 precision2= 4
+do_rescale=False
+
+
 parkes_location = coord.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coord.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 c= 2.998E8 *u.m/u.s
@@ -42,9 +45,12 @@ target_coord = coord.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg
 #rv_file = 'rv_plot_filled_in.txt'
 #rv_file = 'rv_plot_second_iteration.txt'
 #rv_file='20190301_model_fits_new.csv'
-rv_file='20190320_model_fits_nomask.csv'
+#rv_file='20190320_model_fits_nomask.csv'
 #rv_file='merged_stuff.csv'
+rv_file= '20190408_merged_stuff.csv'
+#rv_file= '20190408_model_fits_nomask.csv'
 #rv_file='20190303_model_fits_nomask.csv'
+#rv_file='20190408_super_merged.csv'
 #rv_file='strader_rvs.csv'
 #rv_file= 'rv_plot_teff7500_logg550.txt'
 
@@ -80,10 +86,12 @@ def photo_sine_function(times, systemic_vel,  amplitude, phase):
     
     
 #def photo_harmonic_function(times, zeropoint, A, B, C, D, phiA, phiB, phiC, phiD):
+#def photo_harmonic_function(times, zeropoint,  B,  D,  phiB, phiD):
 #def photo_harmonic_function(times, zeropoint, A, B, C, D):
 def photo_harmonic_function(times, zeropoint, B, D):
 
     #return A*np.sin(2*np.pi*times+phiA) + B*np.cos(2*np.pi*times+phiB) + C*np.sin(4*np.pi*times+phiC) + D*np.cos(4*np.pi*times+phiD) + zeropoint
+    #return  B*np.cos(2*np.pi*times+phiB) + D*np.cos(4*np.pi*times+phiD) + zeropoint
     #return A*np.sin(2*np.pi*times) + B*np.cos(2*np.pi*times) + C*np.sin(4*np.pi*times) + D*np.cos(4*np.pi*times) + zeropoint
     return  B*np.cos(2*np.pi*times)+ D*np.cos(4*np.pi*times) + zeropoint
 
@@ -143,7 +151,11 @@ tconj= Time(55756.21712, format = 'mjd', scale ='utc', location = parkes_locatio
 
 all_table = Table.read(rv_file, format='ascii.csv')
 bmjd_array = all_table['bmjd_tdb']
-rv_array = all_table['rv']+all_table['baryv_corr']
+try:
+    rv_array = all_table['rv']+all_table['baryv_corr']
+except KeyError as error:
+    print(error)
+    rv_array=all_table['rv']
 #rv_array = all_table['rv']
 sigma_array = all_table['rv_error']
 
@@ -179,9 +191,12 @@ print fitted_photo_curve
 #photo_residuals= photometry_flux - photo_sine_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
 #photo_residuals = photometry_flux - photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2], fitted_photo_curve[3], fitted_photo_curve[4], fitted_photo_curve[5], fitted_photo_curve[6], fitted_photo_curve[7], fitted_photo_curve[8])
 #photo_residuals = photometry_flux - photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2], fitted_photo_curve[3], fitted_photo_curve[4])
+#photo_residuals = photometry_flux - photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2], fitted_photo_curve[3], fitted_photo_curve[4])
 photo_residuals = photometry_flux - photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
 
 model_photo_vals = photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2])
+#model_photo_vals=photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2], fitted_photo_curve[3], fitted_photo_curve[4], fitted_photo_curve[5], fitted_photo_curve[6], fitted_photo_curve[7], fitted_photo_curve[8])
+#model_photo_vals=photo_harmonic_function(photo_folded_times, fitted_photo_curve[0], fitted_photo_curve[1], fitted_photo_curve[2], fitted_photo_curve[3], fitted_photo_curve[4])
 
 coeffs = fitted_photo_curve
 
@@ -203,25 +218,31 @@ np.savetxt(output_filename, output_array, delimiter= '\t', header= 'TimesBMJD_TD
 print "RV chi-squared:"
 rv_red_chi_sq = calc_red_chi_square(rv_array, sigma_array, model_rvs, dof=2)
 print rv_red_chi_sq
-new_rv_sigma = rescale_errors(rv_red_chi_sq, sigma_array)
-new_rv_red_chi_sq= calc_red_chi_square(rv_array, new_rv_sigma, model_rvs, dof=2)
-print new_rv_red_chi_sq
+if do_rescale:
+    new_rv_sigma = rescale_errors(rv_red_chi_sq, sigma_array)
+    new_rv_red_chi_sq= calc_red_chi_square(rv_array, new_rv_sigma, model_rvs, dof=2)
+    print new_rv_red_chi_sq
 
-####I'm going to redefine the error array of the radial velocities to use the revised sigma values
-sigma_array = new_rv_sigma
+    ####I'm going to redefine the error array of the radial velocities to use the revised sigma values
+    sigma_array = new_rv_sigma
+else:
+    pass
 
 ##########
 
 print "photo chi-squared:"
 photo_red_chi_sq = calc_red_chi_square(photometry_flux,photometry_error,model_photo_vals, dof=2)
 print photo_red_chi_sq
-new_photo_sigma = rescale_errors(photo_red_chi_sq, photometry_error)
-new_photo_red_chi_sq= calc_red_chi_square(photometry_flux, new_photo_sigma, model_photo_vals, dof=2)
-print new_photo_red_chi_sq
+if do_rescale:
+    new_photo_sigma = rescale_errors(photo_red_chi_sq, photometry_error)
+    new_photo_red_chi_sq= calc_red_chi_square(photometry_flux, new_photo_sigma, model_photo_vals, dof=2)
+    print new_photo_red_chi_sq
 
-####I'm going to redefine the error array of the radial velocities to use the revised sigma values
-sigma_array = new_rv_sigma
-photometry_error= new_photo_sigma
+    ####I'm going to redefine the error array of the radial velocities to use the revised sigma values
+    #sigma_array = new_rv_sigma
+    photometry_error= new_photo_sigma
+else:
+    pass
 
 
 
@@ -360,6 +381,9 @@ props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 #text_string =  harmonic_strings[1] + r'$*\sin(2*\pi*t + $' +harmonic_strings[5]+ r'$) +$' + harmonic_strings[2] + r'$*\cos(2*\pi*t + $' +harmonic_strings[6] +  r'$) +$' + harmonic_strings[3]+ r'$*\sin(4*\pi*t + $' +harmonic_strings[7]+  r'$) +$ ' + harmonic_strings[4] + r'$*\cos(4*\pi*t + $'+ harmonic_strings[8]+ r'$) + $' + harmonic_strings[0]
 #text_string =  harmonic_strings[1] + r'$*\sin(2*\pi*t/P) +$' + harmonic_strings[2] + r'$*\cos(2*\pi*t/P) +$' + harmonic_strings[3]+ r'$*\sin(4*\pi*t/P) +$ ' + harmonic_strings[4] + r'$*\cos(4*\pi*t/P) + $' + harmonic_strings[0]
 #text_string =   harmonic_strings[1] + r'$*\cos(2*\pi*t/P) +$' + harmonic_strings[2] + r'$*\cos(4*\pi*t/P) + $' + harmonic_strings[0]
+print("Harmonic strings:")
+for thing in harmonic_strings:
+    print(thing)
 text_string =   "F= " + harmonic_strings[1] + r'$*\cos(2*\pi*t/P) +$' + harmonic_strings[2] + r'$*\cos(4*\pi*t/P) + $' + harmonic_strings[0]
 
 #ax3.text(0.2, 0.05,text_string, transform=ax3.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
@@ -424,3 +448,95 @@ plt.show()
 
 #plt.tight_layout()
 #plt.savefig('grid_figure.pdf')
+
+
+###################################
+
+
+fig = plt.figure()
+#ax = fig.add_subplot(311)
+ax = plt.subplot2grid((2, 1), (0,0), rowspan = 1)
+ax2 =plt.subplot2grid((2,1), (1, 0), rowspan= 1)
+#ax.axhline(y= fitted_curve_all[0], color = 'r', linestyle = ':', alpha = 0.4, label= str(np.round(fitted_curve_all[0],precision))+' km/s')
+ax.axhline(y= fitted_curve_all[0], color = 'r', linestyle = ':', alpha = 1, label= str(np.round(fitted_curve_all[0],precision))+' km/s')
+
+#ax.scatter(folded_times, rv_array, color = 'b', label = '3/18/18')
+#ax.plot(folded_times, rv_array, color = 'b', marker = 'o', linestyle = 'none', label = '3/18/18')
+#########This is the original plotting version #################
+#ax.errorbar(folded_times, rv_array, yerr= sigma_array, color = 'b', marker = 'o', linestyle = 'none', label = 'RVs')
+#####################################################
+try:
+    
+    feb_inds= np.where((bmjd_array < 58180) & (all_table['lead'] > 0.5))
+    march_inds= np.where((bmjd_array > 58180) & (all_table['lead'] > 0.5))
+    feb_trail_inds= np.where((bmjd_array < 58180) & (all_table['lead'] < 0.5))
+    march_trail_inds= np.where((bmjd_array > 58180) & (all_table['lead'] < 0.5))
+    try:
+        ax.errorbar(folded_times[march_trail_inds], rv_array[march_trail_inds], yerr= sigma_array[march_trail_inds], color = 'b', marker = '*', linestyle = 'none', label = 'march trail RVs')
+        ax2.errorbar(folded_times[march_inds], residuals[march_trail_inds], yerr= sigma_array[march_trail_inds], color = 'b', marker = '*', linestyle = 'none', label = 'march trail RVs')
+    except IndexError as error:
+        print error
+    try:
+        ax.errorbar(folded_times[feb_trail_inds], rv_array[feb_trail_inds], yerr= sigma_array[feb_trail_inds], color = 'r', marker = '*', linestyle = 'none', label = 'feb trail RVs')
+        ax2.errorbar(folded_times[feb_trail_inds], residuals[feb_trail_inds], yerr= sigma_array[feb_trail_inds], color = 'r', marker = '*', linestyle = 'none', label = 'feb trail RVs')
+    except IndexError as error:
+        print error
+except KeyError:
+    feb_inds= np.where(bmjd_array < 58180)
+    march_inds= np.where(bmjd_array > 58180 )
+try:
+    ax.errorbar(folded_times[march_inds], rv_array[march_inds], yerr= sigma_array[march_inds], color = 'b', marker = 'o', linestyle = 'none', label = 'march RVs')
+except IndexError as error:
+    print error
+try:
+    ax.errorbar(folded_times[feb_inds], rv_array[feb_inds], yerr= sigma_array[feb_inds], color = 'r', marker = 'o', linestyle = 'none', label = 'feb RVs')
+except IndexError as error:
+    print error
+
+
+#ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
+ax.plot(x_vals, sine_vals, color = 'k', linestyle = '--', label = 'Model')
+ax.set_xticklabels([])
+ax.set_xlim([0,1])
+#ax.set_xlabel('Phase')
+ax.set_ylabel('RV (km/s)')
+#ax.set_title(str(np.round(1.4/all_mratio,precision2)) + ' M_sun companion assuming 1.4 M_sun NS')
+props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+text_string =  r'$K_c =$ ' +str(np.round(fitted_curve_all[1], precision)) + r'$\pm$ ' + str(np.round(np.sqrt(fitted_cov_all[1,1]),precision)) + 'km/s' +'\n'+ r'$\gamma=$' +str(np.round(fitted_curve_all[0],precision)) + r'$\pm$' + str(np.round(np.sqrt(fitted_cov_all[0,0]),precision))+ ' km/s'
+#ax.text(0.2, 0.05,text_string, transform=ax.transAxes, fontsize=14, verticalalignment='bottom', bbox=props)
+ax.text(0.2, 0.05,text_string, transform=ax.transAxes, verticalalignment='bottom', bbox=props)
+
+try:
+    ax.legend()
+except IndexError:
+    pass
+
+#plt.show()
+
+#### Residuals
+
+#fig = plt.figure()
+#ax2 = fig.add_subplot(613)
+#ax2 =plt.subplot2grid((2,1), (1, 0), rowspan= 1)
+
+###########################################
+try:
+    ax2.errorbar(folded_times[march_inds], residuals[march_inds], yerr= sigma_array[march_inds], color = 'b', marker = 'o', linestyle = 'none', label = 'march RVs')
+except IndexError as error:
+    print error
+try:
+    ax2.errorbar(folded_times[feb_inds], residuals[feb_inds], yerr= sigma_array[feb_inds], color = 'r', marker = 'o', linestyle = 'none', label = 'feb RVs')
+except IndexError as error:
+    print error
+#ax.scatter(folded_timesB, rv_arrayB, color = 'r', label = '2/13/18')
+#ax.plot(x_vals, sine_vals, color = 'k', linestyle = '--', label = 'Model')
+#ax2.plot(x_vals, np.zeros(x_vals.shape), color = 'k', linestyle = '--', label = 'Model')
+ax2.axhline(y=0, color = 'k', linestyle = '--')
+ax2.set_xticklabels([])
+ax2.set_xlim([0,1])
+#ax2.set_xlabel('Phase')
+#ax2.set_ylabel('Residuals (km/s)')
+ax2.set_ylabel('Residuals')
+plt.subplots_adjust(wspace = 0, hspace = 0, top = 0.93, bottom = 0.07, left = 0.07, right = 0.93)
+
+plt.show()

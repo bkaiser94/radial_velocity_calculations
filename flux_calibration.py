@@ -28,24 +28,24 @@ import spec_plot_tools as spt
 #standard_directory = '~/Desktop/standards/'
 standard_directory = '/Users/BenKaiser/Desktop/standards/'
 #standard_file = "foke/fgd108.dat"
-standard_file = 'foke/ffeige67.dat'
-#standard_file = 'fhamuy/fltt6248.dat'
+#standard_file = 'foke/ffeige67.dat'
+standard_file = 'fhamuy/fltt6248.dat'
 #standard_file= 'fhamuy/feg274.dat'
 #standard_file= 'ctio_standards/fltt3218.dat'
 
 
 #output_filename = "GD108_sensitivity_curve.txt"
 #output_filename = 'Feige67_sensitivity_curve.txt'
-#output_filename= 'LTT6248_sensitivity_curve.txt'
-output_filename= 'EG274_sensitivity_curve.txt'
+output_filename= 'LTT6248_sensitivity_curve.txt'
+#output_filename= 'EG274_sensitivity_curve.txt'
 #output_filename = 'LTT3218_sensitivity_curve.txt'
 
 standard_file = standard_directory+standard_file
 
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
-#standard_name = 'LTT6248'
-standard_name = 'EG274'
+standard_name = 'LTT6248'
+#standard_name = 'EG274'
 #standard_name= 'LTT3218'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
@@ -58,7 +58,8 @@ standard_name = 'EG274'
 #observed_file = "wcmtb.GD108930blue.fits"
 #observed_file = 'wctb.0232_feige67_930_blue.fits'
 #observed_file  = 'wctb.0244_LTT6248_930_blue.fits'
-observed_file = 'wctb.0272_eg274_930_blue.fits'
+observed_file  = 'wctb.0269_LTT6248_930_blue_1arcsec.fits'
+#observed_file = 'wctb.0272_eg274_930_blue.fits'
 #observed_file= 'wcmtb.ltt3218930blue.fits'
 
 obs_fits = fits.open(observed_file)

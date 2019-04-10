@@ -38,7 +38,8 @@ combined_spec_file='fwctb.0220_J1431m4715_930_blue.fits'
 
 #astropy_input= '20190210_rv_teff7500_logg550_full.csv'
 #astropy_input='20190301_rv_teff7500_logg550.csv'
-astropy_input='20190320_rv_teff7000_logg500.csv'
+#astropy_input='20190320_rv_teff7000_logg500.csv'
+astropy_input ='20190408_rv_teff7000_logg500.csv'
 #astropy_input='20190319_rv_teff7000_logg500.csv'
 #scaling_range = [4600,4650]
 rms_range= [4600,4650]
