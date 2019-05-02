@@ -888,7 +888,7 @@ if spectrum_type=='individual':
     array_list= [target_name_list, time_list, rv_list, rv_err_list, teff_list, teff_err_list, logg_list, logg_err_list, baryv_list]
     out_table= Table(array_list, names=col_names, dtype= dtype_list)
     out_table.pprint()
-    out_table.write(output_astropy, format='ascii.csv')
+    out_table.write(output_astropy, format='ascii.csv', overwrite=True)
     print "Saved the data"
 else:
     run_model_grid(target_spec, noise_spec= noise_spec, plot_all= plot_fit)

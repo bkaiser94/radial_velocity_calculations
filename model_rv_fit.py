@@ -542,7 +542,7 @@ out_table.pprint()
 print "Saving the data... hopefully"
 #np.savetxt('rv_plot.txt', out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
 #np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s), Sigma (km/s)')
-out_table.write(output_filename, format='ascii.csv')
+out_table.write(output_filename, format='ascii.csv', overwrite=True)
 #np.savetxt(output_filename, out_array.T, delimiter =',', header = 'Times(BMJD_TDB), RV (km/s)') 
 print "Saved the data"
 

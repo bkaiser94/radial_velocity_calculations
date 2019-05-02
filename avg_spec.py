@@ -28,25 +28,126 @@ filenames= glob('wctb*')
 low_index=10
 high_index=-5
 
-filename_matches=[]
+filename_matches={}
 prev_core=''
 filename_set=[]
-for filename in filenames:
+#filename_set={}
+for i,filename in enumerate(filenames[:-1]):
     core_name= filename[low_index:high_index]
-    if core_name == prev_core:
-        filename_set.append(filename)
-        print('match')
-        print(core_name, prev_core)
-    else:
-        filename_matches.append([filename_set])
+    filename_set.append(filename)
+    if core_name != filenames[i+1][low_index:high_index]:
+        #filename_set.append(filename)
+        #print('match')
+        #print(core_name, prev_core)
+        try:
+            print("filename_matches[core_name]", filename_matches[core_name])
+            prev_list=filename_matches[core_name]
+            print('prev_list', prev_list)
+            new_list=prev_list+filename_set
+            filename_matches[core_name]=new_list
+            #filename_matches[core_name].append(filename_set)
+            #filename_matches[core_name]=filename_matches[core_name].append(filename_set)
+            print("filename_matches[core_name]", filename_matches[core_name])
+        except KeyError:
+            filename_matches[core_name]=filename_set
+            print("filename_matches[core_name]", filename_matches[core_name])
         filename_set=[]
-    prev_core= core_name
+        print("resetting filename_set")
+    else:
+        pass
+    
+    #else:
+        #try:
+            #print(filename_matches[prev_core])
+            #filename_matches[prev_core].append(filename_set)
+        #except KeyError:
+            #filename_matches[prev_core]=filename_set
+        #filename_matches.append([filename_set])
+        #print(filename_set)
+        #filename_set=[]
+        #filename_set.append(filename)
+    #prev_core= core_name
+    #filename_set.append(filename)
     print('======')
     print(filename)
     print(core_name)
+    print(filename_set)
     print('+++++++')
-filename_matches.append([filename_set])
+filename_set.append(filename)
+#filename_matches.append([filename_set])
 for sets in filename_matches:
     print('======')
     print(sets)
     print('+++++++')
+try:
+    print(filename_matches[core_name])
+    filename_matches[core_name].append(filename_set)
+except KeyError:
+    filename_matches[core_name]=filename_set
+for sets in filename_matches:
+    print('======')
+    print(filename_matches[sets])
+    print('+++++++')
+    
+#print(filename_matches['eg274_400m2'])
+
+#######################################3
+#########################################
+##NOw do the actual image combination with those lists of filenames that can be used for combination.
+
+
+
+def avg_spectra(target_list):
+    flux_list=[]
+    noise2_list=[]
+    #sky_list=[]
+    print("target_list", target_list)
+    for target_file in target_list:
+        target_spec, header, target_noise = spt.retrieve_spec(target_file)
+        flux_list.append(target_spec[1])
+        noise2_list.append(target_noise[1]**2)
+        #sky_list(
+        plt.plot(target_spec[1], label=target_file)
+    flux_array=np.array(flux_list)
+    print(flux_array.shape)
+    noise2_array= np.array(noise2_list)
+    avg_flux= np.nanmean(flux_array, axis=0)
+    avg_noise2= np.sum(noise2_array, axis=0)/noise2_array.shape[0]**2
+    avg_noise= np.sqrt(avg_noise2)
+    plt.plot(avg_flux, label='avg')
+    #plt.title(target_file)
+    plt.legend()
+    plt.show()
+    core_name=target_file[low_index:high_index]
+    avg_noise=avg_noise/avg_flux
+    
+    output_name= "avg_"+ core_name + ".fits"
+    print('output_name:', output_name)
+    print('saving hopefully...')
+    hdu=fits.PrimaryHDU(target_spec[0], header= header)
+    hdu1= fits.ImageHDU(avg_flux)
+    hdu2= fits.ImageHDU(np.ones(avg_flux.shape))
+    hdu3 = fits.ImageHDU(avg_noise)
+    hdulist= fits.HDUList([hdu,hdu1,hdu2,hdu3])
+    hdulist.writeto(output_name, overwrite= True)
+    print('should have saved')
+    return
+
+print("\n\n\n\n")
+print("##################")
+print("##################")
+print("##################")
+print("\n\n\n\n")
+
+for sets in filename_matches:
+    print('======')
+    print(filename_matches[sets])
+    avg_spectra(filename_matches[sets])
+    print('+++++++')
+
+
+
+
+
+
+

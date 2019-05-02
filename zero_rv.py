@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 import sys
 from astropy.time import Time
+from astropy.table import Table
 import astropy.coordinates as coord
 import astropy.units as u
 import astropy.constants as const
@@ -33,10 +34,15 @@ listfile = 'listFWCTB'
 target_list = np.genfromtxt(listfile, dtype ='str')
 #output_list = []
 #output_list_name = 'listZFWCTB' #zero rv is the new letter tacked onto the front. I'm pretty sure the only thing we should be changing is the wavelength values in the zero index anyway
-model_rv_input = np.genfromtxt('model_rvs.txt', names = True)
+#model_rv_input = np.genfromtxt('model_rvs.txt', names = True)
+model_rv_input=np.genfromtxt('20190408_model_rvs_new.txt', names=True)
+#rv_file= ''
+#rv_table= Table.read(rv_file)
+
 
 
 model_rvs = model_rv_input['RV_kms']
+#model_rvs= rv_table['rv']
 
 
 def rv_correct(wavelengths, radial_velocity):

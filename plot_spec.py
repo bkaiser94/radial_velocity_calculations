@@ -34,11 +34,50 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-#filenames = glob.(sys.argv[1])
-filenames= glob('wctb*')
+#filenames = glob(sys.argv[1])
+#filenames= glob('wctb*')
+#filenames= glob('wctb*SDSS*')
+
 #print(filenames)
 plot_wavelength=False
 plot_400m2_tell= False
+norm_range=[1240,1280]
+#norm_range=[1560,1590]
+
+#file_setting='all_avg'
+file_setting='command'
+#file_setting='all_wctb'
+
+if file_setting=='all_avg':
+    print(file_setting)
+    filenames=glob('avg_*')
+    single_iterate=False
+    double_iterate=True
+
+elif file_setting=='all_wctb':
+    print(file_setting)
+    filenames=glob('wctb*')
+    single_iterate=True
+    double_iterate=False
+
+elif file_setting =='command':
+    filename1=sys.argv[1]
+    filename2=sys.argv[2]
+    #filename1= glob(sys.argv[1])
+    #filename2=glob(sys.argv[2])
+    print(sys.argv[1])
+    print(filename1)
+    print(sys.argv[2])
+    print(filename2)
+    single_iterate=False
+    double_iterate=False
+    
+else:
+    print('\n\nno file_setting specificied\n\n')
+    
+
+
+
 
 
 def convolve_spectrum(target_spec, header, kernel_type='gaussian'):
@@ -60,23 +99,32 @@ def convolve_spectrum(target_spec, header, kernel_type='gaussian'):
     return spec_out
 
 
-def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian'):
+def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', norm=False, forced_title=''):
     if smooth:
         spec= convolve_spectrum(spec, header, kernel_type=kernel_type)
         plt.title(filename+ ' smoothed')
     else:
         plt.title(filename)
         pass
+    if norm:
+        #spec[1]= spec[1]/np.nanmean(spec[1])
+        #spec[1]=spec[1]/np.nanmean(spec[1][1240:1280])
+        spec[1]=spec[1]/np.nanmean(spec[1][norm_range[0]:norm_range[1]])
+        #spec[1]=spec[1]/np.nanmax(spec[1])
+        #spec[1]=spec[1]/np.nanmean(spec[1][1560:1590])
+        #spec[1]=spec[1]/np.nanmean(spec[1][1020:1029])
+    else:
+        pass
     if plot_wavelength:
         plt.xlabel(r'Wavelength ($\AA$)')
-        plt.plot(spec[0], spec[1])
+        plt.plot(spec[0], spec[1], label=filename)
     else:
         plt.xlabel('Pixel')
-        plt.plot(spec[1])
+        plt.plot(spec[1], label=filename)
     plt.ylabel('Flux')
     #plt.title(filename)
     #plt.plot(spec[0], spec[1])
-    plt.show()
+    #plt.show()
     return
 
 def plot_dwavelength(spec):
@@ -125,24 +173,69 @@ def plot_SNR(spec, noise, filename):
 def plot_sky(filename):
     hdu=fits.open(filename)
     sky=hdu[2].data
-    plt.plot(sky)
-    plt.xlabel('pixel')
+    if plot_wavelength:
+        plt.xlabel(r'Wavelength ($\AA$)')
+        plt.plot(hdu[0].data, sky)
+    else:
+        plt.plot(sky)
+        plt.xlabel('pixel')
     plt.title(filename+' sky')
     plt.show()
     return
 
+def plot_diff_spec(spec1, spec2, filename1, filename2, header, smooth=False, kernel_type='gaussian', norm=False):
+    plot_spectrum(spec1, filename1, header, norm=norm, smooth=smooth, kernel_type=kernel_type)
+    plot_spectrum(spec2, filename2, header, norm=norm, smooth=smooth, kernel_type=kernel_type)
+    if norm:
+        spec1[1]=spec1[1]/np.nanmean(spec1[1][norm_range[0]:norm_range[1]])
+        spec2[1]=spec2[1]/np.nanmean(spec2[1][norm_range[0]:norm_range[1]])
+        #spec1[1]=spec1[1]/np.nanmax(spec1[1])
+        #spec2[1]=spec2[1]/np.nanmax(spec2[1])
+    else:
+        pass
+    diff_flux=spec1[1]-spec2[1]
+    diff_spec=np.vstack([spec1[0], diff_flux])
+    plot_spectrum(diff_spec, filename1+' - ' + filename2, header, smooth=smooth, kernel_type=kernel_type)        
+    return
+
+if file_setting=='command':
+        target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
+        target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
+        plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
+        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
+        plt.axhline(y=0, linestyle='--', color='k')
+        plt.legend()
+        plt.show()
+
+if single_iterate:
+    for filename in filenames:
+        target_spec, header, target_noise= spt.retrieve_spec(filename)
+        #conv_spec= convolve_spectrum(target_spec, header)
+        #plot_spectrum(target_spec, filename, header, smooth=True)
+        #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='box')
+        #plot_spectrum(target_spec, filename, header)
+        plot_spectrum(target_spec, filename, header, norm=True)
+        plot_spectrum(target_spec, filename, header, norm=True)
+        #plot_spectrum(target_spec, filename, header, smooth=True)
+        plot_sky(filename)
+        #plot_SNR(target_spec, target_noise, filename)
+        #plot_dwavelength(target_spec)
+    plt.legend()
+    plt.show()
+else:
+    pass
 
 
-for filename in filenames:
-    target_spec, header, target_noise= spt.retrieve_spec(filename)
-    #conv_spec= convolve_spectrum(target_spec, header)
-    #plot_spectrum(target_spec, filename, header, smooth=True)
-    #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='box')
-    plot_spectrum(target_spec, filename, header)
-    plot_spectrum(target_spec, filename, header, smooth=True)
-    plot_sky(filename)
-    plot_SNR(target_spec, target_noise, filename)
-    #plot_dwavelength(target_spec)
+if double_iterate:
+    for filename1 in filenames:
+        target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
+        for filename2 in filenames:
+            target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
+            #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
+            plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
+            plt.axhline(y=0, linestyle='--', color='k')
+            plt.legend()
+            plt.show()
+else:
+    pass
 
-    
-    
