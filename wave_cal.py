@@ -25,11 +25,13 @@ from astropy import coordinates as coords
 from astropy import units as u
 from astropy import constants as const
 
+import get_cal_params as gcp
+
 zerolistname= 'listZero'
 
 speclistname = 'listCTB'
 masterflatfile= 'mctb.master_flat.fits'
-linefilename = 'JJ_FeAr_lines.txt'
+#linefilename = 'JJ_FeAr_lines.txt'
 zerolist = np.genfromtxt(zerolistname, dtype ='str')
 print "zerolist.shape",zerolist.shape
 n_biases= zerolist.shape[0]
@@ -40,43 +42,60 @@ skip_flat= True
 
 def to_barycenter(header):
     #input_times = header['DATE-OBS'] #not gps-synched times
-    input_year = header['OPENDATE'] #gps-synched date
-    input_hours = header['OPENTIME'] #gps-synched time
-    exp_time= header['EXPTIME']*u.s
-    input_times = input_year+'T'+input_hours #formatting correctly
-    obs_time = Time(input_times, format = 'isot', scale = 'utc',location = cerro_pachon_location)
-    obs_time= obs_time+exp_time/2.
-    ra = header['RA']
-    dec = header['DEC']
-    target_coord = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg), )
-    bary_corr =obs_time.tdb.light_travel_time(target_coord)
-    bmjd_tdb_val = (obs_time.tdb+ bary_corr.tdb).mjd
-    header.append(card = ('BMJD_TDB', bmjd_tdb_val, "exp. midpoint value from OPENDATE and OPENTIME headers"))
+    try:
+        input_year = header['OPENDATE'] #gps-synched date
+        input_hours = header['OPENTIME'] #gps-synched time
+        exp_time= header['EXPTIME']*u.s
+        input_times = input_year+'T'+input_hours #formatting correctly
+        obs_time = Time(input_times, format = 'isot', scale = 'utc',location = cerro_pachon_location)
+        obs_time= obs_time+exp_time/2.
+        ra = header['RA']
+        dec = header['DEC']
+        target_coord = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg), )
+        bary_corr =obs_time.tdb.light_travel_time(target_coord)
+        bmjd_tdb_val = (obs_time.tdb+ bary_corr.tdb).mjd
+        header.append(card = ('BMJD_TDB', bmjd_tdb_val, "exp. midpoint value from OPENDATE and OPENTIME headers"))
+    except KeyError as error:
+        print("\n\n")
+        print("==========")
+        print("Problem converting to BMJD_TDB time, so there won't be these times for this exposure and subsequent data from it.")
+        print(error)
+        header.append(card = ('BMJD_TDB','Bad', "exp. midpoint value from OPENDATE and OPENTIME headers"))
+        print('===========')
+        print('\n\n')
     return header
 
 ####
 #trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
-#trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
-trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
+trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
+#trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
+#trace_band_mid=110
+#trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid=170 #y-pixel for comp stars upper
 #trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
 trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
+#trace_band_width= 18 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 10 #pixel width to determine the center of the trace
 core_sides=  5
 #core_sides=  7
-bkg_core_sides= core_sides #This should be changed most likely to make the value be higher to further reduce noise.
+bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 y_trace_width= core_sides*2+1 #the actual number of pixels in the vertical direction that are in the trace (or background)
 poly_degree = 3 #polynomial degree of the fit to the trace
+lamp_poly_degree=5
+#lamp_poly_degree=3
 flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
-bkg_shift = 50 #20190412 previously in place
+#bkg_shift = 50 #20190412 previously in place
+bkg_shift= 40
 #bkg_shift= 25
 lamp_sigma_guess= 2
-line_search_width = 3
-lamp_p0 = [1000, 500,  lamp_sigma_guess, 0]
-lamp_bounds = ([0,-np.inf,0,0],[30000,np.inf,20,5000 ])
+line_search_width = 3#formerly 3 20190502
+#lamp_p0 = [1000, 500,  lamp_sigma_guess, 0]
+lamp_p0 = [10000, 500,  lamp_sigma_guess, 0]
+#lamp_bounds = ([0,-np.inf,0,0],[30000,np.inf,20,5000 ])
+lamp_bounds = ([1,-np.inf,0,0],[1e6,np.inf,40,10000 ])
 seeing_range = [1200, 1220]
 #seeing_p0= [1000, trace_band_width/2, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
 #seeing_p0= [1000, 5, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
@@ -85,10 +104,30 @@ seeing_range = [1200, 1220]
 #see_fit_bounds = ([50, 0, 0.7, 0],[18000, 1000, trace_band_width, 2000]) #(lower, upper) bounds on the fit for the seeing.
 seeing_p0= [2000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
 see_fit_bounds = ([50, 0, 0.7, 0],[1e8, 40, trace_band_width, 1e8]) #(lower, upper) bounds on the fit for the seeing.
+######
+
+expedited_wavecals=True
+
+#fear_array= np.genfromtxt(linefilename, names = True)
+#line_x_checks = np.copy(fear_array['Pixel']) +90
+#print "line_x_checks should have just been created"
+#print line_x_checks
+#lamp_lines = np.copy(fear_array['User'])
+#line_sides = np.ones(line_x_checks.shape[0])*line_search_width
+
+
 #####
 
-fear_array= np.genfromtxt(linefilename, names = True)
-line_x_checks = np.copy(fear_array['Pixel']) +90
+speclist = np.genfromtxt(speclistname, dtype = 'str')
+
+arc_im_filename=speclist[1] #need to change this to be an explicit reference to whatever place actually indicates the lamp image.
+header=fits.getheader(arc_im_filename)
+
+
+#####
+setup_dict= gcp.get_cal_params(header)
+fear_array= np.genfromtxt(setup_dict['linelistname'], names = True)
+line_x_checks = np.copy(fear_array['Pixel']) +setup_dict['offset']
 print "line_x_checks should have just been created"
 print line_x_checks
 lamp_lines = np.copy(fear_array['User'])
@@ -97,7 +136,6 @@ line_sides = np.ones(line_x_checks.shape[0])*line_search_width
 
 ####
 
-speclist = np.genfromtxt(speclistname, dtype = 'str')
 
 #######
 
@@ -200,7 +238,7 @@ def normalize_flat(masterflatfile=masterflatfile, plot_all = False):
     return normed_flat
 
 ######
-def get_trace_waves(target_med, lamp_im):
+def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[0]):
     target_band=target_med[trace_band_mid-trace_band_width/2:trace_band_mid+trace_band_width/2,:]
     band_inds= np.indices(target_band.shape)
     x_positions= band_inds[1,1]
@@ -218,11 +256,15 @@ def get_trace_waves(target_med, lamp_im):
     print polynomial_fit
     print polynomial_fit.shape
     poly_curve_y = np.polyval(polynomial_fit, x_positions)
-    def bkg_trace(x_positions):
+    def bkg_trace(x_positions, sign='minus'):
         #return  np.int_(poly_curve_y[x_positions]+bkg_shift)
-        return  np.int_(poly_curve_y[x_positions]-bkg_shift)
+        if sign=='minus':
+            return  np.int_(poly_curve_y[x_positions]-bkg_shift)
+        elif sign=='plus':
+            return np.int_(poly_curve_y[x_positions]+bkg_shift)
     std_dev = np.std(poly_curve_y-y_positions)
-    plt.imshow(np.log(img_data),cmap = 'hot', interpolation = 'none')
+    #plt.imshow(np.log10(img_data),cmap = 'hot', interpolation = 'none')
+    plt.imshow(np.sqrt(img_data),cmap = 'hot', interpolation = 'none')
     plt.plot(x_positions, poly_curve_y, color = 'blue', label  = 'polynomial fit')
     plt.plot(x_positions,y_positions, color = 'black', label = 'max values', linestyle = 'none', marker = '*')
     plt.plot(x_positions, poly_curve_y+core_sides, color = 'blue', linestyle = '--')
@@ -231,8 +273,11 @@ def get_trace_waves(target_med, lamp_im):
     #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift-core_sides), color = 'cyan', linestyle= '--')
     #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift+core_sides), color = 'cyan', linestyle = '--')
     plt.plot(x_positions, bkg_trace(x_positions), color = 'cyan', label = 'background')
-    plt.plot(x_positions,bkg_trace(x_positions)-core_sides, color = 'cyan', linestyle= '--')
-    plt.plot(x_positions, bkg_trace(x_positions)+core_sides, color = 'cyan', linestyle = '--')
+    plt.plot(x_positions,bkg_trace(x_positions)-bkg_core_sides, color = 'cyan', linestyle= '--')
+    plt.plot(x_positions, bkg_trace(x_positions)+bkg_core_sides, color = 'cyan', linestyle = '--')
+    plt.plot(x_positions, bkg_trace(x_positions, sign='plus'), color = 'cyan', label = 'background')
+    plt.plot(x_positions,bkg_trace(x_positions, sign='plus')-bkg_core_sides, color = 'cyan', linestyle= '--')
+    plt.plot(x_positions, bkg_trace(x_positions, sign='plus')+bkg_core_sides, color = 'cyan', linestyle = '--')
     plt.legend()
     plt.show()
     plt.imshow(target_band[:,seeing_range[0]:seeing_range[1]], cmap='hot')
@@ -253,108 +298,127 @@ def get_trace_waves(target_med, lamp_im):
         #bkg_sum= np.sum(target_med[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
         bkg_sum= np.sum(target_med[bkg_trace(x_pos)-core_sides:bkg_trace(x_pos)+core_sides+1, x_pos])
         bkg_light= np.append(bkg_light,[bkg_sum])
-        lamp_sum= np.sum(lamp_im[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
+        #lamp_sum= np.sum(lamp_im[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
+        lamp_sum= np.average(lamp_im[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
         lamp_light= np.append(lamp_light,[lamp_sum])
-    plt.plot(x_positions,target_light,'-')
-    plt.xlabel('x (pixel)')
-    plt.ylabel('Counts')
-    plt.title('Target Spectrum')
-    plt.show()
-    
+    if do_wavelengths:
+        plt.plot(x_positions,target_light,'-')
+        plt.xlabel('x (pixel)')
+        plt.ylabel('Counts')
+        plt.title('Target Spectrum')
+        plt.show()
+    else:
+        pass
     target_light= target_light-bkg_light
-    for x_spot in line_x_checks:
-        plt.axvline( x= x_spot, color = 'r')
-    #for x_spot in np.array(WaveList_Fe_930_12_24[0])/2.:
-        #plt.axvline( x= x_spot, color = 'r')
-    plt.plot(x_positions,lamp_light,'-')
-    plt.xlabel('x (pixel)')
-    plt.ylabel('Counts')
-    plt.title('Lamp Spectrum (record corresponding dotted line and emission pixels)')
-    #plt.yscale('log')
-    plt.show()
-    #offset = 0
+    if do_wavelengths:
+        for x_spot in line_x_checks:
+            plt.axvline( x= x_spot, color = 'r')
+        #for x_spot in np.array(WaveList_Fe_930_12_24[0])/2.:
+            #plt.axvline( x= x_spot, color = 'r')
+        plt.plot(x_positions,lamp_light,'-')
+        plt.xlabel('x (pixel)')
+        plt.ylabel('Counts')
+        plt.title('Lamp Spectrum (record corresponding dotted line and emission pixels)')
+        #plt.yscale('log')
+        plt.show()
+        #offset = 0
 
-    dotted_pixel = float(raw_input("dotted line pixel>>>"))
-    emission_pixel= float(raw_input("emission line pixel>>>"))
-    #dotted_pixel=0
-    #emission_pixel=0
-    offset = emission_pixel-dotted_pixel
-    #print "skipping offsetting. Change lines 261 - 264 if you want otherwise."
-   
-    line_x_checks2 = np.copy(line_x_checks+offset)
-    #for x_spot in line_x_checks2:
-        #plt.axvline( x= x_spot, color = 'r')
-    #for x_spot in np.array(WaveList_Fe_930_12_24[0])/2.:
-        #plt.axvline( x= x_spot, color = 'r')
-    #plt.plot(x_positions,lamp_light,'-')
-    #plt.xlabel('x (pixel)')
-    #plt.ylabel('Counts')
-    #plt.title('Lamp Spectrum (offset applied)')
-    ##plt.yscale('log')
-    #plt.show()
-    peaks_found=[]
-    wave_peaks_found = []
-    for lamp_line_guess,lamp_line_wave in zip( line_x_checks2,lamp_lines):
-        try:
-            lamp_params, lamp_cov = fit_gaussian_curve(x_positions, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width, bounds= lamp_bounds)
-            if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1)):
-                peaks_found.append(lamp_params[1])
-                wave_peaks_found.append(lamp_line_wave)
-                plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
-                plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
-                plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
-                for x_spot in line_x_checks2:
-                    plt.axvline( x= x_spot, color = 'k',linestyle = '--')
-                plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
-                plt.xlabel('Pixel')
-                plt.ylabel('Counts')
-                plt.legend()
-                plt.show()
-            else:
-                print "Gaussian too flat, flipped, or narrow (or not within the actual fitting region...):", lamp_params
-        except RuntimeError as error:
-            print error
-    peaks_found = np.array(peaks_found)
-    wave_peaks_found = np.array(wave_peaks_found)
-    #print "line_x_checks:"
-    #print line_x_checks
-    #print "peaks found"
-    #print peaks_found
-    #print "wave_peaks_found"
-    #print wave_peaks_found
-    #for line,peak,wave in zip(line_x_checks, peaks_found, wave_peaks_found):
-        #print line, peak, wave
-    #polynomial fitting
-    #poly_coeffs_lamp= np.polyfit(centroids,lamp_lines,2)
-    poly_coeffs_lamp =np.polyfit(peaks_found, wave_peaks_found, 5)
-    def x_to_wavelength(x_positions):
-        #poly_curve_wavelength= poly_coeffs_lamp[2]+poly_coeffs_lamp[1]*x_positions + poly_coeffs_lamp[0]*(x_positions**2)
-        poly_curve_wavelength= poly_coeffs_lamp[-1]+poly_coeffs_lamp[-2]*x_positions + poly_coeffs_lamp[-3]*(x_positions**2)+poly_coeffs_lamp[-4]*(x_positions**3)+poly_coeffs_lamp[-5]*(x_positions**4)+poly_coeffs_lamp[-6]*(x_positions**5)
-        return poly_curve_wavelength
-    poly_curve_wavelength= x_to_wavelength(x_positions)
-    plt.plot(poly_curve_wavelength,target_light,'-')
-    plt.xlabel(r'Wavelength ($\AA$)')
-    plt.ylabel('Counts')
-    plt.title('Target Spectrum')
-    #plt.yscale('log')
-    #plt.ylim(10,200)
-    plt.show()
+        dotted_pixel = float(raw_input("dotted line pixel>>>"))
+        emission_pixel= float(raw_input("emission line pixel>>>"))
+        #dotted_pixel=0
+        #emission_pixel=0
+        offset = emission_pixel-dotted_pixel
+        #print "skipping offsetting. Change lines 261 - 264 if you want otherwise."
+    
+        line_x_checks2 = np.copy(line_x_checks+offset)
+        #for x_spot in line_x_checks2:
+            #plt.axvline( x= x_spot, color = 'r')
+        #for x_spot in np.array(WaveList_Fe_930_12_24[0])/2.:
+            #plt.axvline( x= x_spot, color = 'r')
+        #plt.plot(x_positions,lamp_light,'-')
+        #plt.xlabel('x (pixel)')
+        #plt.ylabel('Counts')
+        #plt.title('Lamp Spectrum (offset applied)')
+        ##plt.yscale('log')
+        #plt.show()
+        peaks_found=[]
+        wave_peaks_found = []
+        for lamp_line_guess,lamp_line_wave in zip( line_x_checks2,lamp_lines):
+            try:
+                lamp_params, lamp_cov = fit_gaussian_curve(x_positions, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width, bounds= lamp_bounds)
+                #if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1)):
+                if ((np.abs(lamp_params[0]) > 1.)  and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1e-3)):
+                    peaks_found.append(lamp_params[1])
+                    wave_peaks_found.append(lamp_line_wave)
+                    plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
+                    plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
+                    plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
+                    for x_spot in line_x_checks2:
+                        plt.axvline( x= x_spot, color = 'k',linestyle = '--')
+                    plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
+                    plt.xlabel('Pixel')
+                    plt.ylabel('Counts')
+                    plt.legend()
+                    plt.show()
+                else:
+                    print "Gaussian too flat, flipped, or narrow (or not within the actual fitting region...):", lamp_params
+                    plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
+                    plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
+                    plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
+                    for x_spot in line_x_checks2:
+                        plt.axvline( x= x_spot, color = 'k',linestyle = '--')
+                    plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
+                    plt.xlabel('Pixel')
+                    plt.ylabel('Counts')
+                    plt.legend()
+                    plt.show()
+            except RuntimeError as error:
+                print error
+        peaks_found = np.array(peaks_found)
+        wave_peaks_found = np.array(wave_peaks_found)
+        #print "line_x_checks:"
+        #print line_x_checks
+        #print "peaks found"
+        #print peaks_found
+        #print "wave_peaks_found"
+        #print wave_peaks_found
+        #for line,peak,wave in zip(line_x_checks, peaks_found, wave_peaks_found):
+            #print line, peak, wave
+        #polynomial fitting
+        #poly_coeffs_lamp= np.polyfit(centroids,lamp_lines,2)
+        poly_coeffs_lamp =np.polyfit(peaks_found, wave_peaks_found, lamp_poly_degree)
+        def x_to_wavelength(x_positions):
+            #poly_curve_wavelength= poly_coeffs_lamp[2]+poly_coeffs_lamp[1]*x_positions + poly_coeffs_lamp[0]*(x_positions**2)
+            #poly_curve_wavelength= poly_coeffs_lamp[-1]+poly_coeffs_lamp[-2]*x_positions + poly_coeffs_lamp[-3]*(x_positions**2)+poly_coeffs_lamp[-4]*(x_positions**3)+poly_coeffs_lamp[-5]*(x_positions**4)+poly_coeffs_lamp[-6]*(x_positions**5)
+            poly_curve_wavelength=np.polyval(poly_coeffs_lamp, x_positions)
+            return poly_curve_wavelength
+        poly_curve_wavelength= x_to_wavelength(x_positions)
+        plt.plot(poly_curve_wavelength,target_light,'-')
+        plt.xlabel(r'Wavelength ($\AA$)')
+        plt.ylabel('Counts')
+        plt.title('Target Spectrum')
+        #plt.yscale('log')
+        #plt.ylim(10,200)
+        plt.show()
 
-    #plt.plot(x_positions, poly_curve_wavelength,  label = 'wavelength solution', color ='blue')
-    #plt.plot(peaks_found, wave_peaks_found, marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
-    #plt.plot(line_x_checks2, lamp_lines, label = 'input points', color = 'green', marker = '*', linestyle = 'none')
-    #plt.title("wavelength to pixel position")
-    #plt.legend()
-    #plt.show()
+        #plt.plot(x_positions, poly_curve_wavelength,  label = 'wavelength solution', color ='blue')
+        #plt.plot(peaks_found, wave_peaks_found, marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
+        #plt.plot(line_x_checks2, lamp_lines, label = 'input points', color = 'green', marker = '*', linestyle = 'none')
+        #plt.title("wavelength to pixel position")
+        #plt.legend()
+        #plt.show()
 
-    plt.axhline(y=0 ,  label = 'wavelength solution', color ='blue')
-    plt.plot(peaks_found, wave_peaks_found-x_to_wavelength(peaks_found), marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
-    plt.plot(line_x_checks2, lamp_lines-x_to_wavelength(line_x_checks2), label = 'input points', color = 'green', marker = '*', linestyle = 'none')
-    plt.title("wavelength to pixel position Residuals")
-    plt.xlabel('Pixel')
-    plt.ylabel(r'Wavelength Residual $\AA$')
-    plt.legend(loc= 'best')
-    plt.show()
+        plt.axhline(y=0 ,  label = 'wavelength solution', color ='blue')
+        plt.plot(peaks_found, wave_peaks_found-x_to_wavelength(peaks_found), marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
+        plt.plot(line_x_checks2, lamp_lines-x_to_wavelength(line_x_checks2), label = 'input points', color = 'green', marker = '*', linestyle = 'none')
+        plt.title("wavelength to pixel position Residuals")
+        plt.xlabel('Pixel')
+        plt.ylabel(r'Wavelength Residual $\AA$')
+        plt.legend(loc= 'best')
+        plt.show()
+    else:
+        print("skipping wavelength fitting\npresumably because you already did it, so there's no need to do it again.")
+        pass
     return [polynomial_fit, poly_coeffs_lamp], seeing_sigma
 #######3
 
@@ -381,6 +445,8 @@ polynomial_list = [] #should eventually be [[trace_polynomial, wavelength_fit_po
 sigma_list= [] #to be appended to the headers for 
 seeing_list = []
 #need to determine if the given image is a lamp or a target spectrum
+do_wavelengths=True
+poly_coeffs_lamp=[0]
 for counter, img in enumerate(speclist):
     filename= glob(img)[0]
     #if '_fe' in filename.lower():
@@ -420,7 +486,13 @@ for counter, img in enumerate(speclist):
             lamp_header = fits.getheader(filename)
             lamp_im= lamp_i[0].data
             target_med = np.nanmedian(target_stack, axis = 0)
-            new_coeffs, seeing_sig= get_trace_waves(target_med, lamp_im)
+            #new_coeffs, seeing_sig= get_trace_waves(target_med, lamp_im)
+            if expedited_wavecals:
+                new_coeffs, seeing_sig= get_trace_waves(target_med, lamp_im, do_wavelengths=do_wavelengths, poly_coeffs_lamp=poly_coeffs_lamp)
+                poly_coeffs_lamp=new_coeffs[1]
+                do_wavelengths=False
+            else:
+                new_coeffs, seeing_sig= get_trace_waves(target_med, lamp_im)
             sigma_list.append(seeing_sig)
             seeing_list.append(2*np.sqrt(2*np.log(2))*seeing_sig) #assuming normal distribution for that
             polynomial_list.append(new_coeffs)
@@ -496,7 +568,7 @@ for counter, img in enumerate(speclist):
             target_noise2 = np.copy(xsum+trace_vals.shape[0]*header['RDNOISE']**2+trace_vals.shape[0]*header['RDNOISE']**2/n_biases)
             target_noise2_list= np.append(target_noise2_list, [target_noise2])
             up_bkg=img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+bkg_core_sides+1),x_pos]
-            down_bkg= img_data[np.int_(poly_curve_y[x_pos]-bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]-bkg_shift+bkg_core_sides+1),x_pos]
+            down_bkg= img_data[np.int_(poly_curve_y[x_pos]-bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]-bkg_shift+bkg_core_sides+1),x_pos]
             bkg_comb= np.append(up_bkg, down_bkg)
             #print "trace_vals.shape", trace_vals.shape
             #print "bkg_comb.shape", bkg_comb.shape

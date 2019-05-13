@@ -23,29 +23,33 @@ import scipy.interpolate as scinterp
 
 
 import spec_plot_tools as spt
+import cal_params as cp
 
+
+#poly_degree= 5 #order of polynomials from before 20190506
+poly_degree=7
 
 #standard_directory = '~/Desktop/standards/'
 standard_directory = '/Users/BenKaiser/Desktop/standards/'
 #standard_file = "foke/fgd108.dat"
 #standard_file = 'foke/ffeige67.dat'
-standard_file = 'fhamuy/fltt6248.dat'
+#standard_file = 'fhamuy/fltt6248.dat'
 #standard_file= 'fhamuy/feg274.dat'
 #standard_file= 'ctio_standards/fltt3218.dat'
 
 
 #output_filename = "GD108_sensitivity_curve.txt"
 #output_filename = 'Feige67_sensitivity_curve.txt'
-output_filename= 'LTT6248_sensitivity_curve.txt'
+#output_filename= 'LTT6248_sensitivity_curve.txt'
 #output_filename= 'EG274_sensitivity_curve.txt'
 #output_filename = 'LTT3218_sensitivity_curve.txt'
 
-standard_file = standard_directory+standard_file
+#standard_file = standard_directory+standard_file
 
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
-standard_name = 'LTT6248'
-#standard_name = 'EG274'
+#standard_name = 'LTT6248'
+standard_name = 'EG274'
 #standard_name= 'LTT3218'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
@@ -58,9 +62,34 @@ standard_name = 'LTT6248'
 #observed_file = "wcmtb.GD108930blue.fits"
 #observed_file = 'wctb.0232_feige67_930_blue.fits'
 #observed_file  = 'wctb.0244_LTT6248_930_blue.fits'
-observed_file  = 'wctb.0269_LTT6248_930_blue_1arcsec.fits'
+#observed_file  = 'wctb.0269_LTT6248_930_blue_1arcsec.fits'
 #observed_file = 'wctb.0272_eg274_930_blue.fits'
 #observed_file= 'wcmtb.ltt3218930blue.fits'
+
+#observed_file='avg_EG274_400m1.fits'
+observed_file='avg_wctb.EG274_400m2.fits'
+#observed_file='avg_wctb.EG274_400m1.fits'
+
+##############################
+##############################
+
+def get_star_info(starname):
+    standard_dict= cp.standard_dict[starname.lower()]
+    standard_dict['filename']=standard_directory+standard_dict['filename']
+    return standard_dict
+
+
+
+
+
+
+
+
+
+
+############################
+##########################
+
 
 obs_fits = fits.open(observed_file)
 header = fits.getheader(observed_file)
@@ -87,20 +116,27 @@ obs_flux1= obs_flux1/np.float_(exptime) #converts to counts per second
     #[4835.18, 4907.76]
     #] #for Feige67
 
-wavelength_masks=[
-    [3792.92, 3811.62],
-    [3823.59, 3853.88],
-    [3867.34,3915.21],
-    [3939.52, 4029.45],
-    [4046.53, 4189.13],
-    [4251.3, 4470.2],
-    [4672.57,4706.4],
-    [4781.18, 4994.76]
-    ] #for EG274
+#wavelength_masks=[
+    #[3792.92, 3811.62],
+    #[3823.59, 3853.88],
+    #[3867.34,3915.21],
+    #[3939.52, 4029.45],
+    #[4046.53, 4189.13],
+    #[4251.3, 4470.2],
+    #[4672.57,4706.4],
+    #[4781.18, 4994.76]
+    #] #for EG274
 #####
 
-
-stand_array = np.genfromtxt(glob(standard_file)[0]).T
+#standard_file = standard_directory+standard_file
+standard_info = get_star_info(standard_name)
+print type(standard_info['balmer_masks'])
+print type(standard_info['other_masks'])
+wavelength_masks=standard_info['balmer_masks']+standard_info['other_masks']
+print "wavelength_masks:", wavelength_masks
+#stand_array = np.genfromtxt(glob(standard_file)[0]).T
+stand_array = np.genfromtxt(glob(standard_info['filename'])[0]).T
+#output_filename= standard_dict['sens_filename']
 
 stand_waves1 = stand_array[0]
 #stand_flux1 = stand_array[1] *1e16 #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
@@ -116,8 +152,8 @@ print stand_bins[0]
 #plt.legend()
 #plt.show()
 
-min_wave = np.nanmin(obs_waves1)
-max_wave = np.nanmax(obs_waves1)
+#min_wave = np.nanmin(obs_waves1)
+#max_wave = np.nanmax(obs_waves1)
 
 #upper_cut = np.where(stand_waves < max_wave)
 #stand_waves = stand_waves[upper_cut]
@@ -134,6 +170,29 @@ plt.plot(stand_waves1, stand_flux1,label = 'model')
 plt.plot(obs_waves1, obs_flux1, label = 'observed')
 plt.legend()
 plt.show()
+
+
+do_offset= bool(raw_input("Do you need to do a wavelength offset?(True/False)>>>"))
+if do_offset:
+    print "Enter the approximate wavelength for the same feature in the model and observed spectra for offset"
+    model_wavelength = float(raw_input("Model spec wavelength>>>"))
+    obs_wavelength= float(raw_input("Observed spec wavelength>>>"))
+    #dotted_pixel=0
+    #emission_pixel=0
+    offset = model_wavelength-obs_wavelength
+    obs_waves1=obs_waves1+offset
+    plt.title('model versus observed')
+    plt.plot(stand_waves1, stand_flux1,label = 'model')
+    plt.plot(obs_waves1, obs_flux1, label = 'observed')
+    plt.legend()
+    plt.show()
+else:
+    print "Skipping offsetting"
+    
+
+min_wave = np.nanmin(obs_waves1)
+max_wave = np.nanmax(obs_waves1)
+
 
 plt.title('interpolated model versus standard model')
 #interp_model_flux = np.interp(obs_waves1, stand_waves1, stand_flux1) #
@@ -156,6 +215,8 @@ stand_flux= stand_spec[1]
 obs_waves = obs_spec[0]
 obs_flux = obs_spec[1]
 
+
+
 plt.title('model versus observed')
 plt.plot(stand_waves, stand_flux,label = 'model')
 plt.plot(obs_waves, obs_flux, label = 'observed')
@@ -177,13 +238,17 @@ plt.show()
 #sens_curve_points= interp_obs_flux/stand_flux
 #sens_curve_fit= np.polyfit(stand_waves, sens_curve_points,5)
 
-obs_curve= np.polyfit(obs_waves, obs_flux, 5)
-model_curve = np.polyfit(stand_waves, stand_flux, 5)
+obs_curve= np.polyfit(obs_waves, obs_flux, poly_degree)
+model_curve = np.polyfit(stand_waves, stand_flux, poly_degree)
 
+calc_waves=np.linspace(min_wave, max_wave,1000)
 #sens_curve_points = np.polyval(obs_curve, stand_waves)/np.polyval(model_curve, stand_waves)
-sens_curve_points = np.polyval(obs_curve, obs_waves)/np.polyval(model_curve, obs_waves)
+#sens_curve_points = np.polyval(obs_curve, obs_waves)/np.polyval(model_curve, obs_waves)
+sens_curve_points= np.polyval(obs_curve,calc_waves )/np.polyval(model_curve, calc_waves)
 #sens_curve_fit= np.polyfit(stand_waves, sens_curve_points,5)
-sens_curve_fit= np.polyfit(obs_waves, sens_curve_points,5)
+#sens_curve_fit= np.polyfit(obs_waves, sens_curve_points,5)
+sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree)
+
 
 
 plt.plot(obs_waves, obs_flux, label= 'observed', marker= 'o', linestyle='none')
@@ -199,7 +264,9 @@ plt.show()
 
 
 
-np.savetxt(output_filename, sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+#np.savetxt(output_filename, sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+np.savetxt(standard_info['sens_filename'], sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+
 #poly_curve=  sens_curve_fit[-1]+sens_curve_fit[-2]*obs_waves + sens_curve_fit[-3]*(obs_waves**2)+sens_curve_fit[-4]*(obs_waves**3)+sens_curve_fit[-5]*(obs_waves**4)+sens_curve_fit[-6]*(obs_waves**5)
 #poly_curve = np.polyval(sens_curve_fit,obs_waves1)
 poly_curve = np.polyval(sens_curve_fit,obs_waves1)
@@ -210,7 +277,8 @@ poly_curve = np.polyval(sens_curve_fit,obs_waves1)
 #plt.show()
 
 #plt.plot(stand_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
-plt.plot(obs_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
+#plt.plot(obs_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
+plt.plot(calc_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
 #plt.plot(obs_waves1, poly_curve, label= 'polynomial fit')
 plt.plot(obs_waves1, poly_curve, label= 'polynomial fit')
 plt.legend()

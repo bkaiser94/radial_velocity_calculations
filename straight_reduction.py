@@ -20,6 +20,9 @@ from astropy import coordinates as coords
 from astropy import units as u
 from astropy import constants as const
 
+#import cal_params as cp
+import get_cal_params as gcp
+
 zerolistname= 'listZero'
 speclistname = 'listSpec'
 flatlistname= 'listFlat'
@@ -37,7 +40,7 @@ slit_yend= 199     #The end of the image with same
 
 #red cam
 
-im_params= {'Blue':{'im_xstart': 9, 'im_xend':  2055},'Red':{'im_xstart':26,'im_xend':2071}}
+#im_params= {'Blue':{'im_xstart': 9, 'im_xend':  2055},'Red':{'im_xstart':26,'im_xend':2071}}
 
 #technically there doesn't appear to be any end trimming neaded with red...
 
@@ -87,8 +90,10 @@ filename= glob(speclist[1])[0]
 print filename
 #i = fits.open(speclist[1])
 header= fits.getheader(speclist[1])
-im_xstart=im_params[header['INSTCONF']]['im_xstart']
-im_xend= im_params[header['INSTCONF']]['im_xend']
+#im_xstart=im_params[header['INSTCONF']]['im_xstart']
+#im_xend= im_params[header['INSTCONF']]['im_xend']
+
+
 
 new_file_list= []
 for img in speclist:
@@ -96,11 +101,13 @@ for img in speclist:
     print filename
     i = fits.open(img)
     header= fits.getheader(img)
+    setup_dict=gcp.get_cal_params(header)
+    trim_regions=setup_dict['trimregions']
     gain =header['GAIN']
     readnoise = header['RDNOISE']
     img_data= i[0].data
     img_data= img_data-bias_med #bias subtraction
-    img_data = img_data[slit_ystart:slit_yend,im_xstart:im_xend] #trimming the edges
+    img_data = img_data[trim_regions['y'][0]:trim_regions['y'][1],trim_regions['x'][0]:trim_regions['x'][1]] #trimming the edges
     target_cosmic= cosmics.cosmicsimage(img_data, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
     target_cosmic.run(maxiter= 4)
     img_data= target_cosmic.cleanarray
@@ -126,11 +133,14 @@ for img in flatlist:
     print filename
     i = fits.open(img)
     header= fits.getheader(img)
+    setup_dict=gcp.get_cal_params(header)
+    trim_regions=setup_dict['trimregions']
     gain =header['GAIN']
     readnoise = header['RDNOISE']
     img_data= i[0].data
     img_data= img_data-bias_med #bias subtraction
-    img_data = img_data[slit_ystart:slit_yend,im_xstart:im_xend] #trimming the edges
+    #img_data = img_data[slit_ystart:slit_yend,im_xstart:im_xend] #trimming the edges
+    img_data = img_data[trim_regions['y'][0]:trim_regions['y'][1],trim_regions['x'][0]:trim_regions['x'][1]] #trimming the edges
     target_cosmic= cosmics.cosmicsimage(img_data, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
     target_cosmic.run(maxiter= 4)
     img_data= target_cosmic.cleanarray

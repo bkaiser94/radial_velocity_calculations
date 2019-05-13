@@ -23,9 +23,13 @@ start = time.time()
 
 import spec_plot_tools as spt
 
+#glob_string= 'wctb*'
+glob_string='fwctb*'
+#filenames= glob('wctb*')
+filenames= glob(glob_string)
 
-filenames= glob('wctb*')
-low_index=10
+#low_index=10
+low_index= len(glob_string)-1+6
 high_index=-5
 
 filename_matches={}
@@ -73,7 +77,8 @@ for i,filename in enumerate(filenames[:-1]):
     print(core_name)
     print(filename_set)
     print('+++++++')
-filename_set.append(filename)
+#filename_set.append(filename)
+filename_set.append(filenames[-1])
 #filename_matches.append([filename_set])
 for sets in filename_matches:
     print('======')
@@ -103,6 +108,7 @@ def avg_spectra(target_list):
     #sky_list=[]
     print("target_list", target_list)
     for target_file in target_list:
+        print('target_file', target_file)
         target_spec, header, target_noise = spt.retrieve_spec(target_file)
         flux_list.append(target_spec[1])
         noise2_list.append(target_noise[1]**2)
@@ -120,8 +126,8 @@ def avg_spectra(target_list):
     plt.show()
     core_name=target_file[low_index:high_index]
     avg_noise=avg_noise/avg_flux
-    
-    output_name= "avg_"+ core_name + ".fits"
+    output_name= "avg_"+ glob_string[:-1]+'.'+ core_name + ".fits"
+    #output_name= "avg_"+ core_name + ".fits"
     print('output_name:', output_name)
     print('saving hopefully...')
     hdu=fits.PrimaryHDU(target_spec[0], header= header)
