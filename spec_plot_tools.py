@@ -207,6 +207,29 @@ def retrieve_spec(filename, scale_noise= True):
         pass
     return file_spec, header, file_noise_spec
 
+
+def retrieve_sdss_spec(filename,scale_noise=True):
+    """
+    Input: filename for a spectrum from SDSS (so it has the SDSS headers and fits format)
+    
+    Output:    Output: Spectrum made of a 2xN numpy array, header of the fits file you loaded it from, and noise spectrum.
+    
+    I.E. the same output format as retrieve_spec(), so that this is effectively a way of bringing all of the spectra together in the same format that I'm already tooled to use.
+    
+    """
+    spec_hdu= fits.open(filename)
+    spec_array=spec_hdu[1].data
+    waves= 10.**np.copy(spec_array['loglam'])
+    flux= np.copy(spec_array['flux'])
+    noise= np.copy(spec_array['PropErr'])
+    file_spec=np.vstack([waves, flux])
+    if scale_noise:
+        file_noise_spec= np.vstack([waves, noise])
+    else:
+        file_noise_spec=np.vstack([waves, noise/flux])
+    header= spec_hdu[1].header
+    return file_spec, header, file_noise_spec
+
 def rescale_spectrum(input_spec, reference_spec, scale_range):
     input_value = get_med_val(input_spec, scale_range)[1]
     reference_value = get_med_val(reference_spec, scale_range)[1]

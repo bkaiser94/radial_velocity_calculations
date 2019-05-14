@@ -34,13 +34,13 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-#wavelength_offset=-60
-wavelength_offset=0
+wavelength_offset=-60
+#wavelength_offset=0
 
 #filenames = glob(sys.argv[1])
 #filenames= glob('wctb*')
 #filenames= glob('wctb*SDSS*')
-
+sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #print(filenames)
 plot_wavelength=True
 plot_400m2_tell= False
@@ -58,8 +58,11 @@ norm_range=[7517,7556]
 norm_range=np.array(norm_range)+wavelength_offset
 
 #file_setting='all_avg'
-file_setting='command'
+#file_setting='command'
 #file_setting='all_wctb'
+file_setting= 'compare_SDSS'
+
+
 
 if file_setting=='all_avg':
     print(file_setting)
@@ -88,6 +91,13 @@ elif file_setting =='command':
     single_iterate=False
     double_iterate=False
     
+elif file_setting=='compare_SDSS':
+    filename=sys.argv[1]
+    sdss_names = glob(sdss_path+'*.fits')
+    print('sdss_names:',sdss_names)
+    single_iterate=False
+    double_iterate=False
+    
 else:
     print('\n\nno file_setting specificied\n\n')
     
@@ -109,10 +119,10 @@ def norm_spectrum(input_spec, norm_range, wave_range=True):
 
 def convolve_spectrum(target_spec, header, kernel_type='gaussian'):
     pix_width =3
-    see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
     fluxes= np.copy(target_spec[1])
     wavelengths = np.copy(target_spec[0])
     if kernel_type=='gaussian':
+        see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
         see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(slit_width), mode = 'oversample')
         see_kernel.normalize()
         spec_conv = conv.convolve(fluxes, see_kernel)
@@ -242,6 +252,27 @@ def plot_diff_spec(spec1, spec2, filename1, filename2, header, smooth=False, ker
     plt.ylim(top=np.nanmax([spec1[1],spec2[1]])+0.5)
     plt.ylim(bottom=np.nanmin(diff_flux)-0.5)
     return
+
+
+if file_setting== 'compare_SDSS':
+    target_spec1, header1, target_noise1= spt.retrieve_spec(filename)
+    target_spec1= norm_spectrum(target_spec1, norm_range)
+    for filename2 in sdss_names:
+        target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2)
+        target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
+        target_spec2=norm_spectrum(target_spec2, norm_range)
+        plt.ylim(top=np.nanmax(np.hstack([target_spec2[1], target_spec1[1]]))+0.5)
+        plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box')
+        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box')
+        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
+        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
+        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
+        plt.axhline(y=0, linestyle='--', color='k')
+        plt.legend()
+        plt.title(filename+ ' & '+ filename2.split('/')[-1])
+        plt.show()
+        
+    
 
 if file_setting=='command':
         target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
