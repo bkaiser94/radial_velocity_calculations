@@ -221,7 +221,12 @@ def retrieve_sdss_spec(filename,scale_noise=True):
     spec_array=spec_hdu[1].data
     waves= 10.**np.copy(spec_array['loglam'])
     flux= np.copy(spec_array['flux'])
-    noise= np.copy(spec_array['PropErr'])
+    try:
+        noise= np.copy(spec_array['PropErr'])
+    except KeyError as error:
+        print(error)
+        print('setting noise=1')
+        noise=np.ones(waves.shape[0])
     file_spec=np.vstack([waves, flux])
     if scale_noise:
         file_noise_spec= np.vstack([waves, noise])
