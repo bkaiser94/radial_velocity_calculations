@@ -27,7 +27,9 @@ import cal_params as cp
 
 
 #poly_degree= 5 #order of polynomials from before 20190506
-poly_degree=7
+#poly_degree=7
+poly_degree=9
+
 
 #standard_directory = '~/Desktop/standards/'
 standard_directory = '/Users/BenKaiser/Desktop/standards/'
@@ -49,7 +51,8 @@ standard_directory = '/Users/BenKaiser/Desktop/standards/'
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-standard_name = 'EG274'
+#standard_name='EG274'
+standard_name = 'GD153'
 #standard_name= 'LTT3218'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
@@ -67,7 +70,8 @@ standard_name = 'EG274'
 #observed_file= 'wcmtb.ltt3218930blue.fits'
 
 #observed_file='avg_EG274_400m1.fits'
-observed_file='avg_wctb.EG274_400m2.fits'
+#observed_file='avg_wctb.EG274_400m2.fits'
+observed_file='avg_wctb.GD153_400m2.fits'
 #observed_file='avg_wctb.EG274_400m1.fits'
 
 ##############################
@@ -142,9 +146,25 @@ stand_waves1 = stand_array[0]
 #stand_flux1 = stand_array[1] *1e16 #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
 stand_flux1 = stand_array[1]  #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
 
-stand_bins = stand_array[3]
+def rescale_flux(stand_flux1):
+    """
+    Make sure the flux is in the correct units for your purposes, which should be 1e-16
+    
+    """
+    standard_type= standard_info['filename'].split('/')[-2]
+    print('standard_type:', standard_type)
+    if standard_type == 'xshooter_standards':
+        print('should be resetting fluxes')
+        stand_flux1= stand_flux1*1e16 #converts to 10**-16 flux vals hopefully
+    else:
+        stand_flux1= stand_flux1
+    return stand_flux1
 
-print stand_bins[0]
+stand_flux1= rescale_flux(stand_flux1)
+
+#stand_bins = stand_array[3]
+
+#print stand_bins[0]
 
 #plt.plot(stand_waves, stand_array[1]/np.mean(stand_array[1]), label='per angstrom flux')
 #plt.plot(stand_waves, stand_array[2]/np.mean(stand_array[2]), label='jansky')
@@ -168,6 +188,8 @@ print stand_bins[0]
 plt.title('model versus observed')
 plt.plot(stand_waves1, stand_flux1,label = 'model')
 plt.plot(obs_waves1, obs_flux1, label = 'observed')
+#plt.scatter(stand_waves1, stand_flux1,label = 'model')
+#plt.scatter(obs_waves1, obs_flux1, label = 'observed', color='r')
 plt.legend()
 plt.show()
 
@@ -243,11 +265,11 @@ model_curve = np.polyfit(stand_waves, stand_flux, poly_degree)
 
 calc_waves=np.linspace(min_wave, max_wave,1000)
 #sens_curve_points = np.polyval(obs_curve, stand_waves)/np.polyval(model_curve, stand_waves)
-#sens_curve_points = np.polyval(obs_curve, obs_waves)/np.polyval(model_curve, obs_waves)
-sens_curve_points= np.polyval(obs_curve,calc_waves )/np.polyval(model_curve, calc_waves)
+sens_curve_points = np.polyval(obs_curve, obs_waves)/np.polyval(model_curve, obs_waves)
+#sens_curve_points= np.polyval(obs_curve,calc_waves)/np.polyval(model_curve, calc_waves)
 #sens_curve_fit= np.polyfit(stand_waves, sens_curve_points,5)
-#sens_curve_fit= np.polyfit(obs_waves, sens_curve_points,5)
-sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree)
+sens_curve_fit= np.polyfit(obs_waves, sens_curve_points,poly_degree)
+#sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree)
 
 
 
@@ -263,22 +285,11 @@ plt.show()
 
 
 
-
-#np.savetxt(output_filename, sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
-np.savetxt(standard_info['sens_filename'], sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
-
-#poly_curve=  sens_curve_fit[-1]+sens_curve_fit[-2]*obs_waves + sens_curve_fit[-3]*(obs_waves**2)+sens_curve_fit[-4]*(obs_waves**3)+sens_curve_fit[-5]*(obs_waves**4)+sens_curve_fit[-6]*(obs_waves**5)
-#poly_curve = np.polyval(sens_curve_fit,obs_waves1)
 poly_curve = np.polyval(sens_curve_fit,obs_waves1)
 
-#plt.plot(obs_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
-#plt.plot(obs_waves, poly_curve, label= 'polynomial fit')
-#plt.legend()
-#plt.show()
-
 #plt.plot(stand_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
-#plt.plot(obs_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
-plt.plot(calc_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
+plt.plot(obs_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
+#plt.plot(calc_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
 #plt.plot(obs_waves1, poly_curve, label= 'polynomial fit')
 plt.plot(obs_waves1, poly_curve, label= 'polynomial fit')
 plt.legend()
@@ -299,3 +310,65 @@ plt.xlabel('wavelength ($\AA$)')
 plt.ylabel('Flux (ergs/cm/cm/s/A 1e-16)')
 plt.legend()
 plt.show()
+
+
+def get_residuals(plot_all = False):
+    residuals= fcal_obs/interp_model_flux
+    if plot_all:
+        plt.plot(obs_waves1, residuals)
+        plt.xlabel('wavelength ($\AA$)')
+        #plt.ylabel('Flux (ergs/cm/cm/s/A 1e-16)')
+        plt.ylabel('F_obscal/ F_model')
+        plt.title('residuals')
+        plt.axhline(y=1, color='k')
+        plt.xlim(np.nanmin(obs_waves1), np.nanmax(obs_waves1))
+        plt.show()
+    return residuals
+
+residuals= get_residuals(plot_all=True)
+
+plt.title('residual-corrected spectrum')
+plt.plot(obs_waves1, fcal_obs/residuals, label='flux-calibrated observation/residuals')
+plt.plot(obs_waves1, interp_model_flux, label='model')
+plt.xlabel('wavelength ($\AA$)')
+plt.ylabel('Flux (ergs/cm/cm/s/A 1e-16)')
+plt.legend()
+plt.show()
+
+#np.savetxt(output_filename, sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+np.savetxt(standard_info['sens_filename'], sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+
+np.savetxt('residuals_' + standard_info['sens_filename'], residuals, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+
+#poly_curve=  sens_curve_fit[-1]+sens_curve_fit[-2]*obs_waves + sens_curve_fit[-3]*(obs_waves**2)+sens_curve_fit[-4]*(obs_waves**3)+sens_curve_fit[-5]*(obs_waves**4)+sens_curve_fit[-6]*(obs_waves**5)
+#poly_curve = np.polyval(sens_curve_fit,obs_waves1)
+#poly_curve = np.polyval(sens_curve_fit,obs_waves1)
+
+#plt.plot(obs_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
+#plt.plot(obs_waves, poly_curve, label= 'polynomial fit')
+#plt.legend()
+#plt.show()
+
+##plt.plot(stand_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
+##plt.plot(obs_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
+#plt.plot(calc_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
+##plt.plot(obs_waves1, poly_curve, label= 'polynomial fit')
+#plt.plot(obs_waves1, poly_curve, label= 'polynomial fit')
+#plt.legend()
+#plt.show()
+
+##fcal_obs = obs_flux1/poly_curve
+#fcal_obs = obs_flux1/poly_curve
+
+
+##plt.plot(obs_waves1, fcal_obs, label ='flux calibrated observation', marker= 'o', linestyle = 'none')
+##plt.plot(stand_waves1, stand_flux1, label = 'model', marker = 'o', linestyle = 'none')
+##plt.plot(obs_waves1, fcal_obs, label ='flux calibrated observation')
+##plt.plot(stand_waves1, stand_flux1, label = 'model')
+#plt.plot(obs_waves1, fcal_obs, label ='flux calibrated observation')
+##plt.plot(stand_waves1, stand_flux1, label = 'model')
+#plt.plot(obs_waves1, interp_model_flux, label='model')
+#plt.xlabel('wavelength ($\AA$)')
+#plt.ylabel('Flux (ergs/cm/cm/s/A 1e-16)')
+#plt.legend()
+#plt.show()

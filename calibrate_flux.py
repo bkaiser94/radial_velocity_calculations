@@ -36,7 +36,7 @@ target_list = speclist[0]
 sens_curve_list = speclist[1]
 
 bad_noise_sub = 100
-
+do_residual_div= True
 do_rv_barycorr=False
 
 parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
@@ -77,6 +77,11 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     #noise_spec = bad_noise_vals(noise_spec) #remove negative noise values and exceedingly high ones
     sens_curve = np.polyval(sens_curve_coeffs,wavelengths)
     flux = counts/sens_curve
+    if do_residual_div:
+        residuals= np.genfromtxt('residuals_'+ sens_curve_file)
+        flux= flux/residuals
+    else:
+        pass
     total_flux = np.sum(flux)
     times.append([header['BMJD_TDB']])
     airmasses.append(header['AIRMASS'])

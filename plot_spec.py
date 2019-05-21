@@ -37,7 +37,7 @@ test_side = test_width/2
 sdss_pix_width = 10
 
 #wavelength_offset=60
-wavelength_offset=0
+wavelength_offset=20
 
 #filenames = glob(sys.argv[1])
 #filenames= glob('wctb*')
@@ -64,7 +64,7 @@ norm_range=[7517,7556]
 #file_setting='all_wctb'
 file_setting= 'compare_SDSS'
 
-file_setting= 'all_SDSS'
+#file_setting= 'all_SDSS'
 
 
 
@@ -326,8 +326,8 @@ if single_iterate:
         #plot_sky(filename)
         #plot_SNR(target_spec, target_noise, filename)
         #plot_dwavelength(target_spec)
-        #plt.legend()
-        #plt.show()
+        plt.legend()
+        plt.show()
     plt.legend()
     plt.show()
 else:

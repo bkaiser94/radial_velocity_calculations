@@ -116,20 +116,53 @@ balmer_lines_wide=[
     [6469.59, 6703.61]
     ] #from EG274
 
+#lines identified by Ben Kaiser looking at GD153 and EG274 in 400M2 setup
+#telluric_lines=[[6803.1, 6976.18],
+                #[7528.0,7760.0],
+                #[7160.0,7375.0],
+                #[8099.0,8405.0]
+                #]
 
-telluric_lines=[[6803.1, 6976.18],[7528.0,7760.0]]
+#lines identified in Moehler et al. 2014
+telluric_lines=[
+    [5855.,5992.],
+    [6261.,6349.],
+    [6438.,6600.],
+    [6821.,7094.],
+    [7127.,7434.],
+    [7562.,7731.],
+    [7801.,8613.],
+    [8798.,10338.],
+    [10500.,20000.]]
 
+
+#old flux cal references
+#standard_dict={
+    #'eg274':{
+        #'ra':'0',
+        #'dec':'0',
+        #'filename':'fhamuy/feg274.dat',
+        #'sens_filename':'EG274_sensitivity_curve.txt',
+        #'balmer_masks':balmer_lines_wide,
+        #'other_masks': telluric_lines}
+    #}
+        
 standard_dict={
     'eg274':{
         'ra':'0',
         'dec':'0',
-        'filename':'fhamuy/feg274.dat',
+        'filename':'xshooter_standards/fEg274.dat',
         'sens_filename':'EG274_sensitivity_curve.txt',
+        'balmer_masks':balmer_lines_wide,
+        'other_masks': telluric_lines},
+    'gd153':{
+        'ra':'0',
+        'dec':'0',
+        'filename':'xshooter_standards/fGD153.dat',
+        'sens_filename':'GD153_sensitivity_curve.txt',
         'balmer_masks':balmer_lines_wide,
         'other_masks': telluric_lines}
     }
-        
-
 
 
 
