@@ -70,9 +70,9 @@ standard_name='EG274'
 #observed_file= 'wcmtb.ltt3218930blue.fits'
 
 #observed_file='avg_EG274_400m1.fits'
-#observed_file='avg_wctb.EG274_400m2.fits'
+observed_file='avg_wctb.EG274_400m2.fits'
 #observed_file='avg_wctb.GD153_400m2.fits'
-observed_file='avg_wctb.EG274_400m1.fits'
+#observed_file='avg_wctb.EG274_400m1.fits'
 
 ##############################
 ##############################
@@ -190,9 +190,9 @@ plt.plot(stand_waves1, stand_flux1,label = 'model')
 plt.plot(obs_waves1, obs_flux1, label = 'observed')
 #plt.scatter(stand_waves1, stand_flux1,label = 'model')
 #plt.scatter(obs_waves1, obs_flux1, label = 'observed', color='r')
-plt.legend()
-plt.show()
-
+#plt.legend()
+#plt.show()
+spt.show_plot()
 
 do_offset= bool(raw_input("Do you need to do a wavelength offset?(True/False)>>>"))
 if do_offset:
@@ -206,8 +206,9 @@ if do_offset:
     plt.title('model versus observed')
     plt.plot(stand_waves1, stand_flux1,label = 'model')
     plt.plot(obs_waves1, obs_flux1, label = 'observed')
-    plt.legend()
-    plt.show()
+    #plt.legend()
+    #plt.show()
+    spt.show_plot()
 else:
     print "Skipping offsetting"
     
@@ -242,9 +243,9 @@ obs_flux = obs_spec[1]
 plt.title('model versus observed')
 plt.plot(stand_waves, stand_flux,label = 'model')
 plt.plot(obs_waves, obs_flux, label = 'observed')
-plt.legend()
-plt.show()
-
+#plt.legend()
+#plt.show()
+spt.show_plot()
 
 #plt.title('wavelength values')
 #plt.plot(obs_waves,np.ones(obs_waves.shape), label = 'observed', marker='o')
@@ -308,9 +309,9 @@ plt.plot(obs_waves1, fcal_obs, label ='flux calibrated observation')
 plt.plot(obs_waves1, interp_model_flux, label='model')
 plt.xlabel('wavelength ($\AA$)')
 plt.ylabel('Flux (ergs/cm/cm/s/A 1e-16)')
-plt.legend()
-plt.show()
-
+#plt.legend()
+#plt.show()
+spt.show_plot()
 
 def get_residuals(plot_all = False):
     residuals= fcal_obs/interp_model_flux
@@ -322,7 +323,8 @@ def get_residuals(plot_all = False):
         plt.title('residuals')
         plt.axhline(y=1, color='k')
         plt.xlim(np.nanmin(obs_waves1), np.nanmax(obs_waves1))
-        plt.show()
+        #plt.show()
+        spt.show_plot()
     return residuals
 
 def limit_to_telluric():
@@ -336,13 +338,14 @@ def limit_to_telluric():
 
 residuals= get_residuals(plot_all=True)
 
-plt.title('residual-corrected spectrum')
+plt.title('residual corrected spectrum')
 plt.plot(obs_waves1, fcal_obs/residuals, label='flux-calibrated observation/residuals')
 plt.plot(obs_waves1, interp_model_flux, label='model')
 plt.xlabel('wavelength ($\AA$)')
 plt.ylabel('Flux (ergs/cm/cm/s/A 1e-16)')
-plt.legend()
-plt.show()
+#plt.legend()
+#plt.show()
+spt.show_plot()
 
 #np.savetxt(output_filename, sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
 np.savetxt(standard_info['sens_filename'], sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))

@@ -37,7 +37,8 @@ test_side = test_width/2
 sdss_pix_width = 10
 
 #wavelength_offset=60
-wavelength_offset=20
+#wavelength_offset=20
+wavelength_offset=15
 
 #filenames = glob(sys.argv[1])
 #filenames= glob('wctb*')
@@ -51,18 +52,18 @@ plot_400m2_tell= False
 #norm_range=[40,80]
 
 #norm_range=[7042,7046]
-#norm_range=[7490,7510]
+norm_range=[7490,7510]
 #norm_range=[7517,7556]
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
-norm_range=[5100,5400]
+#norm_range=[5100,5400]
 
 #norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command'
 #file_setting='all_wctb'
-#file_setting= 'compare_SDSS'
+file_setting= 'compare_SDSS'
 
 #file_setting= 'all_SDSS'
 
@@ -119,10 +120,12 @@ def norm_spectrum(input_spec, norm_range, wave_range=True):
         print('\n\n')
         out_flux= input_spec[1]/np.nanmean(input_spec[1][np.where((input_spec[0]>norm_range[0])&(input_spec[0]<norm_range[1]))])
         #out_flux= input_spec[1]/(np.nanmax(input_spec[1][np.where((input_spec[0]>norm_range[0])&(input_spec[0]<norm_range[1]))])-np.nanmin(input_spec[1][np.where((input_spec[0]>norm_range[0])&(input_spec[0]<norm_range[1]))]))
+        plt.axvspan(norm_range[0], norm_range[1], alpha=0.1, color='r')
     else:
         print('\n\npixel-based norm range selected',norm_range)
         print('\n\n')
         pass
+    
     out_spec=np.vstack([input_spec[0],out_flux])
     return out_spec
 
@@ -281,9 +284,10 @@ if file_setting== 'compare_SDSS':
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
         plt.axhline(y=0, linestyle='--', color='k')
-        plt.legend()
+        #plt.legend()
         plt.title(filename+ ' & '+ filename2.split('/')[-1])
-        plt.show()
+        #plt.show()
+        spt.show_plot()
         
 if file_setting=='all_SDSS':
     for filename1 in filenames:

@@ -277,9 +277,12 @@ def plot_telluric():
     return
     
 
-def show_plot():
+def show_plot(show_telluric=True):
     plt.legend()
-    plot_telluric()
+    if show_telluric:
+        plot_telluric()
+    else:
+        pass
     plt.show()
     return
     
