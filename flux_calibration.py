@@ -51,8 +51,8 @@ standard_directory = '/Users/BenKaiser/Desktop/standards/'
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-#standard_name='EG274'
-standard_name = 'GD153'
+standard_name='EG274'
+#standard_name = 'GD153'
 #standard_name= 'LTT3218'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
@@ -71,8 +71,8 @@ standard_name = 'GD153'
 
 #observed_file='avg_EG274_400m1.fits'
 #observed_file='avg_wctb.EG274_400m2.fits'
-observed_file='avg_wctb.GD153_400m2.fits'
-#observed_file='avg_wctb.EG274_400m1.fits'
+#observed_file='avg_wctb.GD153_400m2.fits'
+observed_file='avg_wctb.EG274_400m1.fits'
 
 ##############################
 ##############################
@@ -323,6 +323,15 @@ def get_residuals(plot_all = False):
         plt.axhline(y=1, color='k')
         plt.xlim(np.nanmin(obs_waves1), np.nanmax(obs_waves1))
         plt.show()
+    return residuals
+
+def limit_to_telluric():
+    """
+    Take the calculated residuals and limit them to the region of telluric absorption and set the value to be 1 everywhere else, so the remnants of other regions aren't messed up too.
+    
+    """
+    
+    
     return residuals
 
 residuals= get_residuals(plot_all=True)

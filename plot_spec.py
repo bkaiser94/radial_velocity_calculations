@@ -52,17 +52,17 @@ plot_400m2_tell= False
 
 #norm_range=[7042,7046]
 #norm_range=[7490,7510]
-norm_range=[7517,7556]
+#norm_range=[7517,7556]
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
-#norm_range=[5100,5400]
+norm_range=[5100,5400]
 
 #norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command'
 #file_setting='all_wctb'
-file_setting= 'compare_SDSS'
+#file_setting= 'compare_SDSS'
 
 #file_setting= 'all_SDSS'
 
@@ -199,6 +199,7 @@ def plot_dwavelength(spec):
     #plt.plot(spec[0])
     #plt.show()
     #return
+    
 
 
 def plot_SNR(spec, noise, filename):
@@ -326,8 +327,9 @@ if single_iterate:
         #plot_sky(filename)
         #plot_SNR(target_spec, target_noise, filename)
         #plot_dwavelength(target_spec)
-        plt.legend()
-        plt.show()
+        spt.show_plot()
+        #plt.legend()
+        #plt.show()
     plt.legend()
     plt.show()
 else:

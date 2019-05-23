@@ -5,6 +5,8 @@ import balmer_line_ranges as blr
 from astropy import units as u
 from astropy import constants as const
 
+import cal_params as cp
+
 percentile= 50
 
 
@@ -48,6 +50,31 @@ def remove_range(input_spec, bound_list):
     merge_waves= np.append(low_waves, high_waves)
     merge_other= np.append(low_other, high_other)
     return np.vstack([merge_waves, merge_other])
+
+def replace_range(input_spec, bound_list, replacement_spec):
+    """
+    Different method of masking the desired region without literally removing the datapoints; it should reassign
+    the values corresponding to certain wavelengths
+    
+    """
+    wave_array= input_spec[0]
+    other_array= input_spec[1]
+    lower_bound = bound_list[0]
+    upper_bound= bound_list[1]
+    low_mask = np.where(wave_array < lower_bound)
+    high_mask= np.where(wave_array > upper_bound)
+    low_waves= wave_array[low_mask]
+    high_waves= wave_array[high_mask]
+    low_other = other_array[low_mask]
+    high_other= other_array[high_mask]
+    #merge_waves= np.append(low_waves, high_waves)
+    #merge_other= np.append(low_other, high_other)
+    return
+
+def stitch_in_telluric():
+    
+    
+    return
 
 def sort_spectrum(input_spec):
     """
@@ -244,9 +271,17 @@ def rescale_spectrum(input_spec, reference_spec, scale_range):
     
     
     
+def plot_telluric():
+    for region in cp.telluric_lines:
+        plt.axvspan(region[0],region[1], alpha=0.05, color='k')
+    return
     
-    
-    
+
+def show_plot():
+    plt.legend()
+    plot_telluric()
+    plt.show()
+    return
     
     
     
