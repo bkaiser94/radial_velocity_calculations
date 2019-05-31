@@ -88,7 +88,7 @@ lamp_poly_degree=5
 flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
-bkg_shift= 40
+bkg_shift= 30
 #bkg_shift= 25
 lamp_sigma_guess= 2
 line_search_width = 3#formerly 3 20190502
@@ -106,7 +106,7 @@ seeing_p0= [2000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the 
 see_fit_bounds = ([50, 0, 0.7, 0],[1e8, 40, trace_band_width, 1e8]) #(lower, upper) bounds on the fit for the seeing.
 ######
 
-expedited_wavecals=True
+expedited_wavecals=False
 
 #fear_array= np.genfromtxt(linefilename, names = True)
 #line_x_checks = np.copy(fear_array['Pixel']) +90
@@ -588,9 +588,11 @@ for counter, img in enumerate(speclist):
         print "noise_spectrum.shape", noise_spectrum.shape
         target_light= target_light-bkg_light
         noise_spectrum = noise_spectrum/target_light #normalized noise values by the target spectrum, so now unitless.
+        target_light= target_light/header['EXPTIME'] #converting to counts/s
         plt.plot(x_positions,target_light,'-')
         plt.xlabel('x (pixel)')
-        plt.ylabel('Counts')
+        #plt.ylabel('Counts')
+        plt.ylabel('Counts/s')
         plt.title('Target Spectrum')
         plt.show()
         header= to_barycenter(header) #append the BMJD_TDB value
@@ -599,6 +601,7 @@ for counter, img in enumerate(speclist):
         header.append(card = ('see_FWHM', seeing_FWHM, 'Seeing (pixels)'))
         header.append(card = ('skipflat', skip_flat, 'flatfielding skipped or not'))
         #poly_curve_wavelength= barycentric_vel_corr(header, poly_curve_wavelength) #correction of Earth's orbital motion
+        header['units']= 'Counts/s'
         hdu = fits.PrimaryHDU(poly_curve_wavelength, header = header)
         hdu1= fits.ImageHDU(target_light)
         hdu2= fits.ImageHDU(bkg_light)

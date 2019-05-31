@@ -34,12 +34,12 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-sdss_pix_width = 10
+sdss_pix_width = 20
 
 #wavelength_offset=60
-#wavelength_offset=20
+wavelength_offset=20
 #wavelength_offset=15
-wavelength_offset=0
+#wavelength_offset=0
 
 #filenames = glob(sys.argv[1])
 #filenames= glob('wctb*')
@@ -58,7 +58,7 @@ norm_range=[7517,7556] #20190528
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
-
+#norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=np.array(norm_range)+wavelength_offset
 
 #file_setting='all_avg'
@@ -99,8 +99,8 @@ elif file_setting =='command':
     
 elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
-    sdss_names = glob(sdss_path+'*.fits')
-    #sdss_names = glob(sdss_path+'sdss*.fits')
+    #sdss_names = glob(sdss_path+'*.fits')
+    sdss_names = glob(sdss_path+'sdss*.fits')
     print('sdss_names:',sdss_names)
     single_iterate=False
     double_iterate=False
@@ -122,7 +122,7 @@ def norm_spectrum(input_spec, norm_range, wave_range=True):
         print('\n\n')
         out_flux= input_spec[1]/np.nanmean(input_spec[1][np.where((input_spec[0]>norm_range[0])&(input_spec[0]<norm_range[1]))])
         #out_flux= input_spec[1]/(np.nanmax(input_spec[1][np.where((input_spec[0]>norm_range[0])&(input_spec[0]<norm_range[1]))])-np.nanmin(input_spec[1][np.where((input_spec[0]>norm_range[0])&(input_spec[0]<norm_range[1]))]))
-        plt.axvspan(norm_range[0], norm_range[1], alpha=0.1, color='r', label='norm range')
+        plt.axvspan(norm_range[0], norm_range[1], alpha=0.1, color='r')
     else:
         print('\n\npixel-based norm range selected',norm_range)
         print('\n\n')
@@ -138,7 +138,8 @@ def convolve_spectrum(target_spec, header, kernel_type='gaussian', pix_width=3):
     fluxes= np.copy(target_spec[1])
     wavelengths = np.copy(target_spec[0])
     if kernel_type=='gaussian':
-        see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
+        #see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
+        see_sig=pix_width
         see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(slit_width), mode = 'oversample')
         see_kernel.normalize()
         spec_conv = conv.convolve(fluxes, see_kernel)
@@ -272,19 +273,21 @@ def plot_diff_spec(spec1, spec2, filename1, filename2, header, smooth=False, ker
 
 
 if file_setting== 'compare_SDSS':
-    #target_spec1, header1, target_noise1= spt.retrieve_spec(filename)
-    target_spec1, header1, target_noise1= spt.retrieve_sdss_spec(filename)
+    target_spec1, header1, target_noise1= spt.retrieve_spec(filename)
+    #target_spec1, header1, target_noise1= spt.retrieve_sdss_spec(filename)
     target_spec1[0]=target_spec1[0]+wavelength_offset
-    target_spec1= norm_spectrum(target_spec1, norm_range)
+    #target_spec1= norm_spectrum(target_spec1, norm_range)
     for filename2 in sdss_names:
         target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2)
-        target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
-        target_spec2=norm_spectrum(target_spec2, norm_range)
+        #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
+        #target_spec2=norm_spectrum(target_spec2, norm_range)
         #plt.ylim(top=np.nanmax(np.hstack([target_spec2[1], target_spec1[1]]))+0.5)
         plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
         #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box')
-        plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+        plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box')
+        #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+        #plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+        plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)

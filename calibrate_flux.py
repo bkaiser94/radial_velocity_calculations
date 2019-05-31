@@ -88,7 +88,8 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     summed_flux.append(total_flux)
     summed_counts.append(np.sum(counts))
     header.append(card = ('Senscurv', sens_curve_file, 'file used for flux calibration'))
-    header.append(card = ('Units', 'ergs/cm/cm/s/A 10**-16', 'Units for flux'))
+    #header.append(card = ('Units', 'ergs/cm/cm/s/A 10**-16', 'Units for flux'))
+    header['units']= 'ergs/cm/cm/s/A 10**-16'
     header.append(card = ('Wavlngth', 0, 'Angstroms extension for wavelengths'))
     header.append(card = ('Flux', 1, 'in flux units extension for target flux values'))
     header.append(card = ('Bkg', 2, 'in flux units extension for bkg flux values'))
