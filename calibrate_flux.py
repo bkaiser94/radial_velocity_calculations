@@ -36,7 +36,7 @@ target_list = speclist[0]
 sens_curve_list = speclist[1]
 
 bad_noise_sub = 100
-do_residual_div= True
+do_residual_div= False
 do_rv_barycorr=False
 
 parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
@@ -71,8 +71,11 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     header = fits.getheader(target_file)
     exptime = header['EXPTIME']
     wavelengths= i[0].data
-    counts = i[1].data/np.float_(exptime) #need counts/second
-    bkg_counts = i[2].data/np.float_(exptime) #need counts/second
+    #counts = i[1].data/np.float_(exptime) #need counts/second
+    #bkg_counts = i[2].data/np.float_(exptime) #need counts/second
+    #noise_spec = i[3].data #don't need to divide this by the exposure time since it's normalized already in proportion to whatever units we use.
+    counts = i[1].data
+    bkg_counts = i[2].data
     noise_spec = i[3].data #don't need to divide this by the exposure time since it's normalized already in proportion to whatever units we use.
     #noise_spec = bad_noise_vals(noise_spec) #remove negative noise values and exceedingly high ones
     sens_curve = np.polyval(sens_curve_coeffs,wavelengths)
@@ -136,7 +139,7 @@ plt.show()
 
 
 plt.title('airmasses over time')
-plt.plot(times, airmasses)
+plt.scatter(times, airmasses)
 plt.show()
     
     

@@ -51,8 +51,8 @@ standard_directory = '/Users/BenKaiser/Desktop/standards/'
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-#standard_name='EG274'
-standard_name = 'GD153'
+standard_name='EG274'
+#standard_name = 'GD153'
 #standard_name= 'LTT3218'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
@@ -70,10 +70,11 @@ standard_name = 'GD153'
 #observed_file= 'wcmtb.ltt3218930blue.fits'
 
 #observed_file='avg_EG274_400m1.fits'
-#observed_file='avg_wctb.EG274_400m2.fits'
-observed_file='avg_wctb.GD153_400m2.fits'
+observed_file='avg_wctb.EG274_400m2.fits'
+#observed_file='avg_wctb.GD153_400m2.fits'
 #observed_file='avg_wctb.EG274_400m1.fits'
-
+#observed_file='avg_wctb.GD153_400m1.fits'
+#observed_file='avg_wctb.EG274_400m1_am13.fits'
 ##############################
 ##############################
 
@@ -106,7 +107,7 @@ obs_time = obs_date+'T'+obs_time
 obs_time = Time(obs_time, format = 'isot', scale = 'utc').mjd
 exptime = header['EXPTIME']
 
-obs_flux1= obs_flux1/np.float_(exptime) #converts to counts per second
+#obs_flux1= obs_flux1/np.float_(exptime) #converts to counts per second
 
 #####
 #wavelength_masks=[
@@ -144,7 +145,10 @@ stand_array = np.genfromtxt(glob(standard_info['filename'])[0]).T
 
 stand_waves1 = stand_array[0]
 #stand_flux1 = stand_array[1] *1e16 #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
-stand_flux1 = stand_array[1]  #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
+#stand_flux1 = stand_array[1]  #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
+
+stand_flux1 = stand_array[1]  #ergs/cm/cm/s/A (That's exactly how it's written in the README for X-shooter)
+
 
 def rescale_flux(stand_flux1):
     """
@@ -186,8 +190,8 @@ stand_flux1= rescale_flux(stand_flux1)
 
 
 plt.title('model versus observed')
-plt.plot(stand_waves1, stand_flux1,label = 'model')
-plt.plot(obs_waves1, obs_flux1, label = 'observed')
+plt.plot(stand_waves1, stand_flux1/np.nanmedian(stand_flux1),label = 'model')
+plt.plot(obs_waves1, obs_flux1/np.nanmedian(obs_flux1), label = 'observed')
 #plt.scatter(stand_waves1, stand_flux1,label = 'model')
 #plt.scatter(obs_waves1, obs_flux1, label = 'observed', color='r')
 #plt.legend()
@@ -204,8 +208,8 @@ if do_offset:
     offset = model_wavelength-obs_wavelength
     obs_waves1=obs_waves1+offset
     plt.title('model versus observed')
-    plt.plot(stand_waves1, stand_flux1,label = 'model')
-    plt.plot(obs_waves1, obs_flux1, label = 'observed')
+    plt.plot(stand_waves1, stand_flux1/np.nanmedian(stand_flux1),label = 'model')
+    plt.plot(obs_waves1, obs_flux1/np.nanmedian(obs_flux1), label = 'observed')
     #plt.legend()
     #plt.show()
     spt.show_plot()

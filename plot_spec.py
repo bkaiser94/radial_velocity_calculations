@@ -37,14 +37,16 @@ test_side = test_width/2
 sdss_pix_width = 20
 
 #wavelength_offset=60
-wavelength_offset=20
+#wavelength_offset=20
 #wavelength_offset=15
 #wavelength_offset=0
+wavelength_offset=40
 
 #filenames = glob(sys.argv[1])
 #filenames= glob('wctb*')
 #filenames= glob('wctb*SDSS*')
 sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
+#sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 #print(filenames)
 plot_wavelength=True
 plot_400m2_tell= False
@@ -54,30 +56,34 @@ plot_400m2_tell= False
 
 #norm_range=[7042,7046]
 #norm_range=[7490,7510]
-norm_range=[7517,7556] #20190528
+#norm_range=[7517,7556] #20190528
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
-#norm_range=[6640,6670]#20190530 400M1 norm range
-#norm_range=np.array(norm_range)+wavelength_offset
+norm_range=[6640,6670]#20190530 400M1 norm range
+####norm_range=np.array(norm_range)+wavelength_offset
 
 #file_setting='all_avg'
 #file_setting='command'
 #file_setting='all_wctb'
-file_setting= 'compare_SDSS'
+#file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
+file_setting= 'two_arm'
 
+single_iterate= False
+double_iterate= False #file_settings change these in their little sections ahead if they should be changed
 
 
 if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('avg_*')
-    filenames=glob('avg_fwctb*fits')
-    #single_iterate=False
-    #double_iterate=True
+    #filenames=glob('avg_fwctb*fits')
+    filenames=glob('avg_wctb*fits')
     single_iterate=True
     double_iterate=False
+    #single_iterate=False
+    #double_iterate=True
 
 elif file_setting=='all_wctb':
     print(file_setting)
@@ -99,8 +105,8 @@ elif file_setting =='command':
     
 elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
-    #sdss_names = glob(sdss_path+'*.fits')
-    sdss_names = glob(sdss_path+'sdss*.fits')
+    sdss_names = glob(sdss_path+'*.fits')
+    #sdss_names = glob(sdss_path+'sdss*.fits')
     print('sdss_names:',sdss_names)
     single_iterate=False
     double_iterate=False
@@ -110,6 +116,14 @@ elif file_setting=='all_SDSS':
     sdss_names = glob(sdss_path+'*.fits')
     single_iterate=False
     double_iterate=False
+    
+elif file_setting== 'two_arm':
+    m1_names =glob('avg_fwctb*400m1*fits')
+    m2_names= glob('avg_fwctb*400m2*fits')
+    #m1_names =glob('avg_wctb*400m1*fits')
+    #m2_names= glob('avg_wctb*400m2*fits')
+    filenames= zip(m1_names, m2_names)
+    
     
 else:
     print('\n\nno file_setting specificied\n\n')
@@ -276,18 +290,18 @@ if file_setting== 'compare_SDSS':
     target_spec1, header1, target_noise1= spt.retrieve_spec(filename)
     #target_spec1, header1, target_noise1= spt.retrieve_sdss_spec(filename)
     target_spec1[0]=target_spec1[0]+wavelength_offset
-    #target_spec1= norm_spectrum(target_spec1, norm_range)
+    target_spec1= norm_spectrum(target_spec1, norm_range)
     for filename2 in sdss_names:
         target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2)
-        #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
-        #target_spec2=norm_spectrum(target_spec2, norm_range)
+        target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
+        target_spec2=norm_spectrum(target_spec2, norm_range)
         #plt.ylim(top=np.nanmax(np.hstack([target_spec2[1], target_spec1[1]]))+0.5)
         plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
-        #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box')
-        plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box')
+        plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box')
+        #plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-        #plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-        plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+        #plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
@@ -325,25 +339,44 @@ if file_setting=='command':
         plt.axhline(y=0, linestyle='--', color='k')
         plt.legend()
         plt.show()
-
+        
+if file_setting=='two_arm':
+    sdss_names = glob(sdss_path+'*1555*.fits')
+    sdss_spec, sdssheader, sdss_noise= spt.retrieve_sdss_spec(sdss_names[0])
+    plot_spectrum(sdss_spec, sdss_names[0], sdssheader, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+    plt.xlim(3700,9000)
+    spt.show_plot() 
+    for m1_name, m2_name in filenames:
+        target_spec1, header1, target_noise1= spt.retrieve_spec(m1_name)
+        target_spec2, header2, target_noise2= spt.retrieve_spec(m2_name)
+        #sdss_spec= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
+        plot_spectrum(target_spec1, m1_name, header1, norm=False, smooth=True, kernel_type='box')
+        plot_spectrum(target_spec2, m2_name, header2, norm=False, smooth=True, kernel_type='box')
+        plot_spectrum(sdss_spec, sdss_names[0], sdssheader, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+        plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
+        plt.xlim(3700,9000)
+        spt.show_plot()
+        
+        
 if single_iterate:
     for filename in filenames:
         target_spec, header, target_noise= spt.retrieve_spec(filename)
         #conv_spec= convolve_spectrum(target_spec, header)
         #plot_spectrum(target_spec, filename, header, smooth=True)
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='box', norm=True)
-        #plot_spectrum(target_spec, filename, header)
+        plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, norm=True)
-        plot_spectrum(target_spec, filename, header, norm=True, smooth=True)
+        #plot_spectrum(target_spec, filename, header, norm=True, smooth=True)
         #plot_spectrum(target_spec, filename, header, smooth=True)
         #plot_sky(filename)
         #plot_SNR(target_spec, target_noise, filename)
         #plot_dwavelength(target_spec)
-        spt.show_plot()
+        #spt.show_plot()
         #plt.legend()
         #plt.show()
-    plt.legend()
-    plt.show()
+    spt.show_plot()
+    #plt.legend()
+    #plt.show()
 else:
     pass
 
@@ -357,8 +390,9 @@ if double_iterate:
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
             plt.axhline(y=0, linestyle='--', color='k')
-            plt.legend()
-            plt.show()
+            #plt.legend()
+            #plt.show()
+            spt.show_plot()
 else:
     pass
 

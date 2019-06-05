@@ -78,7 +78,7 @@ cal_params={
                         'y':blue_default_trim['y']}
                     },
                 'Red':{
-                    'linelistname':'JJ_FeAr_lines.txt',
+                    'linelistname':'400M1_HgAr_redcam.txt',
                     'offset':0,
                     'trimregions':{
                         'x':[380,red_default_trim['x'][1]],

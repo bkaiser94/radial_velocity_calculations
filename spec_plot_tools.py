@@ -248,6 +248,7 @@ def retrieve_sdss_spec(filename,scale_noise=True):
     spec_array=spec_hdu[1].data
     waves= 10.**np.copy(spec_array['loglam'])
     flux= np.copy(spec_array['flux'])
+    flux= flux/10. #convert from 10**-17 to 10**-16
     try:
         noise= np.copy(spec_array['PropErr'])
     except KeyError as error:

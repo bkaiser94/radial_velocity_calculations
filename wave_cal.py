@@ -67,14 +67,15 @@ def to_barycenter(header):
 
 ####
 #trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
-trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
+#trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
 #trace_band_mid=110
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
+trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=170 #y-pixel for comp stars upper
 #trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
-trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
-#trace_band_width= 18 #SDSSJ1159
+#trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
+trace_band_width= 18 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 10 #pixel width to determine the center of the trace
@@ -558,6 +559,8 @@ for counter, img in enumerate(speclist):
         target_noise2_list= np.array([])
         bkg_light= np.array([])
         bkg_noise2_list= np.array([])
+        bkg_up_comb=np.array([])
+        bkg_down_comb= np.array([])
         poly_curve_y = np.polyval(polynomials[0], x_positions)
         poly_curve_wavelength= np.polyval(polynomials[1], x_positions)
         for x_pos in x_positions:
@@ -569,6 +572,8 @@ for counter, img in enumerate(speclist):
             target_noise2_list= np.append(target_noise2_list, [target_noise2])
             up_bkg=img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+bkg_core_sides+1),x_pos]
             down_bkg= img_data[np.int_(poly_curve_y[x_pos]-bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]-bkg_shift+bkg_core_sides+1),x_pos]
+            
+            plt.legend()
             bkg_comb= np.append(up_bkg, down_bkg)
             #print "trace_vals.shape", trace_vals.shape
             #print "bkg_comb.shape", bkg_comb.shape
@@ -577,7 +582,16 @@ for counter, img in enumerate(speclist):
             bkg_sum= trace_vals.shape[0]*np.copy(np.mean(bkg_comb)) #take the mean of the bkg portion of the sky
             bkg_light= np.append(bkg_light,[bkg_sum])
             bkg_noise2_list= np.append(bkg_noise2_list, [bkg_noise2]) #list of noise values for a single pixel (resulting from the mean of the sky) for a given column
-            
+            bkg_up_comb= np.append(bkg_up_comb, [np.sum(up_bkg)])
+            bkg_down_comb= np.append(bkg_down_comb, [np.sum(down_bkg)])
+        #plt.plot(bkg_up_comb, label='bkg_up_comb')
+        #plt.plot(bkg_down_comb, label='bkg_down_comb')
+        #plt.plot(target_light, label='target_light')
+        #plt.title('Before sky subtraction')
+        #plt.legend()
+        #plt.xlabel('pixel')
+        #plt.ylabel('counts')
+        #plt.show()
         #plt.plot(x_positions,target_light,'-')
         #plt.xlabel('x (pixel)')
         #plt.ylabel('Counts')
@@ -589,11 +603,12 @@ for counter, img in enumerate(speclist):
         target_light= target_light-bkg_light
         noise_spectrum = noise_spectrum/target_light #normalized noise values by the target spectrum, so now unitless.
         target_light= target_light/header['EXPTIME'] #converting to counts/s
+        bkg_light= bkg_light/header['EXPTIME'] #converting to counts/s
         plt.plot(x_positions,target_light,'-')
         plt.xlabel('x (pixel)')
         #plt.ylabel('Counts')
         plt.ylabel('Counts/s')
-        plt.title('Target Spectrum')
+        plt.title('Target Spectrum after background subtraction')
         plt.show()
         header= to_barycenter(header) #append the BMJD_TDB value
         header.append(card= ("pix_scal", 0.3, ' "/pixel'))
