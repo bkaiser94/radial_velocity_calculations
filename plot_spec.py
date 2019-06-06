@@ -34,7 +34,7 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-sdss_pix_width = 20
+sdss_pix_width = 10
 
 #wavelength_offset=60
 #wavelength_offset=20
@@ -55,16 +55,18 @@ plot_400m2_tell= False
 #norm_range=[40,80]
 
 #norm_range=[7042,7046]
-norm_range=[7490,7510]
+norm_range=[7490,7510] #outside telluric
+#norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
+#norm_range=[6090,6240]
 #norm_range=[6640,6670]#20190530 400M1 norm range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
-#file_setting='command'
+#file_setting='all_avg'
+file_setting='command'
 #file_setting='all_wctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
@@ -80,10 +82,10 @@ if file_setting=='all_avg':
     #filenames=glob('avg_*')
     filenames=glob('avg_fwctb*fits')
     #filenames=glob('avg_wctb*fits')
-    #single_iterate=True
-    #double_iterate=False
-    single_iterate=False
-    double_iterate=True
+    single_iterate=True
+    double_iterate=False
+    #single_iterate=False
+    #double_iterate=True
 
 elif file_setting=='all_wctb':
     print(file_setting)
@@ -331,14 +333,20 @@ if file_setting=='all_SDSS':
 
 if file_setting=='command':
         target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
+        target_spec1[0]=target_spec1[0]+wavelength_offset
         target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
-        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
+        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True, kernel_type='box')
+        plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box')
+        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box')
+        #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=10)
+        #plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=10)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=False)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
-        plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
+        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
         plt.axhline(y=0, linestyle='--', color='k')
-        plt.legend()
-        plt.show()
+        #plt.legend()
+        #plt.show()
+        spt.show_plot()
         
 if file_setting=='two_arm':
     #sdss_names = glob(sdss_path+'*1555*.fits')
