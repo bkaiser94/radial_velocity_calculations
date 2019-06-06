@@ -66,16 +66,18 @@ def to_barycenter(header):
     return header
 
 ####
+trace_offset = 0 #amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
+
 #trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
-#trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
+trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
 #trace_band_mid=110
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
-trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
+#trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=170 #y-pixel for comp stars upper
-#trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
+trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
-trace_band_width= 18 #SDSSJ1159
+#trace_band_width= 18 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 10 #pixel width to determine the center of the trace
@@ -90,6 +92,7 @@ flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
 bkg_shift= 30
+#bkg_shift=35
 #bkg_shift= 25
 lamp_sigma_guess= 2
 line_search_width = 3#formerly 3 20190502
@@ -168,6 +171,16 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
         print "bounds", bounds
         plt.plot(cut_x_pixels, cut_light_values, label = "data")
         plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels,popt[0],popt[1],popt[2],popt[3]),label ='fit')
+        #popt[1]=popt[1]+trace_offset
+        plt.axvline(x=popt[1],  color='b')
+        plt.axvline(x=popt[1]+core_sides, linestyle= '--', color='b')
+        plt.axvline(x=popt[1]-core_sides,linestyle='--',  color='b')
+        plt.axvline(x=popt[1]+bkg_shift,  color='cyan')
+        plt.axvline(x=popt[1]+bkg_shift+bkg_core_sides, linestyle= '--', color='cyan')
+        plt.axvline(x=popt[1]+bkg_shift-bkg_core_sides,linestyle='--',  color='cyan')
+        plt.axvline(x=popt[1]-bkg_shift,  color='cyan')
+        plt.axvline(x=popt[1]-bkg_shift+bkg_core_sides, linestyle= '--', color='cyan')
+        plt.axvline(x=popt[1]-bkg_shift-bkg_core_sides,linestyle='--',  color='cyan')
         plt.legend()
         plt.show()
     else:
@@ -256,6 +269,8 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     polynomial_fit= np.polyfit(x_positions,y_positions,poly_degree)
     print polynomial_fit
     print polynomial_fit.shape
+    #20190605 added this offsetting part
+    polynomial_fit[-1]=polynomial_fit[-1]+trace_offset
     poly_curve_y = np.polyval(polynomial_fit, x_positions)
     def bkg_trace(x_positions, sign='minus'):
         #return  np.int_(poly_curve_y[x_positions]+bkg_shift)

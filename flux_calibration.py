@@ -70,11 +70,12 @@ standard_name='EG274'
 #observed_file= 'wcmtb.ltt3218930blue.fits'
 
 #observed_file='avg_EG274_400m1.fits'
-observed_file='avg_wctb.EG274_400m2.fits'
+#observed_file='avg_wctb.EG274_400m2.fits'
 #observed_file='avg_wctb.GD153_400m2.fits'
 #observed_file='avg_wctb.EG274_400m1.fits'
 #observed_file='avg_wctb.GD153_400m1.fits'
-#observed_file='avg_wctb.EG274_400m1_am13.fits'
+observed_file='avg_wctb.EG274_400m1_am13.fits'
+#observed_file='avg_wctb.EG274_400m2_am13.fits'
 ##############################
 ##############################
 

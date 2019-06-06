@@ -55,21 +55,21 @@ plot_400m2_tell= False
 #norm_range=[40,80]
 
 #norm_range=[7042,7046]
-#norm_range=[7490,7510]
+norm_range=[7490,7510]
 #norm_range=[7517,7556] #20190528
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
-norm_range=[6640,6670]#20190530 400M1 norm range
+#norm_range=[6640,6670]#20190530 400M1 norm range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command'
 #file_setting='all_wctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
-file_setting= 'two_arm'
+#file_setting= 'two_arm'
 
 single_iterate= False
 double_iterate= False #file_settings change these in their little sections ahead if they should be changed
@@ -78,12 +78,12 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('avg_*')
-    #filenames=glob('avg_fwctb*fits')
-    filenames=glob('avg_wctb*fits')
-    single_iterate=True
-    double_iterate=False
-    #single_iterate=False
-    #double_iterate=True
+    filenames=glob('avg_fwctb*fits')
+    #filenames=glob('avg_wctb*fits')
+    #single_iterate=True
+    #double_iterate=False
+    single_iterate=False
+    double_iterate=True
 
 elif file_setting=='all_wctb':
     print(file_setting)
@@ -341,7 +341,8 @@ if file_setting=='command':
         plt.show()
         
 if file_setting=='two_arm':
-    sdss_names = glob(sdss_path+'*1555*.fits')
+    #sdss_names = glob(sdss_path+'*1555*.fits')
+    sdss_names = glob(sdss_path+'*1159*.fits')
     sdss_spec, sdssheader, sdss_noise= spt.retrieve_sdss_spec(sdss_names[0])
     plot_spectrum(sdss_spec, sdss_names[0], sdssheader, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
     plt.xlim(3700,9000)
@@ -371,10 +372,10 @@ if single_iterate:
         #plot_sky(filename)
         #plot_SNR(target_spec, target_noise, filename)
         #plot_dwavelength(target_spec)
-        #spt.show_plot()
+        spt.show_plot()
         #plt.legend()
         #plt.show()
-    spt.show_plot()
+    #spt.show_plot()
     #plt.legend()
     #plt.show()
 else:
@@ -386,9 +387,11 @@ if double_iterate:
         target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
         for filename2 in filenames:
             target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
-            plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
+            plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True, kernel_type='box')
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
+            #plot_spectrum(target_spec1, filename1, header1, norm=False, smooth=True, kernel_type='box')
+            #plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box')
             plt.axhline(y=0, linestyle='--', color='k')
             #plt.legend()
             #plt.show()
