@@ -25,14 +25,15 @@ import scipy.interpolate as scinterp
 import spec_plot_tools as spt
 import cal_params as cp
 
-
-#poly_degree= 5 #order of polynomials from before 20190506
+#poly_degree=3
+poly_degree= 5 #order of polynomials from before 20190506
 #poly_degree=7
-poly_degree=9
+#poly_degree=9
 
 
 #standard_directory = '~/Desktop/standards/'
-standard_directory = '/Users/BenKaiser/Desktop/standards/'
+#standard_directory = '/Users/BenKaiser/Desktop/standards/'
+standard_directory= cp.standard_dir
 #standard_file = "foke/fgd108.dat"
 #standard_file = 'foke/ffeige67.dat'
 #standard_file = 'fhamuy/fltt6248.dat'
@@ -51,9 +52,10 @@ standard_directory = '/Users/BenKaiser/Desktop/standards/'
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-standard_name='EG274'
+#standard_name='EG274'
 #standard_name = 'GD153'
 #standard_name= 'LTT3218'
+standard_name='Feige110'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
 ##observed_file = 'wcmtb.feige67930blue.fits'
@@ -71,10 +73,13 @@ standard_name='EG274'
 
 #observed_file='avg_EG274_400m1.fits'
 #observed_file='avg_wctb.EG274_400m2.fits'
+observed_file='avg_wctb.Feige110_400m2.fits'
+#observed_file='avg_wctb.Feige110_400m1.fits'
+
 #observed_file='avg_wctb.GD153_400m2.fits'
 #observed_file='avg_wctb.EG274_400m1.fits'
 #observed_file='avg_wctb.GD153_400m1.fits'
-observed_file='avg_wctb.EG274_400m1_am13.fits'
+#observed_file='avg_wctb.EG274_400m1_am13.fits'
 #observed_file='avg_wctb.EG274_400m2_am13.fits'
 ##############################
 ##############################
@@ -108,6 +113,10 @@ obs_time = obs_date+'T'+obs_time
 obs_time = Time(obs_time, format = 'isot', scale = 'utc').mjd
 exptime = header['EXPTIME']
 
+obs_spec= np.vstack([obs_waves1, obs_flux1])
+obs_spec= spt.correct_extinction(obs_spec, header, plot_all=True)
+obs_waves1=obs_spec[0]
+obs_flux1=obs_spec[1]
 #obs_flux1= obs_flux1/np.float_(exptime) #converts to counts per second
 
 #####
@@ -277,6 +286,7 @@ sens_curve_points = np.polyval(obs_curve, obs_waves)/np.polyval(model_curve, obs
 sens_curve_fit= np.polyfit(obs_waves, sens_curve_points,poly_degree)
 #sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree)
 
+sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
 
 
 plt.plot(obs_waves, obs_flux, label= 'observed', marker= 'o', linestyle='none')
@@ -332,12 +342,12 @@ def get_residuals(plot_all = False):
         spt.show_plot()
     return residuals
 
-def limit_to_telluric():
+def limit_to_telluric(obs_waves1,residuals):
     """
     Take the calculated residuals and limit them to the region of telluric absorption and set the value to be 1 everywhere else, so the remnants of other regions aren't messed up too.
     
     """
-    
+    #io_telluric_lines= 
     
     return residuals
 
@@ -357,35 +367,6 @@ np.savetxt(standard_info['sens_filename'], sens_curve_fit, header = 'Airmass: ' 
 
 np.savetxt('residuals_' + standard_info['sens_filename'], residuals, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
 
-#poly_curve=  sens_curve_fit[-1]+sens_curve_fit[-2]*obs_waves + sens_curve_fit[-3]*(obs_waves**2)+sens_curve_fit[-4]*(obs_waves**3)+sens_curve_fit[-5]*(obs_waves**4)+sens_curve_fit[-6]*(obs_waves**5)
-#poly_curve = np.polyval(sens_curve_fit,obs_waves1)
-#poly_curve = np.polyval(sens_curve_fit,obs_waves1)
-
-#plt.plot(obs_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
-#plt.plot(obs_waves, poly_curve, label= 'polynomial fit')
-#plt.legend()
-#plt.show()
-
-##plt.plot(stand_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
-##plt.plot(obs_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
-#plt.plot(calc_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
-##plt.plot(obs_waves1, poly_curve, label= 'polynomial fit')
-#plt.plot(obs_waves1, poly_curve, label= 'polynomial fit')
-#plt.legend()
-#plt.show()
-
-##fcal_obs = obs_flux1/poly_curve
-#fcal_obs = obs_flux1/poly_curve
 
 
-##plt.plot(obs_waves1, fcal_obs, label ='flux calibrated observation', marker= 'o', linestyle = 'none')
-##plt.plot(stand_waves1, stand_flux1, label = 'model', marker = 'o', linestyle = 'none')
-##plt.plot(obs_waves1, fcal_obs, label ='flux calibrated observation')
-##plt.plot(stand_waves1, stand_flux1, label = 'model')
-#plt.plot(obs_waves1, fcal_obs, label ='flux calibrated observation')
-##plt.plot(stand_waves1, stand_flux1, label = 'model')
-#plt.plot(obs_waves1, interp_model_flux, label='model')
-#plt.xlabel('wavelength ($\AA$)')
-#plt.ylabel('Flux (ergs/cm/cm/s/A 1e-16)')
-#plt.legend()
-#plt.show()
+

@@ -4,11 +4,38 @@ from astropy.io import fits
 import balmer_line_ranges as blr
 from astropy import units as u
 from astropy import constants as const
+from astropy.table import Table
+import scipy.interpolate as scinterp
 
 import cal_params as cp
 
 percentile= 50
 
+
+def make_inside_out(input_list, min_val, max_val):
+    """
+    Takes a list of lists (usually something like a mask_list from the other scripts) and then makes the selected regions become the outer boundaries.
+    
+    I.E. make_inside_out([[10,12],[14,18]], 8, 30)
+    returns
+    [[8,10],[12,14],[18,30]]
+    which can then be used as a mask_list to do other stuff
+    
+    from balmer_line_ranges.py, but I figured it should just be in here actually
+    """
+    new_list=[[]]
+    for index in range(0,len(input_list)+1):
+        if index==0:
+            new_list.append([min_val,input_list[index][0]])
+        elif index==len(input_list):
+            new_list.append([input_list[index-1][1],max_val])
+        else:
+            new_list.append([input_list[index-1][1],input_list[index][0]])
+        #print new_list
+    new_list= new_list[1:]
+    #print new_list
+    return new_list
+        
 
 def get_doppler_shifted(wavelengths, radial_velocity):
     #print "doppler shifting by ", radial_velocity
@@ -51,7 +78,7 @@ def remove_range(input_spec, bound_list):
     merge_other= np.append(low_other, high_other)
     return np.vstack([merge_waves, merge_other])
 
-def replace_range(input_spec, bound_list, replacement_spec):
+def replace_range(input_spec, bound_list, method='ones'):
     """
     Different method of masking the desired region without literally removing the datapoints; it should reassign
     the values corresponding to certain wavelengths
@@ -287,6 +314,47 @@ def show_plot(show_telluric=True):
     plt.show()
     return
     
+def correct_extinction(input_spec, header, plot_all=False):
+    """
+    Read in the extinction curves and correct a spectrum for atmospheric extinction
+    
+    The extinction curve is in mags/airmass
+    
+    """
+    extinction_filename=cp.ref_dir+'extinction/Stritzinger_2005_extinction_curve.csv'
+    extinction_table= Table.read(extinction_filename)
+    extinction_interp= scinterp.CubicSpline(extinction_table['lambda'], extinction_table['extinction'])
+    extinction_vals= extinction_interp(input_spec[0])
+    corr_flux= input_spec[1]*10.**(0.4*extinction_vals*header['airmass'])
+    if plot_all:
+        plt.plot(extinction_table['lambda'], extinction_table['extinction'], label='Original')
+        plt.plot(input_spec[0], extinction_vals, label='Interpolated')
+        plt.title('Extinction curve comparison')
+        plt.ylabel('Extinction (mags/airmass)')
+        plt.xlabel('Wavelength (angstroms)')
+        plt.legend()
+        plt.show()
+        
+        plt.plot(extinction_table['lambda'], 10.**(0.4*extinction_table['extinction']*header['airmass']), label='Original')
+        plt.plot(input_spec[0], 10.**(0.4*extinction_vals*header['airmass']), label='Interpolated')
+        plt.title('Extinction curve comparison')
+        plt.ylabel('Extinction Coefficients')
+        plt.xlabel('Wavelength (angstroms)')
+        plt.legend()
+        plt.show()
+        
+        plt.plot(input_spec[0], input_spec[1], label='Original spectrum')
+        plt.plot(input_spec[0], corr_flux, label='Extinction Corrected')
+        plt.xlabel('Wavelength (angstroms)')
+        plt.ylabel(header['units'])
+        plt.title("Spectrum correction")
+        plt.legend()
+        plt.show()
+        
+    else:
+        pass
+    input_spec[1]= corr_flux
+    return input_spec
     
     
     

@@ -37,6 +37,10 @@ name_all_lower_case:{
 
 
 """
+ref_dir= '/Users/BenKaiser/Desktop/Goodman_ref_files/'
+
+standard_dir=ref_dir+'standards/'
+line_list_dir= ref_dir+'line_lists/'
 
 blue_default_trim={'x':[9,2055],
                    'y':[1,199]}
@@ -160,6 +164,13 @@ standard_dict={
         'dec':'0',
         'filename':'xshooter_standards/fGD153.dat',
         'sens_filename':'GD153_sensitivity_curve.txt',
+        'balmer_masks':balmer_lines_wide,
+        'other_masks': telluric_lines},
+    'feige110':{
+        'ra':'0',
+        'dec':'0',
+        'filename':'xshooter_standards/fFeige110.dat',
+        'sens_filename':'Feige110_sensitivity_curve.txt',
         'balmer_masks':balmer_lines_wide,
         'other_masks': telluric_lines}
     }

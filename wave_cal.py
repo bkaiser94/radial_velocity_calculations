@@ -26,6 +26,7 @@ from astropy import units as u
 from astropy import constants as const
 
 import get_cal_params as gcp
+import cal_params as cp
 
 zerolistname= 'listZero'
 
@@ -75,8 +76,8 @@ trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=170 #y-pixel for comp stars upper
-trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
-#trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
+#trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
+trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width= 18 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
@@ -130,7 +131,8 @@ header=fits.getheader(arc_im_filename)
 
 #####
 setup_dict= gcp.get_cal_params(header)
-fear_array= np.genfromtxt(setup_dict['linelistname'], names = True)
+#fear_array= np.genfromtxt(setup_dict['linelistname'], names = True)
+fear_array= np.genfromtxt(cp.line_list_dir+ setup_dict['linelistname'], names = True)
 line_x_checks = np.copy(fear_array['Pixel']) +setup_dict['offset']
 print "line_x_checks should have just been created"
 print line_x_checks

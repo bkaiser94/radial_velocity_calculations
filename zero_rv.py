@@ -30,18 +30,29 @@ import spec_plot_tools as spt
 
 plot_skips= 20
 
-listfile = 'listFWCTB'
+#listfile = 'listFWCTB'
+listfile = 'listSDSSJ1252'
 target_list = np.genfromtxt(listfile, dtype ='str')
 #output_list = []
 #output_list_name = 'listZFWCTB' #zero rv is the new letter tacked onto the front. I'm pretty sure the only thing we should be changing is the wavelength values in the zero index anyway
 #model_rv_input = np.genfromtxt('model_rvs.txt', names = True)
-model_rv_input=np.genfromtxt('20190408_model_rvs_new.txt', names=True)
+
+try:
+    model_rv_input=np.genfromtxt('20190408_model_rvs_new.txt', names=True)
+    model_rvs = model_rv_input['RV_kms']
+except IOError as error:
+    print "IOError:", error
+    num_rvs= target_list.shape[0]
+    print "Assuming you actually just want to see the waterfall plot, so setting RV=0 for everything"
+    model_rvs= np.zeros(num_rvs)
+
+    
 #rv_file= ''
 #rv_table= Table.read(rv_file)
 
 
 
-model_rvs = model_rv_input['RV_kms']
+#model_rvs = model_rv_input['RV_kms']
 #model_rvs= rv_table['rv']
 
 
