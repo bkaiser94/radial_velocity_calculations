@@ -67,9 +67,9 @@ norm_range=[6640,6670]#20190530 400M1 norm range
 
 #file_setting='all_avg'
 #file_setting='command'
-#file_setting='all_wctb'
+file_setting='all_wctb'
 #file_setting='all_fwctb'
-file_setting= 'compare_SDSS'
+#file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -91,14 +91,14 @@ if file_setting=='all_avg':
 
 elif file_setting=='all_wctb':
     print(file_setting)
-    filenames=glob('wctb*')
+    filenames=glob('wctb*EG274*')
     single_iterate=True
     double_iterate=False
     
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*TIC294*')
+    filenames=glob('fwctb*EG274*')
     single_iterate=True
     double_iterate=False
 
@@ -304,7 +304,7 @@ if file_setting== 'compare_SDSS':
     target_spec1= norm_spectrum(target_spec1, norm_range)
     for filename2 in sdss_names:
         target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2)
-        #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
+        target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
         target_spec2=norm_spectrum(target_spec2, norm_range)
         #plt.ylim(top=np.nanmax(np.hstack([target_spec2[1], target_spec1[1]]))+0.5)
         plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
@@ -370,13 +370,27 @@ if file_setting=='two_arm':
         target_spec2, header2, target_noise2= spt.retrieve_spec(m2_name)
         #sdss_spec= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
         
-        #plot_spectrum(target_spec1, m1_name, header1, norm=False, smooth=True, kernel_type='box')
-        #plot_spectrum(target_spec2, m2_name, header2, norm=False, smooth=True, kernel_type='box')
+        plot_spectrum(target_spec1, m1_name, header1, norm=False, smooth=True, kernel_type='box')
+        plot_spectrum(target_spec2, m2_name, header2, norm=False, smooth=True, kernel_type='box')
         
-        target_spec2=norm_spectrum(target_spec2, norm_range)
-        target_spec1=norm_spectrum(target_spec1, norm_range)
-        plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='box')
-        plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='box')
+        #plt.scatter(target_spec1[0],target_spec1[1], color='b')
+        #plt.scatter(target_spec2[0], target_spec2[1], color='r')
+        #plt.show()
+        #dl1=target_spec1[0]-np.roll(target_spec1[0],1)
+        #dl2=target_spec2[0]-np.roll(target_spec2[0],1)
+        #plt.scatter(target_spec1[0][1:],dl1[1:], color='b', label='400M1')
+        #plt.scatter(target_spec2[0][1:],dl2[1:] , color='r', label='400M2')
+        #plt.ylabel(r'$\Delta \lambda (\AA)$')
+        #plt.xlabel(r'Wavelength ($\AA$)')
+        #plt.title(header1['date-obs']+'\t'+header2['date-obs'])
+        #plt.legend()
+        #plt.show()
+        
+        
+        #target_spec2=norm_spectrum(target_spec2, norm_range)
+        #target_spec1=norm_spectrum(target_spec1, norm_range)
+        #plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='box')
+        #plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='box')
         
         #plot_spectrum(sdss_spec, sdss_names[0], sdssheader, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
         plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
@@ -390,7 +404,8 @@ if single_iterate:
         #conv_spec= convolve_spectrum(target_spec, header)
         #plot_spectrum(target_spec, filename, header, smooth=True)
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='box', norm=True)
-        plot_spectrum(target_spec, filename, header, norm=False, smooth=False, kernel_type='box')
+        #target_spec[1]=header['airmass']
+        plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
         #plot_spectrum(target_spec, filename, header, norm=True)
         #plot_spectrum(target_spec, filename, header, norm=True, smooth=True)
         #plot_spectrum(target_spec, filename, header, smooth=True)

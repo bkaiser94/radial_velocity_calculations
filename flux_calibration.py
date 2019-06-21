@@ -26,9 +26,9 @@ import spec_plot_tools as spt
 import cal_params as cp
 
 #poly_degree=3
-poly_degree= 5 #order of polynomials from before 20190506
+#poly_degree= 5 #order of polynomials from before 20190506
 #poly_degree=7
-#poly_degree=9
+poly_degree=9
 
 
 #standard_directory = '~/Desktop/standards/'
@@ -52,10 +52,10 @@ standard_directory= cp.standard_dir
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-#standard_name='EG274'
+standard_name='EG274'
 #standard_name = 'GD153'
 #standard_name= 'LTT3218'
-standard_name='Feige110'
+#standard_name='Feige110'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
 ##observed_file = 'wcmtb.feige67930blue.fits'
@@ -72,8 +72,8 @@ standard_name='Feige110'
 #observed_file= 'wcmtb.ltt3218930blue.fits'
 
 #observed_file='avg_EG274_400m1.fits'
-#observed_file='avg_wctb.EG274_400m2.fits'
-observed_file='avg_wctb.Feige110_400m2.fits'
+observed_file='avg_wctb.EG274_400m2.fits'
+#observed_file='avg_wctb.Feige110_400m2.fits'
 #observed_file='avg_wctb.Feige110_400m1.fits'
 
 #observed_file='avg_wctb.GD153_400m2.fits'
@@ -200,10 +200,10 @@ stand_flux1= rescale_flux(stand_flux1)
 
 
 plt.title('model versus observed')
-plt.plot(stand_waves1, stand_flux1/np.nanmedian(stand_flux1),label = 'model')
-plt.plot(obs_waves1, obs_flux1/np.nanmedian(obs_flux1), label = 'observed')
-#plt.scatter(stand_waves1, stand_flux1,label = 'model')
-#plt.scatter(obs_waves1, obs_flux1, label = 'observed', color='r')
+#plt.plot(stand_waves1, stand_flux1/np.nanmedian(stand_flux1),label = 'model')
+#plt.plot(obs_waves1, obs_flux1/np.nanmedian(obs_flux1), label = 'observed')
+plt.scatter(stand_waves1, stand_flux1,label = 'model')
+plt.scatter(obs_waves1, obs_flux1, label = 'observed', color='r')
 #plt.legend()
 #plt.show()
 spt.show_plot()

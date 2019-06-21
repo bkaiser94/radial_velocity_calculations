@@ -25,6 +25,7 @@ from astropy import coordinates as coords
 from astropy import units as u
 from astropy import constants as const
 
+import spec_plot_tools as spt
 
 speclistname = "listWCTB"
 
@@ -38,6 +39,8 @@ sens_curve_list = speclist[1]
 bad_noise_sub = 100
 do_residual_div= False
 do_rv_barycorr=False
+do_ext_corr= True
+plot_across_night=True
 
 parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
@@ -79,6 +82,15 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     noise_spec = i[3].data #don't need to divide this by the exposure time since it's normalized already in proportion to whatever units we use.
     #noise_spec = bad_noise_vals(noise_spec) #remove negative noise values and exceedingly high ones
     sens_curve = np.polyval(sens_curve_coeffs,wavelengths)
+    if do_ext_corr:
+        print("Doing atmospheric extinction correction.")
+        obs_spec= np.vstack([wavelengths, counts])
+        obs_spec= spt.correct_extinction(obs_spec, header, plot_all=False)
+        wavelengths=np.copy(obs_spec[0])
+        counts=np.copy(obs_spec[1])
+        header.append(card=('ext_corr', True, 'atmospheric extinction correction'))
+    else:
+        header.append(card=('ext_corr', False, 'atmospheric extinction correction'))
     flux = counts/sens_curve
     if do_residual_div:
         residuals= np.genfromtxt('residuals_'+ sens_curve_file)
@@ -113,7 +125,10 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     hdulist.writeto(target_file, overwrite = True)
     if count%4 == 0:
         color = color_list[count%len(color_list)]
-        plt.plot(wavelengths, flux, label = header['OPENTIME'], color= color)
+        if plot_across_night:
+            plt.plot(wavelengths, flux, label = header['OPENTIME'], color= color)
+        else:
+            pass
         #plt.plot(wavelengths, noise_spec*flux, label = header['OPENTIME']+ ' Noise', color = color)
         #plt.plot(wavelengths, noise_spec, label = header['OPENTIME']+ ' Noise no times', color = color)
     count += 1
