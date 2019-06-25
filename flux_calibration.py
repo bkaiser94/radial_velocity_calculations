@@ -72,12 +72,12 @@ standard_name='EG274'
 #observed_file= 'wcmtb.ltt3218930blue.fits'
 
 #observed_file='avg_EG274_400m1.fits'
-observed_file='avg_wctb.EG274_400m2.fits'
+#observed_file='avg_wctb.EG274_400m2.fits'
 #observed_file='avg_wctb.Feige110_400m2.fits'
 #observed_file='avg_wctb.Feige110_400m1.fits'
 
 #observed_file='avg_wctb.GD153_400m2.fits'
-#observed_file='avg_wctb.EG274_400m1.fits'
+observed_file='avg_wctb.EG274_400m1.fits'
 #observed_file='avg_wctb.GD153_400m1.fits'
 #observed_file='avg_wctb.EG274_400m1_am13.fits'
 #observed_file='avg_wctb.EG274_400m2_am13.fits'
@@ -200,10 +200,10 @@ stand_flux1= rescale_flux(stand_flux1)
 
 
 plt.title('model versus observed')
-#plt.plot(stand_waves1, stand_flux1/np.nanmedian(stand_flux1),label = 'model')
-#plt.plot(obs_waves1, obs_flux1/np.nanmedian(obs_flux1), label = 'observed')
-plt.scatter(stand_waves1, stand_flux1,label = 'model')
-plt.scatter(obs_waves1, obs_flux1, label = 'observed', color='r')
+plt.plot(stand_waves1, stand_flux1/np.nanmedian(stand_flux1),label = 'model')
+plt.plot(obs_waves1, obs_flux1/np.nanmedian(obs_flux1), label = 'observed')
+#plt.scatter(stand_waves1, stand_flux1,label = 'model')
+#plt.scatter(obs_waves1, obs_flux1, label = 'observed', color='r')
 #plt.legend()
 #plt.show()
 spt.show_plot()

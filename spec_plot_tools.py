@@ -305,8 +305,11 @@ def plot_telluric():
     return
     
 
-def show_plot(show_telluric=True):
-    plt.legend()
+def show_plot(show_telluric=True, show_legend=True):
+    if show_legend:
+        plt.legend(loc='best')
+    else:
+        pass
     if show_telluric:
         plot_telluric()
     else:

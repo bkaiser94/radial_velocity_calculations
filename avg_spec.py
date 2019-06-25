@@ -105,21 +105,26 @@ for sets in filename_matches:
 def avg_spectra(target_list):
     flux_list=[]
     noise2_list=[]
-    #sky_list=[]
+    sky_list=[]
     print("target_list", target_list)
     for target_file in target_list:
         print('target_file', target_file)
         target_spec, header, target_noise = spt.retrieve_spec(target_file)
         flux_list.append(target_spec[1])
         noise2_list.append(target_noise[1]**2)
+        hdu=fits.open(target_file)
+        sky=np.copy(hdu[2].data)
+        sky_list.append(sky)
         #sky_list(
         plt.plot(target_spec[1], label=target_file)
     flux_array=np.array(flux_list)
     print(flux_array.shape)
     noise2_array= np.array(noise2_list)
+    sky_array=np.array(sky_list)
     avg_flux= np.nanmean(flux_array, axis=0)
     avg_noise2= np.sum(noise2_array, axis=0)/noise2_array.shape[0]**2
     avg_noise= np.sqrt(avg_noise2)
+    avg_sky= np.nanmean(sky_array,axis=0)
     plt.plot(avg_flux, label='avg')
     #plt.title(target_file)
     plt.legend()
@@ -132,7 +137,8 @@ def avg_spectra(target_list):
     print('saving hopefully...')
     hdu=fits.PrimaryHDU(target_spec[0], header= header)
     hdu1= fits.ImageHDU(avg_flux)
-    hdu2= fits.ImageHDU(np.ones(avg_flux.shape))
+    #hdu2= fits.ImageHDU(np.ones(avg_flux.shape))
+    hdu2= fits.ImageHDU(avg_sky)
     hdu3 = fits.ImageHDU(avg_noise)
     hdulist= fits.HDUList([hdu,hdu1,hdu2,hdu3])
     hdulist.writeto(output_name, overwrite= True)

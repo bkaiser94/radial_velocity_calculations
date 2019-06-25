@@ -82,9 +82,11 @@ trace_band_width = 50#pixel width to determine the center of the trace 2019-03-2
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 10 #pixel width to determine the center of the trace
+sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 core_sides=  5
 #core_sides=  7
 bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
+bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
 y_trace_width= core_sides*2+1 #the actual number of pixels in the vertical direction that are in the trace (or background)
 poly_degree = 3 #polynomial degree of the fit to the trace
 lamp_poly_degree=5
@@ -149,7 +151,12 @@ line_sides = np.ones(line_x_checks.shape[0])*line_search_width
 def gaussian_curve(x, a, x0, sigma,b):
     return a*np.exp(-(x-x0)**2/(2*sigma**2))+b
 
-def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all = False, bounds = (-np.inf, np.inf)):
+def seeing_window(seeing_sigma):
+    core_sides= int(seeing_sigma*sigma_multi_side)+1 #setting the extraction window based on the seeing
+    bkg_core_sides= int(core_sides*bkg_side_multi)
+    return core_sides, bkg_core_sides
+
+def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all = False, bounds = (-np.inf, np.inf), fixed_width=True):
     """
     Those bounds are the default for scipy.optimize.curve_fit(), so now changing them changes the bounds
     """
@@ -175,6 +182,10 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
         plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels,popt[0],popt[1],popt[2],popt[3]),label ='fit')
         #popt[1]=popt[1]+trace_offset
         plt.axvline(x=popt[1],  color='b')
+        if fixed_width:
+            pass
+        else:
+            core_sides, bkg_core_sides= seeing_window(popt[2])
         plt.axvline(x=popt[1]+core_sides, linestyle= '--', color='b')
         plt.axvline(x=popt[1]-core_sides,linestyle='--',  color='b')
         plt.axvline(x=popt[1]+bkg_shift,  color='cyan')
@@ -187,28 +198,15 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
         plt.show()
     else:
         pass
-    #try:
-        #cut_region = np.where(x_pixels> (popt[1]-search_width ))
-        #print popt
-        #print  "lower bound:", popt[1]-search_width
-        #print "upper bound: ", popt[1]+search_width
-        #high_x_pixels= np.copy(x_pixels[cut_region])
-        #high_light_values= np.copy(light_values[cut_region])
-        #upper_cut = np.where(high_x_pixels < (popt[1]+search_width))
-        #cut_x_pixels = high_x_pixels[upper_cut]
-        #print np.min(cut_x_pixels), np.max(cut_x_pixels), popt[1]
-        #cut_light_values= high_light_values[upper_cut]
-        #popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= popt)
-    #except ValueError as error:
-        #print "probably chose a center outside the bounds of the image"
-        #print error
-        
-    #print popt
-    #print '========'
-    #plt.plot(cut_x_pixels, cut_light_values)
-    #plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels, popt[0], popt[1], popt[2], popt[3]))
-    #plt.show()
     return popt, pcov
+
+
+def iterate_gauss_trace():
+    """
+    
+    
+    """
+    return
 
 
 def normalize_flat(masterflatfile=masterflatfile, plot_all = False):
@@ -259,6 +257,21 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     band_inds= np.indices(target_band.shape)
     x_positions= band_inds[1,1]
     y_pos = band_inds[0].T[0]
+    
+    #20190624 moved this section up here
+    plt.imshow(target_band[:,seeing_range[0]:seeing_range[1]], cmap='hot')
+    plt.show()
+    seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
+    seeing_p0[1]=np.argmax(seeing_band)
+    seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds, fixed_width=False)
+    seeing_sigma = seeing_popt[2]
+    print seeing_popt
+    print "Seeing sigma: ", seeing_popt[2]
+    core_sides, bkg_core_sides= seeing_window(seeing_sigma)
+    ### end of 20190624 moved section
+    
+    
+    
     print 'xpositionsshape', x_positions.shape
     y_positions= np.argmax(target_band,axis=0)+(trace_band_mid-trace_band_width/2)
     print 'yshape', y_positions.shape
@@ -298,14 +311,14 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     plt.plot(x_positions, bkg_trace(x_positions, sign='plus')+bkg_core_sides, color = 'cyan', linestyle = '--')
     plt.legend()
     plt.show()
-    plt.imshow(target_band[:,seeing_range[0]:seeing_range[1]], cmap='hot')
-    plt.show()
-    seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
-    seeing_p0[1]=np.argmax(seeing_band)
-    seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds)
-    seeing_sigma = seeing_popt[2]
-    print seeing_popt
-    print "Seeing sigma: ", seeing_popt[2]
+    #plt.imshow(target_band[:,seeing_range[0]:seeing_range[1]], cmap='hot')
+    #plt.show()
+    #seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
+    #seeing_p0[1]=np.argmax(seeing_band)
+    #seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds)
+    #seeing_sigma = seeing_popt[2]
+    #print seeing_popt
+    #print "Seeing sigma: ", seeing_popt[2]
     target_light= np.array([])
     bkg_light= np.array([])
     lamp_light= np.array([])
@@ -569,6 +582,14 @@ for counter, img in enumerate(speclist):
         new_filelist.append(filename)
         polynomials = polynomial_list[association_index]
         seeing_sig = sigma_list[association_index]
+        
+        #20190624 changed
+        
+        core_sides, bkg_core_sides= seeing_window(seeing_sig)
+        
+        #end of 20190624 changed stuff
+        
+        
         seeing_FWHM = seeing_list[association_index]
         band_inds= np.indices(img_data.shape)
         x_positions= band_inds[1,1]
@@ -632,6 +653,9 @@ for counter, img in enumerate(speclist):
         header.append(card = ('see_sig', seeing_sig, 'Sigma of Gauss seeing fit (pixels)'))
         header.append(card = ('see_FWHM', seeing_FWHM, 'Seeing (pixels)'))
         header.append(card = ('skipflat', skip_flat, 'flatfielding skipped or not'))
+        header.append(card=('width', core_sides*2+1, 'width of extracted region for trace'))
+        header.append(card=('bkgwidth', bkg_core_sides*2+1, 'width of bkg regions'))
+        header.append(card=('bkgshift', bkg_shift, 'shift of bkg region from center of trace'))
         #poly_curve_wavelength= barycentric_vel_corr(header, poly_curve_wavelength) #correction of Earth's orbital motion
         header['units']= 'Counts/s'
         hdu = fits.PrimaryHDU(poly_curve_wavelength, header = header)
