@@ -66,11 +66,13 @@ cal_params={
                 'Blue':{
                     'linelistname':'JJ_FeAr_lines.txt',
                     'offset':90,
-                    'trimregions': blue_default_trim},
+                    'trimregions': blue_default_trim,
+                    'air_corr':True},
                 'Red':{
                     'linelistname':'',
                     'offset':90,
-                    'trimregions':red_default_trim}
+                    'trimregions':red_default_trim,
+                    'air_corr': True}
                 }
             }
         },
@@ -82,14 +84,16 @@ cal_params={
                     'offset':0,
                     'trimregions':{
                         'x':[380,blue_default_trim['x'][1]],
-                        'y':blue_default_trim['y']}
+                        'y':blue_default_trim['y']},
+                    'air_corr': True
                     },
                 'Red':{
                     'linelistname':'400M1_HgAr_redcam.txt',
                     'offset':0,
                     'trimregions':{
                         'x':[380,red_default_trim['x'][1]],
-                        'y':red_default_trim['y']}
+                        'y':red_default_trim['y']},
+                    'air_corr': True
                     }
                 }
             },
@@ -98,11 +102,13 @@ cal_params={
                 'Blue':{
                     'linelistname':'400M2_HgAr.txt',
                     'offset':0,
-                    'trimregions':blue_default_trim},
+                    'trimregions':blue_default_trim,
+                    'air_corr':True},
                 'Red':{
                     'linelistname':'400M2_HgAr.txt',
                     'offset':0,
-                    'trimregions':red_default_trim}
+                    'trimregions':red_default_trim,
+                    'air_corr':True}
                 }
             }
         }

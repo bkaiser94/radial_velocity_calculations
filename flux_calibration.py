@@ -52,10 +52,10 @@ standard_directory= cp.standard_dir
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-standard_name='EG274'
+#standard_name='EG274'
 #standard_name = 'GD153'
 #standard_name= 'LTT3218'
-#standard_name='Feige110'
+standard_name='Feige110'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
 ##observed_file = 'wcmtb.feige67930blue.fits'
@@ -74,12 +74,12 @@ standard_name='EG274'
 #observed_file='avg_EG274_400m1.fits'
 #observed_file='avg_wctb.EG274_400m2.fits'
 #observed_file='avg_wctb.Feige110_400m2.fits'
-#observed_file='avg_wctb.Feige110_400m1.fits'
+observed_file='avg_wctb.Feige110_400m1.fits'
 
 #observed_file='avg_wctb.GD153_400m2.fits'
 #observed_file='avg_wctb.EG274_400m1.fits'
 #observed_file='avg_wctb.EG274_400m2.fits'
-observed_file='avg_wctb.eg274am126_400m2.fits'
+#observed_file='avg_wctb.eg274am126_400m2.fits'
 #observed_file='avg_wctb.GD153_400m1.fits'
 #observed_file='avg_wctb.EG274_400m1_am13.fits'
 #observed_file='avg_wctb.EG274_400m2_am13.fits'
@@ -102,6 +102,10 @@ def get_star_info(starname):
 
 ############################
 ##########################
+
+
+core_name= observed_file.split('.')[1] #get the part of the filename that follows the first period and exclude the extension
+output_filename=corename+'_sensitivity_curve.txt'
 
 
 obs_fits = fits.open(observed_file)
@@ -365,9 +369,13 @@ plt.ylabel('Flux (ergs/cm/cm/s/A 1e-16)')
 spt.show_plot()
 
 #np.savetxt(output_filename, sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
-np.savetxt(standard_info['sens_filename'], sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+#np.savetxt(standard_info['sens_filename'], sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
 
-np.savetxt('residuals_' + standard_info['sens_filename'], residuals, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+#np.savetxt('residuals_' + standard_info['sens_filename'], residuals, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+
+np.savetxt(output_filename, sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+
+np.savetxt('residuals_' +output_filename, residuals, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
 
 
 
