@@ -42,6 +42,8 @@ ref_dir= '/Users/BenKaiser/Desktop/Goodman_ref_files/'
 standard_dir=ref_dir+'standards/'
 line_list_dir= ref_dir+'line_lists/'
 
+airline_name='OstMart1992_airglow.txt'
+
 blue_default_trim={'x':[9,2055],
                    'y':[1,199]}
 
@@ -53,6 +55,7 @@ red_default_trim={'x':[26,2071],
 #400 M1
 #400 M2
 #need to add 930-ZZcetired
+
 
 
 
@@ -176,5 +179,12 @@ standard_dict={
     }
 
 
+airline_color={
+    'Na': 'red',
+    'KI':'red',
+    'Li':'red',
+    '[O':'blue',
+    'OH':'green'
+    }
 
 

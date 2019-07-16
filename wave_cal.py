@@ -24,6 +24,9 @@ from astropy.time import Time
 from astropy import coordinates as coords
 from astropy import units as u
 from astropy import constants as const
+from astropy.modeling import models as asmodels
+from astropy.modeling import fitting as asfitting
+from astropy.table import Table, Column
 
 import get_cal_params as gcp
 import cal_params as cp
@@ -40,6 +43,7 @@ parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2
 cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
 skip_flat= True
+need_offset=True
 
 def to_barycenter(header):
     #input_times = header['DATE-OBS'] #not gps-synched times
@@ -70,23 +74,27 @@ def to_barycenter(header):
 trace_offset = 0 #amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
 
 #trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
-trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
+#trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
 #trace_band_mid=110
+#trace_band_mid=100
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
-#trace_band_mid=170 #y-pixel for comp stars upper
+trace_band_mid=60 #
+trace_band_width=30
 #trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
-trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
+#trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
+#trace_band_width=150 #super wide search range
 #trace_band_width= 18 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 10 #pixel width to determine the center of the trace
-sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+#sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+sigma_multi_side= 2 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+
 core_sides=  5
 #core_sides=  7
-bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
-bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
+
 y_trace_width= core_sides*2+1 #the actual number of pixels in the vertical direction that are in the trace (or background)
 poly_degree = 3 #polynomial degree of the fit to the trace
 lamp_poly_degree=5
@@ -94,9 +102,12 @@ lamp_poly_degree=5
 flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
-bkg_shift= 30
-#bkg_shift=35
-#bkg_shift= 25
+bkg_shift= 30 #standard shift used
+#bkg_shift=40
+#bkg_shift= 20
+bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
+bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
+bkg_max_side= bkg_shift/2.-5
 lamp_sigma_guess= 2
 line_search_width = 3#formerly 3 20190502
 #lamp_p0 = [1000, 500,  lamp_sigma_guess, 0]
@@ -110,10 +121,18 @@ seeing_range = [1200, 1220]
 #seeing_p0= [2000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
 #see_fit_bounds = ([50, 0, 0.7, 0],[18000, 1000, trace_band_width, 2000]) #(lower, upper) bounds on the fit for the seeing.
 seeing_p0= [2000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
-see_fit_bounds = ([50, 0, 0.7, 0],[1e8, 40, trace_band_width, 1e8]) #(lower, upper) bounds on the fit for the seeing.
+see_fit_bounds = ([50, 0, 0.7, 0],[1e8, trace_band_width, trace_band_width, 1e8]) #(lower, upper) bounds on the fit for the seeing.
+
+box_dict= {
+    'amplitude':10,
+    'x_0':1000,
+    'width':5,
+    'slope':1
+    }
 ######
 
 expedited_wavecals=False
+do_airglow_corr=True
 
 #fear_array= np.genfromtxt(linefilename, names = True)
 #line_x_checks = np.copy(fear_array['Pixel']) +90
@@ -153,7 +172,7 @@ def gaussian_curve(x, a, x0, sigma,b):
 
 def seeing_window(seeing_sigma):
     core_sides= int(seeing_sigma*sigma_multi_side)+1 #setting the extraction window based on the seeing
-    bkg_core_sides= int(core_sides*bkg_side_multi)
+    bkg_core_sides= np.min([int(core_sides*bkg_side_multi), int(bkg_max_side), int(bkg_shift-core_sides)])
     return core_sides, bkg_core_sides
 
 def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all = False, bounds = (-np.inf, np.inf), fixed_width=True):
@@ -200,6 +219,15 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
         pass
     return popt, pcov
 
+def make_box_model(p0_dict):
+    box_model=asmodels.Trapezoid1D(amplitude=p0_dict['amplitude'], x_0=p0_dict['x_0'], width=p0_dict['width'], slope=p0_dict['slope'])
+    return box_model
+
+
+def fit_box_function(x_pixels, light_values, p0_dict, search_width, plot_all = False, bounds = (-np.inf, np.inf), fixed_width=True):
+    box_model= make_box_model(p0_dict)
+    
+    return
 
 def iterate_gauss_trace():
     """
@@ -342,24 +370,32 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         pass
     target_light= target_light-bkg_light
     if do_wavelengths:
-        for x_spot in line_x_checks:
-            plt.axvline( x= x_spot, color = 'r')
-        #for x_spot in np.array(WaveList_Fe_930_12_24[0])/2.:
-            #plt.axvline( x= x_spot, color = 'r')
-        plt.plot(x_positions,lamp_light,'-')
-        plt.xlabel('x (pixel)')
-        plt.ylabel('Counts')
-        plt.title('Lamp Spectrum (record corresponding dotted line and emission pixels)')
-        #plt.yscale('log')
-        plt.show()
-        #offset = 0
-
-        dotted_pixel = float(raw_input("dotted line pixel>>>"))
-        emission_pixel= float(raw_input("emission line pixel>>>"))
-        #dotted_pixel=0
-        #emission_pixel=0
-        offset = emission_pixel-dotted_pixel
-        #print "skipping offsetting. Change lines 261 - 264 if you want otherwise."
+        if need_offset:
+            for x_spot in line_x_checks:
+                plt.axvline( x= x_spot, color = 'r')
+            #for x_spot in np.array(WaveList_Fe_930_12_24[0])/2.:
+                #plt.axvline( x= x_spot, color = 'r')
+            plt.plot(x_positions,lamp_light,'-')
+            plt.xlabel('x (pixel)')
+            plt.ylabel('Counts')
+            plt.title('Lamp Spectrum (record corresponding dotted line and emission pixels)')
+            #plt.yscale('log')
+            plt.show()
+            #offset = 0
+            dotted_pixel = float(raw_input("dotted line pixel>>>"))
+            emission_pixel= float(raw_input("emission line pixel>>>"))
+            
+            #dotted_pixel=0
+            #emission_pixel=0
+            offset = emission_pixel-dotted_pixel
+            global store_offset
+            store_offset= offset
+            global need_offset
+            need_offset=False
+            #print "skipping offsetting. Change lines 261 - 264 if you want otherwise."
+        else:
+            print("Using stored offset because we've already done it")
+            offset=store_offset
     
         line_x_checks2 = np.copy(line_x_checks+offset)
         #for x_spot in line_x_checks2:
@@ -642,6 +678,28 @@ for counter, img in enumerate(speclist):
         noise_spectrum = noise_spectrum/target_light #normalized noise values by the target spectrum, so now unitless.
         target_light= target_light/header['EXPTIME'] #converting to counts/s
         bkg_light= bkg_light/header['EXPTIME'] #converting to counts/s
+        
+        if do_airglow_corr:
+            #airline_array= np.genfromtxt(cp.line_list_dir+ cp.airline_name, names = True, delimiter='\t')
+            airline_array= Table.read(cp.line_list_dir+cp.airline_name, format='ascii.tab')
+            #print(airline_array)
+            use_array=np.int_(airline_array['use'])
+            good_airlines= np.copy(airline_array[np.where(use_array==1)])
+            air_waves = np.float_(good_airlines['User'])
+            #air_names= good_airlines['Name']+good_airlines['Name2']
+            for air_wave, name, name2 in zip(air_waves, good_airlines['Name'], good_airlines['Name2']):
+                #print(name+name2, type(name))
+                air_name=name+name2
+                plt.axvline(x=air_wave, linestyle='--', color=cp.airline_color[air_name[:2]])
+                plt.text(air_wave, np.nanmax(bkg_light), air_name, color=cp.airline_color[air_name[:2]], rotation=90)
+            plt.plot(poly_curve_wavelength, bkg_light)
+            plt.xlabel(r'Wavelength ($\AA$)')
+            plt.ylabel('Counts/s')
+            plt.show()
+        else:
+            pass
+        
+        
         plt.plot(x_positions,target_light,'-')
         plt.xlabel('x (pixel)')
         #plt.ylabel('Counts')
