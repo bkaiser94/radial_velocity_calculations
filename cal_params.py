@@ -50,7 +50,7 @@ blue_default_trim={'x':[9,2055],
 red_default_trim={'x':[26,2071],
                   'y':[1,199]}
 
-
+goodman_unbinned_pixscale= 0.15 #arcsec/pixel
 #930-ZZcetiblue
 #400 M1
 #400 M2
@@ -184,7 +184,7 @@ standard_dict={
         'other_masks': telluric_lines}
     }
 
-
+#dictionary to be used for plotting atmospheric emission lines so elements are a consistent color marker
 airline_color={
     'Na': 'red',
     'KI':'red',
@@ -192,5 +192,16 @@ airline_color={
     '[O':'blue',
     'OH':'green'
     }
+
+#dictionary of guesses for the box1d model used to generate the shape for background skylines
+slit_airline_p0={
+    'amplitude': 4.0,
+    'x_0': 10.0,
+    'width': 9.0
+    }
+
+slit_airline_ampbounds=(0.2,100)
+
+soar_diameter= 4.1 #SOAR diameter in meters
 
 

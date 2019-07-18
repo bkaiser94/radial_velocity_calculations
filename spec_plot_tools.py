@@ -11,6 +11,8 @@ import cal_params as cp
 
 percentile= 50
 
+soar_area= np.pi*(cp.soar_diameter/2.)**2 #area of SOAR light-gathering in meters
+
 
 def make_inside_out(input_list, min_val, max_val):
     """
@@ -102,6 +104,24 @@ def stitch_in_telluric():
     
     
     return
+
+def get_pixel_scale(header):
+    """
+    input header
+    
+    return the arseconds per pixel of the image whose header you have
+    
+    """
+    binning= header['CCDSUM'].split(' ')
+    xbinning= int(binning[0])
+    ybinning= int(binning[1])
+    if xbinning != ybinning:
+        print('\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+        print('x-binning and y-binning are not equal!\nSo... be careful I guess?')
+        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n')
+    xscale= xbinning*cp.goodman_unbinned_pixscale
+    yscale= ybinning*cp.goodman_unbinned_pixscale
+    return xscale, yscale
 
 def sort_spectrum(input_spec):
     """
@@ -316,6 +336,37 @@ def show_plot(show_telluric=True, show_legend=True):
         pass
     plt.show()
     return
+
+def get_photon_energy(wavelengths):
+    """
+    input wavelengths that need energy values (ideally in angstroms) or else needs to be an astropy unitted 
+    object
+    
+    returns energy for each photon at each wavelength value in erg, but not as an astropy quantity object
+    """
+    try:
+        print(wavelengths.value)
+    except AttributeError:
+        print('Input wavelengths do not have units for photon energy calculation.\nAssuming units of angstroms.')
+        wavelengths= wavelengths*u.angstrom
+    energy=(const.c*const.h/ wavelengths).cgs #energy in ergs
+    return energy.value
+
+def counts_to_flambda(input_spec, dlambda):
+    """
+    Returns a 'spec' type array after being given an input spec and the associated width of the wavelength bins
+    
+    output units: erg/s/cm^2/A, assuming the input spectrum is in units of counts/s (photons/s), which it should be...
+    """
+    photon_energies= get_photon_energy(input_spec[0]) #erg (probably erg/s)
+    dlambda= dlambda #delta wavelengths in angstroms
+    soar_area_cm2= (soar_area*(u.meter**2)).to(u.cm**2)
+    soar_area_cm2= soar_area_cm2.value #making it not be an astropy quantity
+    
+    flambda= input_spec[1]*photon_energies/dlambda/soar_area_cm2
+    print(flambda)
+    output_spec= np.vstack([input_spec[0], flambda])
+    return output_spec
     
 def correct_extinction(input_spec, header, plot_all=False):
     """
@@ -349,7 +400,8 @@ def correct_extinction(input_spec, header, plot_all=False):
         plt.plot(input_spec[0], input_spec[1], label='Original spectrum')
         plt.plot(input_spec[0], corr_flux, label='Extinction Corrected')
         plt.xlabel('Wavelength (angstroms)')
-        plt.ylabel(header['units'])
+        #plt.ylabel(header['units'])
+        plt.ylabel('Flux (erg/s/cm^2/Angstrom)')
         plt.title("Spectrum correction")
         plt.legend()
         plt.show()

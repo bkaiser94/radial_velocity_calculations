@@ -30,6 +30,7 @@ from astropy.table import Table, Column
 
 import get_cal_params as gcp
 import cal_params as cp
+import spec_plot_tools as spt
 
 zerolistname= 'listZero'
 
@@ -81,16 +82,16 @@ trace_band_mid=100
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=60 #
-trace_band_width=30
+#trace_band_width=30
 #trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
-#trace_band_width=190 #super wide search range
+trace_band_width=190 #super wide search range
 #trace_band_width= 18 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 10 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side= 2 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 
 core_sides=  5
 #core_sides=  7
@@ -171,7 +172,7 @@ def gaussian_curve(x, a, x0, sigma,b):
     return a*np.exp(-(x-x0)**2/(2*sigma**2))+b
 
 def seeing_window(seeing_sigma):
-    core_sides= int(seeing_sigma*sigma_multi_side)+1 #setting the extraction window based on the seeing
+    core_sides= int(seeing_sigma*sigma_multi_side)+1 #setting the extraction window based on the seeing and rounding up, by adding 1
     bkg_core_sides= np.min([int(core_sides*bkg_side_multi), int(bkg_max_side), int(bkg_shift-core_sides)])
     return core_sides, bkg_core_sides
 
@@ -219,15 +220,84 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
         pass
     return popt, pcov
 
-def make_box_model(p0_dict):
-    box_model=asmodels.Trapezoid1D(amplitude=p0_dict['amplitude'], x_0=p0_dict['x_0'], width=p0_dict['width'], slope=p0_dict['slope'])
+def get_skyline_bounds(header, x_pixels):
+    slit_width= header['SLIT'].split('"')[0] #separate the slit header to get the arcsecond value of the slit width
+    slit_width = float(slit_width) #it was a string
+    xpix_scale, ypix_scale= spt.get_pixel_scale(header)
+    slit_width_pix= slit_width/xpix_scale
+    skyline_bounds={
+        'amplitude':cp.slit_airline_ampbounds,
+        'x_0': (np.nanmin(x_pixels), np.nanmax(x_pixels)),
+        'width': (slit_width_pix*0.5, slit_width_pix*1.5)
+        }
+    #not doing the zeropoint bounds because I'm not sure how I'm going to do it yet...
+    
+    return skyline_bounds
+
+def make_box_model(p0_dict, bounds=(-np.inf, np.inf)):
+    box_model=asmodels.Box1D(amplitude=p0_dict['amplitude'], x_0=p0_dict['x_0'], width=p0_dict['width'], bounds= bounds)
     return box_model
 
+def make_trap_model(p0_dict, bounds=(-np.inf, np.inf)):
+    p0_dict.update({'slope': 2})
+    bounds.update({'slope': (0.1, np.inf)})
+    trap_model=asmodels.Trapezoid1D(amplitude=p0_dict['amplitude'], x_0=p0_dict['x_0'], width=p0_dict['width'], slope=p0_dict['slope'], bounds= bounds)
+    return trap_model
 
-def fit_box_function(x_pixels, light_values, p0_dict, search_width, plot_all = False, bounds = (-np.inf, np.inf), fixed_width=True):
-    box_model= make_box_model(p0_dict)
+
+def fit_slitskyline_function(x_pixels, light_values,  header, p0_dict= cp.slit_airline_p0, plot_all = False):
+    skyline_bounds= get_skyline_bounds(header, x_pixels)
+    #slit_model= make_box_model(p0_dict, bounds=skyline_bounds)
+    slit_model= make_trap_model(p0_dict, bounds=skyline_bounds)
+    #box_model.bounds= {'x_0': (0, x_pixels.shape[0])} #the middle of the box plot can't be outside the range of the thing to examine; not sure if this goes away with next definition on next line
+    #box_model.bounds= get_skyline_bounds(header, x_pixels )
+    fitter = asfitting.LevMarLSQFitter()
+    fitted_model = fitter(slit_model, x_pixels, light_values)
+    print('slit_model x_0:', slit_model.x_0)
+    print('fitted_model x_0:', fitted_model.x_0)
+    print('fitted_model width:' ,fitted_model.width)
+    print('fitted_model amplitude:', fitted_model.amplitude)
+    try:
+        print('fitted_model slope:' ,fitted_model.slope)
+    except AttributeError as error:
+        print('AttributeError:', error)
+    if plot_all:
+        plt.plot(x_pixels, light_values, color='b')
+        plt.plot(x_pixels, fitted_model(x_pixels), color= 'r', label='model')
+        plt.axvline(x= fitted_model.x_0, linestyle='--', color='k', label = 'center')
+        plt.xlabel('pixels')
+        plt.ylabel('intensity')
+        plt.legend(loc='best')
+        plt.title('Sky background slit function fitting')
+        plt.show()
+    return fitted_model.x_0
+
+def wavelength_to_pixel(lambda_val, wave_coeffs):
     
-    return
+    
+    return 286.5
+
+
+def find_skyline_offset(x_pixels, light_values, airline_lambda, wave_coeffs, header, search_width=40, initial_offset=0):
+    
+    airline_guess= wavelength_to_pixel(airline_lambda, wave_coeffs)
+    plt.axvline(x=airline_guess, color= 'r')
+    plt.plot(x_pixels, light_values, color='b')
+    plt.title('Auto-generated prediction of pixel position for air line')
+    plt.show()
+
+    cut_region = np.where(x_pixels> (airline_guess-search_width ))
+    high_x_pixels= np.copy(x_pixels[cut_region])
+    high_light_values= np.copy(light_values[cut_region])
+    upper_cut = np.where(high_x_pixels < (airline_guess+search_width))
+    cut_x_pixels = high_x_pixels[upper_cut]
+    #print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
+    cut_light_values= high_light_values[upper_cut]
+    p0_dict= cp.slit_airline_p0
+    p0_dict['x_0']= airline_guess
+    corr_pixel= fit_slitskyline_function(cut_x_pixels, cut_light_values, header, p0_dict= p0_dict, plot_all=True)
+    return 0
+
 
 def iterate_gauss_trace():
     """
@@ -541,7 +611,11 @@ for counter, img in enumerate(speclist):
         i= fits.open(filename)
         header = fits.getheader(filename)
         img_data= np.copy(i[0].data)
-        img_data= img_data/normed_flat #division by the flat. The noise from the flat is not accounted for currently
+        if not skip_flat:
+            img_data= img_data/normed_flat #division by the flat. The noise from the flat is not accounted for currently
+            print('doing a division by a flat, but it should be 1s if skip_flat=True.')
+        else:
+            print('actually skipping the flat and not dividing by anything.')
         target_stack.append(img_data)
         last_file_lamp = False
         #if '_fe' in speclist[counter+1].lower():
@@ -637,6 +711,9 @@ for counter, img in enumerate(speclist):
         bkg_down_comb= np.array([])
         poly_curve_y = np.polyval(polynomials[0], x_positions)
         poly_curve_wavelength= np.polyval(polynomials[1], x_positions)
+        upper_edges= np.polyval(polynomials[1], x_positions+0.5) #upper wavelength edges
+        lower_edges= np.polyval(polynomials[1], x_positions-0.5) #lower_wavelength edges
+        dlambda_vals= upper_edges-lower_edges
         for x_pos in x_positions:
             trace_vals=img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos]
             xsum= np.sum(trace_vals)
@@ -692,10 +769,16 @@ for counter, img in enumerate(speclist):
                 air_name=name+name2
                 plt.axvline(x=air_wave, linestyle='--', color=cp.airline_color[air_name[:2]])
                 plt.text(air_wave, np.nanmax(bkg_light), air_name, color=cp.airline_color[air_name[:2]], rotation=90)
+            print("need to put dlambda into this part again since we're about to move around wavelengths in the future.")
             plt.plot(poly_curve_wavelength, bkg_light)
             plt.xlabel(r'Wavelength ($\AA$)')
             plt.ylabel('Counts/s')
             plt.show()
+            for air_wave, name, name2 in zip(air_waves, good_airlines['Name'], good_airlines['Name2']):
+                #print(name+name2, type(name))
+                air_name=name+name2
+                offset= find_skyline_offset(x_positions, bkg_light, air_wave, polynomials[1], header)
+           
         else:
             pass
         
@@ -720,7 +803,8 @@ for counter, img in enumerate(speclist):
         hdu1= fits.ImageHDU(target_light)
         hdu2= fits.ImageHDU(bkg_light)
         hdu3 = fits.ImageHDU(noise_spectrum)
-        hdulist= fits.HDUList([hdu, hdu1, hdu2, hdu3])
+        hdu4=fits.ImageHDU(dlambda_vals)
+        hdulist= fits.HDUList([hdu, hdu1, hdu2, hdu3, hdu4])
         hdulist.writeto(filename, overwrite= True)
         #target_stack.append(img_data)
         last_file_lamp = False

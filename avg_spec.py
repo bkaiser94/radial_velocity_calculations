@@ -23,14 +23,16 @@ start = time.time()
 
 import spec_plot_tools as spt
 
-#glob_string= 'wctb*'
-glob_string='fwctb*'
+glob_string= 'wctb*'
+#glob_string='fwctb*'
 #filenames= glob('wctb*')
 filenames= glob(glob_string)
 
 #low_index=10
 low_index= len(glob_string)-1+6
 high_index=-5
+
+do_dlambda_ext= True
 
 filename_matches={}
 prev_core=''
@@ -106,6 +108,10 @@ def avg_spectra(target_list):
     flux_list=[]
     noise2_list=[]
     sky_list=[]
+    if do_dlambda_ext:
+        dlambda_list=[]
+    else:
+        pass
     print("target_list", target_list)
     for target_file in target_list:
         print('target_file', target_file)
@@ -115,6 +121,19 @@ def avg_spectra(target_list):
         hdu=fits.open(target_file)
         sky=np.copy(hdu[2].data)
         sky_list.append(sky)
+        global do_dlambda_ext
+        if do_dlambda_ext:
+            try:
+                dlambda_spec= np.copy(hdu[4].data)
+                print('dlambda_spec extension (4) is present')
+                dlambda_list.append(dlambda_spec)
+            except IndexError as error:
+                print("IndexError:", error)
+                print('No dlambda_spec extension presumably, so not doing it for any other spectra for this target')
+                do_dlambda_ext=False
+        else:
+            print('do_dlambda_ext=False')
+            
         #sky_list(
         plt.plot(target_spec[1], label=target_file)
     flux_array=np.array(flux_list)
@@ -125,6 +144,9 @@ def avg_spectra(target_list):
     avg_noise2= np.sum(noise2_array, axis=0)/noise2_array.shape[0]**2
     avg_noise= np.sqrt(avg_noise2)
     avg_sky= np.nanmean(sky_array,axis=0)
+    if do_dlambda_ext:
+        dlambda_array= np.array(dlambda_list)
+        avg_dlambda= np.nanmean(dlambda_array, axis=0)
     plt.plot(avg_flux, label='avg')
     #plt.title(target_file)
     plt.legend()
@@ -140,7 +162,12 @@ def avg_spectra(target_list):
     #hdu2= fits.ImageHDU(np.ones(avg_flux.shape))
     hdu2= fits.ImageHDU(avg_sky)
     hdu3 = fits.ImageHDU(avg_noise)
-    hdulist= fits.HDUList([hdu,hdu1,hdu2,hdu3])
+    if do_dlambda_ext:
+        hdu4=fits.ImageHDU(avg_dlambda)
+        hdulist= fits.HDUList([hdu,hdu1,hdu2,hdu3, hdu4])
+    else:
+        hdulist= fits.HDUList([hdu,hdu1,hdu2,hdu3])
+    #hdulist= fits.HDUList([hdu,hdu1,hdu2,hdu3])
     hdulist.writeto(output_name, overwrite= True)
     print('should have saved')
     return
@@ -154,6 +181,7 @@ print("\n\n\n\n")
 for sets in filename_matches:
     print('======')
     print(filename_matches[sets])
+    do_dlambda_ext=True
     avg_spectra(filename_matches[sets])
     print('+++++++')
 

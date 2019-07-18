@@ -80,6 +80,7 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     counts = i[1].data
     bkg_counts = i[2].data
     noise_spec = i[3].data #don't need to divide this by the exposure time since it's normalized already in proportion to whatever units we use.
+    dlambda_spec=i[4].data
     #noise_spec = bad_noise_vals(noise_spec) #remove negative noise values and exceedingly high ones
     sens_curve = np.polyval(sens_curve_coeffs,wavelengths)
     if do_ext_corr:
@@ -109,6 +110,7 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     header.append(card = ('Flux', 1, 'in flux units extension for target flux values'))
     header.append(card = ('Bkg', 2, 'in flux units extension for bkg flux values'))
     header.append(card = ('Noise', 3, 'unitless. Normalized'))
+    header.append(card=('dlambda',4, 'delta wavelength value of each bin')
     if do_rv_barycorr:
         header.append(card = ('barycorr', True, 'wavelengths corrected to barycenter'))
         wavelengths = barycentric_vel_corr(header, wavelengths)
@@ -121,7 +123,8 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     hdu1= fits.ImageHDU(flux)
     hdu2 = fits.ImageHDU(bkg_flux)
     hdu3 = fits.ImageHDU(noise_spec)
-    hdulist = fits.HDUList([hdu, hdu1, hdu2, hdu3])
+    hdu4=fits.ImageHDU(dlambda_spec)
+    hdulist = fits.HDUList([hdu, hdu1, hdu2, hdu3,hdu4])
     hdulist.writeto(target_file, overwrite = True)
     if count%4 == 0:
         color = color_list[count%len(color_list)]
