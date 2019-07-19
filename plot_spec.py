@@ -98,7 +98,7 @@ if file_setting=='all_avg':
 
 elif file_setting=='all_wctb':
     print(file_setting)
-    filenames=glob('wctb*aia*0126*')
+    filenames=glob('wctb*aia*1644*')
     single_iterate=True
     double_iterate=False
     
@@ -460,7 +460,7 @@ if single_iterate:
         target_spec, header, target_noise= spt.retrieve_spec(filename)
         target_spec[0]=target_spec[0]+wavelength_offset
         #conv_spec= convolve_spectrum(target_spec, header)
-        #plot_spectrum(target_spec, filename, header, smooth=False, norm=False)
+        plot_spectrum(target_spec, filename, header, smooth=False, norm=False)
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='box', norm=True)
         #target_spec[1]=header['airmass']
         #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
@@ -468,7 +468,7 @@ if single_iterate:
         #plot_spectrum(target_spec, filename, header, norm=True, offset=counter)
         #plot_spectrum(target_spec, filename, header, norm=True, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-        plot_sky(filename)
+        #plot_sky(filename)
         #if header['airmass']<1.5:
             #plot_sky(filename, offset=0)
         #else:

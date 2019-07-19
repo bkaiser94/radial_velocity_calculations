@@ -90,15 +90,16 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     print('Obseved spectrum in units of erg/s/cm^2/angstrom')
     if do_ext_corr:
         print("Doing atmospheric extinction correction.")
-        obs_spec= np.vstack([wavelengths, counts])
-        obs_spec= spt.correct_extinction(obs_spec, header, plot_all=False)
-        wavelengths=np.copy(obs_spec[0])
-        counts=np.copy(obs_spec[1])
+        #obs_spec= np.vstack([wavelengths, counts])
+        obs_spec= np.copy(spt.correct_extinction(obs_spec, header, plot_all=False))
+        #wavelengths=np.copy(obs_spec[0])
+        #counts=np.copy(obs_spec[1])
         header.append(card=('ext_corr', True, 'atmospheric extinction correction'))
     else:
         header.append(card=('ext_corr', False, 'atmospheric extinction correction'))
     #flux = counts/sens_curve
     flux= np.copy(obs_spec[1])
+    flux=flux/sens_curve# I had commented out the only flux calibration part of the flux calibration...
     if do_residual_div:
         residuals= np.genfromtxt('residuals_'+ sens_curve_file)
         flux= flux/residuals
@@ -125,6 +126,18 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     
     target_file = 'f'+target_file
     bkg_flux = bkg_counts/sens_curve
+    
+    
+    
+    ##########################3
+    #convert fluxes to 1e-16 values... meaning multiply by 1e16
+    flux=flux*1e16
+    bkg_flux=bkg_flux*1e16
+    
+    
+    
+    
+    ####################
     hdu=fits.PrimaryHDU(wavelengths, header = header)
     hdu1= fits.ImageHDU(flux)
     hdu2 = fits.ImageHDU(bkg_flux)

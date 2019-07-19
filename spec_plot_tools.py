@@ -366,7 +366,7 @@ def counts_to_flambda(input_spec, dlambda):
     output units: erg/s/cm^2/A, assuming the input spectrum is in units of counts/s (photons/s), which it should be...
     """
     photon_energies= get_photon_energy(input_spec[0]) #erg (probably erg/s)
-    dlambda= dlambda #delta wavelengths in angstroms
+    #dlambda= dlambda #delta wavelengths in angstroms
     soar_area_cm2= (soar_area*(u.meter**2)).to(u.cm**2)
     soar_area_cm2= soar_area_cm2.value #making it not be an astropy quantity
     

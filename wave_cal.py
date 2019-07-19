@@ -134,7 +134,7 @@ box_dict= {
 ######
 
 expedited_wavecals=False
-do_airglow_corr=False
+do_airglow_corr=True
 
 #fear_array= np.genfromtxt(linefilename, names = True)
 #line_x_checks = np.copy(fear_array['Pixel']) +90
