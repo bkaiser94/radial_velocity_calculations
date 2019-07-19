@@ -1,4 +1,6 @@
 """
+Created by Ben Kaiser (UNC-Chapel Hill) (date not known of original creation.)
+
 This is the file that actually applies the sensitivity curve to the target spectra. The sensitivity curves need to
 already be produced by flux_calibration.py. The barycentric velocity correction actually needs to occur after the
 flux-calibration step as the measured wavelengths are the ones that correspond to the given transmissivity of the atmosphere and instrument.
@@ -80,9 +82,12 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     counts = i[1].data
     bkg_counts = i[2].data
     noise_spec = i[3].data #don't need to divide this by the exposure time since it's normalized already in proportion to whatever units we use.
-    dlambda_spec=i[4].data
+    dlambda=i[4].data
     #noise_spec = bad_noise_vals(noise_spec) #remove negative noise values and exceedingly high ones
     sens_curve = np.polyval(sens_curve_coeffs,wavelengths)
+    obs_spec= np.vstack([wavelengths, counts])
+    obs_spec= np.copy(spt.counts_to_flambda(obs_spec, dlambda))
+    print('Obseved spectrum in units of erg/s/cm^2/angstrom')
     if do_ext_corr:
         print("Doing atmospheric extinction correction.")
         obs_spec= np.vstack([wavelengths, counts])
@@ -92,7 +97,8 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
         header.append(card=('ext_corr', True, 'atmospheric extinction correction'))
     else:
         header.append(card=('ext_corr', False, 'atmospheric extinction correction'))
-    flux = counts/sens_curve
+    #flux = counts/sens_curve
+    flux= np.copy(obs_spec[1])
     if do_residual_div:
         residuals= np.genfromtxt('residuals_'+ sens_curve_file)
         flux= flux/residuals
@@ -110,7 +116,7 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     header.append(card = ('Flux', 1, 'in flux units extension for target flux values'))
     header.append(card = ('Bkg', 2, 'in flux units extension for bkg flux values'))
     header.append(card = ('Noise', 3, 'unitless. Normalized'))
-    header.append(card=('dlambda',4, 'delta wavelength value of each bin')
+    header.append(card=('dlambda',4, 'delta wavelength value of each bin'))
     if do_rv_barycorr:
         header.append(card = ('barycorr', True, 'wavelengths corrected to barycenter'))
         wavelengths = barycentric_vel_corr(header, wavelengths)
@@ -123,7 +129,7 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     hdu1= fits.ImageHDU(flux)
     hdu2 = fits.ImageHDU(bkg_flux)
     hdu3 = fits.ImageHDU(noise_spec)
-    hdu4=fits.ImageHDU(dlambda_spec)
+    hdu4=fits.ImageHDU(dlambda)
     hdulist = fits.HDUList([hdu, hdu1, hdu2, hdu3,hdu4])
     hdulist.writeto(target_file, overwrite = True)
     if count%4 == 0:

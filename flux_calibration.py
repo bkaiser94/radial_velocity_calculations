@@ -1,4 +1,5 @@
 """
+Created by Ben Kaiser (UNC-Chapel Hill) (date not known of original creation.)
 This should produce the sensitivity curve that is needed for calibrate_flux.py.
 
 Uses the outputs of actual_reduction.py.
@@ -82,7 +83,8 @@ standard_name='EG274'
 #observed_file='avg_wctb.GD153_400m2.fits'
 #observed_file='avg_wctb.EG274_400m1.fits'
 #observed_file='avg_wctb.EG274_400m2.fits'
-observed_file='avg_wctb.eg274am104_400m2.fits'
+observed_file='avg_wctb.eg274_930_blue.fits'
+#observed_file='avg_wctb.eg274am104_400m2.fits'
 #observed_file='avg_wctb.eg274am126_400m2.fits'
 #observed_file='avg_wctb.eg274am176_400m2.fits'
 #observed_file='avg_wctb.GD153_400m1.fits'
@@ -172,6 +174,7 @@ print type(standard_info['other_masks'])
 wavelength_masks=standard_info['balmer_masks']+standard_info['other_masks']
 print "wavelength_masks:", wavelength_masks
 #stand_array = np.genfromtxt(glob(standard_file)[0]).T
+#print(glob(standard_info['filename']))
 stand_array = np.genfromtxt(glob(standard_info['filename'])[0]).T
 #output_filename= standard_dict['sens_filename']
 

@@ -69,7 +69,7 @@ cal_params={
                     'trimregions': blue_default_trim,
                     'air_corr':True},
                 'Red':{
-                    'linelistname':'',
+                    'linelistname':'JJ_FeAr_lines.txt',
                     'offset':90,
                     'trimregions':red_default_trim,
                     'air_corr': True}
@@ -201,6 +201,18 @@ slit_airline_p0={
     }
 
 slit_airline_ampbounds=(0.2,100)
+
+cont_box_p0={
+    'amplitude':1,
+    'width':5000,
+    'x_0': 100
+    }
+
+cont_box_bounds={
+    'amplitude': (0,30),
+    'width': (4000,6000),
+    'x_0': (0,3000)
+    }
 
 soar_diameter= 4.1 #SOAR diameter in meters
 

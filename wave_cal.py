@@ -72,26 +72,26 @@ def to_barycenter(header):
     return header
 
 ####
-trace_offset = 0 #amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
+trace_offset =0  #amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
 
 #trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
 #trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
 #trace_band_mid=110
-trace_band_mid=100
+trace_band_mid=90
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=60 #
 #trace_band_width=30
 #trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
-trace_band_width=190 #super wide search range
+trace_band_width=40 #super wide search range
 #trace_band_width= 18 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 10 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+sigma_multi_side= 2 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 
 core_sides=  5
 #core_sides=  7
@@ -106,6 +106,7 @@ flat_poly= 7
 bkg_shift= 30 #standard shift used
 #bkg_shift=40
 #bkg_shift= 20
+#bkg_shift=55
 bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
 bkg_max_side= bkg_shift/2.-5
@@ -133,7 +134,7 @@ box_dict= {
 ######
 
 expedited_wavecals=False
-do_airglow_corr=True
+do_airglow_corr=False
 
 #fear_array= np.genfromtxt(linefilename, names = True)
 #line_x_checks = np.copy(fear_array['Pixel']) +90
@@ -192,6 +193,7 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
     cut_x_pixels = high_x_pixels[upper_cut]
     #print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
     cut_light_values= high_light_values[upper_cut]
+    #print('p0_list it lets you use:', p0_list)
     popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= p0_list, bounds = bounds)
     #print "[amplitude, x0, sigma, b]"
     #print popt
@@ -234,8 +236,8 @@ def get_skyline_bounds(header, x_pixels):
     
     return skyline_bounds
 
-def make_box_model(p0_dict, bounds=(-np.inf, np.inf)):
-    box_model=asmodels.Box1D(amplitude=p0_dict['amplitude'], x_0=p0_dict['x_0'], width=p0_dict['width'], bounds= bounds)
+def make_box_model(p0_dict, bounds=(-np.inf, np.inf), fixed={'amplitude':False, 'x_0:': False, "width": False}):
+    box_model=asmodels.Box1D(amplitude=p0_dict['amplitude'], x_0=p0_dict['x_0'], width=p0_dict['width'], bounds= bounds, fixed=fixed)
     return box_model
 
 def make_trap_model(p0_dict, bounds=(-np.inf, np.inf)):
@@ -248,34 +250,73 @@ def make_trap_model(p0_dict, bounds=(-np.inf, np.inf)):
 def fit_slitskyline_function(x_pixels, light_values,  header, p0_dict= cp.slit_airline_p0, plot_all = False):
     skyline_bounds= get_skyline_bounds(header, x_pixels)
     #slit_model= make_box_model(p0_dict, bounds=skyline_bounds)
-    slit_model= make_trap_model(p0_dict, bounds=skyline_bounds)
+    #cont_box_p0= cp.cont_box_p0
+    #cont_box_p0['x_0']= p0_dict['x_0']
+    #cont_model= make_box_model(cont_box_p0, fixed={'amplitude': False, 'width': True, 'x_0':True}, bounds= cp.cont_box_bounds)
+    #sky_model = slit_model
+    #slit_model= make_trap_model(p0_dict, bounds=skyline_bounds)
+    #cont_model = asmodels.Polynomial1D(degree=1)
     #box_model.bounds= {'x_0': (0, x_pixels.shape[0])} #the middle of the box plot can't be outside the range of the thing to examine; not sure if this goes away with next definition on next line
     #box_model.bounds= get_skyline_bounds(header, x_pixels )
-    fitter = asfitting.LevMarLSQFitter()
-    fitted_model = fitter(slit_model, x_pixels, light_values)
-    print('slit_model x_0:', slit_model.x_0)
-    print('fitted_model x_0:', fitted_model.x_0)
-    print('fitted_model width:' ,fitted_model.width)
-    print('fitted_model amplitude:', fitted_model.amplitude)
-    try:
-        print('fitted_model slope:' ,fitted_model.slope)
-    except AttributeError as error:
-        print('AttributeError:', error)
+    #fitter = asfitting.LevMarLSQFitter()
+    #fitter= asfitting.SLSQPLSQFitter()
+    #fitted_model = fitter(slit_model, x_pixels, light_values)
+    #fitted_model = fitter(sky_model, x_pixels, light_values)
+    p0_list_sky= [p0_dict['amplitude'], p0_dict['x_0'], p0_dict['width']/2., 1.]
+    #print('p0_list:' , lamp_p0)
+    print('p0_list_sky:',p0_list_sky)
+    popt, pcov = sciop.curve_fit(gaussian_curve, x_pixels, light_values,  p0=p0_list_sky)
+
+    #print('slit_model x_0:', slit_model.x_0)
+    #print('fitted_model x_0:', fitted_model.x_0)
+    #print('fitted_model width:' ,fitted_model.width)
+    #print('fitted_model amplitude:', fitted_model.amplitude)
+    #print('fitted_model fixed:', fitted_model.fixed)
+    #print('slit_model fixed:', slit_model.fixed)
+    #try:
+        #print('fitted_model slope:' ,fitted_model.slope)
+    #except AttributeError as error:
+        #print('AttributeError:', error)
+    #print('slit_model:',slit_model)
+    #print('fitted_model:', fitted_model)
+    print('initial guesses:', p0_list_sky)
+    print('Gaussian vals:', popt)
+    
     if plot_all:
         plt.plot(x_pixels, light_values, color='b')
-        plt.plot(x_pixels, fitted_model(x_pixels), color= 'r', label='model')
-        plt.axvline(x= fitted_model.x_0, linestyle='--', color='k', label = 'center')
+        #plt.plot(x_pixels, fitted_model(x_pixels), color= 'r', label='model')
+        plt.plot(x_pixels, gaussian_curve(x_pixels,popt[0],popt[1],popt[2],popt[3]),label ='gaussian fit')
+        plt.axvline(x=popt[1],  color='g', label='gaussian center', linestyle='--')
+        plt.axvline(x=p0_list_sky[1], color='k', label='guessed value', linestyle='--')
+        #plt.axvline(x= fitted_model.x_0, linestyle='--', color='k', label = 'center')
         plt.xlabel('pixels')
         plt.ylabel('intensity')
         plt.legend(loc='best')
         plt.title('Sky background slit function fitting')
         plt.show()
-    return fitted_model.x_0
+    return popt[1]
 
-def wavelength_to_pixel(lambda_val, wave_coeffs):
+def wavelength_to_pixel(lambda_val, in_wave_coeffs):
+    """
+    input wave_coeffs should already have an offset subtracted from the x-values everywhere.... you can't really 
+    do that...
+    """
+    wave_coeffs= np.copy(in_wave_coeffs)
+    wave_coeffs[-1]= wave_coeffs[-1]-lambda_val
     
-    
-    return 286.5
+    def func_to_solve(x):
+        if lamp_poly_degree==5:
+            return wave_coeffs[0]*x**5+ wave_coeffs[1]*x**4 +wave_coeffs[2]*x**3+ wave_coeffs[3]*x**2+wave_coeffs[4]*x + wave_coeffs[5]
+        else:
+            print("don't have function to solve for inversion of wavelengths for that lamp_poly_degree:", lamp_poly_degree)
+            return np.polyval(wave_coeffs, x)
+    #plt.plot(np.polyval(wave_coeffs, np.linspace(0,2000,2000)), label='changed wave_coeffs')
+    #plt.plot(np.polyval(in_wave_coeffs, np.linspace(0,2000,2000)), label='og wave_coeffs')
+    #plt.plot(func_to_solve(np.linspace(0,2000,2000)),label='func_to_solve')
+    #plt.legend(loc='best')
+    #plt.show()
+    pixel= sciop.brentq(func_to_solve, 0,2100)
+    return pixel
 
 
 def find_skyline_offset(x_pixels, light_values, airline_lambda, wave_coeffs, header, search_width=40, initial_offset=0):
@@ -294,9 +335,13 @@ def find_skyline_offset(x_pixels, light_values, airline_lambda, wave_coeffs, hea
     #print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
     cut_light_values= high_light_values[upper_cut]
     p0_dict= cp.slit_airline_p0
-    p0_dict['x_0']= airline_guess
-    corr_pixel= fit_slitskyline_function(cut_x_pixels, cut_light_values, header, p0_dict= p0_dict, plot_all=True)
-    return 0
+    max_ind= np.argmax(cut_light_values)
+    max_point= cut_x_pixels[max_ind]
+    plt.axvline(x=airline_guess, color= 'magenta', label='wave to pix guess')
+    p0_dict['x_0']= max_point
+    corr_pixel= fit_slitskyline_function(cut_x_pixels, cut_light_values, header, p0_dict= p0_dict, plot_all=False)
+    offset= airline_guess-corr_pixel #offset that should be added to the pixel values for the new determinations
+    return offset
 
 
 def iterate_gauss_trace():
@@ -774,11 +819,30 @@ for counter, img in enumerate(speclist):
             plt.xlabel(r'Wavelength ($\AA$)')
             plt.ylabel('Counts/s')
             plt.show()
+            coll_air_offsets= []
             for air_wave, name, name2 in zip(air_waves, good_airlines['Name'], good_airlines['Name2']):
                 #print(name+name2, type(name))
                 air_name=name+name2
                 offset= find_skyline_offset(x_positions, bkg_light, air_wave, polynomials[1], header)
-           
+                coll_air_offsets.append(offset)
+            print('coll_air_offsets:', coll_air_offsets)
+            #avg_air_offset=np.mean(coll_air_offsets)
+            avg_air_offset=np.median(coll_air_offsets)
+            poly_curve_wavelength= np.polyval(polynomials[1], x_positions+avg_air_offset)
+            upper_edges= np.polyval(polynomials[1], x_positions+avg_air_offset+0.5) #upper wavelength edges
+            lower_edges= np.polyval(polynomials[1], x_positions+avg_air_offset-0.5) #lower_wavelength edges
+            dlambda_vals= upper_edges-lower_edges
+            for air_wave, name, name2 in zip(air_waves, good_airlines['Name'], good_airlines['Name2']):
+                #print(name+name2, type(name))
+                air_name=name+name2
+                plt.axvline(x=air_wave, linestyle='--', color=cp.airline_color[air_name[:2]])
+                plt.text(air_wave, np.nanmax(bkg_light), air_name, color=cp.airline_color[air_name[:2]], rotation=90)
+            plt.plot(poly_curve_wavelength, bkg_light)
+            plt.xlabel(r'Wavelength ($\AA$)')
+            plt.ylabel('Counts/s')
+            plt.show()
+            header.append(card=('airofstd', np.std(coll_air_offsets), 'std dev of sky emission pixel offsets'))
+            header.append(card=('airofavg', avg_air_offset, 'median of sky emission pixel offsets, this was applied'))
         else:
             pass
         

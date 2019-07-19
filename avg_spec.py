@@ -105,6 +105,7 @@ for sets in filename_matches:
 
 
 def avg_spectra(target_list):
+    wave_list=[]
     flux_list=[]
     noise2_list=[]
     sky_list=[]
@@ -116,6 +117,7 @@ def avg_spectra(target_list):
     for target_file in target_list:
         print('target_file', target_file)
         target_spec, header, target_noise = spt.retrieve_spec(target_file)
+        wave_list.append(target_spec[0])
         flux_list.append(target_spec[1])
         noise2_list.append(target_noise[1]**2)
         hdu=fits.open(target_file)
@@ -137,9 +139,16 @@ def avg_spectra(target_list):
         #sky_list(
         plt.plot(target_spec[1], label=target_file)
     flux_array=np.array(flux_list)
+    wave_array=np.array(wave_list)
     print(flux_array.shape)
     noise2_array= np.array(noise2_list)
     sky_array=np.array(sky_list)
+    std_wave=np.std(wave_array,axis=0)
+    avg_std_wave=np.nanmean(std_wave)
+    max_std_wave=np.nanmax(std_wave)
+    print('average standard deviation of wavelength values', avg_std_wave)
+    print('max standard deviation of wavelength values', max_std_wave)
+    avg_wave= np.nanmean(wave_array,axis=0)
     avg_flux= np.nanmean(flux_array, axis=0)
     avg_noise2= np.sum(noise2_array, axis=0)/noise2_array.shape[0]**2
     avg_noise= np.sqrt(avg_noise2)
@@ -157,7 +166,7 @@ def avg_spectra(target_list):
     #output_name= "avg_"+ core_name + ".fits"
     print('output_name:', output_name)
     print('saving hopefully...')
-    hdu=fits.PrimaryHDU(target_spec[0], header= header)
+    hdu=fits.PrimaryHDU(avg_wave, header= header)
     hdu1= fits.ImageHDU(avg_flux)
     #hdu2= fits.ImageHDU(np.ones(avg_flux.shape))
     hdu2= fits.ImageHDU(avg_sky)

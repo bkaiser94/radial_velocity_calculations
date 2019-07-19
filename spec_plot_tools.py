@@ -1,3 +1,10 @@
+"""
+Created by Ben Kaiser (UNC-Chapel Hill) (date not known of original creation.)
+
+
+"""
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits

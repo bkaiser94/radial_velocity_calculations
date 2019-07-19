@@ -36,7 +36,7 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-pix_width=10
+pix_width=3
 sdss_pix_width = 10
 
 #wavelength_offset=60
@@ -45,7 +45,7 @@ sdss_pix_width = 10
 #wavelength_offset=27
 #wavelength_offset=35
 #wavelength_offset=-30
-wavelength_offset=-4
+wavelength_offset=0
 
 #filenames = glob(sys.argv[1])
 #filenames= glob('wctb*')
@@ -53,7 +53,7 @@ wavelength_offset=-4
 sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 #print(filenames)
-plot_wavelength=False
+plot_wavelength=True
 plot_400m2_tell= False
 #norm_range=[1240,1280]
 #norm_range=[1560,1590]
@@ -71,8 +71,8 @@ norm_range=[7470, 7530]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
 #file_setting='all_avg'
-#file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
-file_setting='all_wctb'
+file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
+#file_setting='all_wctb'
 #file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
