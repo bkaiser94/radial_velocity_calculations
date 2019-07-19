@@ -25,12 +25,15 @@ import scipy.interpolate as scinterp
 
 import spec_plot_tools as spt
 import cal_params as cp
+import get_cal_params as gcp
 
 #poly_degree=3
 #poly_degree= 5 #order of polynomials from before 20190506
 #poly_degree=7
 poly_degree=7
 model_poly_degree= 5
+
+division_extra_deg = 2
 
 ext_corr=True #correct extinction
 
@@ -81,10 +84,10 @@ standard_name='EG274'
 #observed_file='avg_wctb.Feige110_400m1.fits'
 
 #observed_file='avg_wctb.GD153_400m2.fits'
-#observed_file='avg_wctb.EG274_400m1.fits'
+observed_file='avg_wctb.EG274_400m1.fits'
 #observed_file='avg_wctb.EG274_400m2.fits'
 #observed_file='avg_wctb.eg274_930_blue.fits'
-observed_file='avg_wctb.eg274am104_400m2.fits'
+#observed_file='avg_wctb.eg274am104_400m2.fits'
 #observed_file='avg_wctb.eg274am126_400m2.fits'
 #observed_file='avg_wctb.eg274am176_400m2.fits'
 #observed_file='avg_wctb.GD153_400m1.fits'
@@ -105,10 +108,9 @@ def get_star_info(starname):
 
 
 
-
-
 ############################
 ##########################
+
 
 
 core_name= observed_file.split('.')[1] #get the part of the filename that follows the first period and exclude the extension
@@ -166,6 +168,9 @@ obs_flux1=obs_spec[1]
     #[4781.18, 4994.76]
     #] #for EG274
 #####
+
+setup_dict= gcp.get_cal_params(header)
+setup_name=setup_dict['setupname']
 
 #standard_file = standard_directory+standard_file
 standard_info = get_star_info(standard_name)
@@ -305,10 +310,12 @@ spt.show_plot()
 #sens_curve_points= interp_obs_flux/stand_flux
 #sens_curve_fit= np.polyfit(stand_waves, sens_curve_points,5)
 
-obs_curve= np.polyfit(obs_waves, obs_flux, poly_degree)
+#obs_curve= np.polyfit(obs_waves, obs_flux, poly_degree)
+obs_curve= np.polyfit(obs_waves, obs_flux, cp.flux_cal_dict['obs_poly_degree'][setup_name])
 #model_curve = np.polyfit(stand_waves, stand_flux, poly_degree)
 #model_curve = np.polyfit(stand_waves, stand_flux, model_poly_degree)
-model_curve = np.polyfit(unmasked_stand_spec[0], unmasked_stand_spec[1], model_poly_degree)
+#model_curve = np.polyfit(unmasked_stand_spec[0], unmasked_stand_spec[1], model_poly_degree)
+model_curve = np.polyfit(unmasked_stand_spec[0], unmasked_stand_spec[1], cp.flux_cal_dict['model_poly_degree'][setup_name])
 
 calc_waves=np.linspace(min_wave, max_wave,1000)
 #sens_curve_points = np.polyval(obs_curve, stand_waves)/np.polyval(model_curve, stand_waves)
@@ -316,9 +323,10 @@ calc_waves=np.linspace(min_wave, max_wave,1000)
 sens_curve_points= np.polyval(obs_curve,calc_waves)/np.polyval(model_curve, calc_waves)
 #sens_curve_fit= np.polyfit(stand_waves, sens_curve_points,5)
 #sens_curve_fit= np.polyfit(obs_waves, sens_curve_points,poly_degree)
-sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
+#sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
+sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,cp.flux_cal_dict['obs_poly_degree'][setup_name]+division_extra_deg)
 
-#sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
+sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
 
 
 plt.plot(obs_waves1, obs_flux1, label= 'observed', marker= 'o', linestyle='none')

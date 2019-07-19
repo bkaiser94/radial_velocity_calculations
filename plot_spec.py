@@ -61,13 +61,13 @@ plot_400m2_tell= False
 
 #norm_range=[7042,7046]
 #norm_range=[7490,7510] #outside telluric
-norm_range=[7470, 7530]
+#norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
 #norm_range=[6090,6240]
-#norm_range=[6640,6670]#20190530 400M1 norm range
+norm_range=[6640,6670]#20190530 400M1 norm range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
 #file_setting='all_avg'

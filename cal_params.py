@@ -67,12 +67,14 @@ cal_params={
                     'linelistname':'JJ_FeAr_lines.txt',
                     'offset':90,
                     'trimregions': blue_default_trim,
-                    'air_corr':True},
+                    'air_corr':True,
+                    'setupname':'930blue'},
                 'Red':{
                     'linelistname':'JJ_FeAr_lines.txt',
                     'offset':90,
                     'trimregions':red_default_trim,
-                    'air_corr': True}
+                    'air_corr': True,
+                    'setupname':'930blue'}
                 }
             }
         },
@@ -85,7 +87,8 @@ cal_params={
                     'trimregions':{
                         'x':[380,blue_default_trim['x'][1]],
                         'y':blue_default_trim['y']},
-                    'air_corr': True
+                    'air_corr': True,
+                    'setupname':'400m1'
                     },
                 'Red':{
                     'linelistname':'400M1_HgAr_redcam.txt',
@@ -93,7 +96,8 @@ cal_params={
                     'trimregions':{
                         'x':[380,red_default_trim['x'][1]],
                         'y':red_default_trim['y']},
-                    'air_corr': True
+                    'air_corr': True,
+                    'setupname':'400m1'
                     }
                 }
             },
@@ -103,12 +107,14 @@ cal_params={
                     'linelistname':'400M2_HgAr.txt',
                     'offset':0,
                     'trimregions':blue_default_trim,
-                    'air_corr':True},
+                    'air_corr':True,
+                    'setupname':'400m2'},
                 'Red':{
                     'linelistname':'400M2_HgAr.txt',
                     'offset':0,
                     'trimregions':red_default_trim,
-                    'air_corr':True}
+                    'air_corr':True,
+                    'setupname':'400m2'}
                 }
             }
         }
@@ -215,5 +221,18 @@ cont_box_bounds={
     }
 
 soar_diameter= 4.1 #SOAR diameter in meters
+
+#####
+
+flux_cal_dict={
+    'model_poly_degree':{
+        '930blue':7,
+        '400m1':7,
+        '400m2':5},
+    'obs_poly_degree':{
+        '930blue':9,
+        '400m1':5,
+        '400m2':7}
+    }
 
 
