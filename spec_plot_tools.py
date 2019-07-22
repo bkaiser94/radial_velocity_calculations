@@ -8,17 +8,21 @@ Created by Ben Kaiser (UNC-Chapel Hill) (date not known of original creation.)
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
-import balmer_line_ranges as blr
 from astropy import units as u
 from astropy import constants as const
 from astropy.table import Table
 import scipy.interpolate as scinterp
+from astropy import coordinates as coords
 
+import balmer_line_ranges as blr
 import cal_params as cp
 
 percentile= 50
 
-soar_area= np.pi*(cp.soar_diameter/2.)**2 #area of SOAR light-gathering in meters
+soar_area= np.pi*(cp.soar_diameter/2.)**2 #area of SOAR light-gathering in meters (approximately)
+parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
+cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
+
 
 
 def make_inside_out(input_list, min_val, max_val):
@@ -418,7 +422,22 @@ def correct_extinction(input_spec, header, plot_all=False):
     input_spec[1]= corr_flux
     return input_spec
     
-    
-    
+
+
+def barycentric_vel_corr(header, wavelengths):
+    input_year = header['OPENDATE'] #gps-synched date
+    input_hours = header['OPENTIME'] #gps-synched time
+    exp_time= header['EXPTIME']*u.s
+    input_times = input_year+'T'+input_hours #formatting correctly
+    obs_time = Time(input_times, format = 'isot', scale = 'utc')
+    obs_time= obs_time+exp_time/2.
+    ra = header['RA']
+    dec = header['DEC']
+    radec = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
+    bary_corr = radec.radial_velocity_correction(obstime= obs_time, location = cerro_pachon_location)
+    bary_corr = bary_corr.to(u.km/u.s)
+    lambda_rest = (wavelengths*(u.Angstrom))*const.c.to(u.km/u.s)/(-1*bary_corr+const.c.to(u.km/u.s))
+    lambda_rest = lambda_rest.value
+    return lambda_rest
     
     
