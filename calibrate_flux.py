@@ -48,10 +48,16 @@ parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2
 cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
 def barycentric_vel_corr(header, wavelengths):
+    input_year = header['OPENDATE'] #gps-synched date
+    input_hours = header['OPENTIME'] #gps-synched time
+    exp_time= header['EXPTIME']*u.s
+    input_times = input_year+'T'+input_hours #formatting correctly
+    obs_time = Time(input_times, format = 'isot', scale = 'utc')
+    obs_time= obs_time+exp_time/2.
     ra = header['RA']
     dec = header['DEC']
     radec = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
-    bary_corr = radec.radial_velocity_correction(obstime= Time(header['DATE-OBS'], format = 'isot', scale= 'utc'), location = cerro_pachon_location)
+    bary_corr = radec.radial_velocity_correction(obstime= obs_time, location = cerro_pachon_location)
     bary_corr = bary_corr.to(u.km/u.s)
     lambda_rest = (wavelengths*(u.Angstrom))*const.c.to(u.km/u.s)/(-1*bary_corr+const.c.to(u.km/u.s))
     lambda_rest = lambda_rest.value
