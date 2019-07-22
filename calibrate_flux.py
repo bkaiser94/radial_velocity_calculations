@@ -45,24 +45,24 @@ do_rv_barycorr=False
 do_ext_corr= True
 plot_across_night=True
 
-parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
-cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
+#parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
+#cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
-def barycentric_vel_corr(header, wavelengths):
-    input_year = header['OPENDATE'] #gps-synched date
-    input_hours = header['OPENTIME'] #gps-synched time
-    exp_time= header['EXPTIME']*u.s
-    input_times = input_year+'T'+input_hours #formatting correctly
-    obs_time = Time(input_times, format = 'isot', scale = 'utc')
-    obs_time= obs_time+exp_time/2.
-    ra = header['RA']
-    dec = header['DEC']
-    radec = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
-    bary_corr = radec.radial_velocity_correction(obstime= obs_time, location = cerro_pachon_location)
-    bary_corr = bary_corr.to(u.km/u.s)
-    lambda_rest = (wavelengths*(u.Angstrom))*const.c.to(u.km/u.s)/(-1*bary_corr+const.c.to(u.km/u.s))
-    lambda_rest = lambda_rest.value
-    return lambda_rest
+#def barycentric_vel_corr(header, wavelengths):
+    #input_year = header['OPENDATE'] #gps-synched date
+    #input_hours = header['OPENTIME'] #gps-synched time
+    #exp_time= header['EXPTIME']*u.s
+    #input_times = input_year+'T'+input_hours #formatting correctly
+    #obs_time = Time(input_times, format = 'isot', scale = 'utc')
+    #obs_time= obs_time+exp_time/2.
+    #ra = header['RA']
+    #dec = header['DEC']
+    #radec = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
+    #bary_corr = radec.radial_velocity_correction(obstime= obs_time, location = cerro_pachon_location)
+    #bary_corr = bary_corr.to(u.km/u.s)
+    #lambda_rest = (wavelengths*(u.Angstrom))*const.c.to(u.km/u.s)/(-1*bary_corr+const.c.to(u.km/u.s))
+    #lambda_rest = lambda_rest.value
+    #return lambda_rest
 
 #def bad_noise_vals(noise_spec):
     ##bad_inds = np.where(noise_spec < 0)
@@ -127,7 +127,7 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     header.append(card=('dlambda',4, 'delta wavelength value of each bin'))
     if do_rv_barycorr:
         header.append(card = ('barycorr', True, 'wavelengths corrected to barycenter'))
-        wavelengths = barycentric_vel_corr(header, wavelengths)
+        wavelengths = spt.barycentric_vel_corr(header, wavelengths)
     else:
         header.append(card = ('barycorr', False, 'wavelengths corrected to barycenter'))
     
