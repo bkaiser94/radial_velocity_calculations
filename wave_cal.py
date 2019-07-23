@@ -16,6 +16,7 @@ The ListCTB file is already  created by straight_reduction.py
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+import os
 from astropy.io import fits
 from glob import glob
 import scipy.optimize as sciop
@@ -45,7 +46,7 @@ cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41)
 
 skip_flat= True
 need_offset=True
-
+do_save_wavesoln=True
 def to_barycenter(header):
     #input_times = header['DATE-OBS'] #not gps-synched times
     try:
@@ -167,6 +168,28 @@ line_sides = np.ones(line_x_checks.shape[0])*line_search_width
 
 
 #######
+
+def make_wavesoln_filename(fits_filename):
+    """
+    make outupt filename for the wavelength solution for a given file
+    
+    """
+    name_parts = fits_filename.split('.')
+    output_filename= 'wsoln_'+name_parts[1]+'.txt'
+    return output_filename
+
+def save_wavesoln(fits_filename, wave_polynomial):
+    wave_filename= make_wavesoln_filename(fits_filename)
+    wave_filename= cp.wave_sol_dir+ wave_filename
+    if not os.path.exists(cp.wave_sol_dir):
+        os.makedirs(cp.wave_sol_dir)
+    else:
+        pass
+    print('Saving',wave_filename,'.')
+    np.savetxt(wave_filename, wave_polynomial)
+    print(wave_filename,' saved.')
+    return wave_filename
+
 
 
 def gaussian_curve(x, a, x0, sigma,b):
@@ -861,6 +884,12 @@ for counter, img in enumerate(speclist):
         header.append(card=('width', core_sides*2+1, 'width of extracted region for trace'))
         header.append(card=('bkgwidth', bkg_core_sides*2+1, 'width of bkg regions'))
         header.append(card=('bkgshift', bkg_shift, 'shift of bkg region from center of trace'))
+        
+        if do_save_wavesoln:
+            wave_soln_name=save_wavesoln(filename, polynomials[1])
+            header.append(card=('wavesoln', wave_soln_name, 'filename of wavelength solution poly coeffs'))
+        else:
+            pass
         #poly_curve_wavelength= barycentric_vel_corr(header, poly_curve_wavelength) #correction of Earth's orbital motion
         header['units']= 'Counts/s'
         hdu = fits.PrimaryHDU(poly_curve_wavelength, header = header)

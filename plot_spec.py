@@ -70,8 +70,8 @@ plot_400m2_tell= False
 norm_range=[6640,6670]#20190530 400M1 norm range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
-file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
+file_setting='all_avg'
+#file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
@@ -87,10 +87,10 @@ if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('avg_*')
     #filenames=glob('avg_fwctb*eg274*fits')
-    filenames=glob('avg_fwctb*aia*1644*fits')
+    #filenames=glob('avg_fwctb*aia*1644*fits')
     #filenames=glob('avg_wctb*fits')
     #filenames=glob('avg_fwctb*NaD*fits')
-    #filenames=glob('fwctb*SDSSJ1252*')
+    filenames=glob('avg_fwctb*SDSSJ1252*')
     single_iterate=True
     double_iterate=False
     #single_iterate=False
@@ -105,7 +105,8 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*aia*1644*')
+    #filenames=glob('fwctb*aia*1644*')
+    filenames=glob('fwctb*1252*')
     single_iterate=True
     double_iterate=False
 

@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 from astropy import units as u
 from astropy import constants as const
+from astropy.time import Time
 from astropy.table import Table
 import scipy.interpolate as scinterp
 from astropy import coordinates as coords

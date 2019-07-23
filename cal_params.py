@@ -38,6 +38,7 @@ name_all_lower_case:{
 
 """
 ref_dir= '/Users/BenKaiser/Desktop/Goodman_ref_files/'
+wave_sol_dir= 'wavelength_solns/'
 
 standard_dir=ref_dir+'standards/'
 line_list_dir= ref_dir+'line_lists/'
