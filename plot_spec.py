@@ -60,21 +60,21 @@ plot_400m2_tell= False
 #norm_range=[40,80]
 
 #norm_range=[7042,7046]
-#norm_range=[7490,7510] #outside telluric
+norm_range=[7490,7510] #outside telluric
 #norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
 #norm_range=[6090,6240]
-norm_range=[6640,6670]#20190530 400M1 norm range
+#norm_range=[6640,6670]#20190530 400M1 norm range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-#file_setting= 'compare_SDSS'
+file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -85,12 +85,12 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    #filenames=glob('avg_*')
+    filenames=glob('avg_fwctb*')
     #filenames=glob('avg_fwctb*eg274*fits')
     #filenames=glob('avg_fwctb*aia*1644*fits')
     #filenames=glob('avg_wctb*fits')
     #filenames=glob('avg_fwctb*NaD*fits')
-    filenames=glob('avg_fwctb*SDSSJ1252*')
+    #filenames=glob('avg_fwctb*SDSSJ1252*')
     single_iterate=True
     double_iterate=False
     #single_iterate=False
@@ -124,8 +124,8 @@ elif file_setting =='command':
     
 elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
-    #sdss_names = glob(sdss_path+'*.fits')
-    sdss_names = glob(sdss_path+'SDSS*.fits')
+    sdss_names = glob(sdss_path+'*.fits')
+    #sdss_names = glob(sdss_path+'SDSS*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     print('sdss_names:',sdss_names)
     single_iterate=False
@@ -359,7 +359,7 @@ if file_setting== 'compare_SDSS':
     target_spec1= norm_spectrum(target_spec1, norm_range)
     for filename2 in sdss_names:
         target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2)
-        #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
+        target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
         target_spec2=norm_spectrum(target_spec2, norm_range)
         #plt.ylim(top=np.nanmax(np.hstack([target_spec2[1], target_spec1[1]]))+0.5)
         plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
@@ -461,7 +461,7 @@ if single_iterate:
         target_spec, header, target_noise= spt.retrieve_spec(filename)
         target_spec[0]=target_spec[0]+wavelength_offset
         #conv_spec= convolve_spectrum(target_spec, header)
-        plot_spectrum(target_spec, filename, header, smooth=False, norm=False)
+        plot_spectrum(target_spec, filename, header, smooth=False, norm=True)
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='box', norm=True)
         #target_spec[1]=header['airmass']
         #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)

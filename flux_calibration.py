@@ -84,8 +84,8 @@ standard_name='EG274'
 #observed_file='avg_wctb.Feige110_400m1.fits'
 
 #observed_file='avg_wctb.GD153_400m2.fits'
-observed_file='avg_wctb.EG274_400m1.fits'
-#observed_file='avg_wctb.EG274_400m2.fits'
+#observed_file='avg_wctb.EG274_400m1.fits'
+observed_file='avg_wctb.EG274_400m2.fits'
 #observed_file='avg_wctb.eg274_930_blue.fits'
 #observed_file='avg_wctb.eg274am104_400m2.fits'
 #observed_file='avg_wctb.eg274am126_400m2.fits'
@@ -310,12 +310,12 @@ spt.show_plot()
 #sens_curve_points= interp_obs_flux/stand_flux
 #sens_curve_fit= np.polyfit(stand_waves, sens_curve_points,5)
 
-#obs_curve= np.polyfit(obs_waves, obs_flux, poly_degree)
-obs_curve= np.polyfit(obs_waves, obs_flux, cp.flux_cal_dict['obs_poly_degree'][setup_name])
+obs_curve= np.polyfit(obs_waves, obs_flux, poly_degree)
+#obs_curve= np.polyfit(obs_waves, obs_flux, cp.flux_cal_dict['obs_poly_degree'][setup_name])
 #model_curve = np.polyfit(stand_waves, stand_flux, poly_degree)
 #model_curve = np.polyfit(stand_waves, stand_flux, model_poly_degree)
-#model_curve = np.polyfit(unmasked_stand_spec[0], unmasked_stand_spec[1], model_poly_degree)
-model_curve = np.polyfit(unmasked_stand_spec[0], unmasked_stand_spec[1], cp.flux_cal_dict['model_poly_degree'][setup_name])
+model_curve = np.polyfit(unmasked_stand_spec[0], unmasked_stand_spec[1], model_poly_degree)
+#model_curve = np.polyfit(unmasked_stand_spec[0], unmasked_stand_spec[1], cp.flux_cal_dict['model_poly_degree'][setup_name])
 
 calc_waves=np.linspace(min_wave, max_wave,1000)
 #sens_curve_points = np.polyval(obs_curve, stand_waves)/np.polyval(model_curve, stand_waves)
@@ -323,8 +323,8 @@ calc_waves=np.linspace(min_wave, max_wave,1000)
 sens_curve_points= np.polyval(obs_curve,calc_waves)/np.polyval(model_curve, calc_waves)
 #sens_curve_fit= np.polyfit(stand_waves, sens_curve_points,5)
 #sens_curve_fit= np.polyfit(obs_waves, sens_curve_points,poly_degree)
-#sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
-sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,cp.flux_cal_dict['obs_poly_degree'][setup_name]+division_extra_deg)
+sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
+#sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,cp.flux_cal_dict['obs_poly_degree'][setup_name]+division_extra_deg)
 
 sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
 

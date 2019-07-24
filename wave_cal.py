@@ -342,13 +342,16 @@ def wavelength_to_pixel(lambda_val, in_wave_coeffs):
     return pixel
 
 
-def find_skyline_offset(x_pixels, light_values, airline_lambda, wave_coeffs, header, search_width=40, initial_offset=0):
+def find_skyline_offset(x_pixels, light_values, airline_lambda, wave_coeffs, header, search_width=40, initial_offset=0, plot_all=False):
     
     airline_guess= wavelength_to_pixel(airline_lambda, wave_coeffs)
-    plt.axvline(x=airline_guess, color= 'r')
-    plt.plot(x_pixels, light_values, color='b')
-    plt.title('Auto-generated prediction of pixel position for air line')
-    plt.show()
+    if plot_all:
+        plt.axvline(x=airline_guess, color= 'r')
+        plt.plot(x_pixels, light_values, color='b')
+        plt.title('Auto-generated prediction of pixel position for air line')
+        plt.show()
+    else:
+        pass
 
     cut_region = np.where(x_pixels> (airline_guess-search_width ))
     high_x_pixels= np.copy(x_pixels[cut_region])
@@ -360,9 +363,12 @@ def find_skyline_offset(x_pixels, light_values, airline_lambda, wave_coeffs, hea
     p0_dict= cp.slit_airline_p0
     max_ind= np.argmax(cut_light_values)
     max_point= cut_x_pixels[max_ind]
-    plt.axvline(x=airline_guess, color= 'magenta', label='wave to pix guess')
+    if plot_all:
+        plt.axvline(x=airline_guess, color= 'magenta', label='wave to pix guess')
+    else:
+        pass
     p0_dict['x_0']= max_point
-    corr_pixel= fit_slitskyline_function(cut_x_pixels, cut_light_values, header, p0_dict= p0_dict, plot_all=False)
+    corr_pixel= fit_slitskyline_function(cut_x_pixels, cut_light_values, header, p0_dict= p0_dict, plot_all=plot_all)
     offset= airline_guess-corr_pixel #offset that should be added to the pixel values for the new determinations
     return offset
 
@@ -581,6 +587,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
                 print error
         peaks_found = np.array(peaks_found)
         wave_peaks_found = np.array(wave_peaks_found)
+        #np.savetxt('measured_pixel_coords.txt', np.append([peaks_found],[wave_peaks_found],axis=0).T, delimiter='\t')
         #print "line_x_checks:"
         #print line_x_checks
         #print "peaks found"
@@ -606,18 +613,27 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         #plt.ylim(10,200)
         plt.show()
 
-        #plt.plot(x_positions, poly_curve_wavelength,  label = 'wavelength solution', color ='blue')
-        #plt.plot(peaks_found, wave_peaks_found, marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
-        #plt.plot(line_x_checks2, lamp_lines, label = 'input points', color = 'green', marker = '*', linestyle = 'none')
-        #plt.title("wavelength to pixel position")
-        #plt.legend()
-        #plt.show()
+        plt.plot(x_positions, poly_curve_wavelength,  label = 'wavelength solution', color ='blue')
+        plt.plot(peaks_found, wave_peaks_found, marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
+        plt.plot(line_x_checks2, lamp_lines, label = 'input points', color = 'green', marker = '*', linestyle = 'none')
+        plt.title("wavelength to pixel position")
+        plt.legend()
+        plt.show()
 
         plt.axhline(y=0 ,  label = 'wavelength solution', color ='blue')
         plt.plot(peaks_found, wave_peaks_found-x_to_wavelength(peaks_found), marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
         plt.plot(line_x_checks2, lamp_lines-x_to_wavelength(line_x_checks2), label = 'input points', color = 'green', marker = '*', linestyle = 'none')
         plt.title("wavelength to pixel position Residuals")
         plt.xlabel('Pixel')
+        plt.ylabel(r'Wavelength Residual $\AA$')
+        plt.legend(loc= 'best')
+        plt.show()
+        
+        plt.axhline(y=0 ,  label = 'wavelength solution', color ='blue')
+        plt.plot(wave_peaks_found, wave_peaks_found-x_to_wavelength(peaks_found), marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
+        #plt.plot(line_x_checks2, lamp_lines-x_to_wavelength(line_x_checks2), label = 'input points', color = 'green', marker = '*', linestyle = 'none')
+        plt.title("wavelength position Residuals")
+        plt.xlabel('Wavelength')
         plt.ylabel(r'Wavelength Residual $\AA$')
         plt.legend(loc= 'best')
         plt.show()
@@ -782,6 +798,16 @@ for counter, img in enumerate(speclist):
         upper_edges= np.polyval(polynomials[1], x_positions+0.5) #upper wavelength edges
         lower_edges= np.polyval(polynomials[1], x_positions-0.5) #lower_wavelength edges
         dlambda_vals= upper_edges-lower_edges
+        #plt.plot(dlambda_vals)
+        #plt.xlabel('pixel')
+        #plt.ylabel('dlambda')
+        #plt.title('Dispersion')
+        #plt.show()
+        #plt.plot(poly_curve_wavelength, dlambda_vals)
+        #plt.xlabel('Wavelength (A)')
+        #plt.ylabel('dlambda')
+        #plt.title('Dispersion')
+        #plt.show()
         for x_pos in x_positions:
             trace_vals=img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos]
             xsum= np.sum(trace_vals)
@@ -841,6 +867,7 @@ for counter, img in enumerate(speclist):
             plt.plot(poly_curve_wavelength, bkg_light)
             plt.xlabel(r'Wavelength ($\AA$)')
             plt.ylabel('Counts/s')
+            plt.title('Sky with predicted line wavelengths marked')
             plt.show()
             coll_air_offsets= []
             for air_wave, name, name2 in zip(air_waves, good_airlines['Name'], good_airlines['Name2']):
@@ -863,6 +890,7 @@ for counter, img in enumerate(speclist):
             plt.plot(poly_curve_wavelength, bkg_light)
             plt.xlabel(r'Wavelength ($\AA$)')
             plt.ylabel('Counts/s')
+            plt.title('Sky with Correction of'+ str(avg_air_offset)+' pixels applied')
             plt.show()
             header.append(card=('airofstd', np.std(coll_air_offsets), 'std dev of sky emission pixel offsets'))
             header.append(card=('airofavg', avg_air_offset, 'median of sky emission pixel offsets, this was applied'))
