@@ -70,8 +70,8 @@ norm_range=[7490,7510] #outside telluric
 #norm_range=[6640,6670]#20190530 400M1 norm range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
-file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
+file_setting='all_avg'
+#file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
@@ -432,12 +432,10 @@ if file_setting=='command':
         target_spec1[0]=target_spec1[0]+wavelength_offset
         target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True, kernel_type='box')
-        plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=False, kernel_type='box')
+        plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=False, kernel_type='box', pix_width=pix_width)
         #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width*2)
-        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='gaussian', pix_width=pix_width)
-        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=6)
-        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=False, kernel_type='box', pix_width=pix_width*2)
+        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=pix_width)
         #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=10)
         #plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=10)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=False)
