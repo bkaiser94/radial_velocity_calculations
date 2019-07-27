@@ -136,8 +136,8 @@ box_dict= {
 
 expedited_wavecals=False
 do_airglow_corr=True
-air_off_type='lambda' #if you want the airglow offset to be applied in wavelength space, i.e. subtract a lambda value from all wavelength values
-#air_off_type='pixel' #if you want the offset to be applied in pixel space
+#air_off_type='lambda' #if you want the airglow offset to be applied in wavelength space, i.e. subtract a lambda value from all wavelength values
+air_off_type='pixel' #if you want the offset to be applied in pixel space
 #air_off_type='none' #setting for not applying the airglow correction. Realistically you should just set do_airglow_corr=False for this option
 
 #fear_array= np.genfromtxt(linefilename, names = True)
