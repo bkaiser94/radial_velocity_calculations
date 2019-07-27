@@ -245,7 +245,7 @@ def retrieve_spec(filename, scale_noise= True):
     file_flux = np.copy(i[1].data)
     #set flux=0 as a slightly non-zero value to protect against NaNs
     zero_fluxes= np.where(np.abs(file_flux)<1e-10)
-    print('zero flux indices:',zero_fluxes)
+    #print('zero flux indices:',zero_fluxes)
     #plt.plot(file_waves, file_flux, label='pre fixes', marker='o')
     try:
         #if zero_fluxes[0].shape[0] > 0:
@@ -255,7 +255,7 @@ def retrieve_spec(filename, scale_noise= True):
     except IndexError:
         pass
     nan_fluxes= np.where(file_flux==np.nan)
-    print('nan flux indices:',nan_fluxes)
+    #print('nan flux indices:',nan_fluxes)
     try:
         #if nan_fluxes[0].shape[0]> 0:
         file_flux[nan_fluxes]=1e-10
@@ -270,7 +270,7 @@ def retrieve_spec(filename, scale_noise= True):
     file_noise = np.copy(i[3].data)
     #plt.plot(file_waves, file_noise, label='pre fixes', marker='o')
     nan_sigma= np.where(file_noise==np.nan)
-    print('nan sigma', nan_sigma)
+    #print('nan sigma', nan_sigma)
     try:
         #if nan_sigma[0].shape[0]> 0:
         file_noise[nan_sigma]=1e10
@@ -282,7 +282,7 @@ def retrieve_spec(filename, scale_noise= True):
     #plt.legend()
     #plt.title('noise')
     #plt.show()
-    print('zero flux indices:',np.where(file_flux==0))
+    #print('zero flux indices:',np.where(file_flux==0))
     #print(np.sum(np.isnan(file_flux)))
     #print(np.sum(np.isnan(file_noise)))
     file_spec = np.vstack([file_waves, file_flux])

@@ -197,7 +197,8 @@ airline_color={
     'KI':'red',
     'Li':'red',
     '[O':'blue',
-    'OH':'green'
+    'OH':'green',
+    'O_':'magenta'
     }
 
 #dictionary of guesses for the box1d model used to generate the shape for background skylines

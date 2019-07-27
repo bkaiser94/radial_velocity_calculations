@@ -31,24 +31,34 @@ import cal_params as cp
 import spec_plot_tools as spt
 
 
-output_filename= '400m2_HgArNe_calc.txt'
-linelist_file= '400M2_HgAr.txt'
+#output_filename= '400m2_HgArNe_calc.txt'
+#linelist_file= '400M2_HgAr.txt'
 #nelist_file='NIST_NeI_linelist_copy.csv'
 #nelist_file='NIST_NeI_linelist_copy.csv'
-nelist_file='NIST_HgIArINeI_480to920_vac.csv'
-wave_soln_file= 'wsoln_0114_SDSSJ1150p2403_400m2.txt'
-fits_file= 'ctb.0059_HgAr_400m2_simple_fe.fits'
-fits_file2= 'ctb.0056_HgArNe_400m2_simple_fe.fits'
+#nelist_file='NIST_HgIArINeI_480to920_vac.csv'
+#nelist_file='NIST_HgIArINeI_480to920_air_Cup.csv'
+#nelist_file='NIST_HgIArINeI_350to750_air_Cup.csv'
+#wave_soln_file= 'wsoln_0114_SDSSJ1150p2403_400m2.txt'
+#fits_file= 'ctb.0059_HgAr_400m2_simple_fe.fits'
+#fits_file2= 'ctb.0056_HgArNe_400m2_simple_fe.fits'
 
-#wavelength_key= 'obs_wl_air(A)'
-wavelength_key= 'obs_wl_vac(A)'
+
+output_filename= '400m1_HgArNe_calc.txt'
+linelist_file= '400M1_HgAr_redcam.txt'
+nelist_file='NIST_HgIArINeI_350to750_air_Cup.csv'
+wave_soln_file='wsoln_0213_SDSSJ1150p2403_400m1.txt'
+fits_file='ctb.0052_HgAr_400m1_simple_fe.fits'
+fits_file2='ctb.0049_HgArNe_400m1_simple_fe.fits'
+
+wavelength_key= 'obs_wl_air(A)'
+#wavelength_key= 'obs_wl_vac(A)'
 
 wave_sol_binning= 2 #binning of the wavelength solution
 
 trace_width=10
 trace_mid=100
 
-intensity_threshold= np.float_(99. )#minimum "intens" value that the NIST lines can have to make it into the plotting
+intensity_threshold= np.float_(499. )#minimum "intens" value that the NIST lines can have to make it into the plotting
 element_sel= 'Ar'
 
 wave_soln_file= cp.wave_sol_dir+wave_soln_file
@@ -182,9 +192,9 @@ def plot_ne_lines(ne_table, counts):
         except KeyError as error:
             print('KeyError:', error)
             air_name='NeI '+str(row[wavelength_key])[:4]
-        plt.axvline(x=row[wavelength_key], linestyle='--', color='g')
+        plt.axvline(x=row[wavelength_key], linestyle='--', color=color_dict[row['element']])
         #plt.text(row['obs_wl_air(A)'], np.nanmax(counts), air_name, color='g', rotation=90)
-        plt.text(row[wavelength_key], 1000, air_name, color='g', rotation=90)
+        plt.text(row[wavelength_key], 1000, air_name, color=color_dict[row['element']], rotation=90)
     return
 
 
@@ -244,14 +254,14 @@ plt.show()
 
 for x_spot in hgar_wave_vals:
     plt.axvline( x= x_spot, color = 'k',linestyle = '--')
-#plot_ne_lines(ne_table, counts)
+plot_ne_lines(ne_table, counts)
 plot_ne_lines(ar_table, counts)
 plot_ne_lines(hg_table, counts)
 
-plt.plot(wave_vals,counts2, color='r')
+plt.plot(wave_vals,counts2, color='gray')
 plt.plot(wave_vals,counts, color='k')
 plt.ylabel('intensity')
-plt.yscale('log')
+#plt.yscale('log')
 plt.xlabel('wavelength (angstroms)')
 plt.show()
 

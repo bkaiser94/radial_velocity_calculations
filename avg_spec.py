@@ -23,8 +23,8 @@ start = time.time()
 
 import spec_plot_tools as spt
 
-#glob_string= 'wctb*'
-glob_string='fwctb*'
+glob_string= 'wctb*'
+#glob_string='fwctb*'
 #filenames= glob('wctb*')
 filenames= glob(glob_string)
 
@@ -181,6 +181,83 @@ def avg_spectra(target_list):
     print('should have saved')
     return
 
+
+def make_super_spec(target_list):
+    wave_list=[]
+    flux_list=[]
+    noise2_list=[]
+    sky_list=[]
+    if do_dlambda_ext:
+        dlambda_list=[]
+    else:
+        pass
+    print("target_list", target_list)
+    for target_file in target_list:
+        print('target_file', target_file)
+        target_spec, header, target_noise = spt.retrieve_spec(target_file)
+        wave_list.append(target_spec[0])
+        flux_list.append(target_spec[1])
+        noise2_list.append(target_noise[1]**2)
+        hdu=fits.open(target_file)
+        sky=np.copy(hdu[2].data)
+        sky_list.append(sky)
+        core_name=target_file[low_index:high_index]
+        global do_dlambda_ext
+        if do_dlambda_ext:
+            try:
+                dlambda_spec= np.copy(hdu[4].data)
+                print('dlambda_spec extension (4) is present')
+                dlambda_list.append(dlambda_spec)
+            except IndexError as error:
+                print("IndexError:", error)
+                print('No dlambda_spec extension presumably, so not doing it for any other spectra for this target')
+                do_dlambda_ext=False
+        else:
+            print('do_dlambda_ext=False')
+            
+        #sky_list(
+        plt.plot(target_spec[0],target_spec[1], label=target_file)
+    flux_array=np.array(flux_list)
+    flux_array=np.copy(flux_array.ravel())
+    wave_array=np.array(wave_list)
+    wave_array=np.copy(wave_array.ravel())
+    #print(flux_array.shape).ravel()
+    noise2_array= np.array(noise2_list)
+    noise2_array=np.copy(noise2_array.ravel())
+    sky_array=np.array(sky_list)
+    sky_array=np.copy(sky_array.ravel())
+    sorted_indices= np.argsort(wave_array)
+    sorted_waves=wave_array[sorted_indices]
+    sorted_flux= flux_array[sorted_indices]
+    sorted_sky= sky_array[sorted_indices]
+    sorted_noise2= noise2_array[sorted_indices]
+    sorted_noise=np.sqrt(sorted_noise2)
+    if do_dlambda_ext:
+        dlambda_array= np.array(dlambda_list)
+        dlambda_array=np.copy(dlambda_array.ravel())
+        sorted_dlambda= dlambda_array[sorted_indices]
+    plt.plot(sorted_waves,sorted_flux, label='super')
+    #plt.title(target_file)
+    plt.legend()
+    plt.show()
+    header.append(card=('SUPER', True, 'This is a spectrum that just merges all of the spectra without averaging'))
+    hdu=fits.PrimaryHDU(sorted_waves, header= header)
+    hdu1= fits.ImageHDU(sorted_flux)
+    #hdu2= fits.ImageHDU(np.ones(avg_flux.shape))
+    hdu2= fits.ImageHDU(sorted_sky)
+    hdu3 = fits.ImageHDU(sorted_noise)
+    if do_dlambda_ext:
+        hdu4=fits.ImageHDU(sorted_dlambda)
+        hdulist= fits.HDUList([hdu,hdu1,hdu2,hdu3, hdu4])
+    else:
+        hdulist= fits.HDUList([hdu,hdu1,hdu2,hdu3])
+    output_name= "super_"+ glob_string[:-1]+'.'+ core_name + ".fits"
+    print('output_name:', output_name)
+    print('saving hopefully...')
+    hdulist.writeto(output_name, overwrite= True)
+    print('should have saved')
+    
+
 print("\n\n\n\n")
 print("##################")
 print("##################")
@@ -192,6 +269,7 @@ for sets in filename_matches:
     print(filename_matches[sets])
     do_dlambda_ext=True
     avg_spectra(filename_matches[sets])
+    make_super_spec(filename_matches[sets])
     print('+++++++')
 
 

@@ -326,7 +326,7 @@ sens_curve_points= np.polyval(obs_curve,calc_waves)/np.polyval(model_curve, calc
 sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
 #sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,cp.flux_cal_dict['obs_poly_degree'][setup_name]+division_extra_deg)
 
-sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
+#sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
 
 
 plt.plot(obs_waves1, obs_flux1, label= 'observed', marker= 'o', linestyle='none')

@@ -79,11 +79,11 @@ trace_offset =0  #amount by which the calculated trace needs to be offset to end
 #trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
 #trace_band_mid=110
-trace_band_mid=90
+trace_band_mid=100
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=60 #
-#trace_band_width=30
+#trace_band_width=190
 #trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
 trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width=190#super wide search range
@@ -92,7 +92,7 @@ trace_band_width = 50#pixel width to determine the center of the trace 2019-03-2
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 10 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side= 2 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+sigma_multi_side= 2. #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 
 core_sides=  5
 #core_sides=  7
@@ -136,6 +136,9 @@ box_dict= {
 
 expedited_wavecals=False
 do_airglow_corr=True
+air_off_type='lambda' #if you want the airglow offset to be applied in wavelength space, i.e. subtract a lambda value from all wavelength values
+#air_off_type='pixel' #if you want the offset to be applied in pixel space
+#air_off_type='none' #setting for not applying the airglow correction. Realistically you should just set do_airglow_corr=False for this option
 
 #fear_array= np.genfromtxt(linefilename, names = True)
 #line_x_checks = np.copy(fear_array['Pixel']) +90
@@ -369,8 +372,10 @@ def find_skyline_offset(x_pixels, light_values, airline_lambda, wave_coeffs, hea
         pass
     p0_dict['x_0']= max_point
     corr_pixel= fit_slitskyline_function(cut_x_pixels, cut_light_values, header, p0_dict= p0_dict, plot_all=plot_all)
+    corr_wave= np.polyval(wave_coeffs, corr_pixel) #''wavelength'' of skyline on original scale
+    offset_lambda= airline_lambda-corr_wave
     offset= airline_guess-corr_pixel #offset that should be added to the pixel values for the new determinations
-    return offset
+    return offset, offset_lambda
 
 
 def iterate_gauss_trace():
@@ -870,18 +875,38 @@ for counter, img in enumerate(speclist):
             plt.title('Sky with predicted line wavelengths marked')
             plt.show()
             coll_air_offsets= []
+            coll_air_lam_offsets=[]
             for air_wave, name, name2 in zip(air_waves, good_airlines['Name'], good_airlines['Name2']):
                 #print(name+name2, type(name))
                 air_name=name+name2
-                offset= find_skyline_offset(x_positions, bkg_light, air_wave, polynomials[1], header)
+                offset, offset_lambda= find_skyline_offset(x_positions, bkg_light, air_wave, polynomials[1], header)
                 coll_air_offsets.append(offset)
+                coll_air_lam_offsets.append(offset_lambda)
             print('coll_air_offsets:', coll_air_offsets)
+            print('coll_air_lam_offsets:', coll_air_lam_offsets)
             #avg_air_offset=np.mean(coll_air_offsets)
-            avg_air_offset=np.median(coll_air_offsets)
-            poly_curve_wavelength= np.polyval(polynomials[1], x_positions+avg_air_offset)
-            upper_edges= np.polyval(polynomials[1], x_positions+avg_air_offset+0.5) #upper wavelength edges
-            lower_edges= np.polyval(polynomials[1], x_positions+avg_air_offset-0.5) #lower_wavelength edges
-            dlambda_vals= upper_edges-lower_edges
+            if (air_off_type== 'lambda'):
+                print('airglow offsetting will be done with wavelength zeropoint')
+                avg_air_offset= np.median(coll_air_lam_offsets)
+                poly_curve_wavelength= np.polyval(polynomials[1], x_positions)+avg_air_offset
+                upper_edges= np.polyval(polynomials[1], x_positions+0.5)+avg_air_offset #upper wavelength edges
+                lower_edges= np.polyval(polynomials[1], x_positions-0.5) +avg_air_offset#lower_wavelength edges
+                dlambda_vals= upper_edges-lower_edges
+                header.append(card=('airofstd', np.std(coll_air_offsets), 'std dev of sky emission angstrom offsets'))
+                header.append(card=('airofavg', avg_air_offset, 'median of sky emission angstrom offsets, this was applied'))
+            elif(air_off_type=='pixel'):
+                avg_air_offset=np.median(coll_air_offsets)
+                print('airglow offsetting will be done with pixel zeropoint')
+                poly_curve_wavelength= np.polyval(polynomials[1], x_positions+avg_air_offset)
+                upper_edges= np.polyval(polynomials[1], x_positions+avg_air_offset+0.5) #upper wavelength edges
+                lower_edges= np.polyval(polynomials[1], x_positions+avg_air_offset-0.5) #lower_wavelength edges
+                dlambda_vals= upper_edges-lower_edges
+                header.append(card=('airofstd', np.std(coll_air_offsets), 'std dev of sky emission pixel offsets'))
+                header.append(card=('airofavg', avg_air_offset, 'median of sky emission pixel offsets, this was applied'))
+            else:
+                print('\n\nYou seem to have not chosen a valid "air_off_type"; you used:', air_off_type)
+                print('So no airglow correction is actually going to happen\n\n')
+            header.append(card=('AIROFTYP', air_off_type, 'method of zeropoint correction for skylines'))
             for air_wave, name, name2 in zip(air_waves, good_airlines['Name'], good_airlines['Name2']):
                 #print(name+name2, type(name))
                 air_name=name+name2
@@ -890,10 +915,9 @@ for counter, img in enumerate(speclist):
             plt.plot(poly_curve_wavelength, bkg_light)
             plt.xlabel(r'Wavelength ($\AA$)')
             plt.ylabel('Counts/s')
-            plt.title('Sky with Correction of'+ str(avg_air_offset)+' pixels applied')
+            plt.title('Sky with Correction of'+ str(avg_air_offset)+air_off_type+'  applied')
             plt.show()
-            header.append(card=('airofstd', np.std(coll_air_offsets), 'std dev of sky emission pixel offsets'))
-            header.append(card=('airofavg', avg_air_offset, 'median of sky emission pixel offsets, this was applied'))
+            
         else:
             pass
         
