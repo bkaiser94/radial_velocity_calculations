@@ -92,7 +92,7 @@ trace_band_width = 50#pixel width to determine the center of the trace 2019-03-2
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 10 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side= 2. #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+sigma_multi_side= 3 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 
 core_sides=  5
 #core_sides=  7

@@ -23,8 +23,8 @@ start = time.time()
 
 import spec_plot_tools as spt
 
-glob_string= 'wctb*'
-#glob_string='fwctb*'
+#glob_string= 'wctb*'
+glob_string='fwctb*'
 #filenames= glob('wctb*')
 filenames= glob(glob_string)
 
@@ -269,7 +269,7 @@ for sets in filename_matches:
     print(filename_matches[sets])
     do_dlambda_ext=True
     avg_spectra(filename_matches[sets])
-    #make_super_spec(filename_matches[sets])
+    make_super_spec(filename_matches[sets])
     print('+++++++')
 
 
