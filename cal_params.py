@@ -118,6 +118,46 @@ cal_params={
                     'setupname':'400m2'}
                 }
             }
+        },
+    '400_SYZY':{
+        11.60000:{
+            5.80000:{
+                'Blue':{
+                    'linelistname':'400M1_HgAr.txt',
+                    'offset':0,
+                    'trimregions':{
+                        'x':[380,blue_default_trim['x'][1]],
+                        'y':blue_default_trim['y']},
+                    'air_corr': True,
+                    'setupname':'400m1'
+                    },
+                'Red':{
+                    'linelistname':'400M1_HgAr_redcam.txt',
+                    'offset':0,
+                    'trimregions':{
+                        'x':[380,red_default_trim['x'][1]],
+                        'y':red_default_trim['y']},
+                    'air_corr': True,
+                    'setupname':'400m1'
+                    }
+                }
+            },
+        16.10000:{
+            7.50000:{
+                'Blue':{
+                    'linelistname':'400M2_HgAr.txt',
+                    'offset':0,
+                    'trimregions':blue_default_trim,
+                    'air_corr':True,
+                    'setupname':'400m2'},
+                'Red':{
+                    'linelistname':'400M2_HgAr.txt',
+                    'offset':0,
+                    'trimregions':red_default_trim,
+                    'air_corr':True,
+                    'setupname':'400m2'}
+                }
+            }
         }
     }
 

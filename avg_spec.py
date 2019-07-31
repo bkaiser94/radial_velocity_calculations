@@ -33,30 +33,45 @@ low_index= len(glob_string)-1+6
 high_index=-5
 
 do_dlambda_ext= True
-
+#do_super=False
 filename_matches={}
 prev_core=''
 filename_set=[]
 #filename_set={}
+print(filenames)
+
+def get_core_name(filename):
+    return  filename[low_index:high_index]
+
 for i,filename in enumerate(filenames[:-1]):
-    core_name= filename[low_index:high_index]
+    #core_name= filename[low_index:high_index]
+    core_name= get_core_name(filename)
+    #print('filename:', filename, 'core_name:', core_name)
     filename_set.append(filename)
     if core_name != filenames[i+1][low_index:high_index]:
         #filename_set.append(filename)
         #print('match')
         #print(core_name, prev_core)
         try:
-            print("filename_matches[core_name]", filename_matches[core_name])
+            #print("filename_matches[core_name]", filename_matches[core_name])
             prev_list=filename_matches[core_name]
-            print('prev_list', prev_list)
+            #print('prev_list', prev_list)
             new_list=prev_list+filename_set
             filename_matches[core_name]=new_list
             #filename_matches[core_name].append(filename_set)
             #filename_matches[core_name]=filename_matches[core_name].append(filename_set)
-            print("filename_matches[core_name]", filename_matches[core_name])
+            #print("filename_matches[core_name]", filename_matches[core_name])
         except KeyError:
+            print('No previous core names matching:', core_name)
+            print('previous core_names:')
+            for thing in filename_matches:
+                print(thing)
             filename_matches[core_name]=filename_set
-            print("filename_matches[core_name]", filename_matches[core_name])
+            #if len(filename_set) > 1:
+                #filename_matches[core_name]=filename_set
+            #else:
+                #filename_matches[core_name]=filename_set[0]
+            #print("filename_matches[core_name]", filename_matches[core_name])
         filename_set=[]
         print("resetting filename_set")
     else:
@@ -80,17 +95,27 @@ for i,filename in enumerate(filenames[:-1]):
     print(filename_set)
     print('+++++++')
 #filename_set.append(filename)
-filename_set.append(filenames[-1])
+final_core_name= get_core_name(filenames[-1])
+print('final_core_name', final_core_name)
+#filename_set.append(filenames[-1]) #this assumed the last file matched the preceding file, which isn't always the case
 #filename_matches.append([filename_set])
 for sets in filename_matches:
     print('======')
     print(sets)
     print('+++++++')
 try:
-    print(filename_matches[core_name])
-    filename_matches[core_name].append(filename_set)
+    print(filename_matches[final_core_name])
+    prev_list = filename_matches[final_core_name]
+    print('prev_list', prev_list)
+    print('filenames[-1]', filenames[-1])
+    prev_list.append(filenames[-1])
+    print('prev_list', prev_list)
+    #filename_matches[final_core_name].append(filename_set)
+    filename_matches[final_core_name]=prev_list
+    print('filename_matches[final_core_name]', filename_matches[final_core_name])
 except KeyError:
-    filename_matches[core_name]=filename_set
+    #filename_matches[final_core_name]=filename_set
+    print("last filename doesn't match any previous objects, which means it can't be averaged...")
 for sets in filename_matches:
     print('======')
     print(filename_matches[sets])
@@ -270,6 +295,10 @@ for sets in filename_matches:
     do_dlambda_ext=True
     avg_spectra(filename_matches[sets])
     make_super_spec(filename_matches[sets])
+    #if do_super:
+        #make_super_spec(filename_matches[sets])
+    #else:
+        #pass
     print('+++++++')
 
 

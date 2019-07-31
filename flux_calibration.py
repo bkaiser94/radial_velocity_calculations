@@ -85,8 +85,8 @@ standard_name='EG274'
 
 #observed_file='avg_wctb.GD153_400m2.fits'
 #observed_file='avg_wctb.EG274_400m1.fits'
-observed_file='avg_wctb.EG274_400m1_fix.fits'
-#observed_file='avg_wctb.EG274_400m2.fits'
+#observed_file='avg_wctb.EG274_400m1_fix.fits'
+observed_file='avg_wctb.EG274_400m2.fits'
 #observed_file='avg_wctb.eg274_930_blue.fits'
 #observed_file='avg_wctb.eg274am104_400m2.fits'
 #observed_file='avg_wctb.eg274am126_400m2.fits'
@@ -324,10 +324,10 @@ calc_waves=np.linspace(min_wave, max_wave,1000)
 sens_curve_points= np.polyval(obs_curve,calc_waves)/np.polyval(model_curve, calc_waves)
 #sens_curve_fit= np.polyfit(stand_waves, sens_curve_points,5)
 #sens_curve_fit= np.polyfit(obs_waves, sens_curve_points,poly_degree)
-#sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
+sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
 #sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,cp.flux_cal_dict['obs_poly_degree'][setup_name]+division_extra_deg)
 
-sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
+#sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
 
 
 plt.plot(obs_waves1, obs_flux1, label= 'observed', marker= 'o', linestyle='none')

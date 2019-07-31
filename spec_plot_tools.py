@@ -337,6 +337,30 @@ def plot_telluric():
     return
     
 
+def retrieve_nist_list(nist_file):
+    nist_table=Table.read(nist_file, format='ascii.csv')
+    #print(ne_table['intens'])
+    #ne_table=remove_stars(ne_table)
+    #print(ne_table['intens'])
+    #try:
+        #good_inds= np.where(ne_table['use']>0)
+        #ne_table=ne_table[good_inds]
+    #except KeyError:
+        #pass
+    #for count, row in enumerate(ne_table['obs_wl_air(A)']):
+        #print(count, row)
+    for count, row in enumerate(nist_table):
+        print(count, row['intens'])
+        try:
+            row['intens']=int(row['intens'])
+            nist_table[count]['intens']=float(row['intens'])
+            print('converted to int!', row['intens'])
+        except ValueError:
+            print('ValueError ^^^^')
+    #ne_table['intens']=ne_table['intens'].astype(float) #changing this column that gets read as strings for whatever reason
+    nist_table.pprint()
+    return nist_table
+
 def show_plot(show_telluric=True, show_legend=True):
     if show_legend:
         plt.legend(loc='best')
@@ -440,5 +464,7 @@ def barycentric_vel_corr(header, wavelengths):
     lambda_rest = (wavelengths*(u.Angstrom))*const.c.to(u.km/u.s)/(-1*bary_corr+const.c.to(u.km/u.s))
     lambda_rest = lambda_rest.value
     return lambda_rest
+
+
     
     

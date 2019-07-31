@@ -36,7 +36,7 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-pix_width=10
+pix_width=10 
 sdss_pix_width = 10
 
 #wavelength_offset=60
@@ -73,11 +73,11 @@ norm_range=[6640,6670]#20190530 400M1 norm range
 #file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
-#file_setting='all_fwctb'
+file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
-file_setting= 'two_arm'
+#file_setting= 'two_arm'
 #file_setting= 'all_super'
 
 single_iterate= False
@@ -86,9 +86,9 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('avg_fwctb*')
+    #filenames=glob('avg_fwctb*')
     #filenames=glob('avg_fwctb*eg274*fits')
-    #filenames=glob('avg_fwctb*aia*1644*fits')
+    filenames=glob('avg_fwctb*aia*1644*fits')
     #filenames=glob('avg_wctb*fits')
     #filenames=glob('avg_fwctb*NaD*fits')
     #filenames=glob('avg_fwctb*SDSSJ1252*')
@@ -99,15 +99,15 @@ if file_setting=='all_avg':
 
 elif file_setting=='all_wctb':
     print(file_setting)
-    #filenames=glob('wctb*')
-    filenames=glob('wctb*aia*1644*')
+    filenames=glob('wctb*')
+    #filenames=glob('wctb*aia*1644*')
     single_iterate=True
     double_iterate=False
     
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*')
+    filenames=glob('fwctb*aia*1644*')
     #filenames=glob('fwctb*aia*1644*')
     #filenames=glob('fwctb*2356*')
     single_iterate=True
@@ -143,15 +143,17 @@ elif file_setting=='all_SDSS':
     double_iterate=False
     
 elif file_setting== 'two_arm':
-    m1_names =glob('avg_fwctb*400m1*fits')
-    m2_names= glob('avg_fwctb*400m2*fits')
+    #m1_names =glob('avg_fwctb*400m1*fits')
+    #m2_names= glob('avg_fwctb*400m2*fits')
+    m1_names =glob('super_fwctb*400m1*fits')
+    m2_names= glob('super_fwctb*400m2*fits')
     #m1_names =glob('avg_wctb*400m1*fits')
     #m2_names= glob('avg_wctb*400m2*fits')
     filenames= zip(m1_names, m2_names)
     
 elif file_setting=='all_super':
     print(file_setting)
-    filenames=glob('super_wctb*fits')
+    filenames=glob('super_fwctb*1644*fits')
     single_iterate=True
     double_iterate=False
     
@@ -177,7 +179,7 @@ def norm_spectrum(input_spec, norm_range, wave_range=True):
     return out_spec
 
 
-def convolve_spectrum(target_spec, header, kernel_type='gaussian', pix_width=3):
+def convolve_spectrum(target_spec, header, kernel_type='gaussian', pix_width=pix_width):
     #pix_width =3
     #pix_width =20
     fluxes= np.copy(target_spec[1])
@@ -193,6 +195,7 @@ def convolve_spectrum(target_spec, header, kernel_type='gaussian', pix_width=3):
         pix_kernel.normalize()
         spec_conv = conv.convolve(fluxes, pix_kernel)
     else:
+        print('something wrong with convolution attempt')
         pass
     spec_out = np.vstack([wavelengths, spec_conv])
     return spec_out
@@ -202,7 +205,8 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
     title_string=filename
     label_string= filename
     try:
-        label_string= label_string+str(header['airofavg'])[:4]
+        #label_string= label_string+str(header['airofavg'])[:4]
+        pass
     except KeyError:
         pass
     if smooth:
@@ -263,8 +267,9 @@ def plot_dwavelength(spec, filename):
     plt.title(filename)
     #dlambda= spec[0][1:]-spec[0][:-1]
     #plt.plot(spec[0][:-1], dlambda)
-    plt.plot(spec[0], dlambda)
-    plt.show()
+    #plt.plot(spec[0], dlambda, label=filename)
+    plt.plot(spec[0], label=filename)
+    #plt.show()
     
     #plt.ylabel(r'Wavelength ($\AA$)')
     #plt.xlabel('pixel')
@@ -279,12 +284,12 @@ def plot_pix_shifts(file_list):
         #print(filename, header['ROTATOR'],header['airofavg'], header['BMJD_TDB'])
         print(filename, header['ROTATOR'],header['CAM_ANG'], header['CAM_TARG'])
         #plt.errorbar(header['BMJD_TDB'], header['airofavg'], yerr=header['airofstd'], color='b')
-        #plt.errorbar(header['ROTATOR'], header['airofavg'], yerr=header['airofstd'], color='b', marker='o', markersize=4)
-        plt.scatter( header['BMJD_TDB'],header['ROTATOR'], color='b')
+        plt.errorbar(header['ROTATOR'], header['airofavg'], yerr=header['airofstd'], color='b', marker='o', markersize=4)
+        #plt.scatter( header['BMJD_TDB'],header['ROTATOR'], color='b')
         #plt.errorbar(header['AIRMASS'], header['airofavg'], yerr=header['airofstd'], color='b')
-    plt.xlabel('BMDJ_TDB')
-    plt.ylabel('ROTATOR')
-    #plt.ylabel('pixel offset of air lines')
+    #plt.xlabel('BMDJ_TDB')
+    plt.xlabel('ROTATOR')
+    plt.ylabel('pixel offset of air lines')
     plt.show()
     return
 
@@ -318,7 +323,8 @@ def plot_SNR(spec, noise, filename):
     
 def plot_sky(filename, offset=0):
     hdu=fits.open(filename)
-    sky=hdu[2].data+offset
+    sky=np.copy(hdu[2].data+offset)
+    sky=sky/np.nanmax(sky)
     #color='b'
     #if 'eg274' in filename.lower():
         #color='r'
@@ -432,7 +438,7 @@ if file_setting=='command':
         target_spec1[0]=target_spec1[0]+wavelength_offset
         target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True, kernel_type='box')
-        plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=False, kernel_type='box', pix_width=pix_width)
+        plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width)
         #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width*2)
         plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=pix_width)
@@ -477,19 +483,26 @@ if file_setting=='two_arm':
         #plt.show()
         
         
-        target_spec2=norm_spectrum(target_spec2, norm_range)
-        target_spec1=norm_spectrum(target_spec1, norm_range)
-        plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='box')
-        plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='box')
+        #target_spec2=norm_spectrum(target_spec2, norm_range)
+        #target_spec1=norm_spectrum(target_spec1, norm_range)
+        #plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='box')
+        #plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='box')
         
+        #target_spec2=norm_spectrum(target_spec2, norm_range)
+        #target_spec1=norm_spectrum(target_spec1, norm_range)
+        #plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='gaussian')
+        #plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='gaussian')
         
+        plot_dwavelength(target_spec1, m1_name)
+        plot_dwavelength(target_spec2,m2_name)
         
         #plot_spectrum(target_spec1, m1_name, header1, norm=False, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec2, m2_name, header2, norm=False, smooth=True, kernel_type='box')
         
         
         #plot_spectrum(sdss_spec, sdss_names[0], sdssheader, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-        plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
+        
+        #plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
         plt.xlim(3700,9000)
         spt.show_plot()
         
@@ -500,7 +513,7 @@ if single_iterate:
         target_spec, header, target_noise= spt.retrieve_spec(filename)
         target_spec[0]=target_spec[0]+wavelength_offset
         #conv_spec= convolve_spectrum(target_spec, header)
-        plot_spectrum(target_spec, filename, header, smooth=True, norm=True, kernel_type='box')
+        #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
         #target_spec[1]=header['airmass']
         #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
@@ -514,7 +527,7 @@ if single_iterate:
         #else:
             #pass
         #plot_SNR(target_spec, target_noise, filename)
-        #plot_dwavelength(target_spec)
+        plot_dwavelength(target_spec, filename)
         #spt.show_plot(show_telluric=False, show_legend=False)
         #spt.show_plot()
         #plt.legend()
@@ -524,11 +537,11 @@ if single_iterate:
             plt.title(header['airoftyp'])
         except KeyError:
             pass
-    spt.show_plot(show_legend=True)
+    #spt.show_plot(show_legend=True)
     #spt.show_plot(show_legend=False, show_telluric=False)
     #spt.show_plot(show_telluric=False)
-    #plt.legend()
-    #plt.show()
+    plt.legend()
+    plt.show()
     #plot_pix_shifts(filenames)
 else:
     pass
