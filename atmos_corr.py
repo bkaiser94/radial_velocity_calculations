@@ -26,14 +26,18 @@ import time
 start = time.time()
 
 import spec_plot_tools as spt
+import cal_params as cp
+import get_cal_params as gcp
 
-
-sens_names = glob('eg274*sensitivity_curve.txt')
+sens_names = glob('E*sensitivity_curve.txt')+glob('G*sensitivity_curve.txt')
 #sens_names = glob('*sensitivity*.txt')
 
 resid_names= glob('resid*eg274*sensitivity*.txt')
 
-wavelengths = np.linspace(4940,8980, 8080) #400M2 approximately
+do_fnu=True
+
+#wavelengths = np.linspace(4940,8980, 8080) #400M2 approximately
+wavelengths = np.linspace(3800,7200, 8080) #400M1 approximately
 
 
 def extract_AM_MJD(sens_curve_file):
@@ -94,5 +98,47 @@ for resid_name in resid_names:
     print('airmass:', airmass, 'mjd:', mjd)
 plt.xlabel(r'Pixel')
 spt.show_plot()
+
+
+def get_star_info(starname):
+    standard_dict= cp.standard_dict[starname.lower()]
+    standard_dict['filename']=cp.standard_dir+standard_dict['filename']
+    return standard_dict
+
+standard_name= 'GD153'
+#standard_fits= 'avg_fwctb.GD153_400m2.fits'
+standard_fits= 'avg_fwctb.GD153_400m1.fits'
+
+standard_info = get_star_info(standard_name)
+stand_array = np.genfromtxt(glob(standard_info['filename'])[0]).T
+stand_waves1=stand_array[0]
+stand_flux1=stand_array[1]
+model_spec= np.vstack([stand_waves1, stand_flux1])
+
+obs_spec, header, obs_noise= spt.retrieve_spec(standard_fits)
+model_spec=spt.clean_spectrum(model_spec, np.nanmin(obs_spec[0]), np.nanmax(obs_spec[0]), [])
+plt.plot(obs_spec[0], obs_spec[1]/np.nanmean(obs_spec[1]), label='obs')
+if do_fnu:
+    hdu= fits.open(standard_fits)
+    dlambda= hdu[4].data
+    obs_spec=spt.flambda_to_fnu(obs_spec, dlambda)
+    model_spec[1]=model_spec[1]*1e16
+    plt.plot(model_spec[0], model_spec[1]/np.mean(model_spec[1]), label='model flambda')
+
+    model_spec= spt.flambda_to_fnu(model_spec)
+    plt.ylabel(r'$f_{\nu}$')
+else:
+    obs_spec[1]=obs_spec[1]*10**-16
+
+
+
+
+#model_spec=spt.clean_spectrum(model_spec, np.nanmin(obs_spec[0]), np.nanmax(obs_spec[0]), [])
+
+plt.plot(obs_spec[0], obs_spec[1]/np.nanmean(obs_spec[1]), label='obs')
+plt.plot(model_spec[0], model_spec[1]/np.nanmean(model_spec[1]), label='model')
+plt.legend()
+plt.title(standard_name)
+plt.show()
 
 

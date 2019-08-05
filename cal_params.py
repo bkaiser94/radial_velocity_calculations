@@ -274,7 +274,11 @@ flux_cal_dict={
     'obs_poly_degree':{
         '930blue':9,
         '400m1':5,
-        '400m2':7}
+        '400m2':7},
+    'sens_fit_method':{
+        '930blue':'poly/poly',
+        '400m1':'empirical',
+        '400m2':'poly/poly'}
     }
 
 

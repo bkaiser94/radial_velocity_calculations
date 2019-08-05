@@ -403,7 +403,36 @@ def counts_to_flambda(input_spec, dlambda):
     print(flambda)
     output_spec= np.vstack([input_spec[0], flambda])
     return output_spec
+
+def counts_to_fnu(input_spec, dlambda):
     
+    
+    return
+    
+    
+def flambda_to_fnu(input_spec, dlambda=0.):
+    """
+    returns a 'spec' type array after being given an input spec and the associated width of the wavelength bins
+    
+    dlambda defaults to zero, which is essentially the infinitesimal version of this, which is safe for actual 
+    spectroscopy....I'm pretty sure.
+    
+    output_spec is in units of 10^-28 erg/s/cm^2/Hz assuming the input was in units of 10^-16 erg/s/cm^2/A
+    """
+    flambda= np.copy(input_spec[1])
+    flambda= flambda*u.erg/(u.cm**2)/u.s/u.angstrom
+    waves= np.copy(input_spec[0])
+    waves= waves*u.angstrom
+    delta_lambda= np.copy(dlambda)*u.angstrom
+    fnu= flambda*(waves**2-0.25*delta_lambda**2)/const.c
+    print('fnu', fnu)
+    fnu=fnu.to(u.erg/u.cm/u.cm/u.s/u.hertz)
+    print('fnu', fnu)
+    fnu=fnu*1e12 #reducing the decimal stuff and making the units match the description
+    output_spec= np.vstack([waves.value, fnu.value])
+    return output_spec
+
+
 def correct_extinction(input_spec, header, plot_all=False):
     """
     Read in the extinction curves and correct a spectrum for atmospheric extinction

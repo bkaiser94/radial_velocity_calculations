@@ -73,19 +73,19 @@ def to_barycenter(header):
     return header
 
 ####
-trace_offset =0  #amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
+trace_offset =0 #amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
 
 #trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
 #trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
 #trace_band_mid=110
-trace_band_mid=81
+trace_band_mid=90
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=60 #
 #trace_band_width=190
 #trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
-trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
+trace_band_width = 20#pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width=190#super wide search range
 #trace_band_width= 18 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
@@ -104,9 +104,9 @@ lamp_poly_degree=5
 flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
-bkg_shift= 30 #standard shift used
+#bkg_shift= 30 #standard shift used
 #bkg_shift=40
-#bkg_shift= 20
+bkg_shift= 10
 #bkg_shift=55
 bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
@@ -199,9 +199,10 @@ def gaussian_curve(x, a, x0, sigma,b):
     return a*np.exp(-(x-x0)**2/(2*sigma**2))+b
 
 def seeing_window(seeing_sigma):
-    core_sides= int(seeing_sigma*sigma_multi_side)+1 #setting the extraction window based on the seeing and rounding up, by adding 1
-    bkg_core_sides= np.min([int(core_sides*bkg_side_multi), int(bkg_max_side), int(bkg_shift-core_sides)])
-    return core_sides, bkg_core_sides
+    ext_sides= int(seeing_sigma*sigma_multi_side)+1 #setting the extraction window based on the seeing and rounding up, by adding 1
+    #bkg_core_sides= np.min([int(ext_sides*bkg_side_multi), int(bkg_max_side), int(bkg_shift-ext_sides)])
+    bkg_core_sides= np.min([int(ext_sides*bkg_side_multi),int(bkg_shift-ext_sides-1)])
+    return ext_sides, bkg_core_sides
 
 def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all = False, bounds = (-np.inf, np.inf), fixed_width=True):
     """

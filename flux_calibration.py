@@ -32,7 +32,7 @@ import get_cal_params as gcp
 #poly_degree=7
 poly_degree=7
 model_poly_degree= 5
-sens_fit_method='poly/poly' #400M2 method generally, gets sens curve by dividing the polynomial observed by polynomial model
+#sens_fit_method='poly/poly' #400M2 method generally, gets sens curve by dividing the polynomial observed by polynomial model
 #sens_fit_method='empirical' #400M1 method generally, gets sens curve by dividing the obs flux directly by the model flux and then fitting a polynomial
 division_extra_deg = 2
 
@@ -85,9 +85,9 @@ standard_name='EG274'
 #observed_file='avg_wctb.Feige110_400m1.fits'
 
 #observed_file='avg_wctb.GD153_400m2.fits'
-#observed_file='avg_wctb.EG274_400m1.fits'
+observed_file='avg_wctb.EG274_400m1.fits'
 #observed_file='avg_wctb.EG274_400m1_fix.fits'
-observed_file='avg_wctb.EG274_400m2.fits'
+#observed_file='avg_wctb.EG274_400m2.fits'
 #observed_file='avg_wctb.eg274_930_blue.fits'
 #observed_file='avg_wctb.eg274am104_400m2.fits'
 #observed_file='avg_wctb.eg274am126_400m2.fits'
@@ -173,6 +173,7 @@ obs_flux1=obs_spec[1]
 
 setup_dict= gcp.get_cal_params(header)
 setup_name=setup_dict['setupname']
+sens_fit_method= cp.flux_cal_dict['sens_fit_method'][setup_name]
 
 #standard_file = standard_directory+standard_file
 standard_info = get_star_info(standard_name)
