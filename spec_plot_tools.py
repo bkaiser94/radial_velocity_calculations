@@ -112,10 +112,6 @@ def replace_range(input_spec, bound_list, method='ones'):
     #merge_other= np.append(low_other, high_other)
     return
 
-def stitch_in_telluric():
-    
-    
-    return
 
 def get_pixel_scale(header):
     """
@@ -278,13 +274,7 @@ def retrieve_spec(filename, scale_noise= True):
             #pass
     except IndexError:
         pass
-    #plt.plot(file_waves, file_noise, label='post fixes')
-    #plt.legend()
-    #plt.title('noise')
-    #plt.show()
-    #print('zero flux indices:',np.where(file_flux==0))
-    #print(np.sum(np.isnan(file_flux)))
-    #print(np.sum(np.isnan(file_noise)))
+    
     file_spec = np.vstack([file_waves, file_flux])
     file_noise_spec = np.vstack([file_waves, file_noise])
     if scale_noise:
@@ -494,6 +484,65 @@ def barycentric_vel_corr(header, wavelengths):
     lambda_rest = lambda_rest.value
     return lambda_rest
 
+
+def rebin_image(im_array, rebin_axis=1, rebin_num= 10, plot_all= False):
+    """
+    rebin a Goodman image (technically any 2-d array, but I'm assuming it's Goodman)
+    
+    Input: 2-d image array
+    kwarg: rebin_axis (1 is dispersion axis, x)
+                rebin_num: number of pixels to bin together
+    
+    outputs: 
+    output_im: 2-d image array that is rebinned
+    output_indices: indices of the output array because they'll be missing pixels
+
+    
+    """
+    copy_im = np.copy(im_array) #just in case I do something that ends up messing with the input; I'm paranoid
+    indices= np.indices(copy_im.shape) #going to need to keep the location of the pixels that we're messing with
+    binned_im=[]
+    binned_indices=[] #initialize list to append to, yes I'm doing a for-loop because I'm inefficient.
+    ax_len= copy_im.shape[rebin_axis]
+    low_edges= np.arange(0,ax_len, rebin_num)
+    if plot_all:
+        plt.title('unbinned image')
+        plt.imshow(np.log10(copy_im), cmap='hot')
+        plt.show()
+    else:
+        pass
+    for bin_edge in low_edges:
+        if rebin_axis==1:
+            sub_im= np.copy(copy_im[:,bin_edge:bin_edge+rebin_num])
+            sub_indices= np.copy(indices[:, :, bin_edge:bin_edge+rebin_num])
+        elif rebin_axis==0:
+            pass
+        sub_line= np.nanmean(sub_im, axis=rebin_axis)
+        sub_line_inds= np.nanmean(sub_indices, axis=rebin_axis+1)
+        #print('sub_line_inds', sub_line_inds)
+        #print('sub_line.shape', sub_line.shape)
+        binned_im.append(sub_line)
+        binned_indices.append(sub_line_inds[rebin_axis])
+        #plt.title('rebinned element')
+        #plt.imshow(np.log10(sub_line), cmap='hot')
+        #plt.show()
+    
+    binned_im_array= np.array(binned_im)
+    if rebin_axis==1:
+        binned_im_array=binned_im_array.T
+    else:
+        pass
+    print('binned_im_array.shape', binned_im_array.shape)
+    binned_indices_array= np.array(binned_indices)
+    print('binned_indices_array.shape', binned_indices_array.shape)
+    #plt.imshow(np.log10(binned_im_array), cmap='hot')
+    if plot_all:
+        plt.title('rebinned' + str(rebin_num) +' pixels on axis' + str(rebin_axis))
+        plt.imshow(binned_im_array, cmap='hot')
+        plt.show()
+    else:
+        pass
+    return binned_im_array, binned_indices_array
 
     
     

@@ -37,7 +37,7 @@ model_poly_degree= 5
 division_extra_deg = 2
 
 ext_corr=True #correct extinction
-
+use_fnu=False
 
 #standard_directory = '~/Desktop/standards/'
 #standard_directory = '/Users/BenKaiser/Desktop/standards/'
@@ -60,8 +60,8 @@ standard_directory= cp.standard_dir
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-standard_name='EG274'
-#standard_name = 'GD153'
+#standard_name='EG274'
+standard_name = 'GD153'
 #standard_name= 'LTT3218'
 #standard_name='Feige110'
 
@@ -85,14 +85,14 @@ standard_name='EG274'
 #observed_file='avg_wctb.Feige110_400m1.fits'
 
 #observed_file='avg_wctb.GD153_400m2.fits'
-observed_file='avg_wctb.EG274_400m1.fits'
+#observed_file='avg_wctb.EG274_400m1.fits'
 #observed_file='avg_wctb.EG274_400m1_fix.fits'
 #observed_file='avg_wctb.EG274_400m2.fits'
 #observed_file='avg_wctb.eg274_930_blue.fits'
 #observed_file='avg_wctb.eg274am104_400m2.fits'
 #observed_file='avg_wctb.eg274am126_400m2.fits'
 #observed_file='avg_wctb.eg274am176_400m2.fits'
-#observed_file='avg_wctb.GD153_400m1.fits'
+observed_file='avg_wctb.GD153_400m1.fits'
 #observed_file='avg_wctb.EG274_400m1_am13.fits'
 #observed_file='avg_wctb.EG274_400m2_am13.fits'
 ##############################
@@ -118,6 +118,11 @@ def get_star_info(starname):
 core_name= observed_file.split('.')[1] #get the part of the filename that follows the first period and exclude the extension
 output_filename=core_name+'_sensitivity_curve.txt'
 
+if use_fnu:
+    output_filename=core_name+'_fnu_sensitivity_curve.txt'
+else:
+    pass
+
 
 obs_fits = fits.open(observed_file)
 header = fits.getheader(observed_file)
@@ -134,10 +139,19 @@ obs_spec= np.vstack([obs_waves1, obs_flux1])
 try:
     dlambda= obs_fits[4].data
     obs_spec= np.copy(spt.counts_to_flambda(obs_spec, dlambda))
-    print('Obseved spectrum in units of erg/s/cm^2/angstrom')
+    print('Observed spectrum in units of erg/s/cm^2/angstrom')
 except IndexError:
     print('No dlambda extension in observed FITS file. You need to redo wave_cal.py to include that extension.')
     print('This file is most likely generated before 2019-07-16 when this change was implemented')
+    sys.exit()
+    
+if use_fnu:
+    obs_spec[1]=obs_spec[1]*1e16
+    obs_spec= np.copy(spt.flambda_to_fnu(obs_spec, dlambda))
+    print('Observed spectrum in units of 10**-28 erg/s/cm^2/Hz')
+else:
+    pass
+
 
 if ext_corr:
     obs_spec= spt.correct_extinction(obs_spec, header, plot_all=True)
@@ -145,31 +159,7 @@ else:
     pass
 obs_waves1=obs_spec[0]
 obs_flux1=obs_spec[1]
-#obs_flux1= obs_flux1/np.float_(exptime) #converts to counts per second
 
-#####
-#wavelength_masks=[
-    #[3792.92, 3811.62],
-    #[3823.59, 3853.88],
-    #[3867.34,3915.21],
-    #[3939.52, 4006.45],
-    #[4067.53, 4141.13],
-    #[4315.3, 4378.2],
-    #[4672.57,4706.4],
-    #[4835.18, 4907.76]
-    #] #for Feige67
-
-#wavelength_masks=[
-    #[3792.92, 3811.62],
-    #[3823.59, 3853.88],
-    #[3867.34,3915.21],
-    #[3939.52, 4029.45],
-    #[4046.53, 4189.13],
-    #[4251.3, 4470.2],
-    #[4672.57,4706.4],
-    #[4781.18, 4994.76]
-    #] #for EG274
-#####
 
 setup_dict= gcp.get_cal_params(header)
 setup_name=setup_dict['setupname']
@@ -181,14 +171,12 @@ print type(standard_info['balmer_masks'])
 print type(standard_info['other_masks'])
 wavelength_masks=standard_info['balmer_masks']+standard_info['other_masks']
 print "wavelength_masks:", wavelength_masks
-#stand_array = np.genfromtxt(glob(standard_file)[0]).T
-#print(glob(standard_info['filename']))
+
 stand_array = np.genfromtxt(glob(standard_info['filename'])[0]).T
 #output_filename= standard_dict['sens_filename']
 
 stand_waves1 = stand_array[0]
-#stand_flux1 = stand_array[1] *1e16 #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
-#stand_flux1 = stand_array[1]  #ergs/cm/cm/s/A 10**16 (That's exactly how it's written in the README, and it isn't -16, as one would assume...)
+
 
 stand_flux1 = stand_array[1]  #ergs/cm/cm/s/A (That's exactly how it's written in the README for X-shooter)
 
@@ -207,40 +195,29 @@ def rescale_flux(stand_flux1):
         stand_flux1= stand_flux1
     return stand_flux1
 
-#stand_flux1= rescale_flux(stand_flux1)
-
-#stand_bins = stand_array[3]
-
-#print stand_bins[0]
-
-#plt.plot(stand_waves, stand_array[1]/np.mean(stand_array[1]), label='per angstrom flux')
-#plt.plot(stand_waves, stand_array[2]/np.mean(stand_array[2]), label='jansky')
-#plt.ylabel('flux divided by mean flux value')
-#plt.legend()
-#plt.show()
-
-#min_wave = np.nanmin(obs_waves1)
-#max_wave = np.nanmax(obs_waves1)
-
-#upper_cut = np.where(stand_waves < max_wave)
-#stand_waves = stand_waves[upper_cut]
-#stand_flux = stand_flux[upper_cut]
-#lower_cut = np.where(stand_waves > min_wave)
-#stand_waves = stand_waves[lower_cut]
-#stand_flux=stand_flux[lower_cut]
-
+if use_fnu:
+    stand_flux1= rescale_flux(stand_flux1)
+    stand_spec= np.vstack([stand_waves1, stand_flux1])
+    stand_spec=spt.flambda_to_fnu(stand_spec)
+    stand_flux1=stand_spec[1]
+    stand_waves1=stand_spec[0]
+else:
+    pass
 
 
 
 plt.title('model versus observed')
-plt.plot(stand_waves1, stand_flux1/np.nanmedian(stand_flux1),label = 'model')
-plt.plot(obs_waves1, obs_flux1/np.nanmedian(obs_flux1), label = 'observed')
+plt.plot(stand_waves1, stand_flux1,label = 'model')
+plt.plot(obs_waves1, obs_flux1, label = 'observed')
 #plt.scatter(stand_waves1, stand_flux1,label = 'model')
 #plt.scatter(obs_waves1, obs_flux1, label = 'observed', color='r')
 #plt.legend()
 #plt.show()
+if use_fnu:
+    plt.ylabel('Flux(10**-28 erg/s/cm^2/Hz)')
+else:
+    plt.ylabel('Flux(erg/s/cm^2/A)')
 plt.xlabel('Wavelengths (Angstroms)')
-plt.ylabel('Flux(erg/s/cm^2/A)')
 spt.show_plot()
 
 do_offset= bool(raw_input("Do you need to do a wavelength offset?(True/False)>>>"))
@@ -256,7 +233,11 @@ if do_offset:
     plt.plot(stand_waves1, stand_flux1/np.nanmedian(stand_flux1),label = 'model')
     plt.plot(obs_waves1, obs_flux1/np.nanmedian(obs_flux1), label = 'observed')
     plt.xlabel('Wavelengths (Angstroms)')
-    plt.ylabel('Flux(erg/s/cm^2/A)')
+    if use_fnu:
+        plt.ylabel('Flux(10**-28 erg/s/cm^2/Hz)')
+    else:
+        plt.ylabel('Flux(erg/s/cm^2/A)')
+    #plt.ylabel('Flux(erg/s/cm^2/A)')
     #plt.legend()
     #plt.show()
     spt.show_plot()
@@ -274,7 +255,7 @@ interpolator = scinterp.CubicSpline(stand_waves1, stand_flux1)
 interp_model_flux= interpolator(obs_waves1)
 plt.plot(obs_waves1, interp_model_flux, label = 'interpolated')
 plt.plot(stand_waves1, stand_flux1, label = 'model')
-plt.legend()
+plt.legend(loc='best')
 plt.show()
 
 obs_spec = np.vstack([obs_waves1, obs_flux1])
@@ -323,46 +304,52 @@ model_curve = np.polyfit(unmasked_stand_spec[0], unmasked_stand_spec[1], model_p
 calc_waves=np.linspace(min_wave, max_wave,1000)
 #sens_curve_points = np.polyval(obs_curve, stand_waves)/np.polyval(model_curve, stand_waves)
 #sens_curve_points = np.polyval(obs_curve, obs_waves)/np.polyval(model_curve, obs_waves)
-sens_curve_points= np.polyval(obs_curve,calc_waves)/np.polyval(model_curve, calc_waves)
+#sens_curve_points= np.polyval(obs_curve,calc_waves)/np.polyval(model_curve, calc_waves)
 #sens_curve_fit= np.polyfit(stand_waves, sens_curve_points,5)
 #sens_curve_fit= np.polyfit(obs_waves, sens_curve_points,poly_degree)
 #sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
 #sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,cp.flux_cal_dict['obs_poly_degree'][setup_name]+division_extra_deg)
 
-if sens_fit_method == 'poly/poly':
-    sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
-elif sens_fit_method=='empirical':
-    sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
-else:
-    print('no valid sens_fit_method selected, currently selected:')
-    print(sens_fit_method)
 #sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
 
 
 plt.plot(obs_waves1, obs_flux1, label= 'observed', marker= 'o', linestyle='none')
 plt.plot(obs_waves, obs_flux, label= 'observed used', marker= 'o', linestyle='none')
 plt.plot(obs_waves1, np.polyval(obs_curve, obs_waves1), label = 'curve')
-plt.legend()
+plt.legend(loc='best')
 plt.show()
 
 plt.plot(obs_waves1, interp_model_flux, label= 'model', marker= 'o', linestyle = 'none')
 plt.plot(stand_waves, stand_flux, label= 'model used', marker= 'o', linestyle = 'none')
 plt.plot(obs_waves1, np.polyval(model_curve, obs_waves1), label = 'curve')
-plt.legend()
+plt.legend(loc='best')
 plt.show()
 
 
+plt.plot(obs_waves1, obs_flux1/interp_model_flux, label='all obs/model', marker='o', linestyle='none')
+
+if sens_fit_method == 'poly/poly':
+    sens_curve_points= np.polyval(obs_curve,calc_waves)/np.polyval(model_curve, calc_waves)
+    sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
+    plt.plot(calc_waves, sens_curve_points, label = 'used obs curve/model curve', marker = 'o', linestyle = 'none')
+elif sens_fit_method=='empirical':
+    sens_curve_points=obs_flux/stand_flux
+    sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
+    plt.plot(obs_waves, sens_curve_points, label = 'used obs curve/model curve', marker = 'o', linestyle = 'none')
+else:
+    print('no valid sens_fit_method selected, currently selected:')
+    print(sens_fit_method)
 
 poly_curve = np.polyval(sens_curve_fit,obs_waves1)
 
 #plt.plot(stand_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
-plt.plot(obs_waves1, obs_flux1/interp_model_flux, label='all obs/model', marker='o', linestyle='none')
+#plt.plot(obs_waves1, obs_flux1/interp_model_flux, label='all obs/model', marker='o', linestyle='none')
 #plt.plot(obs_waves, sens_curve_points, label = 'used obs/model', marker = 'o', linestyle = 'none')
-plt.plot(calc_waves, sens_curve_points, label = 'used obs curve/model curve', marker = 'o', linestyle = 'none')
+#plt.plot(calc_waves, sens_curve_points, label = 'used obs curve/model curve', marker = 'o', linestyle = 'none')
 #plt.plot(calc_waves, sens_curve_points, label = 'data points', marker = 'o', linestyle = 'none')
 #plt.plot(obs_waves1, poly_curve, label= 'polynomial fit')
 plt.plot(obs_waves1, poly_curve, label= 'polynomial fit')
-plt.legend()
+plt.legend(loc='best')
 plt.show()
 
 #fcal_obs = obs_flux1/poly_curve
@@ -411,7 +398,10 @@ plt.title('residual corrected spectrum')
 plt.plot(obs_waves1, fcal_obs/residuals, label='flux-calibrated observation/residuals')
 plt.plot(obs_waves1, interp_model_flux, label='model')
 plt.xlabel('wavelength ($\AA$)')
-plt.ylabel('Flux (ergs/cm/cm/s/A 1e-16)')
+if use_fnu:
+    plt.ylabel('Flux(10**-28 erg/s/cm^2/Hz)')
+else:
+    plt.ylabel('Flux (ergs/cm/cm/s/A 1e-16)')
 #plt.legend()
 #plt.show()
 spt.show_plot()

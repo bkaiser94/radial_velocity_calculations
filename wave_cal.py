@@ -47,6 +47,9 @@ cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41)
 skip_flat= True
 need_offset=True
 do_save_wavesoln=True
+trace_method='binned_gauss'
+
+
 def to_barycenter(header):
     #input_times = header['DATE-OBS'] #not gps-synched times
     try:
@@ -83,9 +86,9 @@ trace_band_mid=90
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=60 #
-#trace_band_width=190
+trace_band_width=150
 #trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
-trace_band_width = 20#pixel width to determine the center of the trace 2019-03-25 commented out
+#trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width=190#super wide search range
 #trace_band_width= 18 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
@@ -106,7 +109,7 @@ flat_poly= 7
 #bkg_shift = 50 #20190412 previously in place
 #bkg_shift= 30 #standard shift used
 #bkg_shift=40
-bkg_shift= 10
+bkg_shift= 30
 #bkg_shift=55
 bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
@@ -443,7 +446,7 @@ def normalize_flat(masterflatfile=masterflatfile, plot_all = False):
     return normed_flat
 
 ######
-def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[0]):
+def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[0], trace_method=trace_method):
     target_band=target_med[trace_band_mid-trace_band_width/2:trace_band_mid+trace_band_width/2,:]
     band_inds= np.indices(target_band.shape)
     x_positions= band_inds[1,1]
@@ -462,10 +465,48 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     ### end of 20190624 moved section
     
     
-    
-    print 'xpositionsshape', x_positions.shape
-    y_positions= np.argmax(target_band,axis=0)+(trace_band_mid-trace_band_width/2)
-    print 'yshape', y_positions.shape
+    if trace_method=='maxes':
+        print 'xpositionsshape', x_positions.shape
+        y_positions= np.argmax(target_band,axis=0)+(trace_band_mid-trace_band_width/2)
+        print 'yshape', y_positions.shape
+    elif trace_method=='binned_gauss':
+        rebinned_im, rebinned_indices = spt.rebin_image(target_band, rebin_axis=1, rebin_num=10)
+        rebinned_imT= rebinned_im.T
+        rebinned_x_positions= rebinned_indices.T
+        y_positions=[]
+        max_fluxes=[]
+        coll_seeing_sigmas= []
+        rebin_counter= 0
+        for pixel_column in rebinned_imT:
+            seeing_p0[1]=np.argmax(pixel_column)
+            if rebin_counter%25==26:
+                subset_popt, subset_pcov = fit_gaussian_curve(y_pos, pixel_column, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds, fixed_width=False)
+            else:
+                subset_popt, subset_pcov = fit_gaussian_curve(y_pos, pixel_column, seeing_p0, trace_band_width, plot_all=False, bounds = see_fit_bounds, fixed_width=False)
+            y_positions.append(subset_popt[1]+(trace_band_mid-trace_band_width/2))
+            max_fluxes.append(subset_popt[0])
+            coll_seeing_sigmas.append(subset_popt[2])
+            rebin_counter+=1
+        y_positions=np.array(y_positions)
+        x_positions=rebinned_x_positions[0]
+        #print('x_positions', x_positions)
+        max_fluxes= np.array(max_fluxes)
+        coll_seeing_sigmas=np.array(coll_seeing_sigmas)
+        
+        plt.scatter(x_positions,2*np.sqrt(2*np.log(2))*coll_seeing_sigmas)
+        plt.ylabel('Seeing (FWHM) in pixels')
+        plt.xlabel('x pixel')
+        plt.show()
+        
+        plt.scatter(max_fluxes,2*np.sqrt(2*np.log(2))*coll_seeing_sigmas)
+        plt.ylabel('Seeing (FWHM) in pixels')
+        plt.xlabel('amplitude of gaussian fit')
+        plt.show()
+            
+            
+    else:
+        print('No trace_method specified that works (possibly none at all)')
+        print('trace_method:', trace_method)
     
     #seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
     #seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds)
@@ -477,29 +518,30 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     print polynomial_fit.shape
     #20190605 added this offsetting part
     polynomial_fit[-1]=polynomial_fit[-1]+trace_offset
-    poly_curve_y = np.polyval(polynomial_fit, x_positions)
+    plotting_x_coords= np.indices(img_data.shape)[1,1]
+    poly_curve_y = np.polyval(polynomial_fit, plotting_x_coords)
     def bkg_trace(x_positions, sign='minus'):
         #return  np.int_(poly_curve_y[x_positions]+bkg_shift)
         if sign=='minus':
             return  np.int_(poly_curve_y[x_positions]-bkg_shift)
         elif sign=='plus':
             return np.int_(poly_curve_y[x_positions]+bkg_shift)
-    std_dev = np.std(poly_curve_y-y_positions)
+    std_dev = np.std(np.polyval(polynomial_fit, x_positions)-y_positions)
     #plt.imshow(np.log10(img_data),cmap = 'hot', interpolation = 'none')
     plt.imshow(np.sqrt(img_data),cmap = 'hot', interpolation = 'none')
-    plt.plot(x_positions, poly_curve_y, color = 'blue', label  = 'polynomial fit')
+    plt.plot(plotting_x_coords, poly_curve_y, color = 'blue', label  = 'polynomial fit')
     plt.plot(x_positions,y_positions, color = 'black', label = 'max values', linestyle = 'none', marker = '*')
-    plt.plot(x_positions, poly_curve_y+core_sides, color = 'blue', linestyle = '--')
-    plt.plot(x_positions, poly_curve_y-core_sides, color = 'blue', linestyle= '--')
+    plt.plot(plotting_x_coords, poly_curve_y+core_sides, color = 'blue', linestyle = '--')
+    plt.plot(plotting_x_coords, poly_curve_y-core_sides, color = 'blue', linestyle= '--')
     #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift), color = 'cyan', label = 'background')
     #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift-core_sides), color = 'cyan', linestyle= '--')
     #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift+core_sides), color = 'cyan', linestyle = '--')
-    plt.plot(x_positions, bkg_trace(x_positions), color = 'cyan', label = 'background')
-    plt.plot(x_positions,bkg_trace(x_positions)-bkg_core_sides, color = 'cyan', linestyle= '--')
-    plt.plot(x_positions, bkg_trace(x_positions)+bkg_core_sides, color = 'cyan', linestyle = '--')
-    plt.plot(x_positions, bkg_trace(x_positions, sign='plus'), color = 'cyan', label = 'background')
-    plt.plot(x_positions,bkg_trace(x_positions, sign='plus')-bkg_core_sides, color = 'cyan', linestyle= '--')
-    plt.plot(x_positions, bkg_trace(x_positions, sign='plus')+bkg_core_sides, color = 'cyan', linestyle = '--')
+    plt.plot(plotting_x_coords, bkg_trace(plotting_x_coords), color = 'cyan', label = 'background')
+    plt.plot(plotting_x_coords,bkg_trace(plotting_x_coords)-bkg_core_sides, color = 'cyan', linestyle= '--')
+    plt.plot(plotting_x_coords, bkg_trace(plotting_x_coords)+bkg_core_sides, color = 'cyan', linestyle = '--')
+    plt.plot(plotting_x_coords, bkg_trace(plotting_x_coords, sign='plus'), color = 'cyan', label = 'background')
+    plt.plot(plotting_x_coords,bkg_trace(plotting_x_coords, sign='plus')-bkg_core_sides, color = 'cyan', linestyle= '--')
+    plt.plot(plotting_x_coords, bkg_trace(plotting_x_coords, sign='plus')+bkg_core_sides, color = 'cyan', linestyle = '--')
     plt.legend()
     plt.show()
     #plt.imshow(target_band[:,seeing_range[0]:seeing_range[1]], cmap='hot')
@@ -514,7 +556,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     bkg_light= np.array([])
     lamp_light= np.array([])
     print target_light.shape
-    for x_pos in x_positions:
+    for x_pos in plotting_x_coords:
         xsum= np.sum(target_med[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
         target_light= np.append(target_light,[xsum])
         #bkg_sum= np.sum(target_med[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
@@ -524,7 +566,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         lamp_sum= np.average(lamp_im[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
         lamp_light= np.append(lamp_light,[lamp_sum])
     if do_wavelengths:
-        plt.plot(x_positions,target_light,'-')
+        plt.plot(plotting_x_coords,target_light,'-')
         plt.xlabel('x (pixel)')
         plt.ylabel('Counts')
         plt.title('Target Spectrum')
@@ -538,7 +580,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
                 plt.axvline( x= x_spot, color = 'r')
             #for x_spot in np.array(WaveList_Fe_930_12_24[0])/2.:
                 #plt.axvline( x= x_spot, color = 'r')
-            plt.plot(x_positions,lamp_light,'-')
+            plt.plot(plotting_x_coords,lamp_light,'-')
             plt.xlabel('x (pixel)')
             plt.ylabel('Counts')
             plt.title('Lamp Spectrum (record corresponding dotted line and emission pixels)')
@@ -575,13 +617,13 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         wave_peaks_found = []
         for lamp_line_guess,lamp_line_wave in zip( line_x_checks2,lamp_lines):
             try:
-                lamp_params, lamp_cov = fit_gaussian_curve(x_positions, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width, bounds= lamp_bounds)
+                lamp_params, lamp_cov = fit_gaussian_curve(plotting_x_coords, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width, bounds= lamp_bounds)
                 #if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1)):
                 if ((np.abs(lamp_params[0]) > 1.)  and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1e-3)):
                     peaks_found.append(lamp_params[1])
                     wave_peaks_found.append(lamp_line_wave)
-                    plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
-                    plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
+                    plt.plot(plotting_x_coords, lamp_light, label = 'lamp data', color = 'blue')
+                    plt.plot(plotting_x_coords, gaussian_curve(plotting_x_coords, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
                     plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
                     for x_spot in line_x_checks2:
                         plt.axvline( x= x_spot, color = 'k',linestyle = '--')
@@ -592,8 +634,8 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
                     plt.show()
                 else:
                     print "Gaussian too flat, flipped, or narrow (or not within the actual fitting region...):", lamp_params
-                    plt.plot(x_positions, lamp_light, label = 'lamp data', color = 'blue')
-                    plt.plot(x_positions, gaussian_curve(x_positions, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
+                    plt.plot(plotting_x_coords, lamp_light, label = 'lamp data', color = 'blue')
+                    plt.plot(plotting_x_coords, gaussian_curve(plotting_x_coords, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
                     plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
                     for x_spot in line_x_checks2:
                         plt.axvline( x= x_spot, color = 'k',linestyle = '--')
@@ -618,12 +660,12 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         #polynomial fitting
         #poly_coeffs_lamp= np.polyfit(centroids,lamp_lines,2)
         poly_coeffs_lamp =np.polyfit(peaks_found, wave_peaks_found, lamp_poly_degree)
-        def x_to_wavelength(x_positions):
+        def x_to_wavelength(plotting_x_coords):
             #poly_curve_wavelength= poly_coeffs_lamp[2]+poly_coeffs_lamp[1]*x_positions + poly_coeffs_lamp[0]*(x_positions**2)
             #poly_curve_wavelength= poly_coeffs_lamp[-1]+poly_coeffs_lamp[-2]*x_positions + poly_coeffs_lamp[-3]*(x_positions**2)+poly_coeffs_lamp[-4]*(x_positions**3)+poly_coeffs_lamp[-5]*(x_positions**4)+poly_coeffs_lamp[-6]*(x_positions**5)
-            poly_curve_wavelength=np.polyval(poly_coeffs_lamp, x_positions)
+            poly_curve_wavelength=np.polyval(poly_coeffs_lamp, plotting_x_coords)
             return poly_curve_wavelength
-        poly_curve_wavelength= x_to_wavelength(x_positions)
+        poly_curve_wavelength= x_to_wavelength(plotting_x_coords)
         plt.plot(poly_curve_wavelength,target_light,'-')
         plt.xlabel(r'Wavelength ($\AA$)')
         plt.ylabel('Counts')
@@ -632,7 +674,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         #plt.ylim(10,200)
         plt.show()
 
-        plt.plot(x_positions, poly_curve_wavelength,  label = 'wavelength solution', color ='blue')
+        plt.plot(plotting_x_coords, poly_curve_wavelength,  label = 'wavelength solution', color ='blue')
         plt.plot(peaks_found, wave_peaks_found, marker= '*', linestyle = 'none', label = 'fitted values', color = 'red' )
         plt.plot(line_x_checks2, lamp_lines, label = 'input points', color = 'green', marker = '*', linestyle = 'none')
         plt.title("wavelength to pixel position")
