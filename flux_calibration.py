@@ -32,7 +32,8 @@ import get_cal_params as gcp
 #poly_degree=7
 poly_degree=7
 model_poly_degree= 5
-
+sens_fit_method='poly/poly' #400M2 method generally, gets sens curve by dividing the polynomial observed by polynomial model
+#sens_fit_method='empirical' #400M1 method generally, gets sens curve by dividing the obs flux directly by the model flux and then fitting a polynomial
 division_extra_deg = 2
 
 ext_corr=True #correct extinction
@@ -324,9 +325,16 @@ calc_waves=np.linspace(min_wave, max_wave,1000)
 sens_curve_points= np.polyval(obs_curve,calc_waves)/np.polyval(model_curve, calc_waves)
 #sens_curve_fit= np.polyfit(stand_waves, sens_curve_points,5)
 #sens_curve_fit= np.polyfit(obs_waves, sens_curve_points,poly_degree)
-sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
+#sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
 #sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,cp.flux_cal_dict['obs_poly_degree'][setup_name]+division_extra_deg)
 
+if sens_fit_method == 'poly/poly':
+    sens_curve_fit= np.polyfit(calc_waves, sens_curve_points,poly_degree+2)
+elif sens_fit_method=='empirical':
+    sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
+else:
+    print('no valid sens_fit_method selected, currently selected:')
+    print(sens_fit_method)
 #sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
 
 

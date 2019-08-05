@@ -108,14 +108,25 @@ try:
     prev_list = filename_matches[final_core_name]
     print('prev_list', prev_list)
     print('filenames[-1]', filenames[-1])
-    prev_list.append(filenames[-1])
+    if core_name == final_core_name:
+        filename_set.append(filenames[-1])
+        prev_list= prev_list+filename_set
+    else:
+        prev_list.append(filenames[-1])
     print('prev_list', prev_list)
     #filename_matches[final_core_name].append(filename_set)
     filename_matches[final_core_name]=prev_list
     print('filename_matches[final_core_name]', filename_matches[final_core_name])
 except KeyError:
     #filename_matches[final_core_name]=filename_set
-    print("last filename doesn't match any previous objects, which means it can't be averaged...")
+    print("last filename doesn't have a previously stored set, which probably means it's the last one of a set as used to be usual.")
+    print('No previous core names matching:', final_core_name)
+    print('previous core_names:')
+    for thing in filename_matches:
+        print(thing)
+    print('filename_set', filename_set)
+    filename_set.append(filenames[-1])
+    filename_matches[final_core_name]=filename_set
 for sets in filename_matches:
     print('======')
     print(filename_matches[sets])

@@ -79,7 +79,7 @@ trace_offset =0  #amount by which the calculated trace needs to be offset to end
 #trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
 #trace_band_mid=110
-trace_band_mid=105
+trace_band_mid=81
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=60 #
@@ -92,7 +92,7 @@ trace_band_width = 50#pixel width to determine the center of the trace 2019-03-2
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 10 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side= 3 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+sigma_multi_side= 2 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 
 core_sides=  5
 #core_sides=  7
@@ -249,8 +249,15 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
     return popt, pcov
 
 def get_skyline_bounds(header, x_pixels):
-    slit_width= header['SLIT'].split('"')[0] #separate the slit header to get the arcsecond value of the slit width
-    slit_width = float(slit_width) #it was a string
+    try:
+        slit_width= header['SLIT'].split('"')[0] #separate the slit header to get the arcsecond value of the slit width
+        slit_width = float(slit_width) #it was a string
+    except ValueError as error:
+        print('ValueError:', error)
+        print('The Goodman headers were changed for no apparent reason on 2019-07-30, so we have to try another format for the slit width')
+        slit_width= header['SLIT'].split('_')[0] 
+        slit_width = float(slit_width) #it was a string
+    #slit_width = float(slit_width) #it was a string
     xpix_scale, ypix_scale= spt.get_pixel_scale(header)
     slit_width_pix= slit_width/xpix_scale
     skyline_bounds={
@@ -371,10 +378,16 @@ def find_skyline_offset(x_pixels, light_values, airline_lambda, wave_coeffs, hea
     else:
         pass
     p0_dict['x_0']= max_point
-    corr_pixel= fit_slitskyline_function(cut_x_pixels, cut_light_values, header, p0_dict= p0_dict, plot_all=plot_all)
-    corr_wave= np.polyval(wave_coeffs, corr_pixel) #''wavelength'' of skyline on original scale
-    offset_lambda= airline_lambda-corr_wave
-    offset= airline_guess-corr_pixel #offset that should be added to the pixel values for the new determinations
+    try:
+        corr_pixel= fit_slitskyline_function(cut_x_pixels, cut_light_values, header, p0_dict= p0_dict, plot_all=plot_all)
+        corr_wave= np.polyval(wave_coeffs, corr_pixel) #''wavelength'' of skyline on original scale
+        offset_lambda= airline_lambda-corr_wave
+        offset= airline_guess-corr_pixel #offset that should be added to the pixel values for the new determinations
+    except RuntimeError as error:
+        print(error)
+        print('automatically setting this one skyline offset as 0')
+        offset_lambda=0
+        offset=0
     return offset, offset_lambda
 
 
