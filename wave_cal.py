@@ -47,6 +47,7 @@ cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41)
 skip_flat= True
 need_offset=True
 do_save_wavesoln=True
+#trace_method='maxes'
 trace_method='binned_gauss'
 
 
@@ -127,7 +128,9 @@ seeing_range = [1200, 1220]
 #seeing_p0= [2000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
 #see_fit_bounds = ([50, 0, 0.7, 0],[18000, 1000, trace_band_width, 2000]) #(lower, upper) bounds on the fit for the seeing.
 seeing_p0= [2000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
-see_fit_bounds = ([50, 0, 0.7, 0],[1e8, trace_band_width, trace_band_width, 1e8]) #(lower, upper) bounds on the fit for the seeing.
+#see_fit_bounds = ([50, 0, 0.7, 0],[1e8, trace_band_width, trace_band_width, 1e8]) #(lower, upper) bounds on the fit for the seeing.
+see_fit_bounds = ([5, 0, 0.7, 0],[1e8, trace_band_width, 7.1, 1e8]) #(lower, upper) bounds on the fit for the seeing.
+#minimum sigma value corresponds to seeing of 0.5" for 2x2 binned pixels and max is 5" seeing
 
 box_dict= {
     'amplitude':10,
@@ -479,7 +482,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         rebin_counter= 0
         for pixel_column in rebinned_imT:
             seeing_p0[1]=np.argmax(pixel_column)
-            if rebin_counter%25==26:
+            if rebin_counter%25==0:
                 subset_popt, subset_pcov = fit_gaussian_curve(y_pos, pixel_column, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds, fixed_width=False)
             else:
                 subset_popt, subset_pcov = fit_gaussian_curve(y_pos, pixel_column, seeing_p0, trace_band_width, plot_all=False, bounds = see_fit_bounds, fixed_width=False)
@@ -502,7 +505,13 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         plt.ylabel('Seeing (FWHM) in pixels')
         plt.xlabel('amplitude of gaussian fit')
         plt.show()
-            
+        
+        plt.scatter(x_positions, max_fluxes)
+        plt.ylabel('amplitude of gaussian fit')
+        plt.xlabel('x position')
+        plt.title('binned pseudo-spectrum')
+        plt.show()
+        
             
     else:
         print('No trace_method specified that works (possibly none at all)')
@@ -543,6 +552,19 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     plt.plot(plotting_x_coords,bkg_trace(plotting_x_coords, sign='plus')-bkg_core_sides, color = 'cyan', linestyle= '--')
     plt.plot(plotting_x_coords, bkg_trace(plotting_x_coords, sign='plus')+bkg_core_sides, color = 'cyan', linestyle = '--')
     plt.legend()
+    plt.show()
+    
+    plt.plot(plotting_x_coords, poly_curve_y, color = 'blue', label  = 'polynomial fit')
+    plt.plot(x_positions,y_positions, color = 'black', label = 'max values', linestyle = 'none', marker = '*')
+    plt.plot(plotting_x_coords, poly_curve_y+core_sides, color = 'blue', linestyle = '--')
+    plt.plot(plotting_x_coords, poly_curve_y-core_sides, color = 'blue', linestyle= '--')
+    #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift), color = 'cyan', label = 'background')
+    #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift-core_sides), color = 'cyan', linestyle= '--')
+    #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift+core_sides), color = 'cyan', linestyle = '--')
+
+    plt.legend()
+    plt.ylabel('y pixel')
+    plt.xlabel('x pixel')
     plt.show()
     #plt.imshow(target_band[:,seeing_range[0]:seeing_range[1]], cmap='hot')
     #plt.show()

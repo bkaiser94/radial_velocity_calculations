@@ -489,10 +489,10 @@ if file_setting=='two_arm':
         #plt.show()
         
         
-        #target_spec2=norm_spectrum(target_spec2, norm_range)
-        #target_spec1=norm_spectrum(target_spec1, norm_range)
-        #plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='box')
-        #plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='box')
+        target_spec2=norm_spectrum(target_spec2, norm_range)
+        target_spec1=norm_spectrum(target_spec1, norm_range)
+        plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='box')
+        plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='box')
         
         #target_spec2=norm_spectrum(target_spec2, norm_range)
         #target_spec1=norm_spectrum(target_spec1, norm_range)
@@ -505,18 +505,18 @@ if file_setting=='two_arm':
         #plot_spectrum(target_spec1, m1_name, header1, norm=False, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec2, m2_name, header2, norm=False, smooth=True, kernel_type='box')
         
-        try:
-            hdu1= fits.open(m1_name)
-            dlambda1=  hdu1[4].data
-            hdu2= fits.open(m2_name)
-            dlambda2= hdu2[4].data
-            nu_spec1= spt.flambda_to_fnu(target_spec1, dlambda1)
-            nu_spec2=spt.flambda_to_fnu(target_spec2, dlambda2)
-            plot_spectrum(nu_spec2, 'fnu2', header2, smooth=True, norm=True, kernel_type='box')
-            plot_spectrum(nu_spec1, 'fnu1', header1,smooth=True, norm=True, kernel_type='box')
-            plt.ylabel(r'$f_{\nu}$ $10^{-28} erg cm^{-2} s}^{-1} Hz^{-1}$')
-        except IndexError as error:
-            print(error)
+        #try:
+            #hdu1= fits.open(m1_name)
+            #dlambda1=  hdu1[4].data
+            #hdu2= fits.open(m2_name)
+            #dlambda2= hdu2[4].data
+            #nu_spec1= spt.flambda_to_fnu(target_spec1, dlambda1)
+            #nu_spec2=spt.flambda_to_fnu(target_spec2, dlambda2)
+            #plot_spectrum(nu_spec2, 'fnu2', header2, smooth=True, norm=True, kernel_type='box')
+            #plot_spectrum(nu_spec1, 'fnu1', header1,smooth=True, norm=True, kernel_type='box')
+            #plt.ylabel(r'$f_{\nu}$ $10^{-28} erg cm^{-2} s}^{-1} Hz^{-1}$')
+        #except IndexError as error:
+            #print(error)
         
         #plot_spectrum(sdss_spec, sdss_names[0], sdssheader, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
         
