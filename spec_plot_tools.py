@@ -544,5 +544,16 @@ def rebin_image(im_array, rebin_axis=1, rebin_num= 10, plot_all= False):
         pass
     return binned_im_array, binned_indices_array
 
+
+def discrete_int(input_val):
+    """
+    inputs:
+        input_val - some float value (created to handle a single point from a polynomial output, but it needs to be 
+            an input
+    outputs:
+        output_val - a numpy integer dtype that was first rounded to the nearest whole number
+    """
+    output_val= np.int_(np.around(input_val, decimals=0))
+    return output_val
     
     

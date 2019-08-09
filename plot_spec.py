@@ -36,7 +36,7 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-pix_width=10
+pix_width=3
 sdss_pix_width = 10
 
 #wavelength_offset=60
@@ -73,11 +73,11 @@ norm_range=[6640,6670]#20190530 400M1 norm range
 #file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
-#file_setting='all_fwctb'
+file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
-file_setting= 'two_arm'
+#file_setting= 'two_arm'
 #file_setting= 'all_super'
 
 single_iterate= False
@@ -102,7 +102,7 @@ elif file_setting=='all_wctb':
     print(file_setting)
     filenames=glob('wctb*')
     #filenames=glob('wctb*Feige110_*')
-    #filenames=glob('wctb*aia*1644*')
+    #filenames=glob('wctb*aia*2320*')
     single_iterate=True
     double_iterate=False
     
@@ -157,7 +157,7 @@ elif file_setting== 'two_arm':
 elif file_setting=='all_super':
     print(file_setting)
     #filenames=glob('super_fwctb*1644*fits')
-    filenames=glob('super_fwctb*Gaia*fits')
+    filenames=glob('super_fwctb*fits')
     single_iterate=True
     double_iterate=False
     
@@ -236,6 +236,7 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
         pass
     if plot_wavelength:
         plt.xlabel(r'Wavelength ($\AA$)')
+        plt.xlim(np.nanmin(spec[0]), np.nanmax(spec[0]))
         #color='b'
         #if 'eg274' in filename.lower():
             #color='r'
@@ -254,7 +255,7 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
         plt.plot(spec[1]+offset, label=label_string)
     print(title_string)
     plt.title(title_string)
-    plt.xlim(np.nanmin(spec[0]), np.nanmax(spec[0]))
+    #plt.xlim(np.nanmin(spec[0]), np.nanmax(spec[0]))
     plt.ylim(bottom=0)
     #plt.ylabel('Flux')
     #plt.title(filename)
@@ -326,10 +327,18 @@ def plot_SNR(spec, noise, filename):
     plt.show()
     return
     
-def plot_sky(filename, offset=0):
+def plot_sky(filename, offset=0, line_labels=True, convolve=False):
     hdu=fits.open(filename)
-    sky=np.copy(hdu[2].data+offset)
+    wavelengths=np.copy(hdu[0].data)
+    sky=np.copy(hdu[2].data)
+    sky_spec=np.vstack([wavelengths, sky])
+    if convolve:
+        sky_spec= convolve_spectrum(sky_spec, 'dummy_header', kernel_type='box', pix_width=pix_width)
+    else:
+        pass
+    sky= sky_spec[1]
     sky=sky/np.nanmax(sky)
+    sky=sky+offset
     #color='b'
     #if 'eg274' in filename.lower():
         #color='r'
@@ -348,11 +357,14 @@ def plot_sky(filename, offset=0):
     good_airlines= np.copy(airline_array)
     air_waves = np.float_(good_airlines['User'])
     #air_names= good_airlines['Name']+good_airlines['Name2']
-    for air_wave, name, name2 in zip(air_waves, good_airlines['Name'], good_airlines['Name2']):
-        #print(name+name2, type(name))
-        air_name=name+name2
-        plt.axvline(x=air_wave, linestyle='--', color=cp.airline_color[air_name[:2]])
-        plt.text(air_wave, np.nanmax(sky), air_name, color=cp.airline_color[air_name[:2]], rotation=90)
+    if line_labels:
+        for air_wave, name, name2 in zip(air_waves, good_airlines['Name'], good_airlines['Name2']):
+            #print(name+name2, type(name))
+            air_name=name+name2
+            plt.axvline(x=air_wave, linestyle='--', color=cp.airline_color[air_name[:2]])
+            plt.text(air_wave, np.nanmax(sky), air_name, color=cp.airline_color[air_name[:2]], rotation=90)
+    else:
+        pass
     print("need to put dlambda into this part again since we're about to move around wavelengths in the future.")
     if 'wctb' in filename.lower():
         print('IT found WCTB')
@@ -533,10 +545,10 @@ if single_iterate:
         dlambda= hdu[4].data
         target_spec[0]=target_spec[0]+wavelength_offset
         
-        nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
+        #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
         #conv_spec= convolve_spectrum(target_spec, header)
-        plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
-        plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
+        #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, kernel_type='box')
+        #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
         #target_spec[1]=header['airmass']
         #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
@@ -544,7 +556,7 @@ if single_iterate:
         #plot_spectrum(target_spec, filename, header, norm=True, offset=counter)
         #plot_spectrum(target_spec, filename, header, norm=True, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-        #plot_sky(filename)
+        plot_sky(filename, offset=counter, line_labels=True, convolve=False)
         #if header['airmass']<1.5:
             #plot_sky(filename, offset=0)
         #else:
@@ -552,7 +564,7 @@ if single_iterate:
         #plot_SNR(target_spec, target_noise, filename)
         #plot_dwavelength(target_spec, filename)
         #spt.show_plot(show_telluric=False, show_legend=False)
-        spt.show_plot(show_legend=True)
+        #spt.show_plot(show_legend=True)
         #plt.legend()
         #plt.show()
         counter+=1

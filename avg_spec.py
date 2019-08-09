@@ -33,7 +33,7 @@ low_index= len(glob_string)-1+6
 high_index=-5
 
 do_dlambda_ext= True
-#do_super=False
+do_super=True
 filename_matches={}
 prev_core=''
 filename_set=[]
@@ -305,11 +305,11 @@ for sets in filename_matches:
     print(filename_matches[sets])
     do_dlambda_ext=True
     avg_spectra(filename_matches[sets])
-    make_super_spec(filename_matches[sets])
-    #if do_super:
-        #make_super_spec(filename_matches[sets])
-    #else:
-        #pass
+    #make_super_spec(filename_matches[sets])
+    if do_super:
+        make_super_spec(filename_matches[sets])
+    else:
+        pass
     print('+++++++')
 
 

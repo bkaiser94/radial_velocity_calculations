@@ -83,11 +83,11 @@ trace_offset =0 #amount by which the calculated trace needs to be offset to end 
 #trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
 #trace_band_mid=110
-trace_band_mid=90
+trace_band_mid=121
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=60 #
-trace_band_width=150
+trace_band_width=20
 #trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width=190#super wide search range
@@ -96,7 +96,7 @@ trace_band_width=150
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 10 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side= 2 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+sigma_multi_side= 2.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 
 core_sides=  5
 #core_sides=  7
@@ -482,10 +482,18 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         rebin_counter= 0
         for pixel_column in rebinned_imT:
             seeing_p0[1]=np.argmax(pixel_column)
-            if rebin_counter%25==0:
-                subset_popt, subset_pcov = fit_gaussian_curve(y_pos, pixel_column, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds, fixed_width=False)
-            else:
-                subset_popt, subset_pcov = fit_gaussian_curve(y_pos, pixel_column, seeing_p0, trace_band_width, plot_all=False, bounds = see_fit_bounds, fixed_width=False)
+            try:
+                if rebin_counter%25==26:
+                    subset_popt, subset_pcov = fit_gaussian_curve(y_pos, pixel_column, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds, fixed_width=False)
+                else:
+                    subset_popt, subset_pcov = fit_gaussian_curve(y_pos, pixel_column, seeing_p0, trace_band_width, plot_all=False, bounds = see_fit_bounds, fixed_width=False)
+            except RuntimeError as error:
+                print('\n\n++++++++++')
+                print(error)
+                print("Gaussian seeing fit didn't converge for column")
+                print("Setting amplitude=0, x0=trace_band_width/2., sigma=0., b=0.")
+                print('++++++++++\n\n')
+                subset_popt=[0., trace_band_width/2., 0., 0.]
             y_positions.append(subset_popt[1]+(trace_band_mid-trace_band_width/2))
             max_fluxes.append(subset_popt[0])
             coll_seeing_sigmas.append(subset_popt[2])
@@ -532,16 +540,19 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     def bkg_trace(x_positions, sign='minus'):
         #return  np.int_(poly_curve_y[x_positions]+bkg_shift)
         if sign=='minus':
-            return  np.int_(poly_curve_y[x_positions]-bkg_shift)
+            return  spt.discrete_int(poly_curve_y[x_positions])-bkg_shift
         elif sign=='plus':
-            return np.int_(poly_curve_y[x_positions]+bkg_shift)
+            return spt.discrete_int(poly_curve_y[x_positions])+bkg_shift
     std_dev = np.std(np.polyval(polynomial_fit, x_positions)-y_positions)
     #plt.imshow(np.log10(img_data),cmap = 'hot', interpolation = 'none')
     plt.imshow(np.sqrt(img_data),cmap = 'hot', interpolation = 'none')
-    plt.plot(plotting_x_coords, poly_curve_y, color = 'blue', label  = 'polynomial fit')
+    #plt.plot(plotting_x_coords, poly_curve_y, color = 'blue', label  = 'polynomial fit')
     plt.plot(x_positions,y_positions, color = 'black', label = 'max values', linestyle = 'none', marker = '*')
-    plt.plot(plotting_x_coords, poly_curve_y+core_sides, color = 'blue', linestyle = '--')
-    plt.plot(plotting_x_coords, poly_curve_y-core_sides, color = 'blue', linestyle= '--')
+    #plt.plot(plotting_x_coords, poly_curve_y+core_sides, color = 'blue', linestyle = '--')
+    #plt.plot(plotting_x_coords, poly_curve_y-core_sides, color = 'blue', linestyle= '--')
+    plt.plot(plotting_x_coords, spt.discrete_int(poly_curve_y), color = 'blue', label  ='discrete polynomial fit')
+    plt.plot(plotting_x_coords, spt.discrete_int(poly_curve_y)+core_sides, color = 'blue', linestyle = '--')
+    plt.plot(plotting_x_coords, spt.discrete_int(poly_curve_y)-core_sides, color = 'blue', linestyle= '--')
     #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift), color = 'cyan', label = 'background')
     #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift-core_sides), color = 'cyan', linestyle= '--')
     #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift+core_sides), color = 'cyan', linestyle = '--')
@@ -558,6 +569,9 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     plt.plot(x_positions,y_positions, color = 'black', label = 'max values', linestyle = 'none', marker = '*')
     plt.plot(plotting_x_coords, poly_curve_y+core_sides, color = 'blue', linestyle = '--')
     plt.plot(plotting_x_coords, poly_curve_y-core_sides, color = 'blue', linestyle= '--')
+    plt.plot(plotting_x_coords, spt.discrete_int(poly_curve_y), color = 'green', label  ='discrete polynomial fit')
+    plt.plot(plotting_x_coords, spt.discrete_int(poly_curve_y)+core_sides, color = 'green', linestyle = '--')
+    plt.plot(plotting_x_coords, spt.discrete_int(poly_curve_y)-core_sides, color = 'green', linestyle= '--')
     #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift), color = 'cyan', label = 'background')
     #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift-core_sides), color = 'cyan', linestyle= '--')
     #plt.plot(x_positions, np.int_(poly_curve_y+bkg_shift+core_sides), color = 'cyan', linestyle = '--')
@@ -683,8 +697,6 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         #poly_coeffs_lamp= np.polyfit(centroids,lamp_lines,2)
         poly_coeffs_lamp =np.polyfit(peaks_found, wave_peaks_found, lamp_poly_degree)
         def x_to_wavelength(plotting_x_coords):
-            #poly_curve_wavelength= poly_coeffs_lamp[2]+poly_coeffs_lamp[1]*x_positions + poly_coeffs_lamp[0]*(x_positions**2)
-            #poly_curve_wavelength= poly_coeffs_lamp[-1]+poly_coeffs_lamp[-2]*x_positions + poly_coeffs_lamp[-3]*(x_positions**2)+poly_coeffs_lamp[-4]*(x_positions**3)+poly_coeffs_lamp[-5]*(x_positions**4)+poly_coeffs_lamp[-6]*(x_positions**5)
             poly_curve_wavelength=np.polyval(poly_coeffs_lamp, plotting_x_coords)
             return poly_curve_wavelength
         poly_curve_wavelength= x_to_wavelength(plotting_x_coords)
@@ -814,16 +826,6 @@ print polynomial_list
         #last_file_lamp= False #since this image isn't a lamp
 
 
-#def barycentric_vel_corr(header, wavelengths):
-    #ra = header['RA']
-    #dec = header['DEC']
-    #radec = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
-    #bary_corr = radec.radial_velocity_correction(obstime= Time(header['DATE-OBS'], format = 'isot', scale= 'utc'), location = cerro_pachon_location)
-    #bary_corr = bary_corr.to(u.km/u.s)
-    #lambda_rest = (wavelengths*(u.Angstrom))*const.c.to(u.km/u.s)/(-1*bary_corr+const.c.to(u.km/u.s))
-    #lambda_rest = lambda_rest.value
-    #return lambda_rest
-
 last_file_lamp = False
 target_stack = []
 association_index = -1
@@ -881,25 +883,25 @@ for counter, img in enumerate(speclist):
         upper_edges= np.polyval(polynomials[1], x_positions+0.5) #upper wavelength edges
         lower_edges= np.polyval(polynomials[1], x_positions-0.5) #lower_wavelength edges
         dlambda_vals= upper_edges-lower_edges
-        #plt.plot(dlambda_vals)
-        #plt.xlabel('pixel')
-        #plt.ylabel('dlambda')
-        #plt.title('Dispersion')
-        #plt.show()
-        #plt.plot(poly_curve_wavelength, dlambda_vals)
-        #plt.xlabel('Wavelength (A)')
-        #plt.ylabel('dlambda')
-        #plt.title('Dispersion')
-        #plt.show()
+        
+        def bkg_trace(x_positions, sign='minus'):
+            #return  np.int_(poly_curve_y[x_positions]+bkg_shift)
+            if sign=='minus':
+                return  spt.discrete_int(poly_curve_y[x_positions])-bkg_shift
+            elif sign=='plus':
+                return spt.discrete_int(poly_curve_y[x_positions])+bkg_shift
         for x_pos in x_positions:
-            trace_vals=img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos]
+            #trace_vals=img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos]
+            trace_vals=img_data[spt.discrete_int(poly_curve_y[x_pos])-core_sides:spt.discrete_int(poly_curve_y[x_pos])+core_sides+1,x_pos]
             xsum= np.sum(trace_vals)
             #xsum= np.sum(img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos]) #old way 2018-10-31
             target_light= np.append(target_light,[xsum])
             target_noise2 = np.copy(xsum+trace_vals.shape[0]*header['RDNOISE']**2+trace_vals.shape[0]*header['RDNOISE']**2/n_biases)
             target_noise2_list= np.append(target_noise2_list, [target_noise2])
-            up_bkg=img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+bkg_core_sides+1),x_pos]
-            down_bkg= img_data[np.int_(poly_curve_y[x_pos]-bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]-bkg_shift+bkg_core_sides+1),x_pos]
+            #up_bkg=img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+bkg_core_sides+1),x_pos]
+            up_bkg=img_data[bkg_trace(x_pos, sign='plus')-bkg_core_sides:bkg_trace(x_pos, sign='plus')+bkg_core_sides+1,x_pos]
+            #down_bkg= img_data[np.int_(poly_curve_y[x_pos]-bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]-bkg_shift+bkg_core_sides+1),x_pos]
+            down_bkg= img_data[bkg_trace(x_pos, sign='minus')-bkg_core_sides:bkg_trace(x_pos, sign='minus') +bkg_core_sides+1,x_pos]
             
             plt.legend()
             bkg_comb= np.append(up_bkg, down_bkg)
