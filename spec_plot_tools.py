@@ -340,24 +340,44 @@ def retrieve_nist_list(nist_file):
     #for count, row in enumerate(ne_table['obs_wl_air(A)']):
         #print(count, row)
     for count, row in enumerate(nist_table):
-        print(count, row['intens'])
+        #print(count, row['intens'])
         try:
             row['intens']=int(row['intens'])
             nist_table[count]['intens']=float(row['intens'])
-            print('converted to int!', row['intens'])
+            #print('converted to int!', row['intens'])
         except ValueError:
             print('ValueError ^^^^')
     #ne_table['intens']=ne_table['intens'].astype(float) #changing this column that gets read as strings for whatever reason
-    nist_table.pprint()
+    #nist_table.pprint()
     return nist_table
 
-def show_plot(show_telluric=True, show_legend=True):
+def plot_line_markers(nist_file, wavelength_key='obs_wl_vac(A)'):
+    nist_table= retrieve_nist_list(nist_file)
+    for row in nist_table:
+        #print(name+name2, type(name))
+        try:
+            air_name=row['element']+' '+str(row['sp_num'])+'-'+str(row[wavelength_key])[:4]
+        except KeyError as error:
+            print('KeyError:', error)
+            air_name='? '+str(row[wavelength_key])[:4]
+        plt.axvline(x=row[wavelength_key], linestyle='--', color=cp.line_color_dict[row['element']])
+        #plt.text(row['obs_wl_air(A)'], np.nanmax(counts), air_name, color='g', rotation=90)
+        #plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90, transform=ax.transAxes)
+        plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90)    
+    return
+
+def show_plot(show_telluric=True, show_legend=True, line_id=''):
     if show_legend:
         plt.legend(loc='best')
     else:
         pass
     if show_telluric:
         plot_telluric()
+    else:
+        pass
+    if line_id !='':
+        line_list_file= cp.line_list_dir+cp.line_id_dict[line_id]
+        plot_line_markers(line_list_file)
     else:
         pass
     plt.show()
@@ -555,5 +575,64 @@ def discrete_int(input_val):
     """
     output_val= np.int_(np.around(input_val, decimals=0))
     return output_val
+    
+    
+def get_edges(waves, dlambda):
+    return waves-0.5*dlambda, waves+0.5*dlambda
+
+
+def rebin_spec(input_filename, desired_waves, desired_dlambda):
+    """
+    Take a spectrum (with all of its extensions) and rebin it to some new wavelength bins
+    
+    All values need to be in units of f_lambda ... so the noise2 calculation is almost certainly wrong at the moment
+    
+    """
+    target_spec, header, target_noise = retrieve_spec(input_filename)
+    noise2= target_noise[1]**2
+    hdu=fits.open(input_filename)
+    sky=np.copy(hdu[2].data)
+    dlambda_spec= np.copy(hdu[4].data)
+    target_flux = target_spec[1]
+    target_low_edges, target_high_edges= get_edges(target_spec[0],dlambda_spec)
+    desired_low_edges, desired_high_edges= get_edges(desired_waves, desired_dlambda)
+    rebin_flux_list= []
+    rebin_sky_list=[]
+    rebin_noise2_list=[]
+    for des_low, des_high in zip(desired_low_edges, desired_high_edges):
+        stretch_high = np.ones(target_high_edges.shape)*des_high
+        stretch_low= np.ones(target_low_edges.shape)*des_low
+        upper= np.nanmin([stretch_high, target_high_edges], axis=0)
+        #print('des_low', des_low)
+        #print('des_high', des_high)
+        #print('upper', upper[0])
+        lower= np.nanmax([stretch_low, target_low_edges], axis=0)
+        #print('lower', lower[0])
+        dif = upper-lower
+        negatives = np.where(dif<=0)
+        dif[negatives]=0.
+        #rebin_factors = dif /dlambda_spec
+        rebin_factors= dif/(des_high-des_low)
+        #plt.plot(target_spec[0],rebin_factors, label='factors')
+        #plt.plot(target_spec[0],dif, label='dif')
+        #plt.plot(target_spec[0],dlambda_spec,label= 'dlambda')
+        #plt.plot(target_spec[0],desired_dlambda,label= 'dlambda desired')
+        #plt.legend()
+        #plt.show()
+        rebin_flux_list.append(np.sum(target_flux*rebin_factors))
+        rebin_sky_list.append(np.sum(sky* rebin_factors))
+        rebin_noise2_list.append(np.sum(noise2*rebin_factors))
+        
+    #plt.plot(desired_waves, rebin_flux_list, label='rebinned spectrum')
+    #plt.plot(target_spec[0], target_spec[1], label='original spectrum')
+    #plt.xlabel('Wavelength (Angstroms)')
+    #plt.ylabel(header['UNITS'])
+    #plt.legend()
+    #plt.show()
+    return [desired_waves, np.array(rebin_flux_list), np.array(rebin_sky_list), np.array(rebin_noise2_list), desired_dlambda]
+    
+    
+    
+    
     
     

@@ -29,16 +29,17 @@ import wdatmos
 import spec_plot_tools as spt
 import cal_params as cp
 
-slit_width = 1.0 #arcseconds
+slit_width = 3.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
 test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-pix_width=3
+pix_width=5
 sdss_pix_width = 10
-
+sdss_scale_factor=20.6 #BOSS scaling
+#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 #wavelength_offset=60
 #wavelength_offset=20
 #wavelength_offset=15
@@ -51,6 +52,7 @@ wavelength_offset=0
 #filenames= glob('wctb*')
 #filenames= glob('wctb*SDSS*')
 sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
+#sdss_path= sdss_path+'G0_K5/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 #print(filenames)
 plot_wavelength=True
@@ -68,17 +70,20 @@ plot_400m2_tell= False
 #norm_range=[5100,5400]
 #norm_range=[6090,6240]
 norm_range=[6640,6670]#20190530 400M1 norm range
+#norm_range=[6630,6690]#wider double norm range
+#norm_range=[5740,5850]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
-file_setting='all_fwctb'
+#file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
+#file_setting= 'two_arm_compare_SDSS'
 
 single_iterate= False
 double_iterate= False #file_settings change these in their little sections ahead if they should be changed
@@ -86,7 +91,7 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('avg_fwctb*')
+    filenames=glob('*avg_fwctb*eg274*')
     #filenames=glob('avg_fwctb*Gaia*1453*')
     #filenames=glob('avg_fwctb*eg274*fits')
     #filenames=glob('avg_fwctb*aia*1644*fits')
@@ -146,8 +151,8 @@ elif file_setting=='all_SDSS':
     double_iterate=False
     
 elif file_setting== 'two_arm':
-    m1_names =glob('avg_fwctb*400m1*fits')
-    m2_names= glob('avg_fwctb*400m2*fits')
+    m1_names =glob('avg_fwctb*1644*400m1*fits')
+    m2_names= glob('avg_fwctb*1644*400m2*fits')
     #m1_names =glob('super_fwctb*400m1*fits')
     #m2_names= glob('super_fwctb*400m2*fits')
     #m1_names =glob('avg_wctb*400m1*fits')
@@ -161,6 +166,14 @@ elif file_setting=='all_super':
     single_iterate=True
     double_iterate=False
     
+elif file_setting =='two_arm_compare_SDSS':
+    print(file_setting)
+    filename1=sys.argv[1]
+    filename2=sys.argv[2]
+    #sdss_names = glob(sdss_path+'*SDSS*.fits')
+    sdss_names = glob(sdss_path+'*M*.fits')
+    single_iterate=False
+    double_iterate=False
     
 else:
     print('\n\nno file_setting specificied\n\n')
@@ -190,10 +203,20 @@ def convolve_spectrum(target_spec, header, kernel_type='gaussian', pix_width=pix
     wavelengths = np.copy(target_spec[0])
     if kernel_type=='gaussian':
         #see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
+        #see_sig= sdss_scale_factor*see_sig
         see_sig=pix_width
         see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(slit_width), mode = 'oversample')
         see_kernel.normalize()
         spec_conv = conv.convolve(fluxes, see_kernel)
+    elif kernel_type=='sdss_match':
+        see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
+        see_sig= sdss_scale_factor*see_sig
+        see_kernel = conv.Gaussian1DKernel(see_sig, mode = 'oversample')
+        see_kernel.normalize()
+        spec_conv = conv.convolve(fluxes, see_kernel)
+        pix_kernel = conv.Box1DKernel(width = int(sdss_scale_factor*pix_width), mode = 'oversample')
+        pix_kernel.normalize()
+        spec_conv = conv.convolve(spec_conv, pix_kernel)
     elif kernel_type== 'box':
         pix_kernel = conv.Box1DKernel(width = int(pix_width), mode = 'oversample')
         pix_kernel.normalize()
@@ -205,7 +228,7 @@ def convolve_spectrum(target_spec, header, kernel_type='gaussian', pix_width=pix
     return spec_out
 
 
-def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', norm=False, forced_title='', pix_width=pix_width, offset=0):
+def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', norm=False, forced_title='', pix_width=pix_width, offset=0, color='None'):
     title_string=filename
     label_string= filename
     try:
@@ -237,6 +260,7 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
     if plot_wavelength:
         plt.xlabel(r'Wavelength ($\AA$)')
         plt.xlim(np.nanmin(spec[0]), np.nanmax(spec[0]))
+        #plt.xlim(np.nanmin(spec[0]), np.nanmax(spec[0]))
         #color='b'
         #if 'eg274' in filename.lower():
             #color='r'
@@ -249,7 +273,10 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
         #else:
             #pass
         #plt.plot(spec[0], spec[1]+offset, label=filename, color=color)
-        plt.plot(spec[0], spec[1]+offset, label=label_string)
+        if color != 'None':
+            plt.plot(spec[0], spec[1]+offset, label=label_string, color=color)
+        else:
+            plt.plot(spec[0], spec[1]+offset, label=label_string)
     else:
         plt.xlabel('Pixel')
         plt.plot(spec[1]+offset, label=label_string)
@@ -263,17 +290,19 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
     #plt.show()
     return
 
-def plot_dwavelength(spec, filename):
+def plot_dwavelength(spec, filename, read_in=True):
     plt.ylabel(r'delta Wavelength ($\AA$)')
     plt.xlabel('Wavelength ($\AA$)')
-    hdu=fits.open(filename)
-    dlambda= hdu[4].data
+    if read_in:
+        hdu=fits.open(filename)
+        dlambda= hdu[4].data
     
-    plt.title(filename)
-    #dlambda= spec[0][1:]-spec[0][:-1]
-    #plt.plot(spec[0][:-1], dlambda)
+        plt.title(filename)
+        plt.plot(spec[0], label=filename)
+    else:
+        dlambda= spec[0][1:]-spec[0][:-1]
+        plt.plot(spec[0][:-1], dlambda, label=filename)
     #plt.plot(spec[0], dlambda, label=filename)
-    plt.plot(spec[0], label=filename)
     #plt.show()
     
     #plt.ylabel(r'Wavelength ($\AA$)')
@@ -281,7 +310,7 @@ def plot_dwavelength(spec, filename):
     #plt.title(filename)
     #plt.plot(spec[0])
     #plt.show()
-    #return
+    return
     
 def plot_pix_shifts(file_list):
     for filename in file_list:
@@ -326,6 +355,10 @@ def plot_SNR(spec, noise, filename):
     #plt.plot(spec[0], spec[1]/noise[1], color = 'r')
     plt.show()
     return
+
+def get_median_dlambda(input_spec):
+    
+    return np.nanmedian(input_spec[0]-np.roll(input_spec[0],1))
     
 def plot_sky(filename, offset=0, line_labels=True, convolve=False):
     hdu=fits.open(filename)
@@ -366,8 +399,6 @@ def plot_sky(filename, offset=0, line_labels=True, convolve=False):
     else:
         pass
     print("need to put dlambda into this part again since we're about to move around wavelengths in the future.")
-    if 'wctb' in filename.lower():
-        print('IT found WCTB')
     if plot_wavelength:
         plt.xlabel(r'Wavelength ($\AA$)')
         plt.plot(hdu[0].data, sky, label=filename)
@@ -455,10 +486,10 @@ if file_setting=='command':
         target_spec1[0]=target_spec1[0]+wavelength_offset
         target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True, kernel_type='box')
-        plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width)
+        plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=False, kernel_type='box', pix_width=pix_width)
         #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width*2)
-        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=pix_width)
+        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=False, kernel_type='box', pix_width=pix_width)
         #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=10)
         #plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=10)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=False)
@@ -534,8 +565,46 @@ if file_setting=='two_arm':
         
         #plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
         plt.xlim(3700,9000)
-        spt.show_plot()
+        spt.show_plot(line_id='alkali')
         
+if file_setting=='two_arm_compare_SDSS':
+    target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
+    target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
+    
+    target_spec1= spt.flambda_to_fnu(target_spec1)
+    target_spec2=spt.flambda_to_fnu(target_spec2)
+    
+    target_spec1=norm_spectrum(target_spec1, norm_range)
+    target_spec2= norm_spectrum(target_spec2, norm_range)
+    
+    for sdss_filename in sdss_names:
+        
+        sdss_spec, sdss_header, sdss_noise2= spt.retrieve_sdss_spec(sdss_filename)
+        sdss_spec= spt.clean_spectrum(sdss_spec, 3700, 9000, [])
+        
+        sdss_spec=spt.flambda_to_fnu(sdss_spec)
+        
+        sdss_spec= norm_spectrum(sdss_spec, norm_range)
+        
+        
+        print('header1 see_sig', header1['SEE_SIG'])
+        print('header2 see_sig', header2['SEE_SIG'])
+        print('median dlambda spec1:', get_median_dlambda(target_spec1))
+        print('median dlambda spec2:', get_median_dlambda(target_spec2))
+        print('median dlambda sdss spec:', get_median_dlambda(sdss_spec))
+        print('scaling factor:', get_median_dlambda(target_spec1)/get_median_dlambda(sdss_spec))
+        print('scaling factor:', get_median_dlambda(target_spec2)/get_median_dlambda(sdss_spec))
+        plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1], sdss_spec[1]]), 99.9)+0.5)
+        
+        plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], sdss_header, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='r')
+        #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='gray')
+        plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='b')
+        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='b')
+        #plot_dwavelength(target_spec1, filename1, read_in=False)
+        #plot_dwavelength(target_spec2, filename2, read_in=False)
+        #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
+        plt.xlim(3700,9000)
+        spt.show_plot(line_id='alkali')
         
 if single_iterate:
     counter=0
@@ -556,7 +625,7 @@ if single_iterate:
         #plot_spectrum(target_spec, filename, header, norm=True, offset=counter)
         #plot_spectrum(target_spec, filename, header, norm=True, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-        plot_sky(filename, offset=counter, line_labels=True, convolve=False)
+        plot_sky(filename, offset=0, line_labels=False, convolve=False)
         #if header['airmass']<1.5:
             #plot_sky(filename, offset=0)
         #else:
@@ -572,7 +641,7 @@ if single_iterate:
             #plt.title(header['airoftyp'])
         #except KeyError:
             #pass
-    spt.show_plot(show_legend=False)
+    spt.show_plot(show_legend=True)
     #spt.show_plot(show_legend=False, show_telluric=False)
     #spt.show_plot(show_telluric=False)
     #plt.legend()

@@ -77,18 +77,18 @@ def to_barycenter(header):
     return header
 
 ####
-trace_offset =0 #amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
+trace_offset =-16 #amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
 
 #trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
 #trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
 #trace_band_mid=110
-trace_band_mid=121
+trace_band_mid=105
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=60 #
-trace_band_width=20
-#trace_band_width = 40 #pixel width to determine the center of the trace 2019-03-25 commented out
+#trace_band_width=16
+trace_band_width = 90 #pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width=190#super wide search range
 #trace_band_width= 18 #SDSSJ1159
@@ -109,8 +109,8 @@ flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
 #bkg_shift= 30 #standard shift used
-#bkg_shift=40
-bkg_shift= 30
+bkg_shift=50
+#bkg_shift= 30
 #bkg_shift=55
 bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
@@ -166,6 +166,11 @@ header=fits.getheader(arc_im_filename)
 setup_dict= gcp.get_cal_params(header)
 #fear_array= np.genfromtxt(setup_dict['linelistname'], names = True)
 fear_array= np.genfromtxt(cp.line_list_dir+ setup_dict['linelistname'], names = True)
+try:
+    fear_array= fear_array[np.where(fear_array['use']>0)]
+except KeyError:
+    print('missing "use" column')
+    pass
 line_x_checks = np.copy(fear_array['Pixel']) +setup_dict['offset']
 print "line_x_checks should have just been created"
 print line_x_checks
@@ -494,15 +499,28 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
                 print("Setting amplitude=0, x0=trace_band_width/2., sigma=0., b=0.")
                 print('++++++++++\n\n')
                 subset_popt=[0., trace_band_width/2., 0., 0.]
-            y_positions.append(subset_popt[1]+(trace_band_mid-trace_band_width/2))
-            max_fluxes.append(subset_popt[0])
-            coll_seeing_sigmas.append(subset_popt[2])
+            if (subset_popt[2]>(see_fit_bounds[0][2]+0.05)):
+                #print(subset_popt[2], '>', see_fit_bounds[0][2])
+                y_positions.append(subset_popt[1]+(trace_band_mid-trace_band_width/2))
+                max_fluxes.append(subset_popt[0])
+                coll_seeing_sigmas.append(subset_popt[2])
+            else:
+                print("seeing sigma was on the low boundary so we're not including it")
+                y_positions.append(np.nan)
+                max_fluxes.append(np.nan)
+                coll_seeing_sigmas.append(np.nan)
             rebin_counter+=1
         y_positions=np.array(y_positions)
         x_positions=rebinned_x_positions[0]
         #print('x_positions', x_positions)
         max_fluxes= np.array(max_fluxes)
         coll_seeing_sigmas=np.array(coll_seeing_sigmas)
+        
+        nanmask= np.isnan(y_positions)
+        y_positions= y_positions[~nanmask]
+        x_positions= x_positions[~nanmask]
+        max_fluxes=max_fluxes[~nanmask]
+        coll_seeing_sigmas=coll_seeing_sigmas[~nanmask]
         
         plt.scatter(x_positions,2*np.sqrt(2*np.log(2))*coll_seeing_sigmas)
         plt.ylabel('Seeing (FWHM) in pixels')
@@ -651,6 +669,10 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         #plt.show()
         peaks_found=[]
         wave_peaks_found = []
+        for x_spot in line_x_checks2:
+            plt.axvline( x= x_spot, color = 'k',linestyle = '--')
+        plt.plot(plotting_x_coords, lamp_light, label = 'lamp data', color = 'blue')
+
         for lamp_line_guess,lamp_line_wave in zip( line_x_checks2,lamp_lines):
             try:
                 lamp_params, lamp_cov = fit_gaussian_curve(plotting_x_coords, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width, bounds= lamp_bounds)
@@ -658,33 +680,37 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
                 if ((np.abs(lamp_params[0]) > 1.)  and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1e-3)):
                     peaks_found.append(lamp_params[1])
                     wave_peaks_found.append(lamp_line_wave)
-                    plt.plot(plotting_x_coords, lamp_light, label = 'lamp data', color = 'blue')
+                    #plt.plot(plotting_x_coords, lamp_light, label = 'lamp data', color = 'blue')
                     plt.plot(plotting_x_coords, gaussian_curve(plotting_x_coords, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
                     plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
-                    for x_spot in line_x_checks2:
-                        plt.axvline( x= x_spot, color = 'k',linestyle = '--')
+                    #for x_spot in line_x_checks2:
+                        #plt.axvline( x= x_spot, color = 'k',linestyle = '--')
                     plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
-                    plt.xlabel('Pixel')
-                    plt.ylabel('Counts')
-                    plt.legend()
-                    plt.show()
+                    #plt.xlabel('Pixel')
+                    #plt.ylabel('Counts')
+                    #plt.legend()
+                    #plt.show()
                 else:
                     print "Gaussian too flat, flipped, or narrow (or not within the actual fitting region...):", lamp_params
-                    plt.plot(plotting_x_coords, lamp_light, label = 'lamp data', color = 'blue')
-                    plt.plot(plotting_x_coords, gaussian_curve(plotting_x_coords, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
-                    plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
-                    for x_spot in line_x_checks2:
-                        plt.axvline( x= x_spot, color = 'k',linestyle = '--')
-                    plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
-                    plt.xlabel('Pixel')
-                    plt.ylabel('Counts')
-                    plt.legend()
-                    plt.show()
+                    #plt.plot(plotting_x_coords, lamp_light, label = 'lamp data', color = 'blue')
+                    #plt.plot(plotting_x_coords, gaussian_curve(plotting_x_coords, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
+                    #plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
+                    #for x_spot in line_x_checks2:
+                        #plt.axvline( x= x_spot, color = 'k',linestyle = '--')
+                    #plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
+                    #plt.xlabel('Pixel')
+                    #plt.ylabel('Counts')
+                    #plt.legend()
+                    #plt.show()
             except RuntimeError as error:
                 print error
+        plt.xlabel('Pixel')
+        plt.ylabel('Counts')
+        plt.title('all fitting results')
+        plt.show()
         peaks_found = np.array(peaks_found)
         wave_peaks_found = np.array(wave_peaks_found)
-        #np.savetxt('measured_pixel_coords.txt', np.append([peaks_found],[wave_peaks_found],axis=0).T, delimiter='\t')
+        np.savetxt('measured_pixel_coords.txt', np.append([peaks_found],[wave_peaks_found],axis=0).T, delimiter='\t')
         #print "line_x_checks:"
         #print line_x_checks
         #print "peaks found"

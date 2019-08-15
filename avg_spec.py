@@ -33,7 +33,7 @@ low_index= len(glob_string)-1+6
 high_index=-5
 
 do_dlambda_ext= True
-do_super=True
+do_super=False
 filename_matches={}
 prev_core=''
 filename_set=[]
@@ -218,7 +218,7 @@ def avg_spectra(target_list):
     return
 
 
-def make_super_spec(target_list):
+def make_super_spec(target_list, save=True, plot_all=True):
     wave_list=[]
     flux_list=[]
     noise2_list=[]
@@ -272,10 +272,13 @@ def make_super_spec(target_list):
         dlambda_array= np.array(dlambda_list)
         dlambda_array=np.copy(dlambda_array.ravel())
         sorted_dlambda= dlambda_array[sorted_indices]
-    plt.plot(sorted_waves,sorted_flux, label='super')
-    #plt.title(target_file)
-    plt.legend()
-    plt.show()
+    if plot_all:
+        plt.plot(sorted_waves,sorted_flux, label='super')
+        #plt.title(target_file)
+        plt.legend()
+        plt.show()
+    else:
+        pass
     header.append(card=('SUPER', True, 'This is a spectrum that just merges all of the spectra without averaging'))
     hdu=fits.PrimaryHDU(sorted_waves, header= header)
     hdu1= fits.ImageHDU(sorted_flux)
@@ -287,12 +290,68 @@ def make_super_spec(target_list):
         hdulist= fits.HDUList([hdu,hdu1,hdu2,hdu3, hdu4])
     else:
         hdulist= fits.HDUList([hdu,hdu1,hdu2,hdu3])
-    output_name= "super_"+ glob_string[:-1]+'.'+ core_name + ".fits"
+    
+    if save:
+        output_name= "super_"+ glob_string[:-1]+'.'+ core_name + ".fits"
+        print('output_name:', output_name)
+        print('saving hopefully...')
+        hdulist.writeto(output_name, overwrite= True)
+        print('should have saved')
+    else:
+        print('save=', save)
+    return hdulist
+    
+    
+def make_rebin_avg_spec(target_list):
+    """
+    combine all of the spectra into the same wavelength bins using a weighted average method.
+    
+    This method requires knowing dlambda, so I'm just going to let it crash if there isn't a dlambda present
+    
+    """
+    #super_hdulist= make_super_spec(target_list, save=False, plot_all=False)
+    #ref objects are the ones that will be used to establish the baseline for the rebinned average spectrum
+    ref_spec, ref_header, ref_noise= spt.retrieve_spec(target_list[0])
+    ref_hdu=fits.open(target_list[0])
+    ref_sky=np.copy(ref_hdu[2].data)
+    core_name=target_list[0][low_index:high_index]
+    ref_dlambda= np.copy(ref_hdu[4].data)
+    rebin_fluxes=[]
+    rebin_skies= []
+    rebin_noise2s=[]
+    for target_file in target_list:
+        print('target_file', target_file)
+        rebin_list= spt.rebin_spec(target_file, ref_spec[0], ref_dlambda)
+        #rebin_list= spt.rebin_spec(target_file, ref_waves, ref_dlambda)
+        #target_spec, header, target_noise = spt.retrieve_spec(target_file)
+        #wave_list.append(target_spec[0])
+        #flux_list.append(target_spec[1])
+        #noise2_list.append(target_noise[1]**2)
+        #hdu=fits.open(target_file)
+        #sky=np.copy(hdu[2].data)
+        #sky_list.append(sky)
+        #core_name=target_file[low_index:high_index]
+        rebin_fluxes.append(rebin_list[1])
+        rebin_skies.append(rebin_list[2])
+        rebin_noise2s.append(rebin_list[3])
+    avg_rebin_flux= np.nanmean(rebin_fluxes, axis=0)
+    avg_rebin_sky= np.nanmean(rebin_skies, axis=0)
+    avg_rebin_noise2= np.nanmean(rebin_noise2s, axis=0)
+    avg_rebin_noise= np.sqrt(avg_rebin_noise2)
+    avg_rebin_noise=avg_rebin_noise/avg_rebin_flux
+    hdu=fits.PrimaryHDU(ref_spec[0], header= ref_header)
+    hdu1= fits.ImageHDU(avg_rebin_flux)
+    #hdu2= fits.ImageHDU(np.ones(avg_flux.shape))
+    hdu2= fits.ImageHDU(avg_rebin_sky)
+    hdu3 = fits.ImageHDU(avg_rebin_noise)
+    hdu4=fits.ImageHDU(ref_dlambda)
+    hdulist= fits.HDUList([hdu,hdu1,hdu2,hdu3, hdu4])
+    output_name= "ravg_"+ glob_string[:-1]+'.'+ core_name + ".fits"
     print('output_name:', output_name)
     print('saving hopefully...')
     hdulist.writeto(output_name, overwrite= True)
     print('should have saved')
-    
+    return
 
 print("\n\n\n\n")
 print("##################")
@@ -305,6 +364,7 @@ for sets in filename_matches:
     print(filename_matches[sets])
     do_dlambda_ext=True
     avg_spectra(filename_matches[sets])
+    make_rebin_avg_spec(filename_matches[sets])
     #make_super_spec(filename_matches[sets])
     if do_super:
         make_super_spec(filename_matches[sets])

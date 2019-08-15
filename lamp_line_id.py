@@ -15,7 +15,7 @@ should also plot the line labels over top of it...
 
 
 """
-
+from __future__ import print_function
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -26,26 +26,29 @@ from astropy import constants as const
 from astropy.table import Table, Column
 import scipy.interpolate as scinterp
 import scipy.optimize as sciop
+import scipy.signal as scisig
 
 import cal_params as cp
 import spec_plot_tools as spt
 
 
-#output_filename= '400m2_HgArNe_calc.txt'
+#output_filename= '400m2_HgArNe_calc20190814.txt'
 #linelist_file= '400M2_HgAr.txt'
-#nelist_file='NIST_NeI_linelist_copy.csv'
-#nelist_file='NIST_NeI_linelist_copy.csv'
-#nelist_file='NIST_HgIArINeI_480to920_vac.csv'
-#nelist_file='NIST_HgIArINeI_480to920_air_Cup.csv'
-#nelist_file='NIST_HgIArINeI_350to750_air_Cup.csv'
+##nelist_file='NIST_NeI_linelist_copy.csv'
+##nelist_file='NIST_NeI_linelist_copy.csv'
+##nelist_file='NIST_HgIArINeI_480to920_vac.csv'
+##nelist_file='NIST_HgIArINeI_480to920_air_Cup.csv'
+#nelist_file='NIST_HgIArINeI_480to920_air_manual.csv'
+##nelist_file='NIST_HgIArINeI_350to750_air_Cup.csv'
 #wave_soln_file= 'wsoln_0114_SDSSJ1150p2403_400m2.txt'
 #fits_file= 'ctb.0059_HgAr_400m2_simple_fe.fits'
 #fits_file2= 'ctb.0056_HgArNe_400m2_simple_fe.fits'
 
 
-output_filename= '400m1_HgArNe_calc.txt'
+output_filename= '400m1_HgArNe_calc20190814.txt'
 linelist_file= '400M1_HgAr_redcam.txt'
-nelist_file='NIST_HgIArINeI_350to750_air_Cup.csv'
+#nelist_file='NIST_HgIArINeI_350to750_air_Cup.csv'
+nelist_file='NIST_HgIArINeI_350to750_air_manual.csv'
 wave_soln_file='wsoln_0213_SDSSJ1150p2403_400m1.txt'
 fits_file='ctb.0052_HgAr_400m1_simple_fe.fits'
 fits_file2='ctb.0049_HgArNe_400m1_simple_fe.fits'
@@ -55,10 +58,12 @@ wavelength_key= 'obs_wl_air(A)'
 
 wave_sol_binning= 2 #binning of the wavelength solution
 
+peak_widths = np.arange(0.5,7., 0.1)
+
 trace_width=10
 trace_mid=100
 
-intensity_threshold= np.float_(499. )#minimum "intens" value that the NIST lines can have to make it into the plotting
+intensity_threshold= np.float_(0.9 )#minimum "intens" value that the NIST lines can have to make it into the plotting
 element_sel= 'Ar'
 
 wave_soln_file= cp.wave_sol_dir+wave_soln_file
@@ -80,6 +85,27 @@ def get_binning(header):
     xbinning= binning[0]
     return xbinning
 
+
+
+def find_peaks(lamp_light, min_perc= 96, min_dist=3):
+    """
+    Input:
+        lamp_light - 1-D array of summed lamp light along the whole CCD.
+        
+    Output:
+        peak_locs - locations of a bunch of peaks that were located in the search; technically these should be a
+                            bunch of indices
+    
+    """
+    min_height= np.nanpercentile(lamp_light, min_perc)
+    print('min_height:',min_height)
+    #peak_locs, properties= scisig.find_peaks(lamp_light, width=[1.,20.], height= (min_height,None))
+    peak_locs, properties= scisig.find_peaks(lamp_light, width=[None,20.], prominence=(50, None), distance=min_dist)
+    #peak_locs= scisig.find_peaks_cwt(lamp_light, widths=peak_widths)
+    #for peak, prop in zip(peak_locs, properties):
+        #print(peak, prop)
+    #print(properties)
+    return peak_locs
 
 
 def wavelength_to_pixel(lambda_val, in_wave_coeffs, lamp_poly_degree=5, bounds=[0,2100]):
@@ -110,8 +136,8 @@ def wavelength_to_pixel(lambda_val, in_wave_coeffs, lamp_poly_degree=5, bounds=[
 def retrieve_ben_list():
     fear_array= np.genfromtxt(linelist_file, names = True)
     line_x_checks = np.copy(fear_array['Pixel'])
-    print "line_x_checks should have just been created"
-    print line_x_checks
+    print("line_x_checks should have just been created")
+    print(line_x_checks)
     lamp_lines = np.copy(fear_array['User'])
     #line_sides = np.ones(line_x_checks.shape[0])*line_search_width
     names= np.str_(lamp_lines)
@@ -150,7 +176,7 @@ def retrieve_nist_list():
     #for count, row in enumerate(ne_table['obs_wl_air(A)']):
         #print(count, row)
     for count, row in enumerate(ne_table):
-        print(count, row['intens'])
+        print(count, row[wavelength_key], row['intens'])
         try:
             row['intens']=int(row['intens'])
             ne_table[count]['intens']=float(row['intens'])
@@ -198,6 +224,16 @@ def plot_ne_lines(ne_table, counts):
     return
 
 
+def get_pixel_values(nist_table, wave_poly_coeffs):
+    
+    nist_pixels=[]
+    for row in nist_table:
+        nist_wave= float(row[wavelength_key])
+        nist_pixel= wavelength_to_pixel(nist_wave, wave_poly_coeffs)
+        nist_pixels.append(nist_pixel)
+    return nist_pixels
+
+
 def plot_ne_pixels(ne_table, ne_pixels, counts):
     for row,pixel in zip(ne_table, ne_pixels):
         #print(name+name2, type(name))
@@ -206,6 +242,7 @@ def plot_ne_pixels(ne_table, ne_pixels, counts):
         #plt.text(row['obs_wl_air(A)'], np.nanmax(counts), air_name, color='g', rotation=90)
         plt.text(pixel, 1000, air_name, color='g', rotation=90)
     return
+
 
 ######################
 
@@ -219,11 +256,11 @@ header2=fits.getheader(fits_file2)
 image_data2=hdu2[0].data
 
 
-roi= image_data[trace_mid-trace_width/2: trace_mid+trace_width/2,:]
+roi= image_data[np.int_(trace_mid-trace_width/2): np.int_(trace_mid+trace_width/2),:]
 counts= np.nanmean(roi,axis=0)
 
 
-roi2= image_data2[trace_mid-trace_width/2: trace_mid+trace_width/2,:]
+roi2= image_data2[np.int_(trace_mid-trace_width/2): np.int_(trace_mid+trace_width/2),:]
 counts2= np.nanmean(roi2,axis=0)
 
 band_inds= np.indices(counts.shape)[0]
@@ -238,9 +275,12 @@ wave_vals= np.polyval(wave_poly_coeffs, band_inds)
 hgar_pixel_vals, hgar_wave_vals= retrieve_ben_list()
 ne_table= retrieve_nist_list()
 ne_table= inbounds_table(ne_table, wave_vals)
-hg_table= element_table(ne_table, 'Hg')
-ar_table= element_table(ne_table, 'Ar')
-ne_table= element_table(ne_table,'Ne')
+#hg_table= element_table(ne_table, 'Hg')
+#ar_table= element_table(ne_table, 'Ar')
+#ne_table= element_table(ne_table,'Ne')
+hg_table= element_table(ne_table, 'nothing')
+ar_table= element_table(ne_table, 'nonsense')
+#ne_table= element_table(ne_table,'Ne')
 #ne_table= element_table(ne_table, element_sel)
 
 ne_table.pprint()
@@ -261,16 +301,20 @@ plot_ne_lines(hg_table, counts)
 plt.plot(wave_vals,counts2, color='gray')
 plt.plot(wave_vals,counts, color='k')
 plt.ylabel('intensity')
-#plt.yscale('log')
+plt.yscale('log')
 plt.xlabel('wavelength (angstroms)')
 plt.show()
 
 
-ne_pixels=[]
-for row in ne_table:
-    ne_wave= float(row[wavelength_key])
-    ne_pixel= wavelength_to_pixel(ne_wave, wave_poly_coeffs)
-    ne_pixels.append(ne_pixel)
+#ne_pixels=[]
+#for row in ne_table:
+    #ne_wave= float(row[wavelength_key])
+    #ne_pixel= wavelength_to_pixel(ne_wave, wave_poly_coeffs)
+    #ne_pixels.append(ne_pixel)
+    
+ne_pixels= get_pixel_values(ne_table, wave_poly_coeffs)
+hg_pixels= get_pixel_values(hg_table, wave_poly_coeffs)
+ar_pixels= get_pixel_values(ar_table, wave_poly_coeffs)
 
 hgar_calc_pixels= []
 for hgar_wave in hgar_wave_vals:
@@ -281,22 +325,46 @@ for hgar_wave in hgar_wave_vals:
 plot_ne_pixels(ne_table, ne_pixels, counts)
 for x_spot in hgar_calc_pixels:
     plt.axvline( x= x_spot, color = 'k',linestyle = '--')
+    
+
+peak_coords= find_peaks(counts2, min_perc=50)
+
+#for x_spot in peak_coords:
+    #plt.axvline(x=x_spot, color='magenta')
+
+
 plt.plot(counts2, color='r')
 plt.plot(counts)
 plt.xlabel('pixel')
+plt.yscale('log')
 plt.show()
 
+peak_coords= find_peaks(counts)
+
+for x_spot in peak_coords:
+    plt.axvline(x=x_spot, color='k')
+for x_spot in hgar_calc_pixels:
+    plt.axvline( x= x_spot, color = 'r',linestyle = '--')
+#plt.axhline(y= np.nanmedian(counts), color='r', linestyle='--')
+plt.plot(counts)
+#plt.yscale('log')
+plt.xlabel('pixel')
+plt.title('peaks found by scipy.signal')
+plt.show()
 
 ne_waves= np.copy(ne_table[wavelength_key])
 ne_pixels= ne_pixels
-ne_use= np.copy(ne_table['use'])
+#ne_use= np.copy(ne_table['use'])
 ne_relheight= np.copy(ne_table['intens'])
 ne_names= []
 ne_name2= []
 ne_other= []
-ne_residuals= np.zeros(ne_use.shape)
+ne_residuals= np.zeros(ne_waves.shape)
 for row in ne_table:
-    ne_name= 'NeI-'+str(row[wavelength_key])[:4]
+    try:
+        ne_name= row['element']+str(row['sp_num'])+'-'+str(row[wavelength_key])[:4]
+    except KeyError:
+        ne_name= 'NeI-'+str(row[wavelength_key])[:4]
     ne_names.append(ne_name)
     ne_name2.append(0)
     ne_other.append(0)
@@ -305,7 +373,7 @@ hgar_array= np.genfromtxt(linelist_file, names = True)
     
 hgar_waves= np.copy(hgar_wave_vals)
 hgar_pixels= np.copy(hgar_calc_pixels)
-hgar_use= np.copy(hgar_array['use'])
+#hgar_use= np.copy(hgar_array['use'])
 hgar_residuals= np.copy(hgar_array['Residual'])
 
 hgar_name= []
@@ -330,7 +398,21 @@ all_name= np.append(hgar_name, ne_names)
 all_name2= np.append(hgar_name2, ne_name2)
 all_relheight= np.append(hgar_relheight, ne_relheight)
 all_other= np.append(hgar_other, ne_other)
-all_use= np.append(hgar_use, ne_use)
+#all_use= np.append(hgar_use, ne_use)
+
+
+#all_waves= np.append(all_waves, ar_table[wavelength_key])
+#print(all_waves.shape)
+#print(all_waves)
+#all_pixels= np.append(all_pixels, ar_pixels)
+#all_residual=np.append(all_residual, np.zeros()
+#all_name= np.append(hgar_name, ne_names)
+#all_name2= np.append(hgar_name2, ne_name2)
+#all_relheight= np.append(hgar_relheight, ne_relheight)
+#all_other= np.append(hgar_other, ne_other)
+
+
+#
 
 ####################
 #make the Columns and table
@@ -343,11 +425,11 @@ all_table['Name']=all_name
 all_table['Name2']=all_name2
 all_table['Rel_Height']=all_relheight
 all_table['other']=all_other
-all_table['use']=all_use
+#all_table['use']=all_use
 
 all_table.pprint()
 
-print('saving ', output_filename)
+#print('saving ', output_filename)
 #all_table.write(output_filename, format='ascii', delimiter='\t')
 
 

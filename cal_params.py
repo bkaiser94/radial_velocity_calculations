@@ -92,7 +92,7 @@ cal_params={
                     'setupname':'400m1'
                     },
                 'Red':{
-                    'linelistname':'400M1_HgAr_redcam.txt',
+                    'linelistname':'400m1_HgArNe_calc20190814.txt',
                     'offset':0,
                     'trimregions':{
                         'x':[380,red_default_trim['x'][1]],
@@ -111,7 +111,7 @@ cal_params={
                     'air_corr':True,
                     'setupname':'400m2'},
                 'Red':{
-                    'linelistname':'400M2_HgAr.txt',
+                    'linelistname':'400M2_HgArNe_calc20190814.txt',
                     'offset':0,
                     'trimregions':red_default_trim,
                     'air_corr':True,
@@ -241,6 +241,15 @@ airline_color={
     'O_':'magenta'
     }
 
+#dictionary for plotting line identifications; this one should probably replace airline_color as the default dict for colors
+
+line_color_dict={
+    'Li': 'green',
+    'Na': 'red',
+    'K': 'blue',
+    'Rb': 'magenta'
+        }
+
 #dictionary of guesses for the box1d model used to generate the shape for background skylines
 slit_airline_p0={
     'amplitude': 4.0,
@@ -280,5 +289,15 @@ flux_cal_dict={
         '400m1':'empirical',
         '400m2':'poly/poly'}
     }
+
+line_id_dict={
+    'alkali':'alkali_lines_vac.csv'
+    }
+
+
+
+
+
+
 
 
