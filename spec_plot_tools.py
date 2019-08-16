@@ -126,7 +126,7 @@ def replace_range(input_spec, bound_list, method='ones'):
     other_array= input_spec[1]
     lower_bound = bound_list[0]
     upper_bound= bound_list[1]
-    inbound_mask= np.where((wave_array>bound_list[0]) & (wave_array<bound_list[1]))
+    inbound_mask= np.where((wave_array>=bound_list[0]) & (wave_array<=bound_list[1]))
     if method=='ones':
         input_spec[1][inbound_mask]= 1.
     else:

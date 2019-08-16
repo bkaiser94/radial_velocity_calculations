@@ -228,7 +228,14 @@ standard_dict={
         'filename':'xshooter_standards/fFeige110.dat',
         'sens_filename':'Feige110_sensitivity_curve.txt',
         'balmer_masks':balmer_lines_wide,
-        'other_masks': telluric_lines}
+        'other_masks': telluric_lines},
+    'ltt7987':{
+        'ra':'0',
+        'dec':'0',
+        'filename':'xshooter_standards/fLTT7987.dat',
+        'sens_filename':'LTT7987_sensitivity_curve.txt',
+        'balmer_masks':balmer_lines_wide,
+        'other_masks': telluric_lines},
     }
 
 #dictionary to be used for plotting atmospheric emission lines so elements are a consistent color marker

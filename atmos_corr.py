@@ -29,16 +29,17 @@ import spec_plot_tools as spt
 import cal_params as cp
 import get_cal_params as gcp
 
-sens_names = glob('E*sensitivity_curve.txt')+glob('G*sensitivity_curve.txt')+glob('e*sens*curve.txt')
+#sens_names = glob('E*sensitivity_curve.txt')+glob('G*sensitivity_curve.txt')+glob('e*sens*curve.txt')
+sens_names=glob('sens_curv*')
 #sens_names = glob('*sensitivity*.txt')
 
-resid_names= glob('resid*eg274*sensitivity*.txt')
+resid_names= glob('resid*.txt')
 #resid_names=glob('tell*')
 tell_names= glob('tell*')
 do_fnu=False
 
-#wavelengths = np.linspace(4940,8980, 8080) #400M2 approximately
-wavelengths = np.linspace(3800,7200, 8080) #400M1 approximately
+wavelengths = np.linspace(4940,8980, 8080) #400M2 approximately
+#wavelengths = np.linspace(3800,7200, 8080) #400M1 approximately
 
 
 def extract_AM_MJD(sens_curve_file):
@@ -71,6 +72,18 @@ def extract_AM_MJD(sens_curve_file):
     
     return airmass, mjd
 
+def get_absorption(tell_spec, wave_range):
+    absorptions= 1.-tell_spec[1]
+    inbounds= np.where((tell_spec[0]>wave_range[0]) & (tell_spec[0] < wave_range[1]))
+    total_abs= np.sum(tell_spec[1][inbounds])
+    return total_abs
+
+def generate_abs_row():
+    
+    
+    
+    return abs_row
+
 for sens_name in sens_names:
     airmass, mjd= extract_AM_MJD(sens_name)
     sens_curve_coeffs = np.genfromtxt(sens_name)
@@ -102,16 +115,28 @@ spt.show_plot()
 
 tell1_array=  np.genfromtxt(tell_names[0], skip_header=1).T
 tell1_waves= tell1_array[0]
+counter=0
 for tell_name in tell_names:
     airmass, mjd= extract_AM_MJD(tell_name)
     tell_array = np.genfromtxt(tell_name, skip_header=1).T
-    label= ','.join([tell_name, str(airmass), str(mjd)])
+    #tell_array[1]=tell_array[1]+counter
+    subname= tell_name.split('_')[4:6]
+    subname='_'.join(subname)
+    label= ','.join([subname, str(airmass), str(mjd)])
     plt.plot(tell_array[0], tell_array[1], label=label)
-    plt.plot(tell1_waves, np.interp(tell1_waves, tell_array[0], tell_array[1]), label='interp_'+label)
+    #plt.plot(tell_array[1], label=label)
+    #plt.plot(tell1_waves, np.interp(tell1_waves, tell_array[0], tell_array[1]), label='interp_'+label)
+    #plt.text(np.nanmin(tell_array[0]), counter+1, label, color='k')
+    #plt.text(0, 1, label, color='k')
     print("\n=============")
     print(tell_name)
     print('airmass:', airmass, 'mjd:', mjd)
-spt.show_plot()
+    counter+=1
+plt.axvline(x=7599, color='k', linestyle='--')
+plt.axvline(x=7623, color='k', linestyle='--')
+plt.axvline(x=6866, color='k', linestyle='--')
+spt.show_plot(show_legend=True)
+#plt.show()
 
 def get_star_info(starname):
     standard_dict= cp.standard_dict[starname.lower()]
