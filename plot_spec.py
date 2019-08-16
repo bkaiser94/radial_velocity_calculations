@@ -38,8 +38,8 @@ test_side = test_width/2
 
 pix_width=5
 sdss_pix_width = 10
-sdss_scale_factor=20.6 #BOSS scaling
-#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+#sdss_scale_factor=20.6 #BOSS scaling
+sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 #wavelength_offset=60
 #wavelength_offset=20
 #wavelength_offset=15
@@ -62,14 +62,14 @@ plot_400m2_tell= False
 #norm_range=[40,80]
 
 #norm_range=[7042,7046]
-#norm_range=[7490,7510] #outside telluric
+norm_range=[7490,7510] #outside telluric
 #norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
 #norm_range=[6090,6240]
-norm_range=[6640,6670]#20190530 400M1 norm range
+#norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 ####norm_range=np.array(norm_range)+wavelength_offset
@@ -91,7 +91,8 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('*avg_fwctb*eg274*')
+    filenames=glob('ravg_fwctb*fits')
+    #filenames=glob('*avg_fwctb*eg274*')
     #filenames=glob('avg_fwctb*Gaia*1453*')
     #filenames=glob('avg_fwctb*eg274*fits')
     #filenames=glob('avg_fwctb*aia*1644*fits')
@@ -134,9 +135,10 @@ elif file_setting =='command':
     
 elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
-    sdss_names = glob(sdss_path+'*.fits')
-    #sdss_names = glob(sdss_path+'SDSS*.fits')
-    sdss_names = glob(sdss_path+'*WDpec*.fits')
+    #sdss_names = glob(sdss_path+'*.fits')
+    #sdss_names = glob(sdss_path+'*M*.fits')
+    sdss_names = glob(sdss_path+'SDSS*.fits')
+    #sdss_names = glob(sdss_path+'*WDpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     print('sdss_names:',sdss_names)
     single_iterate=False
@@ -170,8 +172,8 @@ elif file_setting =='two_arm_compare_SDSS':
     print(file_setting)
     filename1=sys.argv[1]
     filename2=sys.argv[2]
-    #sdss_names = glob(sdss_path+'*SDSS*.fits')
-    sdss_names = glob(sdss_path+'*M*.fits')
+    sdss_names = glob(sdss_path+'*SDSS*.fits')
+    #sdss_names = glob(sdss_path+'*M*.fits')
     single_iterate=False
     double_iterate=False
     
@@ -450,7 +452,8 @@ if file_setting== 'compare_SDSS':
         #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='gaussian')
         #plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-        plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+        #plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+        plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width)
         #plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
         #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
@@ -459,7 +462,7 @@ if file_setting== 'compare_SDSS':
         #plt.legend()
         plt.title(filename+ ' & '+ filename2.split('/')[-1])
         #plt.show()
-        spt.show_plot()
+        spt.show_plot(line_id='alkali')
         
 if file_setting=='all_SDSS':
     for filename1 in filenames:
@@ -596,9 +599,9 @@ if file_setting=='two_arm_compare_SDSS':
         print('scaling factor:', get_median_dlambda(target_spec2)/get_median_dlambda(sdss_spec))
         plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1], sdss_spec[1]]), 99.9)+0.5)
         
-        plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], sdss_header, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='r')
-        #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='gray')
-        plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='b')
+        #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], sdss_header, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='r')
+        plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
+        plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='g')
         plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='b')
         #plot_dwavelength(target_spec1, filename1, read_in=False)
         #plot_dwavelength(target_spec2, filename2, read_in=False)
@@ -616,7 +619,7 @@ if single_iterate:
         
         #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
         #conv_spec= convolve_spectrum(target_spec, header)
-        #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, kernel_type='box')
+        plot_spectrum(target_spec, filename, header, smooth=True, norm=True, kernel_type='box')
         #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
         #target_spec[1]=header['airmass']
@@ -625,7 +628,7 @@ if single_iterate:
         #plot_spectrum(target_spec, filename, header, norm=True, offset=counter)
         #plot_spectrum(target_spec, filename, header, norm=True, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-        plot_sky(filename, offset=0, line_labels=False, convolve=False)
+        #plot_sky(filename, offset=0, line_labels=False, convolve=False)
         #if header['airmass']<1.5:
             #plot_sky(filename, offset=0)
         #else:

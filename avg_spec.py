@@ -23,8 +23,8 @@ start = time.time()
 
 import spec_plot_tools as spt
 
-#glob_string= 'wctb*'
-glob_string='fwctb*'
+glob_string= 'wctb*'
+#glob_string='fwctb*'
 #filenames= glob('wctb*')
 filenames= glob(glob_string)
 
@@ -322,15 +322,6 @@ def make_rebin_avg_spec(target_list):
     for target_file in target_list:
         print('target_file', target_file)
         rebin_list= spt.rebin_spec(target_file, ref_spec[0], ref_dlambda)
-        #rebin_list= spt.rebin_spec(target_file, ref_waves, ref_dlambda)
-        #target_spec, header, target_noise = spt.retrieve_spec(target_file)
-        #wave_list.append(target_spec[0])
-        #flux_list.append(target_spec[1])
-        #noise2_list.append(target_noise[1]**2)
-        #hdu=fits.open(target_file)
-        #sky=np.copy(hdu[2].data)
-        #sky_list.append(sky)
-        #core_name=target_file[low_index:high_index]
         rebin_fluxes.append(rebin_list[1])
         rebin_skies.append(rebin_list[2])
         rebin_noise2s.append(rebin_list[3])

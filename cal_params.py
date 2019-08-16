@@ -111,7 +111,7 @@ cal_params={
                     'air_corr':True,
                     'setupname':'400m2'},
                 'Red':{
-                    'linelistname':'400M2_HgArNe_calc20190814.txt',
+                    'linelistname':'400M2_HgAr.txt',
                     'offset':0,
                     'trimregions':red_default_trim,
                     'air_corr':True,

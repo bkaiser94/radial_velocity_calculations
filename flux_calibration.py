@@ -21,11 +21,18 @@ from astropy.time import Time
 from astropy import coordinates as coords
 from astropy import units as u
 import scipy.interpolate as scinterp
+import os
 
 
 import spec_plot_tools as spt
 import cal_params as cp
 import get_cal_params as gcp
+
+
+
+cwd= os.getcwd()
+sub_dir = cwd.split('/')[-1]
+
 
 #poly_degree=3
 #poly_degree= 5 #order of polynomials from before 20190506
@@ -60,8 +67,8 @@ standard_directory= cp.standard_dir
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-standard_name='EG274'
-#standard_name = 'GD153'
+#standard_name='EG274'
+standard_name = 'GD153'
 #standard_name= 'LTT3218'
 #standard_name='Feige110'
 
@@ -84,9 +91,9 @@ standard_name='EG274'
 #observed_file='avg_wctb.Feige110_400m2.fits'
 #observed_file='avg_wctb.Feige110_400m1.fits'
 
-#observed_file='avg_wctb.GD153_400m2.fits'
+observed_file='avg_wctb.GD153_400m2.fits'
 #observed_file='avg_wctb.EG274_400m1.fits'
-observed_file='avg_wctb.EG274_400m1_fix.fits'
+#observed_file='avg_wctb.EG274_400m1_fix.fits'
 #observed_file='avg_wctb.EG274_400m2.fits'
 #observed_file='avg_wctb.eg274_930_blue.fits'
 #observed_file='avg_wctb.eg274am104_400m2.fits'
@@ -116,7 +123,7 @@ def get_star_info(starname):
 
 
 core_name= observed_file.split('.')[1] #get the part of the filename that follows the first period and exclude the extension
-output_filename=core_name+'_sensitivity_curve.txt'
+output_filename='sens_curv_' +sub_dir+'_'+ core_name+'.txt'
 
 if use_fnu:
     output_filename=core_name+'_fnu_sensitivity_curve.txt'
@@ -383,19 +390,37 @@ def get_residuals(plot_all = False):
         spt.show_plot()
     return residuals
 
-def limit_to_telluric(obs_waves1,residuals):
+def limit_to_telluric(obs_waves1,residuals, plot_all= True):
     """
     Take the calculated residuals and limit them to the region of telluric absorption and set the value to be 1 everywhere else, so the remnants of other regions aren't messed up too.
     
     """
-    #io_telluric_lines= 
+    hold_telluric_lines = cp.telluric_lines
+    hold_standard_lines = standard_info['balmer_masks']
+    hold_telluric_lines= spt.check_overlaps(hold_telluric_lines, hold_standard_lines, np.nanmax(obs_waves1), np.nanmin(obs_waves1))
+    io_telluric_lines= spt.make_inside_out(hold_telluric_lines, np.nanmin(obs_waves1), np.nanmax(obs_waves1))
+    #inverted masks of telluric lines, so that the things that aren't telluric lines are masked
+    output_factors = np.copy(residuals)
+    factor_spec= np.vstack([obs_waves1, output_factors])
+    for mask in io_telluric_lines:
+        factor_spec= spt.replace_range(factor_spec, mask, method='ones')
     
-    return residuals
+    if plot_all:
+        plt.title('telluric transmission factors')
+        plt.xlabel('Wavelength (Angstroms)')
+        plt.plot(obs_waves1, residuals, label='Residual factors before')
+        plt.plot(factor_spec[0], factor_spec[1], label='Telluric factors')
+        plt.xlim(np.nanmin(factor_spec[0]), np.nanmax(factor_spec[0]))
+        spt.show_plot()
+    return factor_spec
 
 residuals= get_residuals(plot_all=True)
+telluric_factor_spec= limit_to_telluric(obs_waves1, residuals)
 
-plt.title('residual corrected spectrum')
-plt.plot(obs_waves1, fcal_obs/residuals, label='flux-calibrated observation/residuals')
+
+plt.title('telluric corrected spectrum')
+#plt.plot(obs_waves1, fcal_obs/residuals, label='flux-calibrated observation/residuals')
+plt.plot(obs_waves1, fcal_obs/telluric_factor_spec[1], label='flux-calibrated observation/residuals')
 plt.plot(obs_waves1, interp_model_flux, label='model')
 plt.xlabel('wavelength ($\AA$)')
 if use_fnu:
@@ -415,6 +440,6 @@ np.savetxt(output_filename, sens_curve_fit, header = 'Airmass: ' +str(airmass) +
 
 np.savetxt('residuals_' +output_filename, residuals, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
 
-
+np.savetxt('telluric_thru_'+output_filename, telluric_factor_spec.T, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
 
 

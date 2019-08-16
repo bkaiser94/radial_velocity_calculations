@@ -40,10 +40,10 @@ target_list = speclist[0]
 sens_curve_list = speclist[1]
 
 bad_noise_sub = 100
-do_residual_div= False
+do_tell_corr= True
 do_rv_barycorr=False
 do_ext_corr= True
-plot_across_night=True
+plot_across_night=False
 
 #parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 #cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
@@ -94,7 +94,7 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     sens_curve = np.polyval(sens_curve_coeffs,wavelengths)
     obs_spec= np.vstack([wavelengths, counts])
     obs_spec= np.copy(spt.counts_to_flambda(obs_spec, dlambda))
-    print('Obseved spectrum in units of erg/s/cm^2/angstrom')
+    print('Observed spectrum in units of erg/s/cm^2/angstrom')
     if do_ext_corr:
         print("Doing atmospheric extinction correction.")
         #obs_spec= np.vstack([wavelengths, counts])
@@ -107,10 +107,20 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     #flux = counts/sens_curve
     flux= np.copy(obs_spec[1])
     flux=flux/sens_curve# I had commented out the only flux calibration part of the flux calibration...
-    if do_residual_div:
-        residuals= np.genfromtxt('residuals_'+ sens_curve_file)
-        flux= flux/residuals
+    if do_tell_corr:
+        tell_name= glob('telluric_thru*'+ sens_curve_file)[0]
+        print('tell_name', tell_name)
+        tell_corr_spec= np.genfromtxt(tell_name, skip_header=1).T
+        interp_tell_corr= np.interp(wavelengths, tell_corr_spec[0], tell_corr_spec[1])
+        #plt.plot(tell_corr_spec[0], tell_corr_spec[1], label=tell_name)
+        #plt.plot(wavelengths, interp_tell_corr, label='interp_'+tell_name)
+        #plt.plot(wavelengths, flux/np.nanmean(flux), label='normalized '+target_file)
+        #plt.xlim(np.nanmin(wavelengths), np.nanmax(wavelengths))
+        #spt.show_plot()
+        flux= flux/interp_tell_corr
+        header.append(card=('tellcorr', True, 'Telluric Corrections performed'))
     else:
+        header.append(card=('tellcorr', False, 'Telluric Corrections performed'))
         pass
     total_flux = np.sum(flux)
     times.append([header['BMJD_TDB']])

@@ -50,6 +50,30 @@ def make_inside_out(input_list, min_val, max_val):
     #print new_list
     return new_list
         
+def check_overlaps(mask_list1, mask_list2, wave_max, wave_min):
+    """
+    Check mask_list1 for any ranges that overlap from mask_list2, and return only those masks from mask_list1
+    that do not overlap with any of the masks from mask_list2
+    
+    Also, checks if it overlaps with the bounds of some wavelength range so you aren't running up against the 
+    edges.
+    
+    Using the lessons learned from rebin_spec()
+    """
+    output_mask_list=[]
+    for mask1 in mask_list1:
+        overlap_checks= []
+        for mask2 in mask_list2:
+            dif = min(mask1[1],mask2[1])-max(mask1[0],mask2[0])
+            if dif <= 0:
+                overlap_checks.append(0)
+            else:
+                overlap_checks.append(1)
+        if ((np.sum(overlap_checks)<0.1) and (mask1[0] > wave_min) and (mask1[1] < wave_max)):
+            output_mask_list.append(mask1)
+        else:
+            print(mask1, ' mask overlapped with another mask')
+    return output_mask_list
 
 def get_doppler_shifted(wavelengths, radial_velocity):
     #print "doppler shifting by ", radial_velocity
@@ -102,15 +126,12 @@ def replace_range(input_spec, bound_list, method='ones'):
     other_array= input_spec[1]
     lower_bound = bound_list[0]
     upper_bound= bound_list[1]
-    low_mask = np.where(wave_array < lower_bound)
-    high_mask= np.where(wave_array > upper_bound)
-    low_waves= wave_array[low_mask]
-    high_waves= wave_array[high_mask]
-    low_other = other_array[low_mask]
-    high_other= other_array[high_mask]
-    #merge_waves= np.append(low_waves, high_waves)
-    #merge_other= np.append(low_other, high_other)
-    return
+    inbound_mask= np.where((wave_array>bound_list[0]) & (wave_array<bound_list[1]))
+    if method=='ones':
+        input_spec[1][inbound_mask]= 1.
+    else:
+        pass
+    return input_spec
 
 
 def get_pixel_scale(header):
@@ -603,22 +624,13 @@ def rebin_spec(input_filename, desired_waves, desired_dlambda):
         stretch_high = np.ones(target_high_edges.shape)*des_high
         stretch_low= np.ones(target_low_edges.shape)*des_low
         upper= np.nanmin([stretch_high, target_high_edges], axis=0)
-        #print('des_low', des_low)
-        #print('des_high', des_high)
-        #print('upper', upper[0])
         lower= np.nanmax([stretch_low, target_low_edges], axis=0)
-        #print('lower', lower[0])
         dif = upper-lower
         negatives = np.where(dif<=0)
         dif[negatives]=0.
         #rebin_factors = dif /dlambda_spec
         rebin_factors= dif/(des_high-des_low)
-        #plt.plot(target_spec[0],rebin_factors, label='factors')
-        #plt.plot(target_spec[0],dif, label='dif')
-        #plt.plot(target_spec[0],dlambda_spec,label= 'dlambda')
-        #plt.plot(target_spec[0],desired_dlambda,label= 'dlambda desired')
-        #plt.legend()
-        #plt.show()
+        
         rebin_flux_list.append(np.sum(target_flux*rebin_factors))
         rebin_sky_list.append(np.sum(sky* rebin_factors))
         rebin_noise2_list.append(np.sum(noise2*rebin_factors))

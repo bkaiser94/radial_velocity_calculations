@@ -29,12 +29,13 @@ import spec_plot_tools as spt
 import cal_params as cp
 import get_cal_params as gcp
 
-sens_names = glob('E*sensitivity_curve.txt')+glob('G*sensitivity_curve.txt')
+sens_names = glob('E*sensitivity_curve.txt')+glob('G*sensitivity_curve.txt')+glob('e*sens*curve.txt')
 #sens_names = glob('*sensitivity*.txt')
 
 resid_names= glob('resid*eg274*sensitivity*.txt')
-
-do_fnu=True
+#resid_names=glob('tell*')
+tell_names= glob('tell*')
+do_fnu=False
 
 #wavelengths = np.linspace(4940,8980, 8080) #400M2 approximately
 wavelengths = np.linspace(3800,7200, 8080) #400M1 approximately
@@ -99,6 +100,18 @@ for resid_name in resid_names:
 plt.xlabel(r'Pixel')
 spt.show_plot()
 
+tell1_array=  np.genfromtxt(tell_names[0], skip_header=1).T
+tell1_waves= tell1_array[0]
+for tell_name in tell_names:
+    airmass, mjd= extract_AM_MJD(tell_name)
+    tell_array = np.genfromtxt(tell_name, skip_header=1).T
+    label= ','.join([tell_name, str(airmass), str(mjd)])
+    plt.plot(tell_array[0], tell_array[1], label=label)
+    plt.plot(tell1_waves, np.interp(tell1_waves, tell_array[0], tell_array[1]), label='interp_'+label)
+    print("\n=============")
+    print(tell_name)
+    print('airmass:', airmass, 'mjd:', mjd)
+spt.show_plot()
 
 def get_star_info(starname):
     standard_dict= cp.standard_dict[starname.lower()]
