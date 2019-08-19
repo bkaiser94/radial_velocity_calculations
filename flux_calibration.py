@@ -43,6 +43,9 @@ model_poly_degree= 5
 #sens_fit_method='empirical' #400M1 method generally, gets sens curve by dividing the obs flux directly by the model flux and then fitting a polynomial
 division_extra_deg = 2
 
+header_char=':'
+header_delim= '\t'
+
 ext_corr=True #correct extinction
 use_fnu=False
 
@@ -67,10 +70,10 @@ standard_directory= cp.standard_dir
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-standard_name='EG274'
+#standard_name='EG274'
 #standard_name = 'GD153'
 #standard_name= 'LTT3218'
-#standard_name='Feige110'
+standard_name='Feige110'
 #standard_name= 'LTT7987'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
@@ -91,9 +94,9 @@ standard_name='EG274'
 #observed_file='avg_wctb.LTT7987second_400m2.fits'
 
 #observed_file='avg_EG274_400m1.fits'
-observed_file='avg_wctb.EG274_400m2.fits'
+#observed_file='avg_wctb.EG274_400m2.fits'
 #observed_file='avg_wctb.Feige110_400m2.fits'
-#observed_file='avg_wctb.Feige110stand_400m2.fits'
+observed_file='avg_wctb.Feige110stand_400m2.fits'
 #observed_file='avg_wctb.Feige110second_400m2.fits'
 #observed_file='avg_wctb.Feige110_400m1.fits'
 
@@ -115,6 +118,22 @@ def get_star_info(starname):
     standard_dict= cp.standard_dict[starname.lower()]
     standard_dict['filename']=standard_directory+standard_dict['filename']
     return standard_dict
+
+def get_ouptput_header(header):
+    airmass= header['AIRMASS']
+    obs_time = header['OPENTIME']
+    obs_date = header['OPENDATE']
+    obs_time = obs_date+'T'+obs_time
+    obs_time = Time(obs_time, format = 'isot', scale = 'utc').mjd
+    output_header_list= ['Airmass'+header_char+str(airmass), 'MJD'+header_char+str(obs_time)]
+    for in_header, out_header in zip(cp.in_headers, cp.out_headers):
+        value= header[in_header]
+        new_entry= out_header+header_char+str(value)
+        output_header_list.append(new_entry)
+    output_header= header_delim.join(output_header_list)
+    return output_header
+
+##############################
 
 
 
@@ -233,7 +252,7 @@ else:
 plt.xlabel('Wavelengths (Angstroms)')
 spt.show_plot()
 
-do_offset= bool(raw_input("Do you need to do a wavelength offset?(True/False)>>>"))
+do_offset= bool(raw_input("Do you need to do a wavelength offset?(Enter nothing to skip; Enter anything to do it.)>>>"))
 if do_offset:
     print "Enter the approximate wavelength for the same feature in the model and observed spectra for offset"
     model_wavelength = float(raw_input("Model spec wavelength>>>"))
@@ -442,10 +461,19 @@ spt.show_plot()
 
 #np.savetxt('residuals_' + standard_info['sens_filename'], residuals, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
 
-np.savetxt(output_filename, sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+output_header= get_ouptput_header(header)
 
-np.savetxt('residuals_' +output_filename, residuals, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
 
-np.savetxt('telluric_thru_'+output_filename, telluric_factor_spec.T, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+#np.savetxt(output_filename, sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
 
+#np.savetxt('residuals_' +output_filename, residuals, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+
+#np.savetxt('telluric_thru_'+output_filename, telluric_factor_spec.T, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
+
+
+np.savetxt(output_filename, sens_curve_fit, header =output_header)
+
+np.savetxt('residuals_' +output_filename, residuals, header=output_header)
+
+np.savetxt('telluric_thru_'+output_filename, telluric_factor_spec.T, header=output_header)
 

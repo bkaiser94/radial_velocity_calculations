@@ -302,6 +302,27 @@ line_id_dict={
     }
 
 
+#header names to be read-out and then put into flux_calibration.py-produced sens_curves and the like
+#don't include 'AIRMASS' and the method to get the MJD value because of the MJD part
+in_headers = [
+   'WIDTH',
+   'SEE_FWHM',
+   'ENVHUM',
+   'ENVPRE',
+   'ENVTEM',
+   'ENVWIN',
+   'ENVDIR'
+   ]
+#the names that are to be used in the sens_curve files that are written
+out_headers=[
+    'Ext_width',
+    'See_FWHM',
+    'Hum',
+    'Pres',
+    'Temp',
+    'Wind_sp',
+    'Wind_dir'
+    ]
 
 
 

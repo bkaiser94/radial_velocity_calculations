@@ -74,11 +74,11 @@ norm_range=[7490,7510] #outside telluric
 #norm_range=[5740,5850]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-#file_setting= 'compare_SDSS'
+file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -462,7 +462,7 @@ if file_setting== 'compare_SDSS':
         #plt.legend()
         plt.title(filename+ ' & '+ filename2.split('/')[-1])
         #plt.show()
-        spt.show_plot(line_id='alkali')
+        spt.show_plot(line_id='')
         
 if file_setting=='all_SDSS':
     for filename1 in filenames:
