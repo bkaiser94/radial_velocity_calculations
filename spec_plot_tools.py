@@ -384,7 +384,8 @@ def plot_line_markers(nist_file, wavelength_key='obs_wl_vac(A)'):
         plt.axvline(x=row[wavelength_key], linestyle='--', color=cp.line_color_dict[row['element']])
         #plt.text(row['obs_wl_air(A)'], np.nanmax(counts), air_name, color='g', rotation=90)
         #plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90, transform=ax.transAxes)
-        plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90)    
+        #plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90)
+        plt.text(row[wavelength_key], 0.1 , air_name, color=cp.line_color_dict[row['element']], rotation=90)    
     return
 
 def show_plot(show_telluric=True, show_legend=True, line_id=''):

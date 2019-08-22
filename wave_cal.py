@@ -77,13 +77,13 @@ def to_barycenter(header):
     return header
 
 ####
-trace_offset =0 #amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
+trace_offset =-28 #amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
 
 #trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
 #trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
 #trace_band_mid=110
-trace_band_mid=105
+trace_band_mid=132
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=60 #
@@ -91,7 +91,7 @@ trace_band_mid=105
 #trace_band_width = 90 #pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
 trace_band_width=190#super wide search range
-#trace_band_width= 18 #SDSSJ1159
+#trace_band_width= 14 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 10 #pixel width to determine the center of the trace
@@ -109,7 +109,7 @@ flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
 #bkg_shift= 30 #standard shift used
-bkg_shift=50
+bkg_shift=70
 #bkg_shift= 30
 #bkg_shift=55
 bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
@@ -1039,6 +1039,7 @@ for counter, img in enumerate(speclist):
         header.append(card = ('see_sig', seeing_sig, 'Sigma of Gauss seeing fit (pixels)'))
         header.append(card = ('see_FWHM', seeing_FWHM, 'Seeing (pixels)'))
         header.append(card = ('skipflat', skip_flat, 'flatfielding skipped or not'))
+        header.append(card=('trc_off', trace_offset, 'offset of ext trace from fit'))
         header.append(card=('width', core_sides*2+1, 'width of extracted region for trace'))
         header.append(card=('bkgwidth', bkg_core_sides*2+1, 'width of bkg regions'))
         header.append(card=('bkgshift', bkg_shift, 'shift of bkg region from center of trace'))

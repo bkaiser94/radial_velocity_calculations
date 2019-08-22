@@ -74,11 +74,11 @@ norm_range=[7490,7510] #outside telluric
 #norm_range=[5740,5850]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-file_setting= 'compare_SDSS'
+#file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -91,7 +91,7 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('ravg_fwctb*fits')
+    filenames=glob('ravg_fwctb*0253*fits')
     #filenames=glob('*avg_fwctb*eg274*')
     #filenames=glob('avg_fwctb*Gaia*1453*')
     #filenames=glob('avg_fwctb*eg274*fits')
@@ -619,7 +619,7 @@ if single_iterate:
         
         #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
         #conv_spec= convolve_spectrum(target_spec, header)
-        plot_spectrum(target_spec, filename, header, smooth=True, norm=True, kernel_type='box')
+        plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
         #target_spec[1]=header['airmass']
@@ -636,7 +636,7 @@ if single_iterate:
         #plot_SNR(target_spec, target_noise, filename)
         #plot_dwavelength(target_spec, filename)
         #spt.show_plot(show_telluric=False, show_legend=False)
-        #spt.show_plot(show_legend=True)
+        #spt.show_plot(show_legend=False)
         #plt.legend()
         #plt.show()
         counter+=1
