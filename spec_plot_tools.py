@@ -511,6 +511,9 @@ def correct_extinction(input_spec, header, plot_all=False):
 
 
 def barycentric_vel_corr(header, wavelengths):
+    """
+    Correct wavelengths to the barycenter of the solar system
+    """
     input_year = header['OPENDATE'] #gps-synched date
     input_hours = header['OPENTIME'] #gps-synched time
     exp_time= header['EXPTIME']*u.s
@@ -525,6 +528,29 @@ def barycentric_vel_corr(header, wavelengths):
     lambda_rest = (wavelengths*(u.Angstrom))*const.c.to(u.km/u.s)/(-1*bary_corr+const.c.to(u.km/u.s))
     lambda_rest = lambda_rest.value
     return lambda_rest
+
+def barycentric_vel_uncorr(header, wavelengths):
+    """
+    Shift wavelengths from barycenter back to the way they would be seen from Earth
+    """
+    input_year = header['OPENDATE'] #gps-synched date
+    input_hours = header['OPENTIME'] #gps-synched time
+    exp_time= header['EXPTIME']*u.s
+    input_times = input_year+'T'+input_hours #formatting correctly
+    obs_time = Time(input_times, format = 'isot', scale = 'utc')
+    obs_time= obs_time+exp_time/2.
+    ra = header['RA']
+    dec = header['DEC']
+    radec = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
+    bary_corr = radec.radial_velocity_correction(obstime= obs_time, location = cerro_pachon_location)
+    bary_corr = -1. * bary_corr.to(u.km/u.s) #you need the negative of the correction to get the barycentric velocity value
+    print('barycentric velocity:', bary_corr)
+    lambda_obs= wavelengths + bary_corr*wavelengths/const.c.to(u.km/u.s)
+    return lambda_obs
+    
+    
+    
+    
 
 
 def rebin_image(im_array, rebin_axis=1, rebin_num= 10, plot_all= False):
@@ -646,6 +672,29 @@ def rebin_spec(input_filename, desired_waves, desired_dlambda):
     
     
     
+def rebin_generic_spec(input_spec, input_dlambda, desired_waves, desired_dlambda):
+    """
+    Takes any spectrum as an input and rebins it; this version is less efficient than rebin_spec() if you're doing it 
+    on the reduced Goodman spectra because it wont' simultaneously rebin the sky and noise and stuff, which 
+    the other one does. This function does, however, actually just work on whatever you give it.
     
-    
+    """
+    target_low_edges, target_high_edges= get_edges(input_spec[0],input_dlambda)
+    desired_low_edges, desired_high_edges= get_edges(desired_waves, desired_dlambda)
+    rebin_flux_list= []
+    for des_low, des_high in zip(desired_low_edges, desired_high_edges):
+        stretch_high = np.ones(target_high_edges.shape)*des_high
+        stretch_low= np.ones(target_low_edges.shape)*des_low
+        upper= np.nanmin([stretch_high, target_high_edges], axis=0)
+        lower= np.nanmax([stretch_low, target_low_edges], axis=0)
+        dif = upper-lower
+        negatives = np.where(dif<=0)
+        dif[negatives]=0.
+        #rebin_factors = dif /dlambda_spec
+        rebin_factors= dif/(des_high-des_low)
+        
+        rebin_flux_list.append(np.sum(input_spec[1]*rebin_factors))
+    output_spec= np.vstack([desired_waves, rebin_flux_list])
+    return output_spec
+        
     

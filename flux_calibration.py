@@ -133,6 +133,26 @@ def get_ouptput_header(header):
     output_header= header_delim.join(output_header_list)
     return output_header
 
+def degrade_model(model_vals, obs_vals, header):
+    """
+    Convolve model spectrum with the seeing and rebin it (using flux-conservative method) to the pixel-scale of
+    the observation.
+    
+    INPUTS:
+        model_vals - [wavelengths, fluxes, wavelength bin widths]
+        obs_vals - [wavelengths, fluxes, wavelength bin widths]
+        header - observation header, which should include the pixel width, slit width, seeing, etc.
+        
+    OUTPUTS:
+        model_spec 
+    
+    """
+    rebinned_model_spec= spt.rebin_generic_spec(model_vals[:2], model_vals[2], obs_vals[0], obs_vals[2])
+    
+    
+    output_spec= rebinned_model_spec
+    return output_spec
+
 ##############################
 
 
@@ -160,6 +180,7 @@ obs_fits = fits.open(observed_file)
 header = fits.getheader(observed_file)
 obs_waves1= obs_fits[0].data
 obs_flux1 = obs_fits[1].data
+obs_dlambda= obs_fits[4].data
 airmass = header['AIRMASS']
 obs_time = header['OPENTIME']
 obs_date = header['OPENDATE']
@@ -183,6 +204,7 @@ if use_fnu:
     print('Observed spectrum in units of 10**-28 erg/s/cm^2/Hz')
 else:
     pass
+
 
 
 if ext_corr:
@@ -252,6 +274,27 @@ else:
 plt.xlabel('Wavelengths (Angstroms)')
 spt.show_plot()
 
+
+
+
+unshifted_waves= np.copy(stand_waves1)
+#plt.plot(stand_waves1, stand_flux1, label='unshifted')
+stand_waves1= spt.barycentric_vel_uncorr(header, stand_waves1)
+#plt.plot(stand_waves1, stand_flux1, label='shifted to Earth')
+#plt.title('With and without Barycentric RV added')
+#plt.legend(loc='best')
+#plt.show()
+
+#plt.plot(unshifted_waves,unshifted_waves-stand_waves1)
+#plt.title('shift in angstroms by angstrom')
+#plt.show()
+
+#plt.plot(np.roll(unshifted_waves, 1)[1:]-unshifted_waves[1:], label= 'unshifted delta lambda')
+#plt.plot(np.roll(stand_waves1, 1)[1:]- stand_waves1[1:], label='shifted delta lambda')
+#plt.legend()
+#plt.show()
+
+
 do_offset= bool(raw_input("Do you need to do a wavelength offset?(Enter nothing to skip; Enter anything to do it.)>>>"))
 if do_offset:
     print "Enter the approximate wavelength for the same feature in the model and observed spectra for offset"
@@ -276,6 +319,36 @@ if do_offset:
 else:
     print "Skipping offsetting"
     
+
+#plt.plot(stand_waves1, stand_flux1, label='unbinned')
+
+
+standard_type= standard_info['filename'].split('/')[-2]
+print('standard_type:', standard_type)
+if standard_type == 'xshooter_standards':
+    print('no bin widths provided for model because X-Shooter')
+    model_bin_widths= np.copy(np.roll(stand_waves1, -1) - stand_waves1)
+    print(stand_waves1.shape, stand_flux1.shape, model_bin_widths.shape)
+    stand_waves1= stand_waves1[:-1]
+    stand_flux1=stand_flux1[:-1]
+    model_bin_widths= model_bin_widths[:-1] #need to remove the first two pixels because they're going to be weird... or mayb it's the last two...
+    plt.plot(stand_waves1, model_bin_widths)
+    plt.title('model bin widths')
+    plt.show()
+    
+    
+print('degrading model spec')
+rebin_model_spec= degrade_model(np.vstack([stand_waves1, stand_flux1, model_bin_widths]),  np.vstack([obs_waves1, obs_flux1, obs_dlambda]), header)
+
+
+plt.plot(stand_waves1, stand_flux1, label='unbinned model')
+plt.plot(rebin_model_spec[0], rebin_model_spec[1], label='rebinned model_spec')
+plt.legend()
+plt.show()
+
+stand_waves1=rebin_model_spec[0]
+stand_flux1= rebin_model_spec[1]
+
 
 min_wave = np.nanmin(obs_waves1)
 max_wave = np.nanmax(obs_waves1)
