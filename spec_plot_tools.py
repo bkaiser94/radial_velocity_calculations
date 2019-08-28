@@ -696,5 +696,15 @@ def rebin_generic_spec(input_spec, input_dlambda, desired_waves, desired_dlambda
         rebin_flux_list.append(np.sum(input_spec[1]*rebin_factors))
     output_spec= np.vstack([desired_waves, rebin_flux_list])
     return output_spec
+
+
+
+def get_slit_width(header):
+    if '3.2' in header['slit']:
+        slit_width = 3.2
+    elif '1.0' in header['slit']:
+        slit_width= 1.0
+    
+    return slit_width
         
     

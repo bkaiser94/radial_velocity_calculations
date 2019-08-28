@@ -91,7 +91,9 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('ravg_fwctb*0253*fits')
+    filenames=glob('ravg_fwctb*fits')
+    filenames=glob('*avg_fwctb*DQpec*fits')
+    #filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
     #filenames=glob('avg_fwctb*Gaia*1453*')
     #filenames=glob('avg_fwctb*eg274*fits')
@@ -115,7 +117,7 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*')
+    filenames=glob('fwctb*1644*')
     #filenames=glob('fwctb*aia*1644*')
     #filenames=glob('fwctb*2356*')
     single_iterate=True
@@ -153,8 +155,10 @@ elif file_setting=='all_SDSS':
     double_iterate=False
     
 elif file_setting== 'two_arm':
-    m1_names =glob('avg_fwctb*1644*400m1*fits')
-    m2_names= glob('avg_fwctb*1644*400m2*fits')
+    #m1_names =glob('avg_fwctb*400m1*fits')
+    #m2_names= glob('avg_fwctb*400m2*fits')
+    m1_names =glob('ravg_fwctb*400m1*fits')
+    m2_names= glob('ravg_fwctb*400m2*fits')
     #m1_names =glob('super_fwctb*400m1*fits')
     #m2_names= glob('super_fwctb*400m2*fits')
     #m1_names =glob('avg_wctb*400m1*fits')
@@ -568,7 +572,7 @@ if file_setting=='two_arm':
         
         #plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
         plt.xlim(3700,9000)
-        spt.show_plot(line_id='alkali')
+        spt.show_plot(line_id='')
         
 if file_setting=='two_arm_compare_SDSS':
     target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
@@ -614,12 +618,12 @@ if single_iterate:
     for filename in filenames:
         target_spec, header, target_noise= spt.retrieve_spec(filename)
         hdu= fits.open(filename)
-        dlambda= hdu[4].data
+        #dlambda= hdu[4].data
         target_spec[0]=target_spec[0]+wavelength_offset
         
         #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
         #conv_spec= convolve_spectrum(target_spec, header)
-        plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
+        plot_spectrum(target_spec, filename, header, smooth=True, norm=True, kernel_type='box')
         #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
         #target_spec[1]=header['airmass']
@@ -636,7 +640,7 @@ if single_iterate:
         #plot_SNR(target_spec, target_noise, filename)
         #plot_dwavelength(target_spec, filename)
         #spt.show_plot(show_telluric=False, show_legend=False)
-        #spt.show_plot(show_legend=False)
+        #spt.show_plot(show_legend=False, line_id='')
         #plt.legend()
         #plt.show()
         counter+=1
@@ -644,6 +648,7 @@ if single_iterate:
             #plt.title(header['airoftyp'])
         #except KeyError:
             #pass
+    #plt.xlim(3700,9000)
     spt.show_plot(show_legend=True)
     #spt.show_plot(show_legend=False, show_telluric=False)
     #spt.show_plot(show_telluric=False)
