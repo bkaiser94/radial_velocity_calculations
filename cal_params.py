@@ -207,10 +207,17 @@ telluric_lines=[
         #'other_masks': telluric_lines}
     #}
         
+#systemic velocities taken from Simbad. See Page 37 of General Clemens VII for further info.
+#all velocities in km/s
+#Feige110 didn't have one listed at the top of Simbad; I assume there is one, but I haven't gotten it yet.
+#GD71 = 12.0 +/- 3.4
+#LTT3218 29.3+/- 2.9
+#all others don't have uncertainties listed except EG274 which is +/- 0.1 km/s
 standard_dict={
     'eg274':{
         'ra':'0',
         'dec':'0',
+        'sys_vel':13.0,
         'filename':'xshooter_standards/fEg274.dat',
         'sens_filename':'EG274_sensitivity_curve.txt',
         'balmer_masks':balmer_lines_wide,
@@ -218,6 +225,7 @@ standard_dict={
     'gd153':{
         'ra':'0',
         'dec':'0',
+        'sys_vel': 67.0,
         'filename':'xshooter_standards/fGD153.dat',
         'sens_filename':'GD153_sensitivity_curve.txt',
         'balmer_masks':balmer_lines_wide,
@@ -225,6 +233,7 @@ standard_dict={
     'feige110':{
         'ra':'0',
         'dec':'0',
+        'sys_vel': 0.0,
         'filename':'xshooter_standards/fFeige110.dat',
         'sens_filename':'Feige110_sensitivity_curve.txt',
         'balmer_masks':balmer_lines_wide,
@@ -232,6 +241,7 @@ standard_dict={
     'ltt7987':{
         'ra':'0',
         'dec':'0',
+        'sys_vel':75.40,
         'filename':'xshooter_standards/fLTT7987.dat',
         'sens_filename':'LTT7987_sensitivity_curve.txt',
         'balmer_masks':balmer_lines_wide,

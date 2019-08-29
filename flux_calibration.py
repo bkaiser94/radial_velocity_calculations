@@ -71,11 +71,11 @@ standard_directory= cp.standard_dir
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-#standard_name='EG274'
+standard_name='EG274'
 #standard_name = 'GD153'
 #standard_name= 'LTT3218'
 #standard_name='Feige110'
-standard_name= 'LTT7987'
+#standard_name= 'LTT7987'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
 ##observed_file = 'wcmtb.feige67930blue.fits'
@@ -93,10 +93,10 @@ standard_name= 'LTT7987'
 
 #observed_file='avg_wctb.LTT7987_400m2.fits'
 #observed_file='avg_wctb.LTT7987second_400m2.fits'
-observed_file='avg_wctb.LTT7987_400m1.fits'
+#observed_file='avg_wctb.LTT7987_400m1.fits'
 
 #observed_file='avg_wctb.EG274_400m1.fits'
-#observed_file='avg_wctb.EG274_400m2.fits'
+observed_file='avg_wctb.EG274_400m2.fits'
 #observed_file='avg_wctb.Feige110_400m2.fits'
 #observed_file='avg_wctb.Feige110stand_400m2.fits'
 #observed_file='avg_wctb.Feige110second_400m2.fits'
@@ -121,7 +121,7 @@ def get_star_info(starname):
     standard_dict['filename']=standard_directory+standard_dict['filename']
     return standard_dict
 
-def get_ouptput_header(header):
+def get_output_header(header):
     airmass= header['AIRMASS']
     obs_time = header['OPENTIME']
     obs_date = header['OPENDATE']
@@ -536,7 +536,7 @@ spt.show_plot()
 
 #np.savetxt('residuals_' + standard_info['sens_filename'], residuals, header='Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))
 
-output_header= get_ouptput_header(header)
+output_header= get_output_header(header)
 
 
 #np.savetxt(output_filename, sens_curve_fit, header = 'Airmass: ' +str(airmass) + '\tMJD: ' +str(obs_time))

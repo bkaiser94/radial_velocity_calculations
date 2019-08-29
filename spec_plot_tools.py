@@ -529,7 +529,7 @@ def barycentric_vel_corr(header, wavelengths):
     lambda_rest = lambda_rest.value
     return lambda_rest
 
-def barycentric_vel_uncorr(header, wavelengths):
+def barycentric_vel_uncorr(header, wavelengths, sys_vel= 0.0):
     """
     Shift wavelengths from barycenter back to the way they would be seen from Earth
     """
@@ -544,6 +544,7 @@ def barycentric_vel_uncorr(header, wavelengths):
     radec = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg))
     bary_corr = radec.radial_velocity_correction(obstime= obs_time, location = cerro_pachon_location)
     bary_corr = -1. * bary_corr.to(u.km/u.s) #you need the negative of the correction to get the barycentric velocity value
+    bary_corr=bary_corr+sys_vel*u.km/u.s
     print('barycentric velocity:', bary_corr)
     lambda_obs= wavelengths + bary_corr*wavelengths/const.c.to(u.km/u.s)
     return lambda_obs

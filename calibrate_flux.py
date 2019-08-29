@@ -40,7 +40,7 @@ target_list = speclist[0]
 sens_curve_list = speclist[1]
 
 bad_noise_sub = 100
-do_tell_corr= True
+do_tell_corr= False
 do_rv_barycorr=False
 do_ext_corr= True
 plot_across_night=False
@@ -92,6 +92,8 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     dlambda=i[4].data
     #noise_spec = bad_noise_vals(noise_spec) #remove negative noise values and exceedingly high ones
     sens_curve = np.polyval(sens_curve_coeffs,wavelengths)
+    #plt.plot(sens_curve)
+    #plt.show()
     obs_spec= np.vstack([wavelengths, counts])
     obs_spec= np.copy(spt.counts_to_flambda(obs_spec, dlambda))
     print('Observed spectrum in units of erg/s/cm^2/angstrom')

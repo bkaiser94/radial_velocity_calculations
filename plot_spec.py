@@ -62,14 +62,14 @@ plot_400m2_tell= False
 #norm_range=[40,80]
 
 #norm_range=[7042,7046]
-norm_range=[7490,7510] #outside telluric
+#norm_range=[7490,7510] #outside telluric
 #norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
 #norm_range=[6090,6240]
-#norm_range=[6640,6670]#20190530 400M1 norm range
+norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 ####norm_range=np.array(norm_range)+wavelength_offset
@@ -92,7 +92,7 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     filenames=glob('ravg_fwctb*fits')
-    filenames=glob('*avg_fwctb*DQpec*fits')
+    #filenames=glob('*avg_fwctb*DQpec*fits')
     #filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
     #filenames=glob('avg_fwctb*Gaia*1453*')
@@ -117,7 +117,7 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*1644*')
+    filenames=glob('fwctb*')
     #filenames=glob('fwctb*aia*1644*')
     #filenames=glob('fwctb*2356*')
     single_iterate=True
@@ -632,7 +632,7 @@ if single_iterate:
         #plot_spectrum(target_spec, filename, header, norm=True, offset=counter)
         #plot_spectrum(target_spec, filename, header, norm=True, smooth=True, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-        #plot_sky(filename, offset=0, line_labels=False, convolve=False)
+        #plot_sky(filename, offset=0, line_labels=True, convolve=False)
         #if header['airmass']<1.5:
             #plot_sky(filename, offset=0)
         #else:
@@ -648,7 +648,7 @@ if single_iterate:
             #plt.title(header['airoftyp'])
         #except KeyError:
             #pass
-    #plt.xlim(3700,9000)
+    plt.xlim(3700,9000)
     spt.show_plot(show_legend=True)
     #spt.show_plot(show_legend=False, show_telluric=False)
     #spt.show_plot(show_telluric=False)
