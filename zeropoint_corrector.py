@@ -6,6 +6,7 @@ take a "flux-calibrated" standard spectrum and correct any wavelength offset bet
 
 
 """
+from __future__ import print_function
 
 
 import numpy as np
@@ -41,7 +42,7 @@ gauss_p0= [-4000., 6562. , 2., 1e4]
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-standard_name='EG274'
+#standard_name='EG274'
 #standard_name = 'GD153'
 #standard_name= 'LTT3218'
 #standard_name='Feige110'
@@ -62,10 +63,15 @@ observed_file='avg_fwctb.EG274_400m2.fits'
 #observed_file='avg_fwctb.GD153_400m2.fits'
 #observed_file='avg_fwctb.GD153_400m1.fits'
 
+obs_list_file= 'listZP'
+obs_list= np.genfromtxt(obs_list_file, dtype='str')
+
+
+
 
 def get_star_info(starname):
     standard_dict= cp.standard_dict[starname.lower()]
-    standard_dict['filename']=cp.standard_dir+standard_dict['filename']
+    #standard_dict['filename']=cp.standard_dir+standard_dict['filename']
     return standard_dict
 
 def get_output_header(header):
@@ -142,109 +148,141 @@ def rescale_flux(stand_flux1, standard_info):
 ####################################
 
 
+def correct_zeropoint(observed_file, plot_all=False):
+    obs_fits = fits.open(observed_file)
+    header = fits.getheader(observed_file)
+    obs_waves1= obs_fits[0].data
+    obs_flux1 = obs_fits[1].data
+    obs_spec= np.vstack([obs_waves1, obs_flux1])
+    obs_dlambda= obs_fits[4].data
+    airmass = header['AIRMASS']
+    obs_time = header['OPENTIME']
+    obs_date = header['OPENDATE']
+    obs_time = obs_date+'T'+obs_time
+    obs_time = Time(obs_time, format = 'isot', scale = 'utc').mjd
+    exptime = header['EXPTIME']
 
-obs_fits = fits.open(observed_file)
-header = fits.getheader(observed_file)
-obs_waves1= obs_fits[0].data
-obs_flux1 = obs_fits[1].data
-obs_spec= np.vstack([obs_waves1, obs_flux1])
-obs_dlambda= obs_fits[4].data
-airmass = header['AIRMASS']
-obs_time = header['OPENTIME']
-obs_date = header['OPENDATE']
-obs_time = obs_date+'T'+obs_time
-obs_time = Time(obs_time, format = 'isot', scale = 'utc').mjd
-exptime = header['EXPTIME']
-
-obs_spec= np.vstack([obs_waves1, obs_flux1])
-
+    obs_spec= np.vstack([obs_waves1, obs_flux1])
+    
     
 
-setup_dict= gcp.get_cal_params(header)
-setup_name=setup_dict['setupname']
-sens_fit_method= cp.flux_cal_dict['sens_fit_method'][setup_name]
+        
 
-#standard_file = standard_directory+standard_file
-standard_info = get_star_info(standard_name)
-print type(standard_info['balmer_masks'])
-print type(standard_info['other_masks'])
-wavelength_masks=standard_info['balmer_masks']+standard_info['other_masks']
-print "wavelength_masks:", wavelength_masks
-
-stand_array = np.genfromtxt(glob(standard_info['filename'])[0]).T
-#output_filename= standard_dict['sens_filename']
-
-stand_waves1 = stand_array[0]
-
-
-stand_flux1 = stand_array[1]  #ergs/cm/cm/s/A (That's exactly how it's written in the README for X-shooter)
-
-stand_flux1= rescale_flux(stand_flux1, standard_info)
-
-unshifted_waves= np.copy(stand_waves1)
-unshifted_flux= np.copy(stand_flux1)
-#plt.plot(stand_waves1, stand_flux1, label='unshifted')
-stand_waves1= spt.barycentric_vel_uncorr(header, stand_waves1, sys_vel=standard_info['sys_vel'])
-#stand_waves1= spt.barycentric_vel_uncorr(header, stand_waves1, sys_vel=0)
-
+    setup_dict= gcp.get_cal_params(header)
+    setup_name=setup_dict['setupname']
+    sens_fit_method= cp.flux_cal_dict['sens_fit_method'][setup_name]
+    
+    print('observed_file:', observed_file)
+    standard_name= gcp.identify_standard(header)
     
 
+    #standard_file = standard_directory+standard_file
+    standard_info = get_star_info(standard_name)
+    print (type(standard_info['balmer_masks']))
+    print (type(standard_info['other_masks']))
+    wavelength_masks=standard_info['balmer_masks']+standard_info['other_masks']
+    print("wavelength_masks:", wavelength_masks)
+    
+    
+    stand_array = np.genfromtxt(glob(cp.standard_dir+ standard_info['filename'])[0]).T
+    #output_filename= standard_dict['sens_filename']
 
-if use_fnu:
-    #stand_flux1= rescale_flux(stand_flux1, standard_info)
-    plt.plot(stand_waves1, stand_flux1, label='flambda')
-    stand_spec= np.vstack([stand_waves1, stand_flux1])
-    stand_spec=spt.flambda_to_fnu(stand_spec)
-    stand_flux1=stand_spec[1]
-    stand_waves1=stand_spec[0]
-    plt.plot(stand_waves1, stand_flux1, label='fnu')
-    plt.legend()
-    plt.show()
-else:
-    pass
-
+    stand_waves1 = stand_array[0]
 
 
-standard_type= standard_info['filename'].split('/')[-2]
-print('standard_type:', standard_type)
-if standard_type == 'xshooter_standards':
-    print('no bin widths provided for model because X-Shooter')
-    model_bin_widths= np.copy(np.roll(stand_waves1, -1) - stand_waves1)
-    print(stand_waves1.shape, stand_flux1.shape, model_bin_widths.shape)
-    stand_waves1= stand_waves1[:-1]
-    stand_flux1=stand_flux1[:-1]
-    model_bin_widths= model_bin_widths[:-1] #need to remove the first two pixels because they're going to be weird... or mayb it's the last two...
-    plt.plot(stand_waves1, model_bin_widths)
-    plt.title('model bin widths')
-    plt.show()
+    stand_flux1 = stand_array[1]  #ergs/cm/cm/s/A (That's exactly how it's written in the README for X-shooter)
 
-plt.plot(stand_waves1, stand_flux1, label='shifted')
-plt.plot(unshifted_waves, unshifted_flux, label='from file')
-plt.plot(obs_spec[0], obs_spec[1], label='observation')
-plt.legend()
-plt.show()
+    stand_flux1= rescale_flux(stand_flux1, standard_info)
 
-model_fit_gauss, discard_pcov= fit_gaussian_curve(stand_waves1, stand_flux1, gauss_p0, search_width)
-print(model_fit_gauss)
-print('central wavelength of gaussian for model: ', model_fit_gauss[1])
+    unshifted_waves= np.copy(stand_waves1)
+    unshifted_flux= np.copy(stand_flux1)
+    #plt.plot(stand_waves1, stand_flux1, label='unshifted')
+    stand_waves1= spt.barycentric_vel_uncorr(header, stand_waves1, sys_vel=standard_info['sys_vel'])
+    #stand_waves1= spt.barycentric_vel_uncorr(header, stand_waves1, sys_vel=0)
 
-gauss_values= gaussian_curve(stand_waves1, model_fit_gauss[0], model_fit_gauss[1], model_fit_gauss[2], model_fit_gauss[3])
-plt.plot(stand_waves1, gauss_values, label='gaussian')
-plt.plot(stand_waves1, stand_flux1, label='model')
-plt.legend()
-plt.show()
+        
+
+
+    if use_fnu:
+        #stand_flux1= rescale_flux(stand_flux1, standard_info)
+        plt.plot(stand_waves1, stand_flux1, label='flambda')
+        stand_spec= np.vstack([stand_waves1, stand_flux1])
+        stand_spec=spt.flambda_to_fnu(stand_spec)
+        stand_flux1=stand_spec[1]
+        stand_waves1=stand_spec[0]
+        plt.plot(stand_waves1, stand_flux1, label='fnu')
+        plt.legend()
+        plt.show()
+    else:
+        pass
 
 
 
+    standard_type= standard_info['filename'].split('/')[-2]
+    print('standard_type:', standard_type)
+    if standard_type == 'xshooter_standards':
+        print('no bin widths provided for model because X-Shooter')
+        model_bin_widths= np.copy(np.roll(stand_waves1, -1) - stand_waves1)
+        print(stand_waves1.shape, stand_flux1.shape, model_bin_widths.shape)
+        stand_waves1= stand_waves1[:-1]
+        stand_flux1=stand_flux1[:-1]
+        model_bin_widths= model_bin_widths[:-1] #need to remove the first two pixels because they're going to be weird... or mayb it's the last two...
+        if plot_all:
+            plt.plot(stand_waves1, model_bin_widths)
+            plt.title('model bin widths')
+            plt.show()
+        else:
+            pass
+    if plot_all:
+        plt.plot(stand_waves1, stand_flux1, label='shifted')
+        plt.plot(unshifted_waves, unshifted_flux, label='from file')
+        plt.plot(obs_spec[0], obs_spec[1], label='observation')
+        plt.legend()
+        plt.show()
+    else:
+        pass
 
-obs_fit_gauss, discard_pcov= fit_gaussian_curve(obs_spec[0], obs_spec[1], gauss_p0, search_width)
-print(obs_fit_gauss)
-print('central wavelength of gaussian for obs: ', obs_fit_gauss[1])
+    model_fit_gauss, discard_pcov= fit_gaussian_curve(stand_waves1, stand_flux1, gauss_p0, search_width)
+    print(model_fit_gauss)
+    print('central wavelength of gaussian for model: ', model_fit_gauss[1])
 
-gauss_values= gaussian_curve(obs_spec[0], obs_fit_gauss[0], obs_fit_gauss[1], obs_fit_gauss[2], obs_fit_gauss[3])
-plt.plot(obs_spec[0], gauss_values, label='gaussian')
-plt.plot(obs_spec[0], obs_spec[1], label='obs')
-plt.legend()
-plt.show()
+    gauss_values= gaussian_curve(stand_waves1, model_fit_gauss[0], model_fit_gauss[1], model_fit_gauss[2], model_fit_gauss[3])
+    if plot_all:
+        plt.plot(stand_waves1, gauss_values, label='gaussian')
+        plt.plot(stand_waves1, stand_flux1, label='model')
+        plt.xlim(model_fit_gauss[1]-search_width, model_fit_gauss[1]+search_width)
+        plt.legend()
+        plt.show()
+    else:
+        pass
+
+
+
+
+    obs_fit_gauss, discard_pcov= fit_gaussian_curve(obs_spec[0], obs_spec[1], gauss_p0, search_width)
+    print(obs_fit_gauss)
+    print('central wavelength of gaussian for obs: ', obs_fit_gauss[1])
+
+    gauss_values= gaussian_curve(obs_spec[0], obs_fit_gauss[0], obs_fit_gauss[1], obs_fit_gauss[2], obs_fit_gauss[3])
+    if plot_all:
+        plt.plot(obs_spec[0], gauss_values, label='gaussian')
+        plt.plot(obs_spec[0], obs_spec[1], label='obs')
+        plt.xlim(obs_fit_gauss[1]-search_width, obs_fit_gauss[1]+search_width)
+        plt.ylim(np.nanmin(gauss_values)/2., np.nanmax(gauss_values)*2.)
+        plt.legend()
+        plt.show()
+    else:
+        pass
+    
+    return
+
+if __name__ == '__main__':
+    #correct_zeropoint(observed_file)
+    for obs_file in obs_list:
+        print('\n\n new run \n=========')
+        print('obs_file', obs_file)
+        correct_zeropoint(obs_file, plot_all=False)
+        print('=========\n\n')
+
 
 

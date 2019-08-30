@@ -623,7 +623,7 @@ if single_iterate:
         
         #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
         #conv_spec= convolve_spectrum(target_spec, header)
-        plot_spectrum(target_spec, filename, header, smooth=True, norm=True, kernel_type='box')
+        plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
         #target_spec[1]=header['airmass']
@@ -640,7 +640,7 @@ if single_iterate:
         #plot_SNR(target_spec, target_noise, filename)
         #plot_dwavelength(target_spec, filename)
         #spt.show_plot(show_telluric=False, show_legend=False)
-        #spt.show_plot(show_legend=False, line_id='')
+        spt.show_plot(show_legend=False, line_id='')
         #plt.legend()
         #plt.show()
         counter+=1
@@ -648,7 +648,7 @@ if single_iterate:
             #plt.title(header['airoftyp'])
         #except KeyError:
             #pass
-    plt.xlim(3700,9000)
+    #plt.xlim(3700,9000)
     spt.show_plot(show_legend=True)
     #spt.show_plot(show_legend=False, show_telluric=False)
     #spt.show_plot(show_telluric=False)

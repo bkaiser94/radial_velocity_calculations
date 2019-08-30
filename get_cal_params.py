@@ -6,8 +6,11 @@ called needs...hopefully, as always.
 
 
 """
-from astropy.io import fits
+from __future__ import print_function
 
+from astropy.io import fits
+from astropy import coordinates as coords
+from astropy import units as u
 
 import cal_params as cp
 
@@ -15,3 +18,18 @@ import cal_params as cp
 def get_cal_params(header):
     setup_dict= cp.cal_params[header['GRATING']][header['CAM_TARG']][header['GRT_TARG']][header['INSTCONF']]
     return setup_dict
+
+def identify_standard(header):
+    target_loc= coords.SkyCoord(header['RA'], header['DEC'], frame='icrs', unit=(u.hourangle, u.deg))
+    for standard_name in cp.standard_dict:
+        ra= cp.standard_dict[standard_name]['ra']
+        dec= cp.standard_dict[standard_name]['dec']
+        standard_loc= coords.SkyCoord(ra, dec, frame='icrs', unit=(u.hourangle, u.deg))
+        distance= standard_loc.separation(target_loc)
+        if distance.to(u.arcmin).value < cp.distance_threshold:
+            print('Standard matched: ', standard_name)
+            return standard_name
+        else:
+            pass
+    print('No standards matched. Check that the file is in fact a standard, or maybe change cal_params.distance_threshold to be higher.')
+    return

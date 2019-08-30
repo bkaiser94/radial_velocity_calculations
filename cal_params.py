@@ -196,51 +196,44 @@ telluric_lines=[
     [10500.,20000.]]
 
 
-#old flux cal references
-#standard_dict={
-    #'eg274':{
-        #'ra':'0',
-        #'dec':'0',
-        #'filename':'fhamuy/feg274.dat',
-        #'sens_filename':'EG274_sensitivity_curve.txt',
-        #'balmer_masks':balmer_lines_wide,
-        #'other_masks': telluric_lines}
-    #}
-        
 #systemic velocities taken from Simbad. See Page 37 of General Clemens VII for further info.
 #all velocities in km/s
 #Feige110 didn't have one listed at the top of Simbad; I assume there is one, but I haven't gotten it yet.
 #GD71 = 12.0 +/- 3.4
 #LTT3218 29.3+/- 2.9
 #all others don't have uncertainties listed except EG274 which is +/- 0.1 km/s
+#coordinates are approximately the Gaia-projected coordinates for 2019
+
+distance_threshold= 1. #distance in arcminutes that an observation can be away from a standard to count as that standard
+
 standard_dict={
     'eg274':{
-        'ra':'0',
-        'dec':'0',
+        'ra':'16:23:33.96',
+        'dec':' -39:13:46.4',
         'sys_vel':13.0,
         'filename':'xshooter_standards/fEg274.dat',
         'sens_filename':'EG274_sensitivity_curve.txt',
         'balmer_masks':balmer_lines_wide,
         'other_masks': telluric_lines},
     'gd153':{
-        'ra':'0',
-        'dec':'0',
+        'ra':'12:57:02.26',
+        'dec':' +22:01:48.8',
         'sys_vel': 67.0,
         'filename':'xshooter_standards/fGD153.dat',
         'sens_filename':'GD153_sensitivity_curve.txt',
         'balmer_masks':balmer_lines_wide,
         'other_masks': telluric_lines},
     'feige110':{
-        'ra':'0',
-        'dec':'0',
+        'ra':'23:19:58.39',
+        'dec':' -05:09:56.1',
         'sys_vel': 0.0,
         'filename':'xshooter_standards/fFeige110.dat',
         'sens_filename':'Feige110_sensitivity_curve.txt',
         'balmer_masks':balmer_lines_wide,
         'other_masks': telluric_lines},
     'ltt7987':{
-        'ra':'0',
-        'dec':'0',
+        'ra':'20:10:56.35',
+        'dec':' -30:13:11.4',
         'sys_vel':75.40,
         'filename':'xshooter_standards/fLTT7987.dat',
         'sens_filename':'LTT7987_sensitivity_curve.txt',
