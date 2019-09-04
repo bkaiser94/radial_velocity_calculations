@@ -97,6 +97,7 @@ standard_name='EG274'
 
 #observed_file='avg_wctb.EG274_400m1.fits'
 observed_file='avg_wctb.EG274_400m2.fits'
+#observed_file='avg_wctb.EG274_400m2_fix.fits'
 #observed_file='avg_wctb.Feige110_400m2.fits'
 #observed_file='avg_wctb.Feige110stand_400m2.fits'
 #observed_file='avg_wctb.Feige110second_400m2.fits'

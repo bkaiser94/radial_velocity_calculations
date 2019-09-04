@@ -77,16 +77,16 @@ def to_barycenter(header):
     return header
 
 ####
-trace_offset =0#amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
+trace_offset =-32#amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
 
 #trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
 #trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
 #trace_band_mid=110
-trace_band_mid=95
+#trace_band_mid=95
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
-#trace_band_mid=60 #
+trace_band_mid=130 #
 #trace_band_width=16
 #trace_band_width = 90 #pixel width to determine the center of the trace 2019-03-25 commented out
 trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
@@ -97,7 +97,7 @@ trace_band_width = 50#pixel width to determine the center of the trace 2019-03-2
 #trace_band_width = 50 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 sigma_multi_side= 2.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-#sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction windo
+#sigma_multi_side= 1 #multiple of sigma value of trace gaussian that should be distance out to go for extraction windo
 
 core_sides=  5
 #core_sides=  7
@@ -110,9 +110,9 @@ flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
 #bkg_shift= 30 #standard shift used
-#bkg_shift=70
+bkg_shift=60
 #bkg_shift= 64
-bkg_shift=55
+#bkg_shift=55
 bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
 bkg_max_side= bkg_shift/2.-5
