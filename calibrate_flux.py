@@ -40,7 +40,7 @@ target_list = speclist[0]
 sens_curve_list = speclist[1]
 
 bad_noise_sub = 100
-do_tell_corr= False
+do_tell_corr= True
 do_rv_barycorr=False
 do_ext_corr= True
 plot_across_night=False

@@ -36,7 +36,7 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-pix_width=5
+pix_width=3
 sdss_pix_width = 10
 sdss_scale_factor=20.6 #BOSS scaling
 #sdss_scale_factor= 1.467 #SDSS spectrograph scaling
@@ -62,8 +62,8 @@ plot_400m2_tell= False
 #norm_range=[40,80]
 
 #norm_range=[7042,7046]
-norm_range=[7490,7510] #outside telluric
-#norm_range=[7470, 7530]
+#norm_range=[7490,7510] #outside telluric
+norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
@@ -74,11 +74,11 @@ norm_range=[7490,7510] #outside telluric
 #norm_range=[5740,5850]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-file_setting= 'compare_SDSS'
+#file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -91,7 +91,7 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('ravg_fwctb*fits')
+    filenames=glob('ravg_fwctb*LTT*fits')
     #filenames=glob('*avg_fwctb*DQpec*fits')
     #filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
@@ -117,7 +117,7 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*')
+    filenames=glob('fwctb*LTT*')
     #filenames=glob('fwctb*aia*1644*')
     #filenames=glob('fwctb*2356*')
     single_iterate=True
@@ -157,8 +157,10 @@ elif file_setting=='all_SDSS':
 elif file_setting== 'two_arm':
     #m1_names =glob('avg_fwctb*400m1*fits')
     #m2_names= glob('avg_fwctb*400m2*fits')
-    m1_names =glob('ravg_fwctb*400m1*fits')
-    m2_names= glob('ravg_fwctb*400m2*fits')
+    #m1_names =glob('ravg_fwctb*400m1*fits')
+    #m2_names= glob('ravg_fwctb*400m2*fits')
+    m1_names =glob('ravg_fwctb*400m1*DZNa*fits')
+    m2_names= glob('ravg_fwctb*400m2*DZNa*fits')
     #m1_names =glob('super_fwctb*400m1*fits')
     #m2_names= glob('super_fwctb*400m2*fits')
     #m1_names =glob('avg_wctb*400m1*fits')
@@ -620,10 +622,10 @@ if single_iterate:
         hdu= fits.open(filename)
         #dlambda= hdu[4].data
         target_spec[0]=target_spec[0]+wavelength_offset
-        
+        print(filename, 'mean: ', np.nanmean(target_spec[1]))
         #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
         #conv_spec= convolve_spectrum(target_spec, header)
-        plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
+        plot_spectrum(target_spec, filename, header, smooth=True, norm=True, kernel_type='box')
         #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
         #target_spec[1]=header['airmass']
@@ -640,7 +642,7 @@ if single_iterate:
         #plot_SNR(target_spec, target_noise, filename)
         #plot_dwavelength(target_spec, filename)
         #spt.show_plot(show_telluric=False, show_legend=False)
-        spt.show_plot(show_legend=False, line_id='')
+        #spt.show_plot(show_legend=False, line_id='')
         #plt.legend()
         #plt.show()
         counter+=1
