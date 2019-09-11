@@ -36,10 +36,10 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-pix_width=3
+pix_width=5
 sdss_pix_width = 10
-sdss_scale_factor=20.6 #BOSS scaling
-#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+#sdss_scale_factor=20.6 #BOSS scaling
+sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 #wavelength_offset=60
 #wavelength_offset=20
 #wavelength_offset=15
@@ -63,13 +63,13 @@ plot_400m2_tell= False
 
 #norm_range=[7042,7046]
 #norm_range=[7490,7510] #outside telluric
-norm_range=[7470, 7530]
+#norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
 #norm_range=[6090,6240]
-#norm_range=[6640,6670]#20190530 400M1 norm range
+norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 ####norm_range=np.array(norm_range)+wavelength_offset
@@ -91,7 +91,7 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('ravg_fwctb*LTT*fits')
+    filenames=glob('ravg_fwctb*fits')
     #filenames=glob('*avg_fwctb*DQpec*fits')
     #filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
@@ -138,8 +138,8 @@ elif file_setting =='command':
 elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
     #sdss_names = glob(sdss_path+'*.fits')
-    sdss_names = glob(sdss_path+'*M*.fits')
-    #sdss_names = glob(sdss_path+'SDSS*.fits')
+    #sdss_names = glob(sdss_path+'*M*.fits')
+    sdss_names = glob(sdss_path+'SDSS*.fits')
     #sdss_names = glob(sdss_path+'*WDpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     print('sdss_names:',sdss_names)
@@ -159,8 +159,8 @@ elif file_setting== 'two_arm':
     #m2_names= glob('avg_fwctb*400m2*fits')
     #m1_names =glob('ravg_fwctb*400m1*fits')
     #m2_names= glob('ravg_fwctb*400m2*fits')
-    m1_names =glob('ravg_fwctb*400m1*DZNa*fits')
-    m2_names= glob('ravg_fwctb*400m2*DZNa*fits')
+    m1_names =glob('ravg_fwctb*400m1*fits')
+    m2_names= glob('ravg_fwctb*400m2*fits')
     #m1_names =glob('super_fwctb*400m1*fits')
     #m2_names= glob('super_fwctb*400m2*fits')
     #m1_names =glob('avg_wctb*400m1*fits')
@@ -543,8 +543,8 @@ if file_setting=='two_arm':
         
         target_spec2=norm_spectrum(target_spec2, norm_range)
         target_spec1=norm_spectrum(target_spec1, norm_range)
-        plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='box')
-        plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='box')
+        plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=False, kernel_type='box')
+        plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=False, kernel_type='box')
         
         #target_spec2=norm_spectrum(target_spec2, norm_range)
         #target_spec1=norm_spectrum(target_spec1, norm_range)
@@ -572,9 +572,10 @@ if file_setting=='two_arm':
         
         #plot_spectrum(sdss_spec, sdss_names[0], sdssheader, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
         
-        #plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
+        plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
         plt.xlim(3700,9000)
-        spt.show_plot(line_id='')
+        #spt.show_plot(line_id='')
+    spt.show_plot()
         
 if file_setting=='two_arm_compare_SDSS':
     target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
@@ -620,9 +621,9 @@ if single_iterate:
     for filename in filenames:
         target_spec, header, target_noise= spt.retrieve_spec(filename)
         hdu= fits.open(filename)
-        #dlambda= hdu[4].data
+        dlambda= hdu[4].data
         target_spec[0]=target_spec[0]+wavelength_offset
-        print(filename, 'mean: ', np.nanmean(target_spec[1]))
+        #print(filename, 'mean: ', np.nanmean(target_spec[1]))
         #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
         #conv_spec= convolve_spectrum(target_spec, header)
         plot_spectrum(target_spec, filename, header, smooth=True, norm=True, kernel_type='box')
@@ -642,7 +643,7 @@ if single_iterate:
         #plot_SNR(target_spec, target_noise, filename)
         #plot_dwavelength(target_spec, filename)
         #spt.show_plot(show_telluric=False, show_legend=False)
-        #spt.show_plot(show_legend=False, line_id='')
+        #spt.show_plot(show_legend=False, line_id='alkali')
         #plt.legend()
         #plt.show()
         counter+=1
@@ -650,7 +651,7 @@ if single_iterate:
             #plt.title(header['airoftyp'])
         #except KeyError:
             #pass
-    #plt.xlim(3700,9000)
+    plt.xlim(3700,9000)
     spt.show_plot(show_legend=True)
     #spt.show_plot(show_legend=False, show_telluric=False)
     #spt.show_plot(show_telluric=False)

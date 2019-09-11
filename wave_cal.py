@@ -32,6 +32,9 @@ from astropy.table import Table, Column
 import get_cal_params as gcp
 import cal_params as cp
 import spec_plot_tools as spt
+import spectral_extraction_tools as spext
+
+
 
 zerolistname= 'listZero'
 
@@ -89,20 +92,20 @@ trace_band_mid=95
 #trace_band_mid=130 #
 #trace_band_width=16
 #trace_band_width = 90 #pixel width to determine the center of the trace 2019-03-25 commented out
-trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
-#trace_band_width=190#super wide search range
+#trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
+trace_band_width=190#super wide search range
 #trace_band_width= 14 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 50 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side= 2.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+sigma_multi_side=2.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 #sigma_multi_side= 1 #multiple of sigma value of trace gaussian that should be distance out to go for extraction windo
 
-core_sides=  5
+#core_sides=  5
 #core_sides=  7
 
-y_trace_width= core_sides*2+1 #the actual number of pixels in the vertical direction that are in the trace (or background)
+#y_trace_width= core_sides*2+1 #the actual number of pixels in the vertical direction that are in the trace (or background)
 poly_degree = 3 #polynomial degree of the fit to the trace
 lamp_poly_degree=5
 #lamp_poly_degree=3
@@ -113,8 +116,9 @@ bkg_shift= 30 #standard shift used
 #bkg_shift=60
 #bkg_shift= 64
 #bkg_shift=55
-bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
+#bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
+#bkg_side_multi=2.5 #mutliple of core_sides that that  bkg_core_sides should be later
 bkg_max_side= bkg_shift/2.-5
 lamp_sigma_guess= 2
 line_search_width = 3#formerly 3 20190502
@@ -146,6 +150,10 @@ do_airglow_corr=True
 #air_off_type='lambda' #if you want the airglow offset to be applied in wavelength space, i.e. subtract a lambda value from all wavelength values
 air_off_type='pixel' #if you want the offset to be applied in pixel space
 #air_off_type='none' #setting for not applying the airglow correction. Realistically you should just set do_airglow_corr=False for this option
+
+bkg_method= 'avg' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
+bkg_poly= 2 #polynomial degree for background fitting.
+
 
 #fear_array= np.genfromtxt(linefilename, names = True)
 #line_x_checks = np.copy(fear_array['Pixel']) +90
@@ -325,8 +333,8 @@ def fit_slitskyline_function(x_pixels, light_values,  header, p0_dict= cp.slit_a
         #print('AttributeError:', error)
     #print('slit_model:',slit_model)
     #print('fitted_model:', fitted_model)
-    print('initial guesses:', p0_list_sky)
-    print('Gaussian vals:', popt)
+    #print('initial guesses:', p0_list_sky)
+    #print('Gaussian vals:', popt)
     
     if plot_all:
         plt.plot(x_pixels, light_values, color='b')
@@ -403,13 +411,6 @@ def find_skyline_offset(x_pixels, light_values, airline_lambda, wave_coeffs, hea
         offset=0
     return offset, offset_lambda
 
-
-def iterate_gauss_trace():
-    """
-    
-    
-    """
-    return
 
 
 def normalize_flat(masterflatfile=masterflatfile, plot_all = False):
@@ -616,6 +617,13 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         target_light= np.append(target_light,[xsum])
         #bkg_sum= np.sum(target_med[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
         bkg_sum= np.sum(target_med[bkg_trace(x_pos)-core_sides:bkg_trace(x_pos)+core_sides+1, x_pos])
+        #if bkg_method=='avg':
+        #elif bkg_method=='poly':
+            #pass
+        #else:
+            #print('No valid bkg_method selected')
+            #print('bkg_method:', bkg_method)
+            #pass
         bkg_light= np.append(bkg_light,[bkg_sum])
         #lamp_sum= np.sum(lamp_im[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
         lamp_sum= np.average(lamp_im[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
@@ -769,13 +777,16 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
 ######3 Flat handling
 
 print "skip_flat=", skip_flat
-normed_flat= normalize_flat(plot_all = True)
+if skip_flat:
+    example_hdu= fits.open(speclist[1])
+    example_im= example_hdu[0].data
+    normed_flat= np.ones(example_im.shape)
+    print "skipping flat-fielding.\nYes, I know it just went to all the trouble of calculating the flat stuff."
+else:
+    normed_flat= normalize_flat(plot_all = True)
 print "\n==================\n"
 print "skip_flat=", skip_flat
 print "\n\n"
-if skip_flat:
-    normed_flat= np.ones(normed_flat.shape)
-    print "skipping flat-fielding.\nYes, I know it just went to all the trouble of calculating the flat stuff."
 print "\n\n==================\n"
 
 
@@ -911,6 +922,9 @@ for counter, img in enumerate(speclist):
         lower_edges= np.polyval(polynomials[1], x_positions-0.5) #lower_wavelength edges
         dlambda_vals= upper_edges-lower_edges
         
+        #outsourced spectral extaction function
+        #ctarget_light, cbkg_light, cnoise_spec= spext.extract_spectrum(img_data, header, polynomials=polynomials, core_sides= core_sides, bkg_core_sides=bkg_core_sides, bkg_shift=bkg_shift, bkg_method=bkg_method, bkg_poly_deg= bkg_poly, n_biases= n_biases)
+        
         def bkg_trace(x_positions, sign='minus'):
             #return  np.int_(poly_curve_y[x_positions]+bkg_shift)
             if sign=='minus':
@@ -926,6 +940,7 @@ for counter, img in enumerate(speclist):
             target_noise2 = np.copy(xsum+trace_vals.shape[0]*header['RDNOISE']**2+trace_vals.shape[0]*header['RDNOISE']**2/n_biases)
             target_noise2_list= np.append(target_noise2_list, [target_noise2])
             #up_bkg=img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+bkg_core_sides+1),x_pos]
+            #bkg_up_coords= 
             up_bkg=img_data[bkg_trace(x_pos, sign='plus')-bkg_core_sides:bkg_trace(x_pos, sign='plus')+bkg_core_sides+1,x_pos]
             #down_bkg= img_data[np.int_(poly_curve_y[x_pos]-bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]-bkg_shift+bkg_core_sides+1),x_pos]
             down_bkg= img_data[bkg_trace(x_pos, sign='minus')-bkg_core_sides:bkg_trace(x_pos, sign='minus') +bkg_core_sides+1,x_pos]
@@ -962,6 +977,13 @@ for counter, img in enumerate(speclist):
         target_light= target_light/header['EXPTIME'] #converting to counts/s
         bkg_light= bkg_light/header['EXPTIME'] #converting to counts/s
         
+        plt.plot(target_light, label='target avg bkg')
+        plt.plot(ctarget_light, label='target poly bkg')
+        plt.plot(bkg_light, label='avg bkg')
+        plt.plot(cbkg_light, label='poly bkg')
+        plt.legend()
+        plt.title('comparison of bkg methods')
+        plt.show()
         if (do_airglow_corr and setup_dict['air_corr']) :
             #airline_array= np.genfromtxt(cp.line_list_dir+ cp.airline_name, names = True, delimiter='\t')
             airline_array= Table.read(cp.line_list_dir+cp.airline_name, format='ascii.tab')
