@@ -325,9 +325,10 @@ def make_rebin_avg_spec(target_list):
         rebin_fluxes.append(rebin_list[1])
         rebin_skies.append(rebin_list[2])
         rebin_noise2s.append(rebin_list[3])
+    
     avg_rebin_flux= np.nanmean(rebin_fluxes, axis=0)
     avg_rebin_sky= np.nanmean(rebin_skies, axis=0)
-    avg_rebin_noise2= np.nanmean(rebin_noise2s, axis=0)
+    avg_rebin_noise2= np.nanmean(rebin_noise2s, axis=0)**2/np.nansum(rebin_noise2s, axis=0)
     avg_rebin_noise= np.sqrt(avg_rebin_noise2)
     avg_rebin_noise=avg_rebin_noise/avg_rebin_flux
     hdu=fits.PrimaryHDU(ref_spec[0], header= ref_header)

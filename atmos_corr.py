@@ -32,6 +32,7 @@ import get_cal_params as gcp
 
 #sens_names = glob('E*sensitivity_curve.txt')+glob('G*sensitivity_curve.txt')+glob('e*sens*curve.txt')
 sens_names=glob('sens_curv*')
+#sens_names=glob('sens*')
 #sens_names = glob('*sensitivity*.txt')
 
 resid_names= glob('resid*.txt')
@@ -39,8 +40,9 @@ resid_names= glob('resid*.txt')
 tell_names= glob('tell*')
 do_fnu=False
 
-wavelengths = np.linspace(4940,8980, 8080) #400M2 approximately
+#wavelengths = np.linspace(4940,8980, 8080) #400M2 approximately
 #wavelengths = np.linspace(3800,7200, 8080) #400M1 approximately
+wavelengths= np.linspace(3800, 8980, 10000)
 
 
 def extract_AM_MJD(sens_curve_file):
@@ -131,17 +133,19 @@ plt.xlabel('airmass')
 plt.ylabel('max throughput of sensitivity curve')
 plt.show()
 
-#for resid_name in resid_names:
-    #airmass, mjd= extract_AM_MJD(resid_name)
-    #resid_array = np.genfromtxt(resid_name)
-    #max_index= np.argmax(sens_curve)
-    #label= ','.join([resid_name, str(airmass), str(mjd)])
-    #plt.plot(resid_array, label=label)
-    #print("\n=============")
-    #print(sens_name)
-    #print('airmass:', airmass, 'mjd:', mjd)
-#plt.xlabel(r'Pixel')
-#spt.show_plot()
+for resid_name in resid_names:
+    header_dict= extract_AM_MJD(resid_name)
+    airmass= header_dict['Airmass']
+    mjd=header_dict['MJD']
+    resid_array = np.genfromtxt(resid_name)
+    max_index= np.argmax(sens_curve)
+    label= ','.join([resid_name, str(airmass), str(mjd)])
+    plt.plot(resid_array, label=label)
+    print("\n=============")
+    print(sens_name)
+    print('airmass:', airmass, 'mjd:', mjd)
+plt.xlabel(r'Pixel')
+spt.show_plot()
 
 tell1_array=  np.genfromtxt(tell_names[0], skip_header=1).T
 tell1_waves= tell1_array[0]

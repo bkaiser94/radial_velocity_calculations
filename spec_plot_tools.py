@@ -661,7 +661,7 @@ def rebin_spec(input_filename, desired_waves, desired_dlambda):
         
         rebin_flux_list.append(np.sum(target_flux*rebin_factors))
         rebin_sky_list.append(np.sum(sky* rebin_factors))
-        rebin_noise2_list.append(np.sum(noise2*rebin_factors))
+        rebin_noise2_list.append(np.sum(noise2*rebin_factors**2))
         
     #plt.plot(desired_waves, rebin_flux_list, label='rebinned spectrum')
     #plt.plot(target_spec[0], target_spec[1], label='original spectrum')

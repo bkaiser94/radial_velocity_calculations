@@ -55,7 +55,7 @@ sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #sdss_path= sdss_path+'G0_K5/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 #print(filenames)
-plot_wavelength=True
+plot_wavelength=False
 plot_400m2_tell= False
 #norm_range=[1240,1280]
 #norm_range=[1560,1590]
@@ -69,9 +69,10 @@ plot_400m2_tell= False
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
 #norm_range=[6090,6240]
-norm_range=[6640,6670]#20190530 400M1 norm range
+#norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
+norm_range=[5270,5560]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
 file_setting='all_avg'
@@ -108,7 +109,7 @@ if file_setting=='all_avg':
 
 elif file_setting=='all_wctb':
     print(file_setting)
-    filenames=glob('wctb*')
+    filenames=glob('wctb*aia*449_*')
     #filenames=glob('wctb*Feige110_*')
     #filenames=glob('wctb*aia*2320*')
     single_iterate=True
@@ -117,8 +118,8 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*LTT*')
-    #filenames=glob('fwctb*aia*1644*')
+    #filenames=glob('fwctb*LTT*')
+    filenames=glob('fwctb*aia*9_*')
     #filenames=glob('fwctb*2356*')
     single_iterate=True
     double_iterate=False
@@ -626,7 +627,7 @@ if single_iterate:
         #print(filename, 'mean: ', np.nanmean(target_spec[1]))
         #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
         #conv_spec= convolve_spectrum(target_spec, header)
-        plot_spectrum(target_spec, filename, header, smooth=True, norm=True, kernel_type='box')
+        plot_spectrum(target_spec, filename+str(header['airmass']), header, smooth=True, norm=True, kernel_type='box')
         #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
         #target_spec[1]=header['airmass']
