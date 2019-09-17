@@ -36,7 +36,7 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-pix_width=5
+pix_width=10
 sdss_pix_width = 10
 #sdss_scale_factor=20.6 #BOSS scaling
 sdss_scale_factor= 1.467 #SDSS spectrograph scaling
@@ -55,7 +55,7 @@ sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #sdss_path= sdss_path+'G0_K5/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 #print(filenames)
-plot_wavelength=False
+plot_wavelength=True
 plot_400m2_tell= False
 #norm_range=[1240,1280]
 #norm_range=[1560,1590]
@@ -63,7 +63,7 @@ plot_400m2_tell= False
 
 #norm_range=[7042,7046]
 #norm_range=[7490,7510] #outside telluric
-#norm_range=[7470, 7530]
+norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
@@ -72,7 +72,7 @@ plot_400m2_tell= False
 #norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
-norm_range=[5270,5560]
+#norm_range=[5270,5560]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
 file_setting='all_avg'
@@ -92,7 +92,7 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('ravg_fwctb*fits')
+    filenames=glob('ravg_fwctb*0356*avg_*fits')
     #filenames=glob('*avg_fwctb*DQpec*fits')
     #filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
@@ -138,9 +138,9 @@ elif file_setting =='command':
     
 elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
-    #sdss_names = glob(sdss_path+'*.fits')
+    sdss_names = glob(sdss_path+'*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
-    sdss_names = glob(sdss_path+'SDSS*.fits')
+    #sdss_names = glob(sdss_path+'SDSS*.fits')
     #sdss_names = glob(sdss_path+'*WDpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     print('sdss_names:',sdss_names)
@@ -292,7 +292,7 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
     print(title_string)
     plt.title(title_string)
     #plt.xlim(np.nanmin(spec[0]), np.nanmax(spec[0]))
-    plt.ylim(bottom=0)
+    #plt.ylim(bottom=0)
     #plt.ylabel('Flux')
     #plt.title(filename)
     #plt.plot(spec[0], spec[1])
@@ -627,7 +627,8 @@ if single_iterate:
         #print(filename, 'mean: ', np.nanmean(target_spec[1]))
         #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
         #conv_spec= convolve_spectrum(target_spec, header)
-        plot_spectrum(target_spec, filename+str(header['airmass']), header, smooth=True, norm=True, kernel_type='box')
+        plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
+        #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
         #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
         #target_spec[1]=header['airmass']
@@ -644,7 +645,7 @@ if single_iterate:
         #plot_SNR(target_spec, target_noise, filename)
         #plot_dwavelength(target_spec, filename)
         #spt.show_plot(show_telluric=False, show_legend=False)
-        #spt.show_plot(show_legend=False, line_id='alkali')
+        #spt.show_plot(show_legend=False, line_id='')
         #plt.legend()
         #plt.show()
         counter+=1
@@ -652,8 +653,8 @@ if single_iterate:
             #plt.title(header['airoftyp'])
         #except KeyError:
             #pass
-    plt.xlim(3700,9000)
-    spt.show_plot(show_legend=True)
+    #plt.xlim(3700,9000)
+    spt.show_plot(show_legend=True, line_id='')
     #spt.show_plot(show_legend=False, show_telluric=False)
     #spt.show_plot(show_telluric=False)
     #plt.legend()
@@ -668,7 +669,7 @@ if double_iterate:
         target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
         for filename2 in filenames:
             target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
-            plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True, kernel_type='box')
+            plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True, kernel_type='box')
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
             #plot_spectrum(target_spec1, filename1, header1, norm=False, smooth=True, kernel_type='box')

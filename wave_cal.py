@@ -80,7 +80,7 @@ def to_barycenter(header):
     return header
 
 ####
-trace_offset =0#amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
+trace_offset =112#amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
 
 #trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
 #trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
@@ -99,7 +99,7 @@ trace_band_width=190#super wide search range
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 50 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side=2.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 #sigma_multi_side= 1 #multiple of sigma value of trace gaussian that should be distance out to go for extraction windo
 
 #core_sides=  5
@@ -113,13 +113,13 @@ flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
 #bkg_shift= 30 #standard shift used
-#bkg_shift=60
+bkg_shift=15
 #bkg_shift= 64
-bkg_shift=50
+#bkg_shift=70
 #bkg_shift=55
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
-#bkg_side_multi=2.5 #mutliple of core_sides that that  bkg_core_sides should be later
+#bkg_side_multi=3.5 #mutliple of core_sides that that  bkg_core_sides should be later
 bkg_max_side= bkg_shift/2.-5
 lamp_sigma_guess= 2
 line_search_width = 3#formerly 3 20190502
@@ -152,7 +152,7 @@ do_airglow_corr=True
 air_off_type='pixel' #if you want the offset to be applied in pixel space
 #air_off_type='none' #setting for not applying the airglow correction. Realistically you should just set do_airglow_corr=False for this option
 
-bkg_method= 'avg' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
+bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
 bkg_poly= 2 #polynomial degree for background fitting.
 
 
@@ -907,84 +907,94 @@ for counter, img in enumerate(speclist):
         
         #end of 20190624 changed stuff
         
+        #outsourced spectral extaction function
+        #ctarget_light, cbkg_light, cnoise_spec= spext.extract_spectrum(img_data, header, polynomials=polynomials, core_sides= core_sides, bkg_core_sides=bkg_core_sides, bkg_shift=bkg_shift, bkg_method=bkg_method, bkg_poly_deg= bkg_poly, n_biases= n_biases)
+        target_light, bkg_light, noise_spectrum= spext.extract_spectrum(img_data, header, polynomials=polynomials, core_sides= core_sides, bkg_core_sides=bkg_core_sides, bkg_shift=bkg_shift, bkg_method=bkg_method, bkg_poly_deg= bkg_poly, n_biases= n_biases)
+        
         
         seeing_FWHM = seeing_list[association_index]
         band_inds= np.indices(img_data.shape)
         x_positions= band_inds[1,1]
-        target_light= np.array([])
-        target_noise2_list= np.array([])
-        bkg_light= np.array([])
-        bkg_noise2_list= np.array([])
-        bkg_up_comb=np.array([])
-        bkg_down_comb= np.array([])
+        #target_light= np.array([])
+        #target_noise2_list= np.array([])
+        #bkg_light= np.array([])
+        #bkg_noise2_list= np.array([])
+        #bkg_up_comb=np.array([])
+        #bkg_down_comb= np.array([])
         poly_curve_y = np.polyval(polynomials[0], x_positions)
         poly_curve_wavelength= np.polyval(polynomials[1], x_positions)
         upper_edges= np.polyval(polynomials[1], x_positions+0.5) #upper wavelength edges
         lower_edges= np.polyval(polynomials[1], x_positions-0.5) #lower_wavelength edges
         dlambda_vals= upper_edges-lower_edges
         
-        #outsourced spectral extaction function
-        #ctarget_light, cbkg_light, cnoise_spec= spext.extract_spectrum(img_data, header, polynomials=polynomials, core_sides= core_sides, bkg_core_sides=bkg_core_sides, bkg_shift=bkg_shift, bkg_method=bkg_method, bkg_poly_deg= bkg_poly, n_biases= n_biases)
-        
-        def bkg_trace(x_positions, sign='minus'):
-            #return  np.int_(poly_curve_y[x_positions]+bkg_shift)
-            if sign=='minus':
-                return  spt.discrete_int(poly_curve_y[x_positions])-bkg_shift
-            elif sign=='plus':
-                return spt.discrete_int(poly_curve_y[x_positions])+bkg_shift
-        for x_pos in x_positions:
-            #trace_vals=img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos]
-            trace_vals=img_data[spt.discrete_int(poly_curve_y[x_pos])-core_sides:spt.discrete_int(poly_curve_y[x_pos])+core_sides+1,x_pos]
-            xsum= np.sum(trace_vals)
-            #xsum= np.sum(img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos]) #old way 2018-10-31
-            target_light= np.append(target_light,[xsum])
-            target_noise2 = np.copy(xsum+trace_vals.shape[0]*header['RDNOISE']**2+trace_vals.shape[0]*header['RDNOISE']**2/n_biases)
-            target_noise2_list= np.append(target_noise2_list, [target_noise2])
-            #up_bkg=img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+bkg_core_sides+1),x_pos]
-            #bkg_up_coords= 
-            up_bkg=img_data[bkg_trace(x_pos, sign='plus')-bkg_core_sides:bkg_trace(x_pos, sign='plus')+bkg_core_sides+1,x_pos]
-            #down_bkg= img_data[np.int_(poly_curve_y[x_pos]-bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]-bkg_shift+bkg_core_sides+1),x_pos]
-            down_bkg= img_data[bkg_trace(x_pos, sign='minus')-bkg_core_sides:bkg_trace(x_pos, sign='minus') +bkg_core_sides+1,x_pos]
+        #def bkg_trace(x_positions, sign='minus'):
+            ##return  np.int_(poly_curve_y[x_positions]+bkg_shift)
+            #if sign=='minus':
+                #return  spt.discrete_int(poly_curve_y[x_positions])-bkg_shift
+            #elif sign=='plus':
+                #return spt.discrete_int(poly_curve_y[x_positions])+bkg_shift
+        #for x_pos in x_positions:
+            ##trace_vals=img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos]
+            #trace_vals=img_data[spt.discrete_int(poly_curve_y[x_pos])-core_sides:spt.discrete_int(poly_curve_y[x_pos])+core_sides+1,x_pos]
+            #xsum= np.sum(trace_vals)
+            ##xsum= np.sum(img_data[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos]) #old way 2018-10-31
+            #target_light= np.append(target_light,[xsum])
+            #target_noise2 = np.copy(xsum+trace_vals.shape[0]*header['RDNOISE']**2+trace_vals.shape[0]*header['RDNOISE']**2/n_biases)
+            #target_noise2_list= np.append(target_noise2_list, [target_noise2])
+            ##up_bkg=img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+bkg_core_sides+1),x_pos]
+            ##bkg_up_coords= 
+            #up_bkg=img_data[bkg_trace(x_pos, sign='plus')-bkg_core_sides:bkg_trace(x_pos, sign='plus')+bkg_core_sides+1,x_pos]
+            ##down_bkg= img_data[np.int_(poly_curve_y[x_pos]-bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]-bkg_shift+bkg_core_sides+1),x_pos]
+            #down_bkg= img_data[bkg_trace(x_pos, sign='minus')-bkg_core_sides:bkg_trace(x_pos, sign='minus') +bkg_core_sides+1,x_pos]
             
-            plt.legend()
-            bkg_comb= np.append(up_bkg, down_bkg)
-            #print "trace_vals.shape", trace_vals.shape
-            #print "bkg_comb.shape", bkg_comb.shape
-            bkg_noise2= trace_vals.shape[0]*np.copy(np.mean(bkg_comb)/bkg_comb.shape[0]+header['RDNOISE']**2/bkg_comb.shape[0]+header['RDNOISE']**2/(bkg_comb.shape[0]*n_biases))
-            #bkg_sum= np.sum(img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
-            bkg_sum= trace_vals.shape[0]*np.copy(np.mean(bkg_comb)) #take the mean of the bkg portion of the sky
-            bkg_light= np.append(bkg_light,[bkg_sum])
-            bkg_noise2_list= np.append(bkg_noise2_list, [bkg_noise2]) #list of noise values for a single pixel (resulting from the mean of the sky) for a given column
-            bkg_up_comb= np.append(bkg_up_comb, [np.sum(up_bkg)])
-            bkg_down_comb= np.append(bkg_down_comb, [np.sum(down_bkg)])
-        #plt.plot(bkg_up_comb, label='bkg_up_comb')
-        #plt.plot(bkg_down_comb, label='bkg_down_comb')
-        #plt.plot(target_light, label='target_light')
-        #plt.title('Before sky subtraction')
-        #plt.legend()
-        #plt.xlabel('pixel')
-        #plt.ylabel('counts')
-        #plt.show()
-        #plt.plot(x_positions,target_light,'-')
-        #plt.xlabel('x (pixel)')
-        #plt.ylabel('Counts')
-        #plt.title('Target Spectrum')
-        #plt.show()
-        #noise_spectrum = np.copy(np.sqrt(target_light + bkg_light + y_trace_width*header['RDNOISE'])) #old way 2018-10-31
-        noise_spectrum= np.copy(np.sqrt(target_noise2_list+bkg_noise2_list)) #combination of noises of the background pixels and the target trace pixels.
-        print "noise_spectrum.shape", noise_spectrum.shape
-        target_light= target_light-bkg_light
-        noise_spectrum = noise_spectrum/target_light #normalized noise values by the target spectrum, so now unitless.
-        target_light= target_light/header['EXPTIME'] #converting to counts/s
-        bkg_light= bkg_light/header['EXPTIME'] #converting to counts/s
+            #plt.legend()
+            #bkg_comb= np.append(up_bkg, down_bkg)
+            ##print "trace_vals.shape", trace_vals.shape
+            ##print "bkg_comb.shape", bkg_comb.shape
+            #bkg_noise2= trace_vals.shape[0]*np.copy(np.mean(bkg_comb)/bkg_comb.shape[0]+header['RDNOISE']**2/bkg_comb.shape[0]+header['RDNOISE']**2/(bkg_comb.shape[0]*n_biases))
+            ##bkg_sum= np.sum(img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
+            #bkg_sum= trace_vals.shape[0]*np.copy(np.mean(bkg_comb)) #take the mean of the bkg portion of the sky
+            #bkg_light= np.append(bkg_light,[bkg_sum])
+            #bkg_noise2_list= np.append(bkg_noise2_list, [bkg_noise2]) #list of noise values for a single pixel (resulting from the mean of the sky) for a given column
+            #bkg_up_comb= np.append(bkg_up_comb, [np.sum(up_bkg)])
+            #bkg_down_comb= np.append(bkg_down_comb, [np.sum(down_bkg)])
+        ##plt.plot(bkg_up_comb, label='bkg_up_comb')
+        ##plt.plot(bkg_down_comb, label='bkg_down_comb')
+        ##plt.plot(target_light, label='target_light')
+        ##plt.title('Before sky subtraction')
+        ##plt.legend()
+        ##plt.xlabel('pixel')
+        ##plt.ylabel('counts')
+        ##plt.show()
+        ##plt.plot(x_positions,target_light,'-')
+        ##plt.xlabel('x (pixel)')
+        ##plt.ylabel('Counts')
+        ##plt.title('Target Spectrum')
+        ##plt.show()
+        ##noise_spectrum = np.copy(np.sqrt(target_light + bkg_light + y_trace_width*header['RDNOISE'])) #old way 2018-10-31
+        #noise_spectrum= np.copy(np.sqrt(target_noise2_list+bkg_noise2_list)) #combination of noises of the background pixels and the target trace pixels.
+        #print "noise_spectrum.shape", noise_spectrum.shape
+        #target_light= target_light-bkg_light
+        #noise_spectrum = noise_spectrum/target_light #normalized noise values by the target spectrum, so now unitless.
+        #target_light= target_light/header['EXPTIME'] #converting to counts/s
+        #bkg_light= bkg_light/header['EXPTIME'] #converting to counts/s
         
         #plt.plot(target_light, label='target avg bkg')
-        ##plt.plot(ctarget_light, label='target poly bkg')
+        #plt.plot(ctarget_light, label='spext bkg '+bkg_method, linestyle='--')
         #plt.plot(bkg_light, label='avg bkg')
-        ##plt.plot(cbkg_light, label='poly bkg')
+        #plt.plot(cbkg_light, label='spext bkg '+bkg_method, linestyle='--')
         #plt.legend()
         #plt.title('comparison of bkg methods')
         #plt.show()
+        
+        
+        header.append(card=('bkgtype', bkg_method, 'method of bkg determination'))
+        if bkg_method=='poly':
+            header.append(card=('bkgdeg', bkg_poly, 'bkg polynomial degree'))
+        else:
+            pass
+        
+        
         if (do_airglow_corr and setup_dict['air_corr']) :
             #airline_array= np.genfromtxt(cp.line_list_dir+ cp.airline_name, names = True, delimiter='\t')
             airline_array= Table.read(cp.line_list_dir+cp.airline_name, format='ascii.tab')
