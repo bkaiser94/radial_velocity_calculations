@@ -84,6 +84,7 @@ cal_params={
             5.80000:{
                 'Blue':{
                     'linelistname':'400M1_HgAr.txt',
+                    #'linelistname':'400m1_HgArNe_calc20190814.txt',
                     'offset':0,
                     'trimregions':{
                         'x':[380,blue_default_trim['x'][1]],

@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from glob import glob
 from astropy.io import fits
+import scipy.interpolate as scinterp
 
 
 #flatlistname='listFlat'
@@ -23,6 +24,8 @@ from astropy.io import fits
 
 plot_all= True
 master_flat_name= 'mctb.master_flat.fits'
+
+poly_degree= 50
 
 def make_image_stack(imagelist):
     """
@@ -40,6 +43,35 @@ def make_image_stack(imagelist):
         
         
     return np.array(images), readnoise, header
+
+
+
+def normalize_flat(input_flat):
+    single_projection= np.nanmean(input_flat, axis=0)
+    print('single_projection.shape', single_projection.shape)
+    x_positions=np.arange(0, single_projection.shape[0])
+    flat_poly_coeffs= np.polyfit( x_positions, single_projection, poly_degree)
+    flat_poly_vals= np.polyval(flat_poly_coeffs,x_positions)
+    
+    cs = scinterp.CubicSpline(x_positions, single_projection)
+    
+    
+    plt.plot(single_projection, label='single_projection')
+    plt.plot(flat_poly_vals, label='flat_poly_vals')
+    plt.plot(x_positions, cs(x_positions), label='CubicSpline')
+    plt.title('Flat projection and polynomial of degree ' + str(poly_degree))
+    plt.legend()
+    plt.show()
+    
+    plt.plot(single_projection/flat_poly_vals, label='divide by polynomial')
+    plt.plot(single_projection/cs(x_positions), label='divide by CubicSpline')
+    plt.title('Divided residuals of single_projection')
+    plt.legend()
+    plt.show()
+    return
+
+
+
 def make_masterflat(flatlistname):
     """
     read in all of the flat images from a list. These should already be bias-subtracted and cosmic-ray removed.
@@ -75,6 +107,10 @@ def make_masterflat(flatlistname):
     hdu1=fits.ImageHDU(flatsum_err)
     hdulist= fits.HDUList([hdu,hdu1])
     hdulist.writeto(master_flat_name, overwrite= True)
-    return
+    
+    normalize_flat(flatsum)
+    return flatsum
 
-make_masterflat('listCTBflat')
+
+
+flatsum= make_masterflat('listCTBflat')

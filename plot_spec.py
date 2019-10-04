@@ -23,6 +23,7 @@ import time
 start = time.time()
 
 
+#plt.rc('font', size =18)
 
 #print start
 import wdatmos
@@ -36,7 +37,7 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-pix_width=10
+pix_width=3
 sdss_pix_width = 10
 #sdss_scale_factor=20.6 #BOSS scaling
 sdss_scale_factor= 1.467 #SDSS spectrograph scaling
@@ -63,13 +64,14 @@ plot_400m2_tell= False
 
 #norm_range=[7042,7046]
 #norm_range=[7490,7510] #outside telluric
-norm_range=[7470, 7530]
+#norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
 #norm_range=[6090,6240]
-#norm_range=[6640,6670]#20190530 400M1 norm range
+#norm_range=[6360,6420]
+norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
@@ -92,7 +94,8 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('ravg_fwctb*0356*avg_*fits')
+    #filenames=glob('ravg_fwctb*1150*fits')
+    filenames=glob('ravg_fwctb*fits')
     #filenames=glob('*avg_fwctb*DQpec*fits')
     #filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
@@ -119,7 +122,7 @@ elif file_setting=='all_wctb':
 elif file_setting=='all_fwctb':
     print(file_setting)
     #filenames=glob('fwctb*LTT*')
-    filenames=glob('fwctb*aia*9_*')
+    filenames=glob('fwctb*2320*')
     #filenames=glob('fwctb*2356*')
     single_iterate=True
     double_iterate=False
@@ -138,13 +141,15 @@ elif file_setting =='command':
     
 elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
-    sdss_names = glob(sdss_path+'*.fits')
+    #filename=glob('ravg_fwctb*')
+    print('filename:', filename)
+    #sdss_names = glob(sdss_path+'*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
-    #sdss_names = glob(sdss_path+'SDSS*.fits')
+    sdss_names = glob(sdss_path+'SDSS*1330*.fits')
     #sdss_names = glob(sdss_path+'*WDpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     print('sdss_names:',sdss_names)
-    single_iterate=False
+    single_iterate=True
     double_iterate=False
     
 elif file_setting=='all_SDSS':
@@ -160,8 +165,8 @@ elif file_setting== 'two_arm':
     #m2_names= glob('avg_fwctb*400m2*fits')
     #m1_names =glob('ravg_fwctb*400m1*fits')
     #m2_names= glob('ravg_fwctb*400m2*fits')
-    m1_names =glob('ravg_fwctb*400m1*fits')
-    m2_names= glob('ravg_fwctb*400m2*fits')
+    m1_names =glob('ravg_fwctb*1644*400m1*fits')
+    m2_names= glob('ravg_fwctb*1644*400m2*fits')
     #m1_names =glob('super_fwctb*400m1*fits')
     #m2_names= glob('super_fwctb*400m2*fits')
     #m1_names =glob('avg_wctb*400m1*fits')
@@ -261,7 +266,8 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
         #spec[1]=spec[1]/np.nanmean(spec[1][1560:1590])
         #spec[1]=spec[1]/np.nanmean(spec[1][1020:1029])
         title_string= title_string+ ' normed'+str(norm_range)
-        plt.ylabel('Flux (normed)')
+        #plt.ylabel('Flux (normed)')
+        plt.ylabel(r'$f_{\lambda}$ (arbitrary units)')
     else:
         #plt.ylabel('Flux (ergs/cm/cm/s/A 10**-16)')
         plt.ylabel(header['units'])
@@ -363,6 +369,17 @@ def plot_SNR(spec, noise, filename):
     plt.title(filename)
     #plt.plot(spec[0], spec[1]/noise[1], color = 'r')
     plt.show()
+    return
+
+def plot_SNR_from_file(filename):
+    hdu=fits.open(filename)
+    wavelengths=np.copy(hdu[0].data)
+    scaled_noise= np.copy(hdu[3].data)
+    plt.plot(wavelengths, 1/scaled_noise, label=filename)
+    plt.title(filename)
+    plt.ylabel('S/N')
+    plt.xlabel(r'Wavelength ($\AA$)')
+    plt.xlim(np.nanmin(wavelengths), np.nanmax(wavelengths))
     return
 
 def get_median_dlambda(input_spec):
@@ -525,8 +542,9 @@ if file_setting=='two_arm':
         #target_spec1[0]=target_spec1[0]+wavelength_offset
         #plot_sky(m1_name, offset=0)
         #plot_sky(m2_name, offset=0)
-        #plot_spectrum(target_spec1, m1_name, header1, norm=False, smooth=True, kernel_type='box')
-        #plot_spectrum(target_spec2, m2_name, header2, norm=False, smooth=True, kernel_type='box')
+        
+        plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='box')
+        plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='box')
         
         #plt.scatter(target_spec1[0],target_spec1[1], color='b')
         #plt.scatter(target_spec2[0], target_spec2[1], color='r')
@@ -542,10 +560,10 @@ if file_setting=='two_arm':
         #plt.show()
         
         
-        target_spec2=norm_spectrum(target_spec2, norm_range)
-        target_spec1=norm_spectrum(target_spec1, norm_range)
-        plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=False, kernel_type='box')
-        plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=False, kernel_type='box')
+        #target_spec2=norm_spectrum(target_spec2, norm_range)
+        #target_spec1=norm_spectrum(target_spec1, norm_range)
+        #plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='box')
+        #plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='box')
         
         #target_spec2=norm_spectrum(target_spec2, norm_range)
         #target_spec1=norm_spectrum(target_spec1, norm_range)
@@ -565,15 +583,16 @@ if file_setting=='two_arm':
             #dlambda2= hdu2[4].data
             #nu_spec1= spt.flambda_to_fnu(target_spec1, dlambda1)
             #nu_spec2=spt.flambda_to_fnu(target_spec2, dlambda2)
-            #plot_spectrum(nu_spec2, 'fnu2', header2, smooth=True, norm=True, kernel_type='box')
-            #plot_spectrum(nu_spec1, 'fnu1', header1,smooth=True, norm=True, kernel_type='box')
+            #plot_spectrum(nu_spec2, 'fnu2', header2, smooth=False, norm=False, kernel_type='box')
+            #plot_spectrum(nu_spec1, 'fnu1', header1,smooth=False, norm=False, kernel_type='box')
             #plt.ylabel(r'$f_{\nu}$ $10^{-28} erg cm^{-2} s}^{-1} Hz^{-1}$')
+            #plt.title(m1_name)
         #except IndexError as error:
             #print(error)
         
         #plot_spectrum(sdss_spec, sdss_names[0], sdssheader, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
         
-        plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
+        #plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
         plt.xlim(3700,9000)
         #spt.show_plot(line_id='')
     spt.show_plot()
@@ -607,15 +626,16 @@ if file_setting=='two_arm_compare_SDSS':
         print('scaling factor:', get_median_dlambda(target_spec2)/get_median_dlambda(sdss_spec))
         plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1], sdss_spec[1]]), 99.9)+0.5)
         
-        #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], sdss_header, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='r')
-        plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
+        plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], sdss_header, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='r')
+        #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
         plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='g')
         plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='b')
         #plot_dwavelength(target_spec1, filename1, read_in=False)
         #plot_dwavelength(target_spec2, filename2, read_in=False)
         #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
         plt.xlim(3700,9000)
-        spt.show_plot(line_id='alkali')
+        plt.ylabel(r'$F_{\nu}$ (normalized)')
+        spt.show_plot(line_id='')
         
 if single_iterate:
     counter=0
@@ -643,6 +663,7 @@ if single_iterate:
         #else:
             #pass
         #plot_SNR(target_spec, target_noise, filename)
+        #plot_SNR_from_file(filename)
         #plot_dwavelength(target_spec, filename)
         #spt.show_plot(show_telluric=False, show_legend=False)
         #spt.show_plot(show_legend=False, line_id='')
@@ -654,6 +675,7 @@ if single_iterate:
         #except KeyError:
             #pass
     #plt.xlim(3700,9000)
+    #plt.ylabel(r'$f_{\nu}$ (arbitrary units)')
     spt.show_plot(show_legend=True, line_id='')
     #spt.show_plot(show_legend=False, show_telluric=False)
     #spt.show_plot(show_telluric=False)
