@@ -601,6 +601,10 @@ if file_setting=='two_arm_compare_SDSS':
     target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
     target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
     
+    
+    target_spec1[0]=spt.air_to_vac(target_spec1[0])
+    target_spec2[0]=spt.air_to_vac(target_spec2[0])
+    
     #target_spec1= spt.flambda_to_fnu(target_spec1)
     #target_spec2=spt.flambda_to_fnu(target_spec2)
     
@@ -609,8 +613,12 @@ if file_setting=='two_arm_compare_SDSS':
     
     for sdss_filename in sdss_names:
         
-        sdss_spec, sdss_header, sdss_noise2= spt.retrieve_sdss_spec(sdss_filename)
+        sdss_spec, sdss_header, sdss_noise2= spt.retrieve_sdss_spec(sdss_filename, wave_medium='vac')
+        
+        #sdss_spec[0]=spt.vac_to_air(sdss_spec[0])
+        
         sdss_spec= spt.clean_spectrum(sdss_spec, 3700, 9000, [])
+        
         
         #sdss_spec=spt.flambda_to_fnu(sdss_spec)
         
@@ -635,7 +643,7 @@ if file_setting=='two_arm_compare_SDSS':
         #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
         plt.xlim(3700,9000)
         #plt.ylabel(r'$F_{\nu}$ (normalized)')
-        spt.show_plot(line_id='')
+        spt.show_plot(line_id='alkali')
         
 if single_iterate:
     counter=0

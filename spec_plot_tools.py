@@ -15,8 +15,12 @@ from astropy.table import Table
 import scipy.interpolate as scinterp
 from astropy import coordinates as coords
 
+import ref_index
+
+
 import balmer_line_ranges as blr
 import cal_params as cp
+
 
 percentile= 50
 
@@ -25,6 +29,36 @@ parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2
 cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
 
+def air_to_vac(wavelengths):
+    
+    """
+    convert wavelengths in air to vacuum using ref_index
+    
+    INPUT: wavelengths - in angstroms
+    
+    OUTPUT: wavelengths - in angstroms
+    
+    """
+    print('wavelengths.min: ', wavelengths.min())
+    new_wavelengths= wavelengths /10.
+    new_wavelengths = ref_index.air2vac(new_wavelengths)*10. #back to angstroms
+    print('new_wavelengths.min():', new_wavelengths.min())
+    return new_wavelengths
+
+def vac_to_air(wavelengths):
+    """
+    convert wavelengths in air to vacuum using ref_index
+    
+    INPUT: wavelengths - in angstroms
+    
+    OUTPUT: wavelengths - in angstroms
+    
+    """
+    print('wavelengths.min: ', wavelengths.min())
+    new_wavelengths= wavelengths /10.
+    new_wavelengths = ref_index.vac2air(new_wavelengths)*10. #back to angstroms
+    print('new_wavelengths.min():', new_wavelengths.min())
+    return new_wavelengths
 
 def make_inside_out(input_list, min_val, max_val):
     """
@@ -305,11 +339,11 @@ def retrieve_spec(filename, scale_noise= True):
     return file_spec, header, file_noise_spec
 
 
-def retrieve_sdss_spec(filename,scale_noise=True):
+def retrieve_sdss_spec(filename,scale_noise=True, wave_medium= 'air'):
     """
     Input: filename for a spectrum from SDSS (so it has the SDSS headers and fits format)
     
-    Output:    Output: Spectrum made of a 2xN numpy array, header of the fits file you loaded it from, and noise spectrum.
+    Output:    Output: Spectrum made of a 2xN numpy array, header of the fits file you loaded it from, and noise spectrum. With wavelengths converted to AIR
     
     I.E. the same output format as retrieve_spec(), so that this is effectively a way of bringing all of the spectra together in the same format that I'm already tooled to use.
     
@@ -319,6 +353,12 @@ def retrieve_sdss_spec(filename,scale_noise=True):
     waves= 10.**np.copy(spec_array['loglam'])
     flux= np.copy(spec_array['flux'])
     flux= flux/10. #convert from 10**-17 to 10**-16
+    
+    if wave_medium=='air':
+        waves= vac_to_air(waves) #conversion to air wavelengths
+    elif wave_medium=='vac':
+        pass
+    
     try:
         noise= np.copy(spec_array['PropErr'])
     except KeyError as error:
