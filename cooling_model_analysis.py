@@ -27,12 +27,16 @@ cooling_model_file=cp.ref_dir+'WD_cooling_models/'+cooling_model_file
 #target_logg= 7.85
 #target_teff= 4030. #K
 
-target_logg=7.98
-target_teff= 4040. #K
+#target_logg=7.98
+#target_teff= 4040. #K
+
+target_logg=7.77
+target_teff= 4000.
+given_target_mass= 0.6
 
 
-target_logg=8.26
-target_teff= 4310. #K
+#target_logg=8.26
+#target_teff= 4310. #K
 
 
 cooling_table= Table.read(cooling_model_file)
@@ -45,8 +49,14 @@ print('Target mass:', target_mass)
 teffm_to_age= scinterp.interp2d(cooling_table['Teff'], cooling_table['Mass'], cooling_table['Age'], kind='cubic')
 
 target_age= teffm_to_age(target_teff, target_mass)
+target_age_gmass= teffm_to_age(target_teff, given_target_mass)
 print('Target age:', target_age)
+print('Target age assuming mass=', given_target_mass, ':', target_age_gmass)
 
+loggteff_to_age= scinterp.interp2d(cooling_table['Teff'], cooling_table['logg'], cooling_table['Age'], kind='cubic')
+
+target_age2= loggteff_to_age(target_teff, target_logg)
+print("Target age from logg and teff:", target_age2)
 
 plt.scatter(cooling_table['Teff'], cooling_table['logg'], label='cooling models')
 plt.plot(target_teff, target_logg, marker='*', color='r', markersize=12)
@@ -70,6 +80,7 @@ given_inds= np.where(cooling_table["Mass"]==given_mass)
 plt.scatter(cooling_table['Teff'][given_inds], cooling_table['Age'][given_inds], label='table vals for '+ str(given_mass))
 plt.scatter(cooling_table['Teff'][given_inds], teffm_to_age(cooling_table['Teff'][given_inds], given_mass), label='interpolated vals')
 plt.plot(target_teff, target_age, marker='*', color='r', markersize=12, label='Target')
+plt.plot(target_teff, target_age2, marker='*', color='g', markersize=12, label='Target (from teff+logg)')
 plt.legend()
 plt.xlabel('Teff')
 plt.xlim(0,70000)

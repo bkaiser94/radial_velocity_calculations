@@ -77,7 +77,7 @@ norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[5270,5560]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
@@ -86,7 +86,7 @@ file_setting='all_avg'
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
-#file_setting= 'two_arm_compare_SDSS'
+file_setting= 'two_arm_compare_SDSS'
 
 single_iterate= False
 double_iterate= False #file_settings change these in their little sections ahead if they should be changed
@@ -95,13 +95,13 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('ravg_fwctb*1150*fits')
-    filenames=glob('ravg_fwctb*fits')
+    #filenames=glob('ravg_fwctb*fits')
     #filenames=glob('*avg_fwctb*DQpec*fits')
     #filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
     #filenames=glob('avg_fwctb*Gaia*1453*')
     #filenames=glob('avg_fwctb*eg274*fits')
-    #filenames=glob('avg_fwctb*aia*1644*fits')
+    filenames=glob('ravg_fwctb*aia*1644*fits')
     #filenames=glob('avg_wctb*fits')
     #filenames=glob('avg_fwctb*NaD*fits')
     #filenames=glob('avg_fwctb*SDSSJ1252*')
@@ -601,8 +601,8 @@ if file_setting=='two_arm_compare_SDSS':
     target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
     target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
     
-    target_spec1= spt.flambda_to_fnu(target_spec1)
-    target_spec2=spt.flambda_to_fnu(target_spec2)
+    #target_spec1= spt.flambda_to_fnu(target_spec1)
+    #target_spec2=spt.flambda_to_fnu(target_spec2)
     
     target_spec1=norm_spectrum(target_spec1, norm_range)
     target_spec2= norm_spectrum(target_spec2, norm_range)
@@ -612,7 +612,7 @@ if file_setting=='two_arm_compare_SDSS':
         sdss_spec, sdss_header, sdss_noise2= spt.retrieve_sdss_spec(sdss_filename)
         sdss_spec= spt.clean_spectrum(sdss_spec, 3700, 9000, [])
         
-        sdss_spec=spt.flambda_to_fnu(sdss_spec)
+        #sdss_spec=spt.flambda_to_fnu(sdss_spec)
         
         sdss_spec= norm_spectrum(sdss_spec, norm_range)
         
@@ -634,7 +634,7 @@ if file_setting=='two_arm_compare_SDSS':
         #plot_dwavelength(target_spec2, filename2, read_in=False)
         #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
         plt.xlim(3700,9000)
-        plt.ylabel(r'$F_{\nu}$ (normalized)')
+        #plt.ylabel(r'$F_{\nu}$ (normalized)')
         spt.show_plot(line_id='')
         
 if single_iterate:
@@ -647,7 +647,7 @@ if single_iterate:
         #print(filename, 'mean: ', np.nanmean(target_spec[1]))
         #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
         #conv_spec= convolve_spectrum(target_spec, header)
-        plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
+        plot_spectrum(target_spec, filename, header, smooth=True, norm=True, kernel_type='box')
         #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
         #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
