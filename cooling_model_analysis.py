@@ -31,7 +31,10 @@ cooling_model_file=cp.ref_dir+'WD_cooling_models/'+cooling_model_file
 #target_teff= 4040. #K
 
 target_logg=7.77
-target_teff= 4000.
+target_teff= 3830.
+
+#target_logg=7.77
+#target_teff= 4000.
 given_target_mass= 0.6
 
 
@@ -41,7 +44,10 @@ given_target_mass= 0.6
 
 cooling_table= Table.read(cooling_model_file)
 
+cooling_table.pprint()
+
 loggteff_to_m = scinterp.interp2d(cooling_table['Teff'], cooling_table['logg'], cooling_table['Mass'], kind='cubic')
+loggteff_to_logTc = scinterp.interp2d([cooling_table['Teff']], [cooling_table['logg']], cooling_table['Log(Tc)'], kind='cubic')
 
 target_mass=  loggteff_to_m(target_teff, target_logg)
 print('Target mass:', target_mass)
@@ -52,6 +58,11 @@ target_age= teffm_to_age(target_teff, target_mass)
 target_age_gmass= teffm_to_age(target_teff, given_target_mass)
 print('Target age:', target_age)
 print('Target age assuming mass=', given_target_mass, ':', target_age_gmass)
+target_logTc=  loggteff_to_logTc(target_teff, target_logg)
+target_Tc= 10.** target_logTc
+
+print('Target core temperature:', target_Tc)
+
 
 loggteff_to_age= scinterp.interp2d(cooling_table['Teff'], cooling_table['logg'], cooling_table['Age'], kind='cubic')
 
@@ -96,9 +107,28 @@ plt.xlabel('mass')
 plt.ylabel('age')
 plt.show()
 
+teff_vals= np.linspace(3000., 30000., 100)
+allowed_inds= np.where(cooling_table['Mass']==0.5)
+plt.plot(teff_vals, loggteff_to_logTc(teff_vals, target_logg), label='log(Tc)')
+plt.scatter(cooling_table['Teff'][allowed_inds], cooling_table['Log(Tc)'][allowed_inds], label='cooling table direct values for 0.5M')
+plt.plot(target_teff, target_logTc, marker='*', label='target')
+plt.xlabel('Teff')
+
+plt.ylabel('log(Tc)')
+plt.legend()
+plt.show()
 
 
+logg_vals= np.linspace(7., 8.5, 100)
+allowed_inds= np.where(cooling_table['Mass']==0.5)
+plt.plot(logg_vals, loggteff_to_logTc(target_teff, logg_vals), label='log(Tc)')
+plt.scatter(cooling_table['logg'][allowed_inds], cooling_table['Log(Tc)'][allowed_inds], label='cooling table direct values for 0.5M')
+plt.plot(target_logg, target_logTc, marker='*', label='target')
+plt.xlabel('logg')
 
+plt.ylabel('log(Tc)')
+plt.legend()
+plt.show()
 
 
 

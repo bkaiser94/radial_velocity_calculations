@@ -86,7 +86,8 @@ norm_range=[6640,6670]#20190530 400M1 norm range
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
-file_setting= 'two_arm_compare_SDSS'
+#file_setting= 'two_arm_compare_SDSS'
+file_setting='null'
 
 single_iterate= False
 double_iterate= False #file_settings change these in their little sections ahead if they should be changed
@@ -95,13 +96,14 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('ravg_fwctb*1150*fits')
-    #filenames=glob('ravg_fwctb*fits')
+    #filenames=glob('ravg_fwctb*2126*fits')
+    filenames=glob('ravg_fwctb*fits')
     #filenames=glob('*avg_fwctb*DQpec*fits')
     #filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
     #filenames=glob('avg_fwctb*Gaia*1453*')
     #filenames=glob('avg_fwctb*eg274*fits')
-    filenames=glob('ravg_fwctb*aia*1644*fits')
+    #filenames=glob('ravg_fwctb*aia*1644*fits')
     #filenames=glob('avg_wctb*fits')
     #filenames=glob('avg_fwctb*NaD*fits')
     #filenames=glob('avg_fwctb*SDSSJ1252*')
@@ -194,13 +196,16 @@ else:
     
 
 
-def norm_spectrum(input_spec, norm_range, wave_range=True):
+def norm_spectrum(input_spec, norm_range, wave_range=True, show_norm_range=True):
     if wave_range:
         print('\n\nwavelength-based norm range selected',norm_range)
         print('\n\n')
         out_flux= input_spec[1]/np.nanmean(input_spec[1][np.where((input_spec[0]>norm_range[0])&(input_spec[0]<norm_range[1]))])
         #out_flux= input_spec[1]/(np.nanmax(input_spec[1][np.where((input_spec[0]>norm_range[0])&(input_spec[0]<norm_range[1]))])-np.nanmin(input_spec[1][np.where((input_spec[0]>norm_range[0])&(input_spec[0]<norm_range[1]))]))
-        plt.axvspan(norm_range[0], norm_range[1], alpha=0.1, color='r')
+        if show_norm_range:
+            plt.axvspan(norm_range[0], norm_range[1], alpha=0.1, color='r')
+        else:
+            pass
     else:
         print('\n\npixel-based norm range selected',norm_range)
         print('\n\n')
@@ -643,7 +648,7 @@ if file_setting=='two_arm_compare_SDSS':
         #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
         plt.xlim(3700,9000)
         #plt.ylabel(r'$F_{\nu}$ (normalized)')
-        spt.show_plot(line_id='alkali')
+        spt.show_plot(line_id='alkali', convert_to_air=True)
         
 if single_iterate:
     counter=0
@@ -684,7 +689,7 @@ if single_iterate:
             #pass
     #plt.xlim(3700,9000)
     #plt.ylabel(r'$f_{\nu}$ (arbitrary units)')
-    spt.show_plot(show_legend=True, line_id='')
+    spt.show_plot(show_legend=True, line_id='ca', convert_to_air=True)
     #spt.show_plot(show_legend=False, show_telluric=False)
     #spt.show_plot(show_telluric=False)
     #plt.legend()

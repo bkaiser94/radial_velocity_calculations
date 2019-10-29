@@ -373,6 +373,10 @@ def retrieve_sdss_spec(filename,scale_noise=True, wave_medium= 'air'):
     header= spec_hdu[1].header
     return file_spec, header, file_noise_spec
 
+def retrieve_model_spec(filename):
+    all_array=np.genfromtxt(filename).T
+    return all_array
+
 def rescale_spectrum(input_spec, reference_spec, scale_range):
     input_value = get_med_val(input_spec, scale_range)[1]
     reference_value = get_med_val(reference_spec, scale_range)[1]
@@ -412,23 +416,36 @@ def retrieve_nist_list(nist_file):
     #nist_table.pprint()
     return nist_table
 
-def plot_line_markers(nist_file, wavelength_key='obs_wl_vac(A)'):
+def plot_line_markers(nist_file, wavelength_key='obs_wl_vac(A)', convert_to_air=False, label_pos=1.5):
     nist_table= retrieve_nist_list(nist_file)
     for row in nist_table:
         #print(name+name2, type(name))
         try:
-            air_name=row['element']+' '+str(row['sp_num'])+'-'+str(row[wavelength_key])[:4]
-        except KeyError as error:
-            print('KeyError:', error)
-            air_name='? '+str(row[wavelength_key])[:4]
-        plt.axvline(x=row[wavelength_key], linestyle='--', color=cp.line_color_dict[row['element']])
-        #plt.text(row['obs_wl_air(A)'], np.nanmax(counts), air_name, color='g', rotation=90)
-        #plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90, transform=ax.transAxes)
-        #plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90)
-        plt.text(row[wavelength_key], 0.1 , air_name, color=cp.line_color_dict[row['element']], rotation=90)    
+            if row['show_line']:
+                show_line=True
+            else:
+                show_line= False
+        except KeyError:
+            show_line=False
+        if show_line:
+            try:
+                air_name=row['element']+' '+str(row['sp_num'])+'-'+str(row[wavelength_key])[:4]
+            except KeyError as error:
+                print('KeyError:', error)
+                air_name='? '+str(row[wavelength_key])[:4]
+            if convert_to_air:
+                plt.axvline(x=vac_to_air(row[wavelength_key]), linestyle='--', color=cp.line_color_dict[row['element']])
+            else:
+                plt.axvline(x=row[wavelength_key], linestyle='--', color=cp.line_color_dict[row['element']])
+            #plt.text(row['obs_wl_air(A)'], np.nanmax(counts), air_name, color='g', rotation=90)
+            #plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90, transform=ax.transAxes)
+            #plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90)
+            plt.text(row[wavelength_key], label_pos, air_name, color=cp.line_color_dict[row['element']], rotation=270)
+        else:
+            pass
     return
 
-def show_plot(show_telluric=True, show_legend=True, line_id=''):
+def show_plot(show_telluric=True, show_legend=True, line_id='', convert_to_air=False, label_pos=1.5,):
     if show_legend:
         plt.legend(loc='best')
     else:
@@ -439,7 +456,8 @@ def show_plot(show_telluric=True, show_legend=True, line_id=''):
         pass
     if line_id !='':
         line_list_file= cp.line_list_dir+cp.line_id_dict[line_id]
-        plot_line_markers(line_list_file)
+        print(line_list_file)
+        plot_line_markers(line_list_file, convert_to_air=convert_to_air, label_pos=label_pos)
     else:
         pass
     plt.show()
@@ -748,4 +766,25 @@ def get_slit_width(header):
     
     return slit_width
         
+def get_ew(target_spec, wave_range, cont_method= 'avg', cont_width=20, plot_all=False):
+    cont_spec= clean_spectrum(target_spec, wave_range[0]-cont_width, wave_range[1]+cont_width, [wave_range]) #make a spectrum of only the 'continuum' regions
+    abs_spec= clean_spectrum(target_spec, wave_range[0], wave_range[1],[])
+    if plot_all:
+        plt.plot(cont_spec[0], cont_spec[1], label='continuum')
+        plt.plot(abs_spec[0], abs_spec[1], label='absorption')
+        plt.legend(loc='best')
+        plt.show()
+    else:
+        pass
+    absorptions= continuum-target_spec[1]
+    inbounds= np.where((target_spec[0]>wave_range[0]) & (target_spec[0] < wave_range[1]))
+    total_abs= np.sum(absorptions[inbounds])
+    total_bins= target_spec[1][inbounds].shape[0]
+    dlambdas=np.roll(target_spec[0], -1)-target_spec[0]
+    dlambda_in=dlambdas[inbounds]
+    dlambda_in[np.where(dlambda_in <0)] = np.nan
+    ew= np.nansum(absorptions[inbounds]*dlambda_in)/1.
+    print('ew', ew)
+    avg_abs= total_abs/total_bins
+    return ew
     
