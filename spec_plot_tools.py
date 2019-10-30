@@ -766,25 +766,56 @@ def get_slit_width(header):
     
     return slit_width
         
-def get_ew(target_spec, wave_range, cont_method= 'avg', cont_width=20, plot_all=False):
+def get_ew(filename, wave_range, cont_method= 'avg', cont_width=20, plot_all=False):
+    target_spec, header, target_noise= retrieve_spec(filename)
+    print('\n=====\n')
+    i=fits.open(filename)
+    dlams= np.copy(i[4].data)
+    dlams_spec=np.vstack([np.copy(target_spec[0]), dlams])
     cont_spec= clean_spectrum(target_spec, wave_range[0]-cont_width, wave_range[1]+cont_width, [wave_range]) #make a spectrum of only the 'continuum' regions
+    cont_noise= clean_spectrum(target_spec, wave_range[0]-cont_width, wave_range[1]+cont_width, [wave_range]) #make a spectrum of only the 'continuum' regions
     abs_spec= clean_spectrum(target_spec, wave_range[0], wave_range[1],[])
+    abs_noise=clean_spectrum(target_noise, wave_range[0], wave_range[1],[])
+    abs_dlams= clean_spectrum(dlams_spec, wave_range[0], wave_range[1], [])
+    
+    
+    if cont_method=='avg':
+        print('cont_spec.shape', cont_spec.shape)
+        print('abs_spec.shape', abs_spec.shape)
+        cont_val= np.nanmean(cont_spec[1])
+        print('mean of cont_noise:', np.nanmean(cont_noise[1]))
+        cont_noise_mean= np.sqrt(np.sum(cont_noise[1]**2)/cont_noise.shape[1]**2)
+        print('combined noise:', cont_noise_mean)
+        print('cont std:', np.std(cont_spec[1]))
+        cont_energy= np.sum(abs_dlams[1]*cont_val)
+        cont_energy_noise=np.sqrt(np.sum((abs_dlams[1]*cont_noise_mean)**2))
+        print('divisions:', cont_val/cont_noise_mean, cont_energy/cont_energy_noise)
+        print('cont_energy', cont_energy, '+/-', cont_energy_noise)
+        if plot_all:
+            plt.plot(abs_spec[0], cont_val*np.ones(abs_spec[0].shape), label='continuum used')
+        else:
+            pass
+    else:
+        print("no valid 'cont_method' specified")
+        pass
     if plot_all:
-        plt.plot(cont_spec[0], cont_spec[1], label='continuum')
+        plt.plot(cont_spec[0], cont_spec[1], label='continuum source')
         plt.plot(abs_spec[0], abs_spec[1], label='absorption')
         plt.legend(loc='best')
         plt.show()
     else:
         pass
-    absorptions= continuum-target_spec[1]
-    inbounds= np.where((target_spec[0]>wave_range[0]) & (target_spec[0] < wave_range[1]))
-    total_abs= np.sum(absorptions[inbounds])
-    total_bins= target_spec[1][inbounds].shape[0]
-    dlambdas=np.roll(target_spec[0], -1)-target_spec[0]
-    dlambda_in=dlambdas[inbounds]
-    dlambda_in[np.where(dlambda_in <0)] = np.nan
-    ew= np.nansum(absorptions[inbounds]*dlambda_in)/1.
-    print('ew', ew)
-    avg_abs= total_abs/total_bins
-    return ew
+    abs_energy= np.sum(abs_spec[1]*abs_dlams[1])
+    abs_energy_noise= np.sqrt(np.sum((abs_noise[1]*abs_dlams[1])**2))
+    print("abs_energy", abs_energy, '+/-', abs_energy_noise)
+    total_noise= np.sqrt(abs_energy_noise**2+cont_energy_noise**2)
+    energy_dif= cont_energy-abs_energy
+    print("energy_dif", energy_dif, '+/-', total_noise)
+    #mid_index= int(abs_spec.shape[1]/2.)
+    #used_dlam= abs_dlams[1][mid_index]
+    ew_noise= total_noise/cont_val
+    ew=energy_dif/cont_val
+    print('EW:', ew, '+/-', ew_noise)
+   
+    return ew, ew_noise
     
