@@ -37,7 +37,7 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-pix_width=3
+pix_width=5
 sdss_pix_width = 10
 #sdss_scale_factor=20.6 #BOSS scaling
 sdss_scale_factor= 1.467 #SDSS spectrograph scaling
@@ -71,8 +71,8 @@ plot_400m2_tell= False
 #norm_range=[5100,5400]
 #norm_range=[6090,6240]
 #norm_range=[6360,6420]
-norm_range=[6640,6670]#20190530 400M1 norm range
-#norm_range=[6630,6690]#wider double norm range
+#norm_range=[6640,6670]#20190530 400M1 norm range
+norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 ####norm_range=np.array(norm_range)+wavelength_offset
@@ -124,7 +124,7 @@ elif file_setting=='all_wctb':
 elif file_setting=='all_fwctb':
     print(file_setting)
     #filenames=glob('fwctb*LTT*')
-    filenames=glob('fwctb*2320*')
+    filenames=glob('fwctb*')
     #filenames=glob('fwctb*2356*')
     single_iterate=True
     double_iterate=False
@@ -165,10 +165,10 @@ elif file_setting=='all_SDSS':
 elif file_setting== 'two_arm':
     #m1_names =glob('avg_fwctb*400m1*fits')
     #m2_names= glob('avg_fwctb*400m2*fits')
-    #m1_names =glob('ravg_fwctb*400m1*fits')
-    #m2_names= glob('ravg_fwctb*400m2*fits')
-    m1_names =glob('ravg_fwctb*1644*400m1*fits')
-    m2_names= glob('ravg_fwctb*1644*400m2*fits')
+    m1_names =glob('ravg_fwctb*400m1*fits')
+    m2_names= glob('ravg_fwctb*400m2*fits')
+    #m1_names =glob('ravg_fwctb*1644*400m1*fits')
+    #m2_names= glob('ravg_fwctb*1644*400m2*fits')
     #m1_names =glob('super_fwctb*400m1*fits')
     #m2_names= glob('super_fwctb*400m2*fits')
     #m1_names =glob('avg_wctb*400m1*fits')
@@ -599,7 +599,7 @@ if file_setting=='two_arm':
         
         #plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
         plt.xlim(3700,9000)
-        #spt.show_plot(line_id='')
+        spt.show_plot(line_id='')
     spt.show_plot()
         
 if file_setting=='two_arm_compare_SDSS':
@@ -656,11 +656,11 @@ if single_iterate:
         target_spec, header, target_noise= spt.retrieve_spec(filename)
         hdu= fits.open(filename)
         dlambda= hdu[4].data
-        target_spec[0]=target_spec[0]+wavelength_offset
+        #target_spec[0]=target_spec[0]+wavelength_offset
         #print(filename, 'mean: ', np.nanmean(target_spec[1]))
         #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
         #conv_spec= convolve_spectrum(target_spec, header)
-        plot_spectrum(target_spec, filename, header, smooth=True, norm=True, kernel_type='box')
+        plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
         #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
         #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
@@ -689,12 +689,12 @@ if single_iterate:
             #pass
     #plt.xlim(3700,9000)
     #plt.ylabel(r'$f_{\nu}$ (arbitrary units)')
-    spt.show_plot(show_legend=True, line_id='ca', convert_to_air=True)
+    spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
     #spt.show_plot(show_legend=False, show_telluric=False)
     #spt.show_plot(show_telluric=False)
     #plt.legend()
     #plt.show()
-    #plot_pix_shifts(filenames)
+    plot_pix_shifts(filenames)
 else:
     pass
 

@@ -71,9 +71,9 @@ standard_directory= cp.standard_dir
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-standard_name='EG274'
+#standard_name='EG274'
 #standard_name = 'GD153'
-#standard_name= 'LTT3218'
+standard_name= 'LTT3218'
 #standard_name='Feige110'
 #standard_name= 'LTT7987'
 
@@ -89,6 +89,7 @@ standard_name='EG274'
 #observed_file  = 'wctb.0244_LTT6248_930_blue.fits'
 #observed_file  = 'wctb.0269_LTT6248_930_blue_1arcsec.fits'
 #observed_file = 'wctb.0272_eg274_930_blue.fits'
+observed_file='ravg_wctb.LTT3218_400m1_moretime.fits'
 #observed_file= 'wcmtb.ltt3218930blue.fits'
 
 #observed_file='avg_wctb.LTT7987_400m2.fits'
@@ -116,7 +117,7 @@ standard_name='EG274'
 #observed_file='avg_wctb.eg274am126_400m2.fits'
 #observed_file='avg_wctb.eg274am176_400m2.fits'
 #observed_file='avg_wctb.GD153_400m1.fits'
-observed_file='avg_wctb.EG274_400m1_am13.fits'
+#observed_file='avg_wctb.EG274_400m1_am13.fits'
 #observed_file='avg_wctb.EG274_400m2_am13.fits'
 ##############################
 ##############################

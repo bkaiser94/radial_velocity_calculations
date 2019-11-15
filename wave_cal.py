@@ -42,7 +42,7 @@ speclistname = 'listCTB'
 masterflatfile= 'mctb.master_flat.fits'
 #linefilename = 'JJ_FeAr_lines.txt'
 zerolist = np.genfromtxt(zerolistname, dtype ='str')
-print "zerolist.shape",zerolist.shape
+print("zerolist.shape",zerolist.shape)
 n_biases= zerolist.shape[0]
 parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
@@ -80,7 +80,7 @@ def to_barycenter(header):
     return header
 
 ####
-trace_offset =0#amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
+trace_offset =-68#amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
 
 #trace_band_mid= 85   #y-pixel that's about the center of the trace #old one as of 2018-10-31
 #trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
@@ -116,10 +116,10 @@ flat_poly= 7
 #bkg_shift=15
 #bkg_shift= 64
 #bkg_shift=70
-bkg_shift=40
+bkg_shift=18
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
-#bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
-bkg_side_multi=3. #mutliple of core_sides that that  bkg_core_sides should be later
+bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
+#bkg_side_multi=3. #mutliple of core_sides that that  bkg_core_sides should be later
 bkg_max_side= bkg_shift/2.-5
 lamp_sigma_guess= 2
 line_search_width = 3#formerly 3 20190502
@@ -152,7 +152,7 @@ do_airglow_corr=True
 air_off_type='pixel' #if you want the offset to be applied in pixel space
 #air_off_type='none' #setting for not applying the airglow correction. Realistically you should just set do_airglow_corr=False for this option
 
-bkg_method= 'avg' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
+bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
 bkg_poly= 2 #polynomial degree for background fitting.
 
 
@@ -182,8 +182,8 @@ except KeyError:
     print('missing "use" column')
     pass
 line_x_checks = np.copy(fear_array['Pixel']) +setup_dict['offset']
-print "line_x_checks should have just been created"
-print line_x_checks
+print("line_x_checks should have just been created")
+print( line_x_checks)
 lamp_lines = np.copy(fear_array['User'])
 line_sides = np.ones(line_x_checks.shape[0])*line_search_width
 
@@ -246,8 +246,8 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
     #print "[amplitude, x0, sigma, b]"
     #print popt
     if plot_all:
-        print "popt", popt
-        print "bounds", bounds
+        print("popt", popt)
+        print("bounds", bounds)
         plt.plot(cut_x_pixels, cut_light_values, label = "data")
         plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels,popt[0],popt[1],popt[2],popt[3]),label ='fit')
         #popt[1]=popt[1]+trace_offset
@@ -452,8 +452,8 @@ def normalize_flat(masterflatfile=masterflatfile, plot_all = False):
     else:
         pass
     normed_flat = master_flat/poly_curve
-    print "max value in normalized flat" , np.max(normed_flat)
-    print "min value in normalized flat", np.min(normed_flat)
+    print("max value in normalized flat" , np.max(normed_flat))
+    print("min value in normalized flat", np.min(normed_flat))
     return normed_flat
 
 ######
@@ -470,16 +470,16 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     seeing_p0[1]=np.argmax(seeing_band)
     seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds, fixed_width=False)
     seeing_sigma = seeing_popt[2]
-    print seeing_popt
-    print "Seeing sigma: ", seeing_popt[2]
+    print(seeing_popt)
+    print("Seeing sigma: ", seeing_popt[2])
     core_sides, bkg_core_sides= seeing_window(seeing_sigma)
     ### end of 20190624 moved section
     
     
     if trace_method=='maxes':
-        print 'xpositionsshape', x_positions.shape
+        print('xpositionsshape', x_positions.shape)
         y_positions= np.argmax(target_band,axis=0)+(trace_band_mid-trace_band_width/2)
-        print 'yshape', y_positions.shape
+        print('yshape', y_positions.shape)
     elif trace_method=='binned_gauss':
         rebinned_im, rebinned_indices = spt.rebin_image(target_band, rebin_axis=1, rebin_num=10)
         rebinned_imT= rebinned_im.T
@@ -552,8 +552,8 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     #print seeing_popt
     #print "Seeing sigma: ", seeing_popt[2]
     polynomial_fit= np.polyfit(x_positions,y_positions,poly_degree)
-    print polynomial_fit
-    print polynomial_fit.shape
+    print(polynomial_fit)
+    print(polynomial_fit.shape)
     #20190605 added this offsetting part
     polynomial_fit[-1]=polynomial_fit[-1]+trace_offset
     plotting_x_coords= np.indices(img_data.shape)[1,1]
@@ -612,7 +612,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     target_light= np.array([])
     bkg_light= np.array([])
     lamp_light= np.array([])
-    print target_light.shape
+    print(target_light.shape)
     for x_pos in plotting_x_coords:
         xsum= np.sum(target_med[np.int_(poly_curve_y[x_pos]-core_sides):np.int_(poly_curve_y[x_pos]+core_sides+1),x_pos])
         target_light= np.append(target_light,[xsum])
@@ -701,7 +701,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
                     #plt.legend()
                     #plt.show()
                 else:
-                    print "Gaussian too flat, flipped, or narrow (or not within the actual fitting region...):", lamp_params
+                    print( "Gaussian too flat, flipped, or narrow (or not within the actual fitting region...):", lamp_params)
                     #plt.plot(plotting_x_coords, lamp_light, label = 'lamp data', color = 'blue')
                     #plt.plot(plotting_x_coords, gaussian_curve(plotting_x_coords, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
                     #plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
@@ -713,7 +713,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
                     #plt.legend()
                     #plt.show()
             except RuntimeError as error:
-                print error
+                print(error)
         plt.xlabel('Pixel')
         plt.ylabel('Counts')
         plt.title('all fitting results')
@@ -777,18 +777,18 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
 
 ######3 Flat handling
 
-print "skip_flat=", skip_flat
+print ("skip_flat=", skip_flat)
 if skip_flat:
     example_hdu= fits.open(speclist[1])
     example_im= example_hdu[0].data
     normed_flat= np.ones(example_im.shape)
-    print "skipping flat-fielding.\nYes, I know it just went to all the trouble of calculating the flat stuff."
+    print ("skipping flat-fielding.\nYes, I know it just went to all the trouble of calculating the flat stuff.")
 else:
     normed_flat= normalize_flat(plot_all = True)
-print "\n==================\n"
-print "skip_flat=", skip_flat
-print "\n\n"
-print "\n\n==================\n"
+print ("\n==================\n")
+print ("skip_flat=", skip_flat)
+print ("\n\n")
+print ("\n\n==================\n")
 
 
 #####
@@ -806,14 +806,14 @@ for counter, img in enumerate(speclist):
     filename= glob(img)[0]
     #if '_fe' in filename.lower():
     if '_fe.' in filename.lower():
-        print 'Lamp file detected: ', filename
-        print 'Updating lamp reference image.'
+        print ('Lamp file detected: ', filename)
+        print ('Updating lamp reference image.')
         lamp_i = fits.open(filename)
         lamp_header = fits.getheader(filename)
         lamp_im= lamp_i[0].data
         if last_file_lamp:
             #since the previous file was a lamp, that would make this a new run, so we'd want to use this lamp file, right?
-            print "Double lamp detected, so it must be a new run."
+            print ("Double lamp detected, so it must be a new run.")
             
             
         else:
@@ -825,7 +825,7 @@ for counter, img in enumerate(speclist):
         association_index+=1
     else:
         #the filename doesn't contain a lamp indicator, so it must be a target spectrum
-        print "Target file detected: ", filename
+        print( "Target file detected: ", filename)
         i= fits.open(filename)
         header = fits.getheader(filename)
         img_data= np.copy(i[0].data)
@@ -838,8 +838,8 @@ for counter, img in enumerate(speclist):
         last_file_lamp = False
         #if '_fe' in speclist[counter+1].lower():
         if '_fe.' in speclist[counter+1].lower():
-            print "Next file is a lamp, so we're going to do the trace and wavelength calibration."
-            print "Using last lamp file as calibration lamp"
+            print("Next file is a lamp, so we're going to do the trace and wavelength calibration.")
+            print("Using last lamp file as calibration lamp")
             filename= speclist[counter+1]
             lamp_i = fits.open(filename)
             lamp_header = fits.getheader(filename)
@@ -855,13 +855,13 @@ for counter, img in enumerate(speclist):
             sigma_list.append(seeing_sig)
             seeing_list.append(2*np.sqrt(2*np.log(2))*seeing_sig) #assuming normal distribution for that
             polynomial_list.append(new_coeffs)
-            print "Resetting the target_stack."
+            print("Resetting the target_stack.")
             target_stack = [] #
 
         else:
-            print "Next file is not a lamp."
+            print("Next file is not a lamp.")
         
-print polynomial_list
+print(polynomial_list)
         #last_file_lamp= False #since this image isn't a lamp
 
 
@@ -874,23 +874,23 @@ for counter, img in enumerate(speclist):
     filename= glob(img)[0]
     #if '_fe' in filename.lower():
     if '_fe.' in filename.lower():
-        print 'Lamp file detected: ', filename
+        print('Lamp file detected: ', filename)
         
         if last_file_lamp:
             #since the previous file was a lamp, that would make this a new run, so we'd want to use this lamp file, right?
-            print "Double lamp detected, so it must be a new run."
+            print("Double lamp detected, so it must be a new run.")
             
             
         else:
             association_index+=1
-            print "association_index increased: ", association_index
+            print("association_index increased: ", association_index)
             #last_file_lamp = True
             
         last_file_lamp = True #since the image has to be a lamp
         
     else:
         #the filename doesn't contain a lamp indicator, so it must be a target spectrum
-        print "Target file detected: ", filename
+        print("Target file detected: ", filename)
         
         i= fits.open(filename)
         header = fits.getheader(filename)
@@ -1095,13 +1095,13 @@ for counter, img in enumerate(speclist):
         #target_stack.append(img_data)
         last_file_lamp = False
         if '_fe' in speclist[counter+1].lower():
-            print "Next file is a lamp"
+            print("Next file is a lamp")
             pass
             #print "Next file is a lamp, so we're going to do the trace and wavelength calibration."
             
 
         else:
-            print "Next file is not a lamp."
+            print("Next file is not a lamp.")
             
             
             
