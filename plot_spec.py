@@ -81,13 +81,13 @@ norm_range=[6630,6690]#wider double norm range
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-#file_setting= 'compare_SDSS'
+file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
 #file_setting= 'two_arm_compare_SDSS'
-file_setting='null'
+#file_setting='null'
 
 single_iterate= False
 double_iterate= False #file_settings change these in their little sections ahead if they should be changed
@@ -97,7 +97,7 @@ if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('ravg_fwctb*1150*fits')
     #filenames=glob('ravg_fwctb*2126*fits')
-    filenames=glob('ravg_fwctb*fits')
+    #filenames=glob('ravg_fwctb*fits')
     #filenames=glob('*avg_fwctb*DQpec*fits')
     #filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
@@ -105,7 +105,7 @@ if file_setting=='all_avg':
     #filenames=glob('avg_fwctb*eg274*fits')
     #filenames=glob('ravg_fwctb*aia*1644*fits')
     #filenames=glob('avg_wctb*fits')
-    #filenames=glob('avg_fwctb*NaD*fits')
+    filenames=glob('avg_fwctb*fits')
     #filenames=glob('avg_fwctb*SDSSJ1252*')
     single_iterate=True
     double_iterate=False
@@ -147,7 +147,7 @@ elif file_setting=='compare_SDSS':
     print('filename:', filename)
     #sdss_names = glob(sdss_path+'*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
-    sdss_names = glob(sdss_path+'SDSS*1330*.fits')
+    sdss_names = glob(sdss_path+'SDSS*.fits')
     #sdss_names = glob(sdss_path+'*WDpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     print('sdss_names:',sdss_names)
@@ -473,7 +473,7 @@ if file_setting== 'compare_SDSS':
     target_spec1= norm_spectrum(target_spec1, norm_range)
     for filename2 in sdss_names:
         target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2)
-        target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
+        #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
         target_spec2=norm_spectrum(target_spec2, norm_range)
         #plt.ylim(top=np.nanmax(np.hstack([target_spec2[1], target_spec1[1]]))+0.5)
         plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)

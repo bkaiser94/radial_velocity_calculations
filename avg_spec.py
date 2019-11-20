@@ -356,7 +356,11 @@ for sets in filename_matches:
     print(filename_matches[sets])
     do_dlambda_ext=True
     avg_spectra(filename_matches[sets])
-    make_rebin_avg_spec(filename_matches[sets])
+    try:
+        make_rebin_avg_spec(filename_matches[sets])
+    except IndexError as error:
+        print(error)
+        print('\nskipping', filename_matches[sets],'\n')
     #make_super_spec(filename_matches[sets])
     if do_super:
         make_super_spec(filename_matches[sets])

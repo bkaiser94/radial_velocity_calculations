@@ -363,8 +363,16 @@ def retrieve_sdss_spec(filename,scale_noise=True, wave_medium= 'air'):
         noise= np.copy(spec_array['PropErr'])
     except KeyError as error:
         print(error)
-        print('setting noise=1')
-        noise=np.ones(waves.shape[0])
+        try:
+            print('trying "ivar"')
+            noise=np.copy(spec_array['ivar'])
+            noise=np.sqrt(1./noise) #square root of the 1/variance value provided by SDSS
+        except KeyError as error:
+            print(error)
+            print('setting noise=1')
+            noise=np.ones(waves.shape[0])
+        #print('setting noise=1')
+        #noise=np.ones(waves.shape[0])
     file_spec=np.vstack([waves, flux])
     if scale_noise:
         file_noise_spec= np.vstack([waves, noise])
@@ -835,7 +843,7 @@ def get_ew(filename, wave_range, cont_method= 'avg', cont_width=20, plot_all=Fal
    
     return ew, ew_noise
     
-def get_generic_ew(input_spec, wave_range, noise=1e-10, cont_method= 'avg', cont_width=20, plot_all=False):
+def get_generic_ew(input_spec, wave_range, noise=1e-10, cont_method= 'avg', cont_width=20, plot_all=False, noise_method='prop'):
     """
     This one should get the equivalent width on just an arbitrary spectrum instead of starting from a file
     
@@ -844,10 +852,19 @@ def get_generic_ew(input_spec, wave_range, noise=1e-10, cont_method= 'avg', cont
     Assumes that input spectrum is in units of f_lambda
     
     """
-    noise_spec=np.ones(input_spec.shape)
-    noise_spec[1]= noise*noise_spec[1]
+    try:
+        print(noise.shape)
+        noise_spec=noise
+    except AttributeError:
+        if noise_method != 'rms':
+            print("Probably should be using noise_method='rms' since you didn't provide a noise value")
+        else:
+            pass
+        noise_spec=np.ones(input_spec.shape)
+        noise_spec[1]= noise*noise_spec[1]
+        noise_spec[0]=np.copy(input_spec[0])
     print('np.nanmean(noise_spec[1])', np.nanmean(noise_spec[1]))
-    noise_spec[0]=np.copy(input_spec[0])
+    
     dlams= np.copy(input_spec[0][1:]-input_spec[0][:-1])
     dlams=np.append(dlams, dlams[-1])
     dlams_spec= np.vstack([np.copy(input_spec[0]),dlams])
@@ -866,7 +883,14 @@ def get_generic_ew(input_spec, wave_range, noise=1e-10, cont_method= 'avg', cont
         cont_val= np.nanmean(cont_spec[1])
         #print('mean of cont_noise:', np.nanmean(cont_noise[1]))
         #print('np.nanmean(noise)/sqrt(cont_noise.shape[1]))', np.nanmean(cont_noise[1])/np.sqrt(cont_noise.shape[1]))
-        cont_noise_mean= np.sqrt(np.sum(cont_noise[1]**2)/cont_noise.shape[1]**2)
+        if noise_method=='prop':
+            cont_noise_mean= np.sqrt(np.sum(cont_noise[1]**2)/cont_noise.shape[1]**2)
+        elif noise_method=='rms':
+            cont_noise_single=np.std(cont_spec[1])
+            cont_noise_mean=np.sqrt((cont_noise.shape[1]*cont_noise_single**2)/cont_noise.shape[1]**2)
+            abs_noise[1]=cont_noise_single
+        else:
+            pass
         #print('combined noise:', cont_noise_mean)
         #print('cont std:', np.std(cont_spec[1]))
         cont_energy= np.sum(abs_dlams[1]*cont_val)
@@ -874,10 +898,7 @@ def get_generic_ew(input_spec, wave_range, noise=1e-10, cont_method= 'avg', cont
         cont_energy_noise=np.sum(abs_dlams[1]*cont_noise_mean)
         print('divisions:', cont_val/cont_noise_mean, cont_energy/cont_energy_noise)
         print('cont_energy', cont_energy, '+/-', cont_energy_noise)
-        plt.plot(abs_noise[0], abs_noise[1], label='abs_noise')
-        plt.plot(cont_noise[0], cont_noise[1], label='cont_noise')
-        plt.legend()
-        plt.show()
+        
         if plot_all:
             plt.plot(abs_spec[0], cont_val*np.ones(abs_spec[0].shape), label='continuum used')
         else:
