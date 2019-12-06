@@ -55,6 +55,8 @@ wavelength_offset=0
 sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #sdss_path= sdss_path+'G0_K5/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
+
+tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
 #print(filenames)
 plot_wavelength=True
 plot_400m2_tell= False
@@ -71,8 +73,9 @@ plot_400m2_tell= False
 #norm_range=[5100,5400]
 #norm_range=[6090,6240]
 #norm_range=[6360,6420]
-#norm_range=[6640,6670]#20190530 400M1 norm range
-norm_range=[6630,6690]#wider double norm range
+#norm_range=[6570,6620]
+norm_range=[6640,6670]#20190530 400M1 norm range
+#norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 ####norm_range=np.array(norm_range)+wavelength_offset
@@ -80,14 +83,14 @@ norm_range=[6630,6690]#wider double norm range
 #file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
-#file_setting='all_fwctb'
-file_setting= 'compare_SDSS'
+file_setting='all_fwctb'
+#file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
 #file_setting= 'two_arm_compare_SDSS'
-#file_setting='null'
+#file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
 
 single_iterate= False
 double_iterate= False #file_settings change these in their little sections ahead if they should be changed
@@ -97,7 +100,7 @@ if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('ravg_fwctb*1150*fits')
     #filenames=glob('ravg_fwctb*2126*fits')
-    #filenames=glob('ravg_fwctb*fits')
+    filenames=glob('ravg_fwctb*1644*fits')
     #filenames=glob('*avg_fwctb*DQpec*fits')
     #filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
@@ -105,7 +108,7 @@ if file_setting=='all_avg':
     #filenames=glob('avg_fwctb*eg274*fits')
     #filenames=glob('ravg_fwctb*aia*1644*fits')
     #filenames=glob('avg_wctb*fits')
-    filenames=glob('avg_fwctb*fits')
+    #filenames=glob('avg_fwctb*fits')
     #filenames=glob('avg_fwctb*SDSSJ1252*')
     single_iterate=True
     double_iterate=False
@@ -215,7 +218,7 @@ def norm_spectrum(input_spec, norm_range, wave_range=True, show_norm_range=True)
     return out_spec
 
 
-def convolve_spectrum(target_spec, header, kernel_type='gaussian', pix_width=pix_width):
+def convolve_spectrum(target_spec, header, kernel_type='gaussian', pix_width=pix_width, kernel_width=slit_width):
     #pix_width =3
     #pix_width =20
     fluxes= np.copy(target_spec[1])
@@ -224,7 +227,12 @@ def convolve_spectrum(target_spec, header, kernel_type='gaussian', pix_width=pix
         #see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
         #see_sig= sdss_scale_factor*see_sig
         see_sig=pix_width
-        see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(slit_width), mode = 'oversample')
+        #see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(slit_width), mode = 'oversample')
+        if int(kernel_width)%2 ==0:
+            kernel_width=kernel_width+1
+        else:
+            pass
+        see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(kernel_width), mode = 'oversample')
         see_kernel.normalize()
         spec_conv = conv.convolve(fluxes, see_kernel)
     elif kernel_type=='sdss_match':
@@ -247,7 +255,7 @@ def convolve_spectrum(target_spec, header, kernel_type='gaussian', pix_width=pix
     return spec_out
 
 
-def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', norm=False, forced_title='', pix_width=pix_width, offset=0, color='None'):
+def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', norm=False, forced_title='', pix_width=pix_width, offset=0, color='None', kernel_width=slit_width):
     title_string=filename
     label_string= filename
     try:
@@ -256,7 +264,7 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
     except KeyError:
         pass
     if smooth:
-        spec= convolve_spectrum(spec, header, kernel_type=kernel_type, pix_width=pix_width)
+        spec= convolve_spectrum(spec, header, kernel_type=kernel_type, pix_width=pix_width, kernel_width=kernel_width)
         title_string=title_string+ ' smoothed'
         #plt.title(filename+ ' smoothed')
     else:
@@ -275,8 +283,10 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
         plt.ylabel(r'$f_{\lambda}$ (arbitrary units)')
     else:
         #plt.ylabel('Flux (ergs/cm/cm/s/A 10**-16)')
-        plt.ylabel(header['units'])
-        pass
+        try:
+            plt.ylabel(header['units'])
+        except TypeError:
+            pass
     if plot_wavelength:
         plt.xlabel(r'Wavelength ($\AA$)')
         plt.xlim(np.nanmin(spec[0]), np.nanmax(spec[0]))
@@ -309,6 +319,14 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
     #plt.plot(spec[0], spec[1])
     #plt.show()
     return
+
+
+def plot_telluric_spectrum(wave_range, pix_width=pix_width, smooth=False, kernel_type='gaussian', kernel_width= 300.):
+    tell_spec= spt.retrieve_telluric_model(tell_filename, wave_range)
+    #plt.plot(tell_spec[0], tell_spec[1], label='Telluric absorption')
+    plot_spectrum(tell_spec, 'Telluric Absorption', '', smooth=smooth, kernel_type=kernel_type, pix_width=pix_width, kernel_width=kernel_width)
+    return
+
 
 def plot_dwavelength(spec, filename, read_in=True):
     plt.ylabel(r'delta Wavelength ($\AA$)')
@@ -432,7 +450,7 @@ def plot_sky(filename, offset=0, line_labels=True, convolve=False):
     print("need to put dlambda into this part again since we're about to move around wavelengths in the future.")
     if plot_wavelength:
         plt.xlabel(r'Wavelength ($\AA$)')
-        plt.plot(hdu[0].data, sky, label=filename)
+        plt.plot(hdu[0].data, sky, label=filename+' sky')
         #plt.plot(hdu[0].data, sky, label=filename, color=color)
         #plt.plot(hdu[0].data, sky, label=hdu[0].header['airmass'])
     else:
@@ -660,7 +678,8 @@ if single_iterate:
         #print(filename, 'mean: ', np.nanmean(target_spec[1]))
         #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
         #conv_spec= convolve_spectrum(target_spec, header)
-        plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
+        #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
+        #plt.scatter(header['BMJD_TDB'], np.sum(target_spec[1]*dlambda))
         #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
         #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
         #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
@@ -668,7 +687,8 @@ if single_iterate:
         #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
         #plot_spectrum(target_spec, str(header['airmass']), header, norm=False, smooth=True, kernel_type='box', pix_width=10)
         #plot_spectrum(target_spec, filename, header, norm=True, offset=counter)
-        #plot_spectrum(target_spec, filename, header, norm=True, smooth=True, kernel_type='box')
+        plot_spectrum(target_spec, filename, header, norm=True, smooth=False, kernel_type='box')
+        #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
         #plot_sky(filename, offset=0, line_labels=True, convolve=False)
         #if header['airmass']<1.5:
@@ -689,9 +709,15 @@ if single_iterate:
             #pass
     #plt.xlim(3700,9000)
     #plt.ylabel(r'$f_{\nu}$ (arbitrary units)')
+    #plt.legend(loc='best')
+    #plt.show()
+    plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=40)
     spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
-    #spt.show_plot(show_legend=False, show_telluric=False)
-    #spt.show_plot(show_telluric=False)
+    #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
+    #plt.xlabel('BMJD_TDB')
+    #plt.show()
+    #spt.show_plot(show_legend=True, show_telluric=True)
+    #spt.show_plot(show_telluric=True, )
     #plt.legend()
     #plt.show()
     plot_pix_shifts(filenames)

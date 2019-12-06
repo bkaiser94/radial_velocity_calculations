@@ -207,7 +207,7 @@ def clean_spectrum(input_spec, min_wave, max_wave, mask_list):
     for mask in mask_list:
         clean_spec= remove_range(clean_spec, mask)
     clean_spec= sort_spectrum(clean_spec)
-    return clean_spec
+    return np.copy(clean_spec)
 
 
 def get_med_val(input_spec, wave_range):
@@ -384,6 +384,16 @@ def retrieve_sdss_spec(filename,scale_noise=True, wave_medium= 'air'):
 def retrieve_model_spec(filename):
     all_array=np.genfromtxt(filename).T
     return all_array
+
+def retrieve_telluric_model(filename, wave_range):
+    filename=cp.tell_dir+filename
+    hdu=fits.open(filename)
+    tell_array=hdu[1].data
+    waves=tell_array['lam']*10000.
+    transmission=tell_array['trans']
+    tell_spec=np.vstack([waves,transmission])
+    tell_spec=clean_spectrum(tell_spec, wave_range[0],wave_range[1], [])
+    return tell_spec
 
 def rescale_spectrum(input_spec, reference_spec, scale_range):
     input_value = get_med_val(input_spec, scale_range)[1]
@@ -773,77 +783,9 @@ def get_slit_width(header):
         slit_width= 1.0
     
     return slit_width
-        
-def get_ew(filename, wave_range, cont_method= 'avg', cont_width=20, plot_all=False):
-    """
-    Take a FITS file from the Goodman reduction process (most likely a ravg_fwctb file)
-    and then get the equivalent width for some portion of the spectrum.
-    
-    assumes input spectrum is in units of f_lambda
-    """
-    target_spec, header, target_noise= retrieve_spec(filename)
-    print('\n=====\n')
-    i=fits.open(filename)
-    dlams= np.copy(i[4].data)
-    dlams_spec=np.vstack([np.copy(target_spec[0]), dlams])
-    cont_spec= clean_spectrum(target_spec, wave_range[0]-cont_width, wave_range[1]+cont_width, [wave_range]) #make a spectrum of only the 'continuum' regions
-    cont_noise= clean_spectrum(target_noise, wave_range[0]-cont_width, wave_range[1]+cont_width, [wave_range]) #make a spectrum of only the 'continuum' regions
-    #if plot_all:
-        #plt.plot(target_noise[0], target_spec[1]/target_noise[1])
-        #plt.ylabel('S/N')
-        #plt.xlim(wave_range[0]-cont_width, wave_range[1]+cont_width)
-        #plt.show()
-    #else:
-        #pass
-    abs_spec= clean_spectrum(target_spec, wave_range[0], wave_range[1],[])
-    abs_noise=clean_spectrum(target_noise, wave_range[0], wave_range[1],[])
-    abs_dlams= clean_spectrum(dlams_spec, wave_range[0], wave_range[1], [])
-    #print('sum abs_spec/merged noise:', np.sum(abs_spec[1])/np.sqrt(np.sum(abs_noise[1]**2)))
-    
-    if cont_method=='avg':
-        #print('cont_spec.shape', cont_spec.shape)
-        #print('abs_spec.shape', abs_spec.shape)
-        cont_val= np.nanmean(cont_spec[1])
-        #print('mean of cont_noise:', np.nanmean(cont_noise[1]))
-        #print('np.nanmean(noise)/sqrt(cont_noise.shape[1]))', np.nanmean(cont_noise[1])/np.sqrt(cont_noise.shape[1]))
-        cont_noise_mean= np.sqrt(np.sum(cont_noise[1]**2)/cont_noise.shape[1]**2)
-        #print('combined noise:', cont_noise_mean)
-        #print('cont std:', np.std(cont_spec[1]))
-        cont_energy= np.sum(abs_dlams[1]*cont_val)
-        cont_energy_noise=np.sum(abs_dlams[1]*cont_noise_mean)
-        #cont_energy_noise=np.sqrt(np.sum((abs_dlams[1]*cont_noise_mean)**2))
-        print('divisions:', cont_val/cont_noise_mean, cont_energy/cont_energy_noise)
-        #print('cont_energy', cont_energy, '+/-', cont_energy_noise)
-        if plot_all:
-            plt.plot(abs_spec[0], cont_val*np.ones(abs_spec[0].shape), label='continuum used')
-        else:
-            pass
-    else:
-        print("no valid 'cont_method' specified")
-        pass
-    if plot_all:
-        plt.plot(cont_spec[0], cont_spec[1], label='continuum source')
-        plt.plot(abs_spec[0], abs_spec[1], label='absorption')
-        plt.legend(loc='best')
-        plt.show()
-    else:
-        pass
-    abs_energy= np.sum(abs_spec[1]*abs_dlams[1])
-    abs_energy_noise= np.sqrt(np.sum((abs_noise[1]*abs_dlams[1])**2))
-    print('abs_energy/abs_energy_noise:', abs_energy/abs_energy_noise)
-    print("abs_energy", abs_energy, '+/-', abs_energy_noise)
-    total_noise= np.sqrt(abs_energy_noise**2+cont_energy_noise**2)
-    energy_dif= cont_energy-abs_energy
-    print("energy_dif", energy_dif, '+/-', total_noise)
-    #mid_index= int(abs_spec.shape[1]/2.)
-    #used_dlam= abs_dlams[1][mid_index]
-    ew_noise= total_noise/cont_val
-    ew=energy_dif/cont_val
-    print('EW:', ew, '+/-', ew_noise)
-   
-    return ew, ew_noise
-    
-def get_generic_ew(input_spec, wave_range, noise=1e-10, cont_method= 'avg', cont_width=20, plot_all=False, noise_method='prop'):
+
+
+def get_generic_ew(input_spec, wave_range, noise=1e-10, dlams=[], cont_method= 'avg', cont_width=20, plot_all=False, noise_method='prop'):
     """
     This one should get the equivalent width on just an arbitrary spectrum instead of starting from a file
     
@@ -865,9 +807,14 @@ def get_generic_ew(input_spec, wave_range, noise=1e-10, cont_method= 'avg', cont
         noise_spec[0]=np.copy(input_spec[0])
     print('np.nanmean(noise_spec[1])', np.nanmean(noise_spec[1]))
     
-    dlams= np.copy(input_spec[0][1:]-input_spec[0][:-1])
-    dlams=np.append(dlams, dlams[-1])
-    dlams_spec= np.vstack([np.copy(input_spec[0]),dlams])
+    if dlams ==[]:
+        #creating delta lambda values in case the spectrum doesn't actually have them by just taking the difference of centers.
+        print("No dlams provided as a kwarg, so we'll make them up.")
+        dlams= np.copy(input_spec[0][1:]-input_spec[0][:-1])
+        dlams=np.append(dlams, dlams[-1])
+        dlams_spec= np.vstack([np.copy(input_spec[0]),dlams])
+    else:
+        dlams_spec=dlams
     cont_spec= clean_spectrum(input_spec, wave_range[0]-cont_width, wave_range[1]+cont_width, [wave_range]) #make a spectrum of only the 'continuum' regions
     cont_noise= clean_spectrum(noise_spec, wave_range[0]-cont_width, wave_range[1]+cont_width, [wave_range])
     abs_spec= clean_spectrum(input_spec, wave_range[0], wave_range[1],[])
@@ -876,43 +823,91 @@ def get_generic_ew(input_spec, wave_range, noise=1e-10, cont_method= 'avg', cont
     
     
     #print('sum abs_spec/merged noise:', np.sum(abs_spec[1])/np.sqrt(np.sum(abs_noise[1]**2)))
-    
+    #plt.plot(abs_noise[0],abs_noise[1],label='og')
     if cont_method=='avg':
         #print('cont_spec.shape', cont_spec.shape)
         #print('abs_spec.shape', abs_spec.shape)
-        cont_val= np.nanmean(cont_spec[1])
+        cont_val_abs= np.nanmean(cont_spec[1])
+        cont_val=cont_val_abs
         #print('mean of cont_noise:', np.nanmean(cont_noise[1]))
         #print('np.nanmean(noise)/sqrt(cont_noise.shape[1]))', np.nanmean(cont_noise[1])/np.sqrt(cont_noise.shape[1]))
         if noise_method=='prop':
-            cont_noise_mean= np.sqrt(np.sum(cont_noise[1]**2)/cont_noise.shape[1]**2)
+            cont_noise_merge= np.sqrt(np.sum(cont_noise[1]**2)/cont_noise.shape[1]**2)
         elif noise_method=='rms':
-            cont_noise_single=np.std(cont_spec[1])
-            cont_noise_mean=np.sqrt((cont_noise.shape[1]*cont_noise_single**2)/cont_noise.shape[1]**2)
+            #cont_noise_single=np.std(cont_spec[1])*np.sqrt(cont_spec.shape[1]) #you have to deaden the sigma value to recover the  standard deviation as the combined noise value of the inferred noise level
+            cont_noise_single=np.std(cont_spec[1]) #Maybe one shouldn't 
+            #print('np.std(cont_spec[1])', np.std(cont_spec[1]))
+            cont_noise_merge=np.copy(np.sqrt((cont_noise.shape[1]*cont_noise_single**2)/cont_noise.shape[1]**2))
+            print('cont_noise_single', cont_noise_single, 'cont_noise_merge', cont_noise_merge)
+            cont_noise_single=cont_noise_single/cont_val #rescaling the noise level to the flux now that I'm about to use it...
+            abs_noise[1]=cont_noise_single*abs_spec[1] #rescaling that expected noise level per pixel to the flux levels in the different cells of interest
+            print('abs_noise[1]',np.nanmean(abs_noise[1]))
+            print('cont_spec.shape', cont_spec.shape)
+            print('abs_spec.shape', abs_spec.shape)
+    elif cont_method=='poly1':
+        #print('cont_spec.shape', cont_spec.shape)
+        #print('abs_spec.shape', abs_spec.shape)
+        #cont_val= np.nanmean(cont_spec[1])
+        poly_coeffs=np.polyfit(cont_spec[0], cont_spec[1], 1)
+        cont_val_abs= np.polyval(poly_coeffs, abs_spec[0])
+        cont_val=np.nanmean(cont_val_abs)
+        #print('mean of cont_noise:', np.nanmean(cont_noise[1]))
+        #print('np.nanmean(noise)/sqrt(cont_noise.shape[1]))', np.nanmean(cont_noise[1])/np.sqrt(cont_noise.shape[1]))
+        if noise_method=='prop':
+            cont_noise_merge= np.sqrt(np.sum(cont_noise[1]**2)/cont_noise.shape[1]**2)
+        elif noise_method=='rms':
+            #cont_noise_single=np.std(cont_spec[1])*np.sqrt(cont_spec.shape[1]) #you have to deaden the sigma value to recover the  standard deviation as the combined noise value of the inferred noise level
+            
+            #cont_noise_rms= np.sqrt(np.nanmean((cont_spec[1]-np.polyval(poly_coeffs, cont_spec[0])) **2 ))
+            cont_noise_rms=np.sqrt(np.sum((cont_spec[1]-np.polyval(poly_coeffs, cont_spec[0]))**2)/(cont_spec.shape[1]-2)) #minus 2 because there's supposed to be a minus 1 in the first place, and the sloap is an additional free parameter in this case
+            cont_noise_single=np.copy(cont_noise_rms)
+            
+            
+            cont_noise_merge= cont_noise_rms
+            #print('np.std(cont_spec[1])', np.std(cont_spec[1]))
+            #cont_noise_single= cont_noise_rms*np.sqrt(np.float_(cont_spec.shape[1]))
+            #cont_noise_mean=np.copy(np.sqrt((cont_noise.shape[1]*cont_noise_single**2)/cont_noise.shape[1]**2))
+            print('cont_noise_single', cont_noise_single, 'cont_noise_rms', cont_noise_merge)
+            #cont_noise_single=cont_noise_single/cont_val #rescaling the noise level to the flux now that I'm about to use it...
+            print('cont_noise_single', cont_noise_single)
             abs_noise[1]=cont_noise_single
+            #abs_noise[1]=cont_noise_single*abs_spec[1] #rescaling that expected noise level per pixel to the flux levels in the different cells of interest
+            print('abs_noise[1]',np.nanmean(abs_noise[1]))
+            print('cont_spec.shape', cont_spec.shape)
+            print('abs_spec.shape', abs_spec.shape)
+        elif noise_method=='rms_wrong':
+            #cont_noise_single=np.std(cont_spec[1])*np.sqrt(cont_spec.shape[1]) #you have to deaden the sigma value to recover the  standard deviation as the combined noise value of the inferred noise level
+            print("\n=======")
+            print("wrong method (I think) of RMS error calculation used here, where you don't rescale the noise value by the sqrt of the number of measurements that went into it to get the single value.")
+            cont_noise_rms= np.sqrt(np.nanmean((cont_spec[1]-np.polyval(poly_coeffs, cont_spec[0]) )**2 ))
+            cont_noise_merge= cont_noise_rms
+            #print('np.std(cont_spec[1])', np.std(cont_spec[1]))
+            cont_noise_single= cont_noise_rms
+            #cont_noise_mean=np.copy(np.sqrt((cont_noise.shape[1]*cont_noise_single**2)/cont_noise.shape[1]**2))
+            print('cont_noise_single', cont_noise_single, 'cont_noise_rms', cont_noise_merge, cont_noise_rms*np.sqrt(np.float_(cont_spec.shape[1])))
+            cont_noise_single=cont_noise_single/cont_val #rescaling the noise level to the flux now that I'm about to use it...
+            print('cont_noise_single', cont_noise_single)
+            abs_noise[1]=cont_noise_single*abs_spec[1] #rescaling that expected noise level per pixel to the flux levels in the different cells of interest
+            print('abs_noise[1]',np.nanmean(abs_noise[1]))
+            print('cont_spec.shape', cont_spec.shape)
+            print('abs_spec.shape', abs_spec.shape)
         else:
             pass
+        #plt.plot(abs_noise[0],abs_noise[1],label='rms')
+        #plt.legend(loc='best')
+        #plt.show()
         #print('combined noise:', cont_noise_mean)
         #print('cont std:', np.std(cont_spec[1]))
-        cont_energy= np.sum(abs_dlams[1]*cont_val)
-        #cont_energy_noise=np.sqrt(np.sum((abs_dlams[1]*cont_noise_mean)**2))
-        cont_energy_noise=np.sum(abs_dlams[1]*cont_noise_mean)
-        print('divisions:', cont_val/cont_noise_mean, cont_energy/cont_energy_noise)
-        print('cont_energy', cont_energy, '+/-', cont_energy_noise)
-        
-        if plot_all:
-            plt.plot(abs_spec[0], cont_val*np.ones(abs_spec[0].shape), label='continuum used')
-        else:
-            pass
-    else:
-        print("no valid 'cont_method' specified")
-        pass
-    if plot_all:
-        plt.plot(cont_spec[0], cont_spec[1], label='continuum source')
-        plt.plot(abs_spec[0], abs_spec[1], label='absorption')
-        plt.legend(loc='best')
-        plt.show()
-    else:
-        pass
+    cont_energy= np.sum(abs_dlams[1]*cont_val_abs)
+    #cont_energy_noise=np.sqrt(np.sum((abs_dlams[1]*cont_noise_mean)**2))
+    #cont_energy_noise=np.sqrt(np.sum((abs_dlams[1]*cont_noise_merge)**2))
+    cont_energy_noise=np.sqrt(np.sum((abs_dlams[1]*cont_noise_merge)**2))
+    #print('divisions:', cont_val_abs/cont_noise_merge, cont_energy/cont_energy_noise)
+    print('cont_energy', cont_energy, '+/-', cont_energy_noise)
+    #else:
+        #print("no valid 'cont_method' specified")
+        #pass
+    
     abs_energy= np.sum(abs_spec[1]*abs_dlams[1])
     abs_energy_noise= np.sqrt(np.sum((abs_noise[1]*abs_dlams[1])**2))
     print('abs_energy/abs_energy_noise:', abs_energy/abs_energy_noise)
@@ -924,6 +919,95 @@ def get_generic_ew(input_spec, wave_range, noise=1e-10, cont_method= 'avg', cont
     #used_dlam= abs_dlams[1][mid_index]
     ew_noise= total_noise/cont_val
     ew=energy_dif/cont_val
+    if plot_all:
+        plt.plot(abs_spec[0], cont_val_abs*np.ones(abs_spec[0].shape), label='continuum used')
+        plt.plot(cont_spec[0], cont_spec[1], label='continuum source')
+        #plt.plot(abs_spec[0], abs_spec[1], label='absorption')
+        plt.errorbar(abs_spec[0],abs_spec[1],yerr=abs_noise[1], label='absorption')
+        plt.axvspan(np.mean(wave_range)-0.5*ew, np.mean(wave_range)+0.5*ew, alpha=0.1, color='r',label='EW')
+        plt.legend(loc='best')
+        plt.show()
+    else:
+        pass
     print('EW:', ew, '+/-', ew_noise)
     
     return ew, ew_noise
+        
+def get_ew(filename, wave_range, cont_method= 'avg', cont_width=20, plot_all=False, noise_method='prop'):
+    """
+    Take a FITS file from the Goodman reduction process (most likely a ravg_fwctb file)
+    and then get the equivalent width for some portion of the spectrum.
+    
+    assumes input spectrum is in units of f_lambda
+    """
+    target_spec, header, target_noise= retrieve_spec(filename)
+    print('\n=====\n')
+    i=fits.open(filename)
+    dlams= np.copy(i[4].data)
+    dlams_spec=np.vstack([np.copy(target_spec[0]), dlams])
+    cont_spec= clean_spectrum(target_spec, wave_range[0]-cont_width, wave_range[1]+cont_width, [wave_range]) #make a spectrum of only the 'continuum' regions
+    cont_noise= clean_spectrum(target_noise, wave_range[0]-cont_width, wave_range[1]+cont_width, [wave_range]) #make a spectrum of only the 'continuum' regions
+    #if plot_all:
+        #plt.plot(target_noise[0], target_spec[1]/target_noise[1])
+        #plt.ylabel('S/N')
+        #plt.xlim(wave_range[0]-cont_width, wave_range[1]+cont_width)
+        #plt.show()
+    #else:
+        #pass
+    ew, ew_noise=get_generic_ew(target_spec, wave_range, cont_method=cont_method, noise=target_noise, cont_width=cont_width, plot_all=plot_all, noise_method=noise_method, dlams=dlams_spec)
+    #abs_spec= clean_spectrum(target_spec, wave_range[0], wave_range[1],[])
+    #abs_noise=clean_spectrum(target_noise, wave_range[0], wave_range[1],[])
+    #abs_dlams= clean_spectrum(dlams_spec, wave_range[0], wave_range[1], [])
+    ##print('sum abs_spec/merged noise:', np.sum(abs_spec[1])/np.sqrt(np.sum(abs_noise[1]**2)))
+    
+    #if cont_method=='avg':
+        ##print('cont_spec.shape', cont_spec.shape)
+        ##print('abs_spec.shape', abs_spec.shape)
+        #cont_val= np.nanmean(cont_spec[1])
+        ##print('mean of cont_noise:', np.nanmean(cont_noise[1]))
+        ##print('np.nanmean(noise)/sqrt(cont_noise.shape[1]))', np.nanmean(cont_noise[1])/np.sqrt(cont_noise.shape[1]))
+        ##cont_noise_mean= np.sqrt(np.sum(cont_noise[1]**2)/cont_noise.shape[1]**2)
+        ##print('combined noise:', cont_noise_mean)
+        ##print('cont std:', np.std(cont_spec[1]))
+        ##cont_energy= np.sum(abs_dlams[1]*cont_val)
+        ##cont_energy_noise=np.sum(abs_dlams[1]*cont_noise_mean)
+        ##cont_energy_noise=np.sqrt(np.sum((abs_dlams[1]*cont_noise_mean)**2))
+        ##print('divisions:', cont_val/cont_noise_mean, cont_energy/cont_energy_noise)
+        ##print('cont_energy', cont_energy, '+/-', cont_energy_noise)
+        #if noise_method=='prop':
+            #cont_noise_mean= np.sqrt(np.sum(cont_noise[1]**2)/cont_noise.shape[1]**2)
+        #elif noise_method=='rms':
+            #cont_noise_single=np.std(cont_spec[1])*np.sqrt(cont_spec.shape[1])
+            #cont_noise_mean=np.sqrt((cont_noise.shape[1]*cont_noise_single**2)/cont_noise.shape[1]**2)
+            #abs_noise[1]=cont_noise_single
+        #cont_energy= np.sum(abs_dlams[1]*cont_val)
+        #cont_energy_noise=np.sum(abs_dlams[1]*cont_noise_mean)
+        #if plot_all:
+            #plt.plot(abs_spec[0], cont_val*np.ones(abs_spec[0].shape), label='continuum used')
+        #else:
+            #pass
+    #else:
+        #print("no valid 'cont_method' specified")
+        #pass
+    #if plot_all:
+        #plt.plot(cont_spec[0], cont_spec[1], label='continuum source')
+        #plt.plot(abs_spec[0], abs_spec[1], label='absorption')
+        #plt.legend(loc='best')
+        #plt.show()
+    #else:
+        #pass
+    #abs_energy= np.sum(abs_spec[1]*abs_dlams[1])
+    #abs_energy_noise= np.sqrt(np.sum((abs_noise[1]*abs_dlams[1])**2))
+    #print('abs_energy/abs_energy_noise:', abs_energy/abs_energy_noise)
+    #print("abs_energy", abs_energy, '+/-', abs_energy_noise)
+    #total_noise= np.sqrt(abs_energy_noise**2+cont_energy_noise**2)
+    #energy_dif= cont_energy-abs_energy
+    #print("energy_dif", energy_dif, '+/-', total_noise)
+    ##mid_index= int(abs_spec.shape[1]/2.)
+    ##used_dlam= abs_dlams[1][mid_index]
+    #ew_noise= total_noise/cont_val
+    #ew=energy_dif/cont_val
+    #print('EW:', ew, '+/-', ew_noise)
+   
+    return ew, ew_noise
+    
