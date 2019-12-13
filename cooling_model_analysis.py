@@ -30,19 +30,19 @@ cooling_model_file=cp.ref_dir+'WD_cooling_models/'+cooling_model_file
 default_ms_method='Fontaine'
 
 #madeup
-wd_name='made-up'
-target_logg= 8.0
-target_logg_err=0.15
-target_teff= 6000. #K
-target_teff_err=190
+#wd_name='made-up'
+#target_logg= 8.0
+#target_logg_err=0.15
+#target_teff= 6000. #K
+#target_teff_err=190
 
 
 ##1330
-#wd_name='SDSSJ1330+6435'
-#target_logg= 8.26
-#target_logg_err=0.15
-#target_teff= 4310. #K
-#target_teff_err=190
+wd_name='SDSSJ1330+6435'
+target_logg= 8.26
+target_logg_err=0.15
+target_teff= 4310. #K
+target_teff_err=190
 
 #2356
 #wd_name='WDJ2356-209'
