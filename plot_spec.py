@@ -56,7 +56,8 @@ sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #sdss_path= sdss_path+'G0_K5/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 
-tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
+#tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
+tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
 #print(filenames)
 plot_wavelength=True
 plot_400m2_tell= False
@@ -68,22 +69,23 @@ plot_400m2_tell= False
 #norm_range=[7490,7510] #outside telluric
 #norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
+norm_range=[7860.,8050.]
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
 #norm_range=[6090,6240]
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
-norm_range=[6640,6670]#20190530 400M1 norm range
+#norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
-file_setting='all_fwctb'
+#file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
@@ -687,7 +689,8 @@ if single_iterate:
         #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
         #plot_spectrum(target_spec, str(header['airmass']), header, norm=False, smooth=True, kernel_type='box', pix_width=10)
         #plot_spectrum(target_spec, filename, header, norm=True, offset=counter)
-        plot_spectrum(target_spec, filename, header, norm=True, smooth=False, kernel_type='box')
+        plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box')
+        #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
         #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
         #plot_sky(filename, offset=0, line_labels=True, convolve=False)
@@ -711,7 +714,7 @@ if single_iterate:
     #plt.ylabel(r'$f_{\nu}$ (arbitrary units)')
     #plt.legend(loc='best')
     #plt.show()
-    plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=40)
+    #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=40)
     spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
     #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
     #plt.xlabel('BMJD_TDB')

@@ -29,6 +29,9 @@ cooling_model_file=cp.ref_dir+'WD_cooling_models/'+cooling_model_file
 #default_ms_method='MIST'
 default_ms_method='Fontaine'
 
+universe_age= 13.8 #Gyr
+percent_range=0.68 #error bar coverage for total age estimate.
+
 #madeup
 #wd_name='made-up'
 #target_logg= 8.0
@@ -38,13 +41,13 @@ default_ms_method='Fontaine'
 
 
 ##1330
-wd_name='SDSSJ1330+6435'
-target_logg= 8.26
-target_logg_err=0.15
-target_teff= 4310. #K
-target_teff_err=190
+#wd_name='SDSSJ1330+6435'
+#target_logg= 8.26
+#target_logg_err=0.15
+#target_teff= 4310. #K
+#target_teff_err=190
 
-#2356
+##2356
 #wd_name='WDJ2356-209'
 #target_logg=7.98
 #target_logg_err=0.07
@@ -56,11 +59,11 @@ target_teff_err=190
 n=100000
 
 ##1644
-#wd_name='GaiaJ1644-0449'
-#target_logg=7.77
-#target_logg_err= 0.23
-#target_teff= 3830.
-#target_teff_err= 230.
+wd_name='GaiaJ1644-0449'
+target_logg=7.77
+target_logg_err= 0.23
+target_teff= 3830.
+target_teff_err= 230.
 
 simon_mass= 0.45
 simon_mass_err= 0.12
@@ -155,7 +158,7 @@ def operate_on_dist(dist1, dist2, function):
 
 cooling_table= Table.read(cooling_model_file)
 
-cooling_table.pprint()
+#cooling_table.pprint()
 
 #loggteff_to_m = scinterp.interp2d(cooling_table['Teff'], cooling_table['logg'], cooling_table['Mass'], kind=interp_kind)
 loggteff_to_m_interp = scinterp.SmoothBivariateSpline(cooling_table['Teff'], cooling_table['logg'], cooling_table['Mass'])
@@ -194,19 +197,21 @@ print(target_teff_dist.shape)
 
 calc_pro_masses= get_progenitor_mass(target_mass_dist)
 test_masses= np.linspace(0.2, 1.3, 100)
-plt.scatter(target_mass_dist, calc_pro_masses, label='WD distribution')
-plt.plot(test_masses, get_progenitor_mass(test_masses), label='Cummings IFMR')
-plt.legend(loc='best')
-plt.xlabel('M_wd (M_sol)')
-plt.ylabel('M_prog. (M_sol)')
-plt.show()
+
+#plt.scatter(target_mass_dist, calc_pro_masses, label='WD distribution')
+#plt.plot(test_masses, get_progenitor_mass(test_masses), label='Cummings IFMR')
+#plt.legend(loc='best')
+#plt.xlabel('M_wd (M_sol)')
+#plt.ylabel('M_prog. (M_sol)')
+#plt.show()
 
 print(np.nanmax(calc_pro_masses))
 calc_pro_masses[np.isnan(calc_pro_masses)]=10.
 calc_pro_masses[np.isinf(calc_pro_masses)]=10.
-plt.hist(calc_pro_masses)
-plt.xlabel('M_progenitor')
-plt.show()
+
+#plt.hist(calc_pro_masses)
+#plt.xlabel('M_progenitor')
+#plt.show()
 
 print(target_teff_dist.shape)
 age_bins=np.arange(0,21,0.25)
@@ -217,14 +222,16 @@ mean_mass= np.nanmean(target_mass_dist)
 std_mass= np.std(target_mass_dist)
 median_mass= np.nanmedian(target_mass_dist)
 print('Mass:', mean_mass, '+/-', std_mass, 'or', median_mass)
-plt.hist(target_mass_dist, bins=50, label='logg-> M')
-plt.hist(simon_mass_dist, bins=50,label='Simon M', alpha=0.5)
-plt.axvline(x=np.median(target_mass_dist), color='r', linestyle='--', label='median(logg -> M): '+str(np.round(np.median(target_mass_dist),2)))
-plt.axvline(x=np.median(simon_mass_dist), color='k', linestyle= '--', label= 'median(Simon M): '+ str(np.round(np.median(simon_mass_dist),2) ))
-plt.legend(loc='best')
-plt.xlabel('Mass')
-plt.ylabel('N')
-plt.show()
+
+
+#plt.hist(target_mass_dist, bins=50, label='logg-> M')
+#plt.hist(simon_mass_dist, bins=50,label='Simon M', alpha=0.5)
+#plt.axvline(x=np.median(target_mass_dist), color='r', linestyle='--', label='median(logg -> M): '+str(np.round(np.median(target_mass_dist),2)))
+#plt.axvline(x=np.median(simon_mass_dist), color='k', linestyle= '--', label= 'median(Simon M): '+ str(np.round(np.median(simon_mass_dist),2) ))
+#plt.legend(loc='best')
+#plt.xlabel('Mass')
+#plt.ylabel('N')
+#plt.show()
 
 
 
@@ -244,6 +251,59 @@ clean_total_age_dist= np.copy(total_age_dist)
 clean_total_age_dist[np.isnan(clean_total_age_dist)]=20.
 clean_total_age_dist[np.where(clean_total_age_dist> 20.)] = 20. #setting a max
 
+
+#################
+################
+
+
+trimmed_total_age_dist=np.copy(total_age_dist)
+trimmed_total_age_dist=trimmed_total_age_dist[~np.isnan(trimmed_total_age_dist)]
+trimmed_total_age_dist=trimmed_total_age_dist[trimmed_total_age_dist<universe_age]
+
+#ln_trim_ages= np.log(trimmed_total_age_dist)
+
+#plt.hist(ln_trim_ages)
+#plt.xlabel('ln(total ages)')
+#plt.show()
+
+print('trimmed_total_age_dist.shape', trimmed_total_age_dist.shape)
+print(wd_name)
+print('relative remaining fraction', np.float_(trimmed_total_age_dist.shape[0])/total_age_dist.shape[0])
+
+trim_vals, trim_edges, trim_patches= plt.hist(trimmed_total_age_dist, bins=np.arange(0,21, 0.1), label='total ages limited to universe', normed=True, alpha=0.2)
+sub_edges=trim_edges[:-1] #remove the last edge to make the length the same as the probability values
+sort_order= np.argsort(-1*trim_vals) #by multiplying by a negative you make the largest values the smallest effectively. Thanks stackoverflow!
+bin_widths=np.median(trim_edges-np.roll(trim_edges,1))
+sort_trim_vals= trim_vals[sort_order]
+sort_trim_probs=sort_trim_vals*bin_widths #probability contribution of each bin
+sort_edges=sub_edges[sort_order]
+max_arg=np.argmax(trim_vals)
+max_val=sub_edges[max_arg]+(bin_widths*0.5)
+cumprob= np.cumsum(sort_trim_probs)
+inbounds=np.where(cumprob-percent_range < 0)
+print("max percentage", np.max(cumprob[inbounds]))
+
+
+print('bin_widths', bin_widths)
+print('max val', max_val)
+
+lowbound=np.nanmin(sort_edges[inbounds])
+highbound= np.nanmax(sort_edges[inbounds])+bin_widths
+
+print("low total age:", lowbound)
+print("high total age:", highbound)
+print("most likely total age:", max_val)
+plt.show()
+
+plt.plot(sort_trim_vals)
+plt.show()
+
+print('Minimum total age: ', np.nanmin(trimmed_total_age_dist), 'Gyr')
+print('Median total age: ', np.nanmedian(trimmed_total_age_dist), 'Gyr')
+
+
+############################
+###########################
 
 total_simon_dist= get_ms_lifetime(simon_mass_dist)+simon_age_dist
 total_simon_dist[np.where(total_simon_dist > 20.)]=20.
@@ -267,12 +327,16 @@ print(np.nanmedian(total_simon_dist), np.nanpercentile(total_simon_dist,16), np.
 plt.hist(target_age_dist, bins=np.arange(0,21, 0.25),label='cooling ages', normed=True)
 #plt.hist(ms_age_dist[~np.isnan(ms_age_dist)], bins=50, alpha=0.4, label='ms ages')
 plt.hist(clean_total_age_dist, bins=np.arange(0,21, 0.25), alpha=0.5,label= 'logg-> M -> Total Ages', normed=True)
+plt.hist(trimmed_total_age_dist, bins=np.arange(0,21, 0.1), label='total ages limited to universe', normed=True, alpha=0.2)
 #plt.hist(total_simon_dist, bins=np.arange(0,21, 0.25), alpha=0.5, label='Simon M -> total ages', normed=True)
 
 plt.xlabel('Age (Gyr)')
 plt.axvline(x=med_total_age, linestyle='--', color='k')
 plt.axvline(x=upper_total_age, linestyle='--', color='k')
 plt.axvline(x=lower_total_age, linestyle='--', color='k')
+plt.axvline(x=max_val, linestyle='--', color='r', label='M/L estimates')
+plt.axvline(x=lowbound, linestyle='--', color='r')
+plt.axvline(x=highbound, linestyle='--', color='r')
 plt.legend(loc='best')
 plt.title(wd_name)
 #plt.yscale('log')
@@ -332,6 +396,7 @@ plt.plot(wd_mass_vals, total_ages, label='Total Age')
 plt.plot(wd_mass_vals, cooling_ages, label='WD Cooling Age')
 plt.plot(wd_mass_vals, ms_ages, label='MS lifetime')
 plt.scatter(approx_masses, approx_ages, color='r', label='Grid vals with Teff ~3800K')
+plt.hist(target_mass_dist, normed=True, label='WD Mass distribution')
 plt.xlabel('M_wd in solar masses')
 #plt.ylabel('MS lifetime (Gyr)')
 plt.ylabel('Age (Gyr)')
