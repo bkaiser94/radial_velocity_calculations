@@ -19,6 +19,7 @@ import scipy.interpolate as scinterp
 
 import spec_plot_tools as spt
 import cal_params as cp
+import hurley_polynomials as hp
 
 
 cooling_model_file='COModel_ThinH.csv'
@@ -27,7 +28,8 @@ cooling_model_file='COModel_ThinH.csv'
 cooling_model_file=cp.ref_dir+'WD_cooling_models/'+cooling_model_file
 
 #default_ms_method='MIST'
-default_ms_method='Fontaine'
+#default_ms_method='Fontaine'
+default_ms_method='Hurley'
 
 universe_age= 13.8 #Gyr
 percent_range=0.68 #error bar coverage for total age estimate.
@@ -124,6 +126,8 @@ def get_ms_lifetime(mass_wd, method=default_ms_method):
         return 10*prog_mass**(-2.5)
     elif method=='MIST':
         return 61*prog_mass**(-2.5)
+    elif method=='Hurley':
+        return hp.get_t_ms(prog_mass)
     
 
 
@@ -378,7 +382,8 @@ approx_inds= np.where((cooling_table['Teff']< 4000) & (cooling_table['Teff']> 35
 approx_masses= cooling_table['Mass'][approx_inds]
 approx_ages=cooling_table['Age'][approx_inds]*1e-9
 
-wd_mass_vals= np.linspace(0.2, 1.3, 100)
+#wd_mass_vals= np.linspace(0.2, 1.3, 100)
+wd_mass_vals= np.linspace(0.2, 1.3, 1000)
 cooling_ages=teffm_to_age(target_teff, wd_mass_vals)*1e-9
 print('cooling_ages.shape', cooling_ages.shape)
 ms_ages= get_ms_lifetime(wd_mass_vals)
@@ -394,7 +399,8 @@ plt.axhline(y=10, linestyle='--', color='k')
 plt.axhline(y=13.8, color='k', label='13.8 Gyr')
 plt.plot(wd_mass_vals, total_ages, label='Total Age')
 plt.plot(wd_mass_vals, cooling_ages, label='WD Cooling Age')
-plt.plot(wd_mass_vals, ms_ages, label='MS lifetime')
+plt.plot(wd_mass_vals, ms_ages, label='MS lifetime from'+default_ms_method)
+plt.plot(wd_mass_vals, get_ms_lifetime(wd_mass_vals, method='Fontaine'), label='Fontaine')
 plt.scatter(approx_masses, approx_ages, color='r', label='Grid vals with Teff ~3800K')
 plt.hist(target_mass_dist, normed=True, label='WD Mass distribution')
 plt.xlabel('M_wd in solar masses')
@@ -501,7 +507,7 @@ plt.legend()
 plt.show()
 
 
-
+print('t_ms for 0.56 M_wd', get_ms_lifetime(0.56,method='Hurley'))
 
 
 

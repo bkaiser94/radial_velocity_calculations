@@ -24,7 +24,7 @@ from a_coeffs import a_coeffs
 
 #nothing
 
-default_z=0.02
+default_z=0.0001
 
 def make_match(value, array):
     try:
@@ -50,14 +50,14 @@ def a(z,index):
     return a_out
 
 def get_t_bgb(z,mass):
-    print('a_1',a(z,1))
-    print('a(z,2)*mass**4',a(z,2)*mass**4)
-    print('a(z,3)*mass**5.5 ',a(z,3)*mass**5.5 )
-    print('mass**7',mass**7)
-    print('(a(z,1)+a(z,2)*mass**4+a(z,3)*mass**5.5 + mass**7)',(a(z,1)+a(z,2)*mass**4+a(z,3)*mass**5.5 + mass**7))
-    print('a(z,4)*mass**2',a(z,4)*mass**2)
-    print('a(z,5)*mass**7',a(z,5)*mass**7)
-    print('(a(z,4)*mass**2 + a(z,5)*mass**7)',(a(z,4)*mass**2 + a(z,5)*mass**7))
+    #print('a_1',a(z,1))
+    #print('a(z,2)*mass**4',a(z,2)*mass**4)
+    #print('a(z,3)*mass**5.5 ',a(z,3)*mass**5.5 )
+    #print('mass**7',mass**7)
+    #print('(a(z,1)+a(z,2)*mass**4+a(z,3)*mass**5.5 + mass**7)',(a(z,1)+a(z,2)*mass**4+a(z,3)*mass**5.5 + mass**7))
+    #print('a(z,4)*mass**2',a(z,4)*mass**2)
+    #print('a(z,5)*mass**7',a(z,5)*mass**7)
+    #print('(a(z,4)*mass**2 + a(z,5)*mass**7)',(a(z,4)*mass**2 + a(z,5)*mass**7))
     return(a(z,1)+a(z,2)*mass**4+a(z,3)*mass**5.5 + mass**7)/(a(z,4)*mass**2 + a(z,5)*mass**7)
 
 def get_x(z):
@@ -88,25 +88,29 @@ def get_t_ms(mass, z=default_z):
     return np.max([
         get_mu(z,mass)*t_bgb,
         get_x(z)*t_bgb
-        ],axis=0)#*1e-3
+        ],axis=0)*1e-3
 
 
-test_mass=1.
-print('zeta', zeta(default_z))
-print('t_bgb', get_t_bgb(default_z, test_mass))
-print('mu', get_mu(default_z, test_mass))
-print('x', get_x(default_z))
-print('t_ms',get_t_ms(test_mass))
+#test_mass=1.
+#print('zeta', zeta(default_z))
+#print('t_bgb', get_t_bgb(default_z, test_mass))
+#print('mu', get_mu(default_z, test_mass))
+#print('x', get_x(default_z))
+#print('t_ms',get_t_ms(test_mass))
 
 
 #mass_vals=np.linspace(0.1,13.,100)
+#log_mass_vals=np.linspace(-0.4, 1.9, 100)
+#mass_vals= 10.**log_mass_vals
 
 #t_ms_vals= get_t_ms(mass_vals)
 #t_bgb_vals=get_t_bgb(default_z, mass_vals)
 
 
 #plt.plot(np.log10(mass_vals), np.log10(t_ms_vals))
-#plt.plot(np.log10(mass_vals), np.log10(t_bgb_vals))
+##plt.plot(np.log10(mass_vals), np.log10(t_bgb_vals))
+#plt.plot(np.log10(mass_vals), np.log10(get_t_ms(mass_vals,z=0.0001)))
+#plt.xlim(-0.4, 1.9)
 #plt.show()
 
 
