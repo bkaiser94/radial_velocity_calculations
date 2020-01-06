@@ -250,6 +250,14 @@ standard_dict={
         'sens_filename':'LTT3218_sensitivity_curve.txt',
         'balmer_masks':balmer_lines_wide,
         'other_masks': telluric_lines},
+     'gd71':{
+        'ra':'08:41:32.43',
+        'dec':'-32:56:32.92',
+        'sys_vel':12.0,
+        'filename':'xshooter_standards/fGD71.dat',
+        'sens_filename':'GD71_sensitivity_curve.txt',
+        'balmer_masks':balmer_lines_wide,
+        'other_masks': telluric_lines},
     }
 
 #dictionary to be used for plotting atmospheric emission lines so elements are a consistent color marker
