@@ -40,10 +40,12 @@ name_all_lower_case:{
 ref_dir= '/Users/BenKaiser/Desktop/Goodman_ref_files/'
 wave_sol_dir= 'wavelength_solns/'
 tell_dir='telluric_libs/'
+abundance_dir='abundances/'
 
 standard_dir=ref_dir+'standards/'
 line_list_dir= ref_dir+'line_lists/'
 tell_dir= ref_dir+tell_dir
+abundance_dir= ref_dir+abundance_dir
 
 airline_name='OstMart1992_airglow.txt'
 

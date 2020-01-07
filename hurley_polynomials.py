@@ -24,7 +24,9 @@ from a_coeffs import a_coeffs
 
 #nothing
 
-default_z=0.0001
+#default_z=0.0001
+default_z=0.02
+
 
 def make_match(value, array):
     try:
