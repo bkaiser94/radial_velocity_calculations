@@ -43,11 +43,11 @@ percent_range=0.68 #error bar coverage for total age estimate.
 
 
 ##1330
-#wd_name='SDSSJ1330+6435'
-#target_logg= 8.26
-#target_logg_err=0.15
-#target_teff= 4310. #K
-#target_teff_err=190
+wd_name='SDSSJ1330+6435'
+target_logg= 8.26
+target_logg_err=0.15
+target_teff= 4310. #K
+target_teff_err=190
 
 ##2356
 #wd_name='WDJ2356-209'
@@ -58,14 +58,22 @@ percent_range=0.68 #error bar coverage for total age estimate.
 
 #target_teff=3000.
 
-n=100000
 
 ##1644
-wd_name='GaiaJ1644-0449'
-target_logg=7.77
-target_logg_err= 0.23
-target_teff= 3830.
-target_teff_err= 230.
+#wd_name='GaiaJ1644-0449'
+#target_logg=7.77
+#target_logg_err= 0.23
+#target_teff= 3830.
+#target_teff_err= 230.
+
+############################3
+##############################
+
+default_z=0.0001 #allegedly thick disk value
+#default_z=0.02 #approximately solar
+
+n=100000
+
 
 simon_mass= 0.45
 simon_mass_err= 0.12
@@ -87,16 +95,24 @@ interp_kind='cubic'
 #target_logg=8.26
 #target_teff= 4310. #K
 ##############################
+#cummings_m_ranges= [
+    #[[-np.inf,0.555],[np.nan,np.nan]],
+    #[[0.555,0.717],[0.080,0.476]],
+    #[[0.717,0.856],[0.187,0.199]],
+    #[[0.856,1.24],[0.107,0.471]],
+    #[[1.24,np.inf],[0.,0.]]
+    #]
+
+#setting the progenitor mass to be huge for masses greater than largest allowed so that the MS lifetime is essentially 0.
+#setting the masses to produce Nan's for  progenitor mass if Mwd is below the range covered.
+#I artificially changed the bounds in the below set so that the min mass is 0.5 This is decidedly outside Jeff's target area
 cummings_m_ranges= [
-    [[-np.inf,0.555],[np.nan,np.nan]],
-    [[0.555,0.717],[0.080,0.476]],
+    [[-np.inf,0.52],[np.nan,np.nan]],
+    [[0.52,0.717],[0.080,0.476]],
     [[0.717,0.856],[0.187,0.199]],
     [[0.856,1.24],[0.107,0.471]],
     [[1.24,np.inf],[0.,0.]]
     ]
-#setting the progenitor mass to be huge for masses greater than largest allowed so that the MS lifetime is essentially 0.
-#setting the masses to produce Nan's for  progenitor mass if Mwd is below the range covered.
-
 
 
 
@@ -119,15 +135,14 @@ def get_progenitor_mass(mass_wd):
                 output_masses= mfunc(mass_wd, element[1])
     return output_masses
 
-
-def get_ms_lifetime(mass_wd, method=default_ms_method):
+def get_ms_lifetime(mass_wd, method=default_ms_method, z=default_z):
     prog_mass= get_progenitor_mass(mass_wd)
     if method=='Fontaine':
         return 10*prog_mass**(-2.5)
     elif method=='MIST':
         return 61*prog_mass**(-2.5)
     elif method=='Hurley':
-        return hp.get_t_ms(prog_mass)
+        return hp.get_t_ms(prog_mass, z=z)
     
 
 
@@ -158,6 +173,17 @@ def operate_on_dist(dist1, dist2, function):
         output_dist.append(out_el)
     output_dist=np.array(output_dist).T[0]
     return output_dist
+
+def clean_and_trim_age(total_age_dist):
+    
+    clean_total_age_dist= np.copy(total_age_dist)
+    clean_total_age_dist[np.isnan(clean_total_age_dist)]=20.
+    clean_total_age_dist[np.where(clean_total_age_dist> 20.)] = 20. #set
+    
+    trimmed_total_age_dist=np.copy(total_age_dist)
+    trimmed_total_age_dist=trimmed_total_age_dist[~np.isnan(trimmed_total_age_dist)]
+    trimmed_total_age_dist=trimmed_total_age_dist[trimmed_total_age_dist<universe_age]
+    return trimmed_total_age_dist
 ##########################3
 
 cooling_table= Table.read(cooling_model_file)
@@ -248,21 +274,32 @@ target_age_dist=operate_on_dist(target_teff_dist, target_mass_dist, teffm_to_age
 simon_age_dist=operate_on_dist(target_teff_dist, simon_mass_dist, teffm_to_age)*1e-9 #Gyr units
 
 ms_age_dist=get_ms_lifetime(target_mass_dist)
+lowz_ms_age_dist=get_ms_lifetime(target_mass_dist, z=0.0001)
 #ms_age_dist=get_ms_lifetime(simon_mass_dist)
 
 total_age_dist= target_age_dist+ms_age_dist
+lowz_total_age_dist= target_age_dist+lowz_ms_age_dist
+
 clean_total_age_dist= np.copy(total_age_dist)
 clean_total_age_dist[np.isnan(clean_total_age_dist)]=20.
 clean_total_age_dist[np.where(clean_total_age_dist> 20.)] = 20. #setting a max
+
+
+#cleanz_total_age_dist= np.copy(lowz_total_age_dist)
+#cleanz_total_age_dist[np.isnan(cleanz_total_age_dist)]=20.
+#cleanz_total_age_dist[np.where(cleanz_total_age_dist> 20.)] = 20. #setting a max
 
 
 #################
 ################
 
 
-trimmed_total_age_dist=np.copy(total_age_dist)
-trimmed_total_age_dist=trimmed_total_age_dist[~np.isnan(trimmed_total_age_dist)]
-trimmed_total_age_dist=trimmed_total_age_dist[trimmed_total_age_dist<universe_age]
+#trimmed_total_age_dist=np.copy(total_age_dist)
+#trimmed_total_age_dist=trimmed_total_age_dist[~np.isnan(trimmed_total_age_dist)]
+#trimmed_total_age_dist=trimmed_total_age_dist[trimmed_total_age_dist<universe_age]
+
+trimmed_total_age_dist=clean_and_trim_age(total_age_dist)
+trimmed_lowz_total_age_dist=clean_and_trim_age(lowz_total_age_dist)
 
 #ln_trim_ages= np.log(trimmed_total_age_dist)
 
@@ -333,7 +370,7 @@ plt.hist(target_age_dist, bins=np.arange(0,21, 0.25),label='cooling ages', norme
 plt.hist(clean_total_age_dist, bins=np.arange(0,21, 0.25), alpha=0.5,label= 'logg-> M -> Total Ages', normed=True)
 plt.hist(trimmed_total_age_dist, bins=np.arange(0,21, 0.1), label='total ages limited to universe', normed=True, alpha=0.2)
 #plt.hist(total_simon_dist, bins=np.arange(0,21, 0.25), alpha=0.5, label='Simon M -> total ages', normed=True)
-
+plt.hist(trimmed_lowz_total_age_dist, bins=np.arange(0,21, 0.1), label='lowz total ages limited to universe', normed=True, alpha=0.2)
 plt.xlabel('Age (Gyr)')
 plt.axvline(x=med_total_age, linestyle='--', color='k')
 plt.axvline(x=upper_total_age, linestyle='--', color='k')
@@ -383,13 +420,16 @@ approx_masses= cooling_table['Mass'][approx_inds]
 approx_ages=cooling_table['Age'][approx_inds]*1e-9
 
 #wd_mass_vals= np.linspace(0.2, 1.3, 100)
-wd_mass_vals= np.linspace(0.2, 1.3, 1000)
+#wd_mass_vals= np.linspace(0.2, 1.3, 1000)
+wd_mass_vals=10.**np.linspace(np.log10(0.2),np.log10(1.3), 1000)
 cooling_ages=teffm_to_age(target_teff, wd_mass_vals)*1e-9
 print('cooling_ages.shape', cooling_ages.shape)
 ms_ages= get_ms_lifetime(wd_mass_vals)
+lowz_ms_ages=get_ms_lifetime(wd_mass_vals, z=0.0001)
 print(ms_ages.shape)
 
 total_ages= cooling_ages+ms_ages
+lowz_total_ages= cooling_ages+lowz_ms_ages
 print('total_ages.shape', total_ages.shape)
 print((teffm_to_age(target_teff, wd_mass_vals)*1e-9).shape)
 print(get_ms_lifetime(wd_mass_vals).shape)
@@ -397,12 +437,15 @@ print(get_ms_lifetime(wd_mass_vals).shape)
 plt.axvline(x=0.5, linestyle='--', color='k')
 plt.axhline(y=10, linestyle='--', color='k')
 plt.axhline(y=13.8, color='k', label='13.8 Gyr')
-plt.plot(wd_mass_vals, total_ages, label='Total Age')
+plt.plot(wd_mass_vals, total_ages, label='Total Age z='+str(default_z))
+plt.plot(wd_mass_vals, lowz_total_ages, label='Total Age z='+str(0.0001))
 plt.plot(wd_mass_vals, cooling_ages, label='WD Cooling Age')
 plt.plot(wd_mass_vals, ms_ages, label='MS lifetime from'+default_ms_method)
+plt.plot(wd_mass_vals, lowz_ms_ages, label='lowz MS lifetime from'+default_ms_method)
 plt.plot(wd_mass_vals, get_ms_lifetime(wd_mass_vals, method='Fontaine'), label='Fontaine')
 plt.scatter(approx_masses, approx_ages, color='r', label='Grid vals with Teff ~3800K')
 plt.hist(target_mass_dist, normed=True, label='WD Mass distribution')
+plt.scatter(0.56,  teffm_to_age(target_teff, 0.56)*1e-9+get_ms_lifetime(0.56), label='M=0.56 at teff'+str(target_teff))
 plt.xlabel('M_wd in solar masses')
 #plt.ylabel('MS lifetime (Gyr)')
 plt.ylabel('Age (Gyr)')

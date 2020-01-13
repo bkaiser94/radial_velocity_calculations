@@ -24,8 +24,8 @@ from a_coeffs import a_coeffs
 
 #nothing
 
-#default_z=0.0001
-default_z=0.02
+default_z=0.0001 #allegedly thick disk value
+#default_z=0.02 #approximately solar
 
 
 def make_match(value, array):
@@ -72,7 +72,7 @@ def get_x(z):
                        ],axis=0)],axis=0)
 
 def get_mu(z,mass):
-    print(np.max([a(z,6)/(mass**a(z,7)),a(z,8)+(a(z,9)/mass**(a(z,10)))],axis=0))
+    #print(np.max([a(z,6)/(mass**a(z,7)),a(z,8)+(a(z,9)/mass**(a(z,10)))],axis=0))
     first_val=make_match(0.5, mass)
     return np.max([
         first_val,

@@ -119,7 +119,7 @@ if file_setting=='all_avg':
 
 elif file_setting=='all_wctb':
     print(file_setting)
-    filenames=glob('wctb*aia*449_*')
+    filenames=glob('wctb*SDSS*')
     #filenames=glob('wctb*Feige110_*')
     #filenames=glob('wctb*aia*2320*')
     single_iterate=True
@@ -129,7 +129,7 @@ elif file_setting=='all_wctb':
 elif file_setting=='all_fwctb':
     print(file_setting)
     #filenames=glob('fwctb*LTT*')
-    filenames=glob('fwctb*')
+    filenames=glob('fwctb*SDSS*')
     #filenames=glob('fwctb*2356*')
     single_iterate=True
     double_iterate=False
@@ -160,10 +160,10 @@ elif file_setting=='compare_SDSS':
     double_iterate=False
     
 elif file_setting=='all_SDSS':
-    sdss_names= glob(sdss_path+'*sdss*')
-    filenames=sdss_names
+    #sdss_names= glob(sdss_path+'*sdss*')
     #sdss_names = glob(sdss_path+'*.fits')
-    #sdss_names = glob(sdss_path+'SDSS*.fits')
+    sdss_names = glob(sdss_path+'SDSS*.fits')
+    filenames=sdss_names
     single_iterate=False
     double_iterate=False
     
@@ -527,9 +527,10 @@ if file_setting=='all_SDSS':
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)        plt.axhline(y=0, linestyle='--', color='k')
-            plt.legend()
+            #plt.legend()
             plt.title(filename1+ ' & '+ filename2.split('/')[-1])
-            plt.show()
+            #plt.show()
+            spt.show_plot(line_id='alkali', convert_to_air=False)
     #plt.legend()
     #plt.show()
 
@@ -689,7 +690,7 @@ if single_iterate:
         #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
         #plot_spectrum(target_spec, str(header['airmass']), header, norm=False, smooth=True, kernel_type='box', pix_width=10)
         #plot_spectrum(target_spec, filename, header, norm=True, offset=counter)
-        plot_spectrum(target_spec, filename, header, norm=True, smooth=True, kernel_type='box')
+        plot_spectrum(target_spec, filename, header, norm=True, smooth=False, kernel_type='box', offset=counter)
         #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
         #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
