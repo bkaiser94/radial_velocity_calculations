@@ -105,7 +105,7 @@ interp_kind='cubic'
 
 #setting the progenitor mass to be huge for masses greater than largest allowed so that the MS lifetime is essentially 0.
 #setting the masses to produce Nan's for  progenitor mass if Mwd is below the range covered.
-#I artificially changed the bounds in the below set so that the min mass is 0.5 This is decidedly outside Jeff's target area
+#I artificially changed the bounds in the below set so that the min mass is 0.52 This is decidedly outside Jeff's target area
 cummings_m_ranges= [
     [[-np.inf,0.52],[np.nan,np.nan]],
     [[0.52,0.717],[0.080,0.476]],
