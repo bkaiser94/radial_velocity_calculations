@@ -351,7 +351,42 @@ out_headers=[
     ]
 
 
+el_names = [
+ "null",
+ "H",
+ "He",
+ "Li",
+ "Be",
+ "B",
+ "C",
+ "N",
+ "O",
+ "F",
+ "Ne",
+ "Na",
+ "Mg",
+ "Al",
+ "Si",
+ "P",
+ "S",
+ "Cl",
+ "Ar",
+ "K",
+ "Ca",
+ "Sc",
+ "Ti",
+ "V",
+ "Cr",
+ "Mn",
+ "Fe",
+ "Co",
+ "Ni",
+ "Cu",
+     ]
 
-
+#el_nums=[]
+#for el_num, el_name in enumerate(el_names):
+    
+el_nums=dict([(el[1],el[0]) for el in enumerate(el_names)])
 
 
