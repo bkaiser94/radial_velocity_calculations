@@ -33,6 +33,12 @@ default_ms_method='Hurley'
 
 universe_age= 13.8 #Gyr
 percent_range=0.68 #error bar coverage for total age estimate.
+null_age_val=20. #usually 20
+#null_age_val=50. #I'm experimenting though for the moment
+default_limit_universe=True
+#default_z=0.0001 #allegedly thick disk value
+default_z=0.02 #approximately solar
+
 
 #madeup
 #wd_name='made-up'
@@ -43,18 +49,18 @@ percent_range=0.68 #error bar coverage for total age estimate.
 
 
 ##1330
-wd_name='SDSSJ1330+6435'
-target_logg= 8.26
-target_logg_err=0.15
-target_teff= 4310. #K
-target_teff_err=190
+#wd_name='SDSSJ1330+6435'
+#target_logg= 8.26
+#target_logg_err=0.15
+#target_teff= 4310. #K
+#target_teff_err=190
 
 ##2356
-#wd_name='WDJ2356-209'
-#target_logg=7.98
-#target_logg_err=0.07
-#target_teff= 4040. #K
-#target_teff_err=110.
+wd_name='WDJ2356-209'
+target_logg=7.98
+target_logg_err=0.07
+target_teff= 4040. #K
+target_teff_err=110.
 
 #target_teff=3000.
 
@@ -66,11 +72,19 @@ target_teff_err=190
 #target_teff= 3830.
 #target_teff_err= 230.
 
+#J1150
+#from Gentile Fusillo et al. 2019
+#wd_name='SDSSJ1150+2403'
+#target_logg=7.945462
+#target_logg_err=2.24414e-01
+#target_teff= 3454.718922
+#target_teff_err= 126.986438
+
 ############################3
 ##############################
 
-default_z=0.0001 #allegedly thick disk value
-#default_z=0.02 #approximately solar
+
+
 
 n=100000
 
@@ -95,24 +109,24 @@ interp_kind='cubic'
 #target_logg=8.26
 #target_teff= 4310. #K
 ##############################
-#cummings_m_ranges= [
-    #[[-np.inf,0.555],[np.nan,np.nan]],
-    #[[0.555,0.717],[0.080,0.476]],
-    #[[0.717,0.856],[0.187,0.199]],
-    #[[0.856,1.24],[0.107,0.471]],
-    #[[1.24,np.inf],[0.,0.]]
-    #]
-
-#setting the progenitor mass to be huge for masses greater than largest allowed so that the MS lifetime is essentially 0.
-#setting the masses to produce Nan's for  progenitor mass if Mwd is below the range covered.
-#I artificially changed the bounds in the below set so that the min mass is 0.52 This is decidedly outside Jeff's target area
 cummings_m_ranges= [
-    [[-np.inf,0.52],[np.nan,np.nan]],
-    [[0.52,0.717],[0.080,0.476]],
+    [[-np.inf,0.555],[np.nan,np.nan]],
+    [[0.555,0.717],[0.080,0.476]],
     [[0.717,0.856],[0.187,0.199]],
     [[0.856,1.24],[0.107,0.471]],
     [[1.24,np.inf],[0.,0.]]
     ]
+
+#setting the progenitor mass to be huge for masses greater than largest allowed so that the MS lifetime is essentially 0.
+#setting the masses to produce Nan's for  progenitor mass if Mwd is below the range covered.
+#I artificially changed the bounds in the below set so that the min mass is 0.52 This is decidedly outside Jeff's target area
+#cummings_m_ranges= [
+    #[[-np.inf,0.52],[np.nan,np.nan]],
+    #[[0.52,0.717],[0.080,0.476]],
+    #[[0.717,0.856],[0.187,0.199]],
+    #[[0.856,1.24],[0.107,0.471]],
+    #[[1.24,np.inf],[0.,0.]]
+    #]
 
 
 
@@ -174,15 +188,35 @@ def operate_on_dist(dist1, dist2, function):
     output_dist=np.array(output_dist).T[0]
     return output_dist
 
-def clean_and_trim_age(total_age_dist):
+def clean_and_trim_age(total_age_dist, limit_universe=default_limit_universe, wd_mass_dist=[]):
     
     clean_total_age_dist= np.copy(total_age_dist)
-    clean_total_age_dist[np.isnan(clean_total_age_dist)]=20.
-    clean_total_age_dist[np.where(clean_total_age_dist> 20.)] = 20. #set
+    clean_total_age_dist[np.isnan(clean_total_age_dist)]=null_age_val
+    clean_total_age_dist[np.where(clean_total_age_dist>null_age_val)] = null_age_val #set
     
     trimmed_total_age_dist=np.copy(total_age_dist)
+    trimmed_wd_mass=np.copy(wd_mass_dist)
+    try:
+        trimmed_wd_mass= trimmed_wd_mass[~np.isnan(trimmed_total_age_dist)]
+    except IndexError:
+        #no wd_mass_dist_provided
+        pass
     trimmed_total_age_dist=trimmed_total_age_dist[~np.isnan(trimmed_total_age_dist)]
-    trimmed_total_age_dist=trimmed_total_age_dist[trimmed_total_age_dist<universe_age]
+    if limit_universe:
+        try:
+            trimmed_wd_mass= trimmed_wd_mass[trimmed_total_age_dist<universe_age]
+            trimmed_total_age_dist=trimmed_total_age_dist[trimmed_total_age_dist<universe_age]
+            return trimmed_total_age_dist, trimmed_wd_mass
+        except IndexError:
+            #no wd_mass_dist_provided
+            pass
+        #trimmed_total_age_dist=trimmed_total_age_dist[trimmed_total_age_dist<universe_age]
+    else:
+        try:
+            print(wd_mass_dist)
+            return trimmed_total_age_dist, trimmed_wd_mass
+        except IndexError:
+            pass
     return trimmed_total_age_dist
 ##########################3
 
@@ -244,7 +278,8 @@ calc_pro_masses[np.isinf(calc_pro_masses)]=10.
 #plt.show()
 
 print(target_teff_dist.shape)
-age_bins=np.arange(0,21,0.25)
+#age_bins=np.arange(0,21,0.25)
+age_bins=np.arange(0,null_age_val+0.25, 0.25)
 #print(np.where(target_mass_dist== loggteff_to_m(target_teff_dist[5], target_logg_dist[5])))
 #print('comparison', target_mass_dist[5], loggteff_to_m(target_teff_dist[5], target_logg_dist[5]))
 print('target_mass_dist.shape', target_mass_dist.shape)
@@ -281,8 +316,10 @@ total_age_dist= target_age_dist+ms_age_dist
 lowz_total_age_dist= target_age_dist+lowz_ms_age_dist
 
 clean_total_age_dist= np.copy(total_age_dist)
-clean_total_age_dist[np.isnan(clean_total_age_dist)]=20.
-clean_total_age_dist[np.where(clean_total_age_dist> 20.)] = 20. #setting a max
+#clean_total_age_dist[np.isnan(clean_total_age_dist)]=20.
+#clean_total_age_dist[np.where(clean_total_age_dist> 20.)] = 20. #setting a max
+clean_total_age_dist[np.isnan(clean_total_age_dist)]=null_age_val
+clean_total_age_dist[np.where(clean_total_age_dist> null_age_val)] = null_age_val#setting a max
 
 
 #cleanz_total_age_dist= np.copy(lowz_total_age_dist)
@@ -298,7 +335,8 @@ clean_total_age_dist[np.where(clean_total_age_dist> 20.)] = 20. #setting a max
 #trimmed_total_age_dist=trimmed_total_age_dist[~np.isnan(trimmed_total_age_dist)]
 #trimmed_total_age_dist=trimmed_total_age_dist[trimmed_total_age_dist<universe_age]
 
-trimmed_total_age_dist=clean_and_trim_age(total_age_dist)
+#trimmed_total_age_dist=clean_and_trim_age(total_age_dist)
+trimmed_total_age_dist, trimmed_mass_dist=clean_and_trim_age(total_age_dist,wd_mass_dist= target_mass_dist)
 trimmed_lowz_total_age_dist=clean_and_trim_age(lowz_total_age_dist)
 
 #ln_trim_ages= np.log(trimmed_total_age_dist)
@@ -311,7 +349,7 @@ print('trimmed_total_age_dist.shape', trimmed_total_age_dist.shape)
 print(wd_name)
 print('relative remaining fraction', np.float_(trimmed_total_age_dist.shape[0])/total_age_dist.shape[0])
 
-trim_vals, trim_edges, trim_patches= plt.hist(trimmed_total_age_dist, bins=np.arange(0,21, 0.1), label='total ages limited to universe', normed=True, alpha=0.2)
+trim_vals, trim_edges, trim_patches= plt.hist(trimmed_total_age_dist, bins=np.arange(0,null_age_val+0.1, 0.1), label='total ages limited to universe', normed=True, alpha=0.2)
 sub_edges=trim_edges[:-1] #remove the last edge to make the length the same as the probability values
 sort_order= np.argsort(-1*trim_vals) #by multiplying by a negative you make the largest values the smallest effectively. Thanks stackoverflow!
 bin_widths=np.median(trim_edges-np.roll(trim_edges,1))
@@ -330,12 +368,28 @@ print('max val', max_val)
 
 lowbound=np.nanmin(sort_edges[inbounds])
 highbound= np.nanmax(sort_edges[inbounds])+bin_widths
+bounding_range=np.where((trimmed_total_age_dist < highbound) & (trimmed_total_age_dist > lowbound))
+bounded_masses= trimmed_mass_dist[bounding_range]
+ml_mass_vals= trimmed_mass_dist[np.where((trimmed_total_age_dist > sub_edges[max_arg])&(trimmed_total_age_dist < sub_edges[max_arg]+bin_widths))]
 
+print("\n***********\n")
 print("low total age:", lowbound)
 print("high total age:", highbound)
 print("most likely total age:", max_val)
+print("Minimum WD mass in that age range", np.min(bounded_masses))
+print("Maximum WD mass in that age range", np.max(bounded_masses))
+print("Mean WD mass for M/L", np.mean(ml_mass_vals))
+print(np.min(ml_mass_vals), np.max(ml_mass_vals))
+print("\n***********\n")
 plt.show()
 
+these_bins= np.arange(0,1.4, 0.025)
+plt.hist(bounded_masses, alpha =0.2, label='bounded_masses', bins=these_bins, normed=True)
+plt.hist(target_mass_dist, alpha=0.2, label='target_mass_dist', bins=these_bins, normed=True)
+plt.hist(trimmed_mass_dist, alpha=0.2, label='trimmed_mass_dist', bins=these_bins, normed=True)
+plt.legend()
+plt.xlabel('Mass (M_sol)')
+plt.show()
 plt.plot(sort_trim_vals)
 plt.show()
 
@@ -347,8 +401,8 @@ print('Median total age: ', np.nanmedian(trimmed_total_age_dist), 'Gyr')
 ###########################
 
 total_simon_dist= get_ms_lifetime(simon_mass_dist)+simon_age_dist
-total_simon_dist[np.where(total_simon_dist > 20.)]=20.
-total_simon_dist[np.isnan(total_simon_dist )]=20.
+total_simon_dist[np.where(total_simon_dist > null_age_val)]=null_age_val
+total_simon_dist[np.isnan(total_simon_dist )]=null_age_val
 
 mean_age= np.nanmean(target_age_dist)
 std_age= np.std(target_age_dist)
@@ -365,12 +419,12 @@ print('mean cooling age', mean_age, '+/-', std_age)
 print('mean total age', mean_total_age, '+/-', std_total_age)
 print(np.nanpercentile(clean_total_age_dist,16),np.nanmedian(clean_total_age_dist), np.nanpercentile(clean_total_age_dist,84))
 print(np.nanmedian(total_simon_dist), np.nanpercentile(total_simon_dist,16), np.nanpercentile(total_simon_dist,84))
-plt.hist(target_age_dist, bins=np.arange(0,21, 0.25),label='cooling ages', normed=True)
+plt.hist(target_age_dist, bins=np.arange(0,null_age_val+0.25, 0.25),label='cooling ages', normed=True)
 #plt.hist(ms_age_dist[~np.isnan(ms_age_dist)], bins=50, alpha=0.4, label='ms ages')
-plt.hist(clean_total_age_dist, bins=np.arange(0,21, 0.25), alpha=0.5,label= 'logg-> M -> Total Ages', normed=True)
-plt.hist(trimmed_total_age_dist, bins=np.arange(0,21, 0.1), label='total ages limited to universe', normed=True, alpha=0.2)
+plt.hist(clean_total_age_dist, bins=np.arange(0,null_age_val+0.25, 0.25), alpha=0.5,label= 'logg-> M -> Total Ages', normed=True)
+plt.hist(trimmed_total_age_dist, bins=np.arange(0,null_age_val+0.1, 0.1), label='total ages limited to universe', normed=True, alpha=0.2)
 #plt.hist(total_simon_dist, bins=np.arange(0,21, 0.25), alpha=0.5, label='Simon M -> total ages', normed=True)
-plt.hist(trimmed_lowz_total_age_dist, bins=np.arange(0,21, 0.1), label='lowz total ages limited to universe', normed=True, alpha=0.2)
+plt.hist(trimmed_lowz_total_age_dist, bins=np.arange(0,null_age_val+0.1, 0.1), label='lowz total ages limited to universe', normed=True, alpha=0.2)
 plt.xlabel('Age (Gyr)')
 plt.axvline(x=med_total_age, linestyle='--', color='k')
 plt.axvline(x=upper_total_age, linestyle='--', color='k')
@@ -385,9 +439,11 @@ plt.show()
 
 log_total= np.log10(total_age_dist)
 clean_log_dist= np.copy(log_total)
-clean_log_dist[np.isnan(clean_log_dist)]=20.
+clean_log_dist[np.isnan(clean_log_dist)]=null_age_val
+
 #clean_log_dist[np.where(clean_total_age_dist> 20.)] = 20.
-plt.hist(clean_log_dist, bins=200, normed=True, color='g', alpha=0.5, label='Total Ages')
+#plt.hist(clean_log_dist, bins=200, normed=True, color='g', alpha=0.5, label='Total Ages')
+plt.hist(clean_log_dist, bins=np.linspace(0,null_age_val+1,1000), normed=True, color='g', alpha=0.5, label='Total Ages')
 plt.xlabel('log10(age(Gyr))')
 #plt.yscale('log')
 plt.show()
