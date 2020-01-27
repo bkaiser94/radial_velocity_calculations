@@ -122,13 +122,30 @@ def make_DB_tau_table(input_logg):
 
 #plt.show()
 
-def extrapolate_single_el_tau(target_teff, element,  input_logg= 8.0, teff_max=teff_max, plot_all=False):
+def extrapolate_tau_single_logg( element,  input_logg= 8.0, teff_max=teff_max, plot_all=False):
     db_table= make_DB_tau_table(input_logg)
     valid_teff_inds= np.where(db_table['teff']<teff_max)
     valid_teffs= db_table[valid_teff_inds]['teff']
     valid_taus= db_table[valid_teff_inds][element]
     log_valid_teffs= np.log10(valid_teffs)
     poly_coeffs= np.polyfit(log_valid_teffs, valid_taus, 1) #it's going to only be a linear fit to the log-log space, tau is already logged
+    return poly_coeffs
+
+def make_extrap_cross_logg(element, teff_max=teff_max):
+    logg_coeffs=[]
+    for grid_logg in ggDB_array:
+        coeff_single=extrapolate_tau_single_logg(element, input_logg=grid_logg, teff_max=teff_max)
+        logg_coeffs.append(coeff_single)
+    return logg_coeffs
+
+def extrapolate_single_el_tau(target_teff, element,  input_logg= 8.0, teff_max=teff_max, plot_all=False):
+    #db_table= make_DB_tau_table(input_logg)
+    #valid_teff_inds= np.where(db_table['teff']<teff_max)
+    #valid_teffs= db_table[valid_teff_inds]['teff']
+    #valid_taus= db_table[valid_teff_inds][element]
+    #log_valid_teffs= np.log10(valid_teffs)
+    #poly_coeffs= np.polyfit(log_valid_teffs, valid_taus, 1) #it's going to only be a linear fit to the log-log space, tau is already logged
+    poly_coeffs=extrapolate_tau_single_logg(element,  input_logg= 8.0, teff_max=teff_max, plot_all=False)
     target_tau= np.polyval(poly_coeffs, np.log10(target_teff))
     test_teffs=np.log10(np.linspace(3000,teff_max, 100))
     if plot_all:
@@ -144,8 +161,62 @@ def extrapolate_single_el_tau(target_teff, element,  input_logg= 8.0, teff_max=t
     #plt.show()
     return target_tau
     #need the teff values to also be logged... 
+    
+def extrapolate_tau_x_logg(target_teff, target_logg, element):
+    input_vals_array=True
+    poly_coeffs= make_extrap_cross_logg(element)
+    try:
+        print(target_teff[0], target_logg[0])
+    except AttributeError:
+        input_vals_array=False
+        print("Not an array input, which is ok.")
+    if input_vals_array:
+        tau_list=[]
+        #loop_count=0
+        for teff, logg in zip(target_teff, target_logg):
+            #print('loop round done', loop_count)
+            #loop_count+=1
+            logg_diffs= np.abs(logg-ggDB_array)
+            small_args=np.argsort(logg_diffs)[:2]
+            bound_taus=[]
+            for arg in small_args:
+               
+                tau_teff= np.polyval(poly_coeffs[arg], np.log10(teff))
+                bound_taus.append(tau_teff)
+            cross_coeffs=np.polyfit(ggDB_array[small_args], bound_taus, 1)
+            single_tau= np.polyval(cross_coeffs, logg)
+            tau_list.append(single_tau)
+        return tau_list
+    else:
+        pass
+    
+    return
 
 if __name__ == '__main__':
+    #wd_name='GaiaJ1644-0449'
+    target_logg=7.77
+    target_logg_err= 0.23
+    target_teff= 3830.
+    target_teff_err= 230.
+    n_points=1e4
+    logg_dist=np.random.normal(loc=target_logg, scale=target_logg_err, size=n_points)
+    teff_dist= np.random.normal(loc=target_teff, scale=target_teff_err, size=n_points)
+    tau_li_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Li')
+    tau_ca_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Ca')
+    plt.hist(tau_li_dist, label='Li')
+    plt.hist(tau_ca_dist, label='Ca')
+    plt.legend()
+    plt.show()
+    plt.hist(logg_dist)
+    plt.axvline(x=7.5, linestyle='--')
+    plt.axvline(x=9.0, linestyle='--')
+    plt.show()
+    plt.scatter(teff_dist, tau_li_dist)
+    plt.scatter(teff_dist, tau_ca_dist)
+    plt.show()
+    plt.scatter(logg_dist, tau_li_dist)
+    plt.scatter(logg_dist, tau_ca_dist)
+    plt.show()
     target_tau_li=extrapolate_single_el_tau(3830., 'Li')
     target_tau_li=extrapolate_single_el_tau(3830., 'Li', input_logg=7.5)
     target_tau_ca=extrapolate_single_el_tau(3830., 'Ca')
