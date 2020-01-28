@@ -18,14 +18,19 @@ from astropy import constants as const
 import interp_tau as itau
 import cal_params as cp
 
-def declining_phase(target_teff, log_el1_over_el2, time,el1, el2, logg=8.0, steady_state_start=False):
+def declining_phase(target_teff, log_el1_over_el2, time,el1, el2, logg=8.0, steady_state_start=False, cross_extrap=True):
     """
     provide log_el1_over_el2 as an absolute number ratio not the one normalized to solar abundances.
     
     the output value will be in log10 of absolute number abundances... hopefully
     """
-    el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg)
-    el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg)
+    if cross_extrap:
+        el1_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el1)
+        el2_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el2)
+    else:
+        el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg)
+        el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg)
+    
     el1_tau=10.**el1_logtau
     el2_tau=10.**el2_logtau
     exp_term= np.exp(time*((el2_tau-el1_tau)/(el1_tau*el2_tau))) #from equation 3 of Harrison et al. 2018
@@ -37,16 +42,20 @@ def declining_phase(target_teff, log_el1_over_el2, time,el1, el2, logg=8.0, stea
     return np.log10(dp_el1el2)
 
 
-def get_time_since_accretion(target_teff, log_atm_ratio, log_desired_ratio, el1, el2,logg=8.0, steady_state_start=False):
+def get_time_since_accretion(target_teff, log_atm_ratio, log_desired_ratio, el1, el2,logg=8.0, steady_state_start=False,cross_extrap=True):
     """
     track back some abundance ratio from the present atmospheric abundance ratio to some expected abundance 
     ratio based on a solar system object (most likely). This gives the amount of time that must have passed since 
     accreting whatever body of that abundance in order to get the present day abundance.
     
     """
-    
-    el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg)
-    el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg)
+    if cross_extrap:
+        print('cross_extrap')
+        el1_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el1)
+        el2_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el2)
+    else:
+        el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg)
+        el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg)
     el1_tau=10.**el1_logtau
     el2_tau=10.**el2_logtau
     t_coeffs= (el1_tau*el2_tau)/(el2_tau-el1_tau)
@@ -62,7 +71,7 @@ def get_time_since_accretion(target_teff, log_atm_ratio, log_desired_ratio, el1,
     return t_coeffs*pollutant_term
 
 
-def LiCa_DP_NaCa(target_teff, log_LiCa, log_NaCa, desired_log_NaCa, logg=8.0, steady_state_start=False):
+def LiCa_DP_NaCa(target_teff, log_LiCa, log_NaCa, desired_log_NaCa, logg=8.0, steady_state_start=False, cross_extrap=True):
     """
     Take the log(Na/Ca ) in the atmosphere and an expected log(Na/Ca) for some sort of solar system object (most 
     likely) (desired_log_NaCa), and then using the time for since accretion from the function 
@@ -70,8 +79,8 @@ def LiCa_DP_NaCa(target_teff, log_LiCa, log_NaCa, desired_log_NaCa, logg=8.0, st
     log(Li/Ca ) would have been for the body that was accreted.
     
     """
-    t_NaCa= get_time_since_accretion(target_teff, log_NaCa, desired_log_NaCa, "Na", "Ca",  logg=logg, steady_state_start=steady_state_start)
-    dp_LiCa= declining_phase(target_teff, log_LiCa,t_NaCa,  'Li', "Ca", logg=logg, steady_state_start=steady_state_start)
+    t_NaCa= get_time_since_accretion(target_teff, log_NaCa, desired_log_NaCa, "Na", "Ca",  logg=logg, steady_state_start=steady_state_start, cross_extrap=cross_extrap)
+    dp_LiCa= declining_phase(target_teff, log_LiCa,t_NaCa,  'Li', "Ca", logg=logg, steady_state_start=steady_state_start, cross_extrap=cross_extrap)
     
     return t_NaCa, dp_LiCa
 
@@ -84,7 +93,7 @@ def recover_lost_element_number(t_passed, log_elHe_atm, log_m_cvz, el, el_tau):
     """
     return
 
-def get_accreted_mass( el, log_elHe,t_passed, teff=5000., logg=8.0,log_q=-5.0, m_wd=0.56):
+def get_accreted_mass( el, log_elHe,t_passed, teff=5000., logg=8.0,log_q=-5.0, m_wd=0.56, cross_extrap=True):
     """
     Assumes all of the convective mass can be treated as being helium and also that the helium isotope abundances are the same as that found on Earth(?, whatever the default periodic table mean molecular weight is). 
     
@@ -94,7 +103,10 @@ def get_accreted_mass( el, log_elHe,t_passed, teff=5000., logg=8.0,log_q=-5.0, m
     or eucrite or whatever to get the total mass of the accreted body.
     """
     el_num=cp.el_nums[el]
-    log_el_tau=itau.extrapolate_single_el_tau(teff, el, input_logg=logg)
+    if cross_extrap:
+        log_el_tau=itau.extrapolate_tau_x_logg(teff, logg, el)
+    else:
+        log_el_tau=itau.extrapolate_single_el_tau(teff, el, input_logg=logg)
     #print('log_el_tau', log_el_tau)
     #print("t_passed", t_passed)
     #print('(t_passed/(10.**log_el_tau))',(t_passed/(10.**log_el_tau)))
@@ -120,12 +132,12 @@ if __name__ == '__main__':
     print('DP log(Li/Ca)', dp_lica)
 
     #plt.plot(np.log10(time_range), dp_lica)
-    plt.plot(time_range, dp_lica)
-    plt.plot(time_range, declining_phase(3830., 1.7,time_range, 'Li', 'Ca', steady_state_start=True), label='Steady state start')
-    plt.legend()
-    plt.show()
+    #plt.plot(time_range, dp_lica)
+    #plt.plot(time_range, declining_phase(3830., 1.7,time_range, 'Li', 'Ca', steady_state_start=True), label='Steady state start')
+    #plt.legend()
+    #plt.show()
 
-    t_NaCa= get_time_since_accretion(3830., 0.0, -1.0, 'Na', 'Ca', steady_state_start=False)
+    t_NaCa= get_time_since_accretion(3830., 0.0, -1.1, 'Na', 'Ca', steady_state_start=False, cross_extrap=True, logg=7.77)
     print("t_NaCa", t_NaCa, np.log10(t_NaCa))
     print(declining_phase(3830., 1.7,t_NaCa, 'Li', 'Ca', steady_state_start=False))
 

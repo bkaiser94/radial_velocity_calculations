@@ -24,6 +24,8 @@ import hurley_polynomials as hp
 
 cooling_model_file='COModel_ThinH.csv'
 
+wd_file='temp_wd_abundances.csv'
+
 
 cooling_model_file=cp.ref_dir+'WD_cooling_models/'+cooling_model_file
 
@@ -79,6 +81,8 @@ target_teff_err=110.
 #target_logg_err=2.24414e-01
 #target_teff= 3454.718922
 #target_teff_err= 126.986438
+
+desired_NaCa= -1.1 #Sioux county meteorite, achondrite
 
 ############################3
 ##############################

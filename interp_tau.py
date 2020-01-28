@@ -11,10 +11,11 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.table import Table, Column
-
+import time
 
 from evolution_pulled import ttDB, ggDB, tauDB, elemnameDB
 
+start= time.time()
 
 
 color_wheel=['b', 'r', 'g', 'k']
@@ -95,6 +96,7 @@ def get_logg_index(input_logg):
     return np.where(ggDB_array==input_logg)
 
 def make_DB_tau_table(input_logg):
+    #print('logg:', input_logg)
     subtau=tauDB_array[get_logg_index(input_logg)][0]
     #print('subtau.shape', subtau.shape)
     li_taus=  subtau[li_index][:]
@@ -145,7 +147,7 @@ def extrapolate_single_el_tau(target_teff, element,  input_logg= 8.0, teff_max=t
     #valid_taus= db_table[valid_teff_inds][element]
     #log_valid_teffs= np.log10(valid_teffs)
     #poly_coeffs= np.polyfit(log_valid_teffs, valid_taus, 1) #it's going to only be a linear fit to the log-log space, tau is already logged
-    poly_coeffs=extrapolate_tau_single_logg(element,  input_logg= 8.0, teff_max=teff_max, plot_all=False)
+    poly_coeffs=extrapolate_tau_single_logg(element,  input_logg= input_logg, teff_max=teff_max, plot_all=False)
     target_tau= np.polyval(poly_coeffs, np.log10(target_teff))
     test_teffs=np.log10(np.linspace(3000,teff_max, 100))
     if plot_all:
@@ -167,14 +169,20 @@ def extrapolate_tau_x_logg(target_teff, target_logg, element):
     poly_coeffs= make_extrap_cross_logg(element)
     try:
         print(target_teff[0], target_logg[0])
-    except AttributeError:
+    except TypeError:
         input_vals_array=False
-        print("Not an array input, which is ok.")
+    except IndexError:
+        input_vals_array=False
+        #for some crazy reason attempting to index a float value in the terminal python script is a 
+        #TypeError, but doing the exact same thing when calling from a jupyter notebook is an IndexError. 
+        #Can't make this shit up. Maybe they're slightly different python version?
+        #print("Not an array input, which is ok.")
     if input_vals_array:
         tau_list=[]
         #loop_count=0
         for teff, logg in zip(target_teff, target_logg):
-            #print('loop round done', loop_count)
+            #if loop_count%1000==0:
+                #print('loop round done', loop_count)
             #loop_count+=1
             logg_diffs= np.abs(logg-ggDB_array)
             small_args=np.argsort(logg_diffs)[:2]
@@ -188,8 +196,16 @@ def extrapolate_tau_x_logg(target_teff, target_logg, element):
             tau_list.append(single_tau)
         return tau_list
     else:
-        pass
-    
+        logg_diffs= np.abs(target_logg-ggDB_array)
+        small_args=np.argsort(logg_diffs)[:2]
+        bound_taus=[]
+        for arg in small_args:
+            
+            tau_teff= np.polyval(poly_coeffs[arg], np.log10(target_teff))
+            bound_taus.append(tau_teff)
+        cross_coeffs=np.polyfit(ggDB_array[small_args], bound_taus, 1)
+        single_tau= np.polyval(cross_coeffs, target_logg)
+        return single_tau
     return
 
 if __name__ == '__main__':
@@ -198,11 +214,28 @@ if __name__ == '__main__':
     target_logg_err= 0.23
     target_teff= 3830.
     target_teff_err= 230.
+    
+    
+    #wd_name='WDJ2356-209'
+    #target_logg=7.98
+    #target_logg_err=0.07
+    #target_teff= 4040. #K
+    #target_teff_err=110.
+    
+    #wd_name='SDSSJ1330+6435'
+    #target_logg= 8.26
+    #target_logg_err=0.15
+    #target_teff= 4310. #K
+    #target_teff_err=190
+    
     n_points=1e4
     logg_dist=np.random.normal(loc=target_logg, scale=target_logg_err, size=n_points)
     teff_dist= np.random.normal(loc=target_teff, scale=target_teff_err, size=n_points)
     tau_li_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Li')
     tau_ca_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Ca')
+    stop= time.time()
+    print(stop-start)
+    print((stop-start)/60.)
     plt.hist(tau_li_dist, label='Li')
     plt.hist(tau_ca_dist, label='Ca')
     plt.legend()
@@ -216,6 +249,10 @@ if __name__ == '__main__':
     plt.show()
     plt.scatter(logg_dist, tau_li_dist)
     plt.scatter(logg_dist, tau_ca_dist)
+    plt.show()
+    plt.scatter(logg_dist, np.array(tau_li_dist)-np.array(tau_ca_dist))
+    plt.show()
+    plt.hist(np.array(tau_li_dist)-np.array(tau_ca_dist))
     plt.show()
     target_tau_li=extrapolate_single_el_tau(3830., 'Li')
     target_tau_li=extrapolate_single_el_tau(3830., 'Li', input_logg=7.5)
