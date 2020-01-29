@@ -18,6 +18,8 @@ from astropy import constants as const
 import interp_tau as itau
 import cal_params as cp
 
+n_points=1e5
+
 def declining_phase(target_teff, log_el1_over_el2, time,el1, el2, logg=8.0, steady_state_start=False, cross_extrap=True):
     """
     provide log_el1_over_el2 as an absolute number ratio not the one normalized to solar abundances.
@@ -84,6 +86,20 @@ def LiCa_DP_NaCa(target_teff, log_LiCa, log_NaCa, desired_log_NaCa, logg=8.0, st
     
     return t_NaCa, dp_LiCa
 
+def el1el2_DP_el3el2(target_teff, log_el1el2, log_el3el2, desired_log_el3el2, el1, el2, el3,  logg=8.0, steady_state_start=False, cross_extrap=True):
+    """
+    Take the log(el3/el2) in the atmosphere and an expected log(el3/el2) for some sort of solar system object (most likely) (desired_log_el3el2), and then using the time for since accretion from the function 
+    get_time_since_accretion(), which is called internally, then un-decline the el1/el2 abundance to what the 
+    log(el1 / el2) would have been for the body that was accreted.
+    
+    This is the more generalized form of LiCa_DP_NaCa(), hopefully.
+    
+    """
+    t_el3el2= get_time_since_accretion(target_teff, log_el3el2, desired_log_el3el2, el3, el2,  logg=logg, steady_state_start=steady_state_start, cross_extrap=cross_extrap)
+    dp_el1el2= declining_phase(target_teff, log_el1el2, t_el3el2,  el1,  el2, logg=logg, steady_state_start=steady_state_start, cross_extrap=cross_extrap)
+    
+    return t_el3el2, dp_el1el2
+
 
 def recover_lost_element_number(t_passed, log_elHe_atm, log_m_cvz, el, el_tau):
     """
@@ -122,8 +138,81 @@ def get_accreted_mass( el, log_elHe,t_passed, teff=5000., logg=8.0,log_q=-5.0, m
     return log_m_acc
 
 
+def easy_dist_decline(wd_row, el1, el2, el3, desired_log_el3el2, n_points=n_points, plot_all=False):
+    teff_dist=np.random.normal(loc=wd_row['teff'], scale=wd_row['teff_err'], size=n_points)
+    logg_dist= np.random.normal(loc=wd_row['logg'], scale=wd_row['logg_err'], size=n_points)
+    def get_el(el):
+        el_stem= el.lower()+'/he'
+        el_abund= wd_row[el_stem]
+        el_err= wd_row[el_stem+'_err']
+        return el_abund, el_err
+    def make_el_dist(el):
+        el_abund, el_err= get_el(el)
+        el_dist= np.random.normal(loc=el_abund, scale= el_err, size=n_points)
+        return el_dist
+    el1_dist= make_el_dist(el1)
+    el2_dist= make_el_dist(el2)
+    el3_dist= make_el_dist(el3)
+    log_el1el2= el1_dist-el2_dist
+    log_el3el2= el3_dist-el2_dist
+    t_decline, dp_el1el2= el1el2_DP_el3el2(teff_dist, log_el1el2, log_el3el2, desired_log_el3el2, el1, el2, el3, logg=logg_dist, cross_extrap=True)
+    
+    dp_el1el2=dp_el1el2[~np.isinf(dp_el1el2)]
+    dp_el1el2=dp_el1el2[~np.isnan(dp_el1el2)]
+    
+    t_decline=t_decline[~np.isinf(t_decline)]
+    t_decline=t_decline[~np.isnan(t_decline)]
+    
+    print(wd_row['name'], 'mean log('+el1+'/'+el2+')' , np.mean(dp_el1el2), '+/-',np.std(dp_el1el2))
+    print(wd_row['name'], 'median log('+el1+'/'+el2+')' , np.median(dp_el1el2), 'up/down',np.percentile(dp_el1el2, 84),np.percentile(dp_el1el2, 16))
+    print('mean t_decline', np.mean(t_decline*1e-6),'Myr')
+    if plot_all:
+        plt.hist(dp_el1el2, bins=101, normed=True)
+        plt.title(wd_row['name'])
+        plt.show()
+        plt.hist(t_decline*1e-6, bins=101, normed=True)
+        plt.xlabel('t_decline (Myr)')
+        plt.title(wd_row['name'])
+        plt.show()
+    else:
+        pass
+    return
+
 
 if __name__ == '__main__':
+    #wd_name='WDJ2356-209'
+    target_logg=7.98
+    target_logg_err=0.07
+    target_teff= 4040. #K
+    target_teff_err=110.
+    
+    logg_dist=np.random.normal(loc=target_logg, scale=target_logg_err, size=n_points)
+    teff_dist= np.random.normal(loc=target_teff, scale=target_teff_err, size=n_points)
+    #fe_dist= np.random.normal(loc=-8.6, scale=0.2, size=n_points)
+    fe_dist= np.random.normal(loc=-11.7, scale=0.0001, size=n_points)
+    ca_dist=np.random.normal(loc=-9.4, scale=0.2, size=n_points)
+    na_dist= np.random.normal(loc=-8.3, scale=0.2, size=n_points)
+    naca_line= np.linspace(0.25,1.25, 100)
+    feca_dist= fe_dist-ca_dist
+    naca_dist= na_dist-ca_dist
+    #tFeCa, dp_FeCa= el1el2_DP_el3el2(teff_dist, 0.8, 1.1, -0.01, 'Fe', 'Ca', 'Na', logg=logg_dist, cross_extrap=True)
+    
+    #tFeCa, dp_FeCa= el1el2_DP_el3el2(target_teff,0.8, naca_line, -0.01, 'Fe', 'Ca', 'Na', logg=target_logg, cross_extrap=True)
+    #plt.plot(naca_line, dp_FeCa)
+    #plt.xlim(-2.0, 1.25)
+    #plt.ylim(0.0, 2.0)
+    #plt.show()
+    tFeCa, dp_FeCa= el1el2_DP_el3el2(teff_dist,feca_dist, naca_dist, -0.01, 'Li', 'Ca', 'Na', logg=logg_dist, cross_extrap=True)
+    #plt.scatter(teff_dist, dp_FeCa)
+    #plt.show()
+    print("mean", np.mean(dp_FeCa), np.std(dp_FeCa))
+    plt.hist(dp_FeCa, bins=101, normed=True, label='log(Na/Ca)=-0.01', alpha=0.2)
+    tFeCa, dp_FeCa= el1el2_DP_el3el2(teff_dist,feca_dist, naca_dist, -1.1, 'Li', 'Ca', 'Na', logg=logg_dist, cross_extrap=True)
+    plt.hist(dp_FeCa, bins=101, normed=True, label='log(Na/Ca)=-1.1', alpha=0.2)
+    print("mean", np.mean(dp_FeCa), np.std(dp_FeCa))
+    plt.legend()
+    plt.show()
+    
     print(cp.el_nums)
     time_range=np.linspace(0, 40, 20)
     time_range=time_range*1e6

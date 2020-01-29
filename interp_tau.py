@@ -46,6 +46,7 @@ k_index=np.where(DBels=='K ')[0][0]
     #li_taus=  subtau[li_index][:]
     #ca_taus= subtau[ca_index][:]
     #na_taus=subtau[na_index][:]
+    #fe_taus=subtau[fe_index][:]
     #print(li_taus.shape)
     #print(subtau[:][0].shape)
     #print(subtau.shape)
@@ -71,6 +72,7 @@ for grav,subtau, color  in zip(ggDB_array,tauDB_array, color_wheel):
     #plt.plot(ttDB_array,li_taus-ca_taus, label='Li-Ca logg='+str(grav), marker='s', color=color)
     #plt.plot(ttDB_array,na_taus-ca_taus, label='Na-Ca logg='+str(grav), marker='^', color=color)
     #plt.plot(ttDB_array,mg_taus-ca_taus, label='Mg-Ca logg='+str(grav), marker='o', color=color)
+    #plt.plot(ttDB_array,fe_taus-ca_taus, label='Fe-Ca logg='+str(grav), marker='<', color=color)
     ##plt.plot(ttDB_array,na_taus-fe_taus, label='Fe-Ca logg='+str(grav), marker='^', color=color)
 #plt.legend(loc='best')
 #plt.xlabel('Teff')
@@ -194,7 +196,7 @@ def extrapolate_tau_x_logg(target_teff, target_logg, element):
             cross_coeffs=np.polyfit(ggDB_array[small_args], bound_taus, 1)
             single_tau= np.polyval(cross_coeffs, logg)
             tau_list.append(single_tau)
-        return tau_list
+        return np.array(tau_list)
     else:
         logg_diffs= np.abs(target_logg-ggDB_array)
         small_args=np.argsort(logg_diffs)[:2]
@@ -210,17 +212,17 @@ def extrapolate_tau_x_logg(target_teff, target_logg, element):
 
 if __name__ == '__main__':
     #wd_name='GaiaJ1644-0449'
-    target_logg=7.77
-    target_logg_err= 0.23
-    target_teff= 3830.
-    target_teff_err= 230.
+    #target_logg=7.77
+    #target_logg_err= 0.23
+    #target_teff= 3830.
+    #target_teff_err= 230.
     
     
     #wd_name='WDJ2356-209'
-    #target_logg=7.98
-    #target_logg_err=0.07
-    #target_teff= 4040. #K
-    #target_teff_err=110.
+    target_logg=7.98
+    target_logg_err=0.07
+    target_teff= 4040. #K
+    target_teff_err=110.
     
     #wd_name='SDSSJ1330+6435'
     #target_logg= 8.26
@@ -233,11 +235,21 @@ if __name__ == '__main__':
     teff_dist= np.random.normal(loc=target_teff, scale=target_teff_err, size=n_points)
     tau_li_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Li')
     tau_ca_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Ca')
+    tau_na_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Na')
+    tau_fe_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Fe')
     stop= time.time()
     print(stop-start)
     print((stop-start)/60.)
-    plt.hist(tau_li_dist, label='Li')
-    plt.hist(tau_ca_dist, label='Ca')
+    print('Na', extrapolate_tau_x_logg(target_teff, target_logg, 'Na'))
+    print('Na', extrapolate_single_el_tau(target_teff, 'Na'))
+    print('ca', extrapolate_tau_x_logg(target_teff, target_logg, 'Ca'))
+    print('Ca', extrapolate_single_el_tau(target_teff, 'Ca'))
+    print('Li', extrapolate_tau_x_logg(target_teff, target_logg, 'Li'))
+    print('Li', extrapolate_single_el_tau(target_teff, 'Li'))
+    plt.hist(tau_li_dist, label='Li', alpha=0.2)
+    plt.hist(tau_ca_dist, label='Ca', alpha=0.2)
+    plt.hist(tau_na_dist, label='Na', alpha=0.2)
+    plt.hist(tau_fe_dist, label='Fe', alpha=0.2)
     plt.legend()
     plt.show()
     plt.hist(logg_dist)
