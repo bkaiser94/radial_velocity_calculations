@@ -42,6 +42,7 @@ print(filenames)
 
 def get_core_name(filename):
     return  filename[low_index:high_index]
+    #return filename.split('_')[1]
 
 for i,filename in enumerate(filenames[:-1]):
     #core_name= filename[low_index:high_index]
@@ -355,7 +356,11 @@ for sets in filename_matches:
     print('======')
     print(filename_matches[sets])
     do_dlambda_ext=True
-    avg_spectra(filename_matches[sets])
+    try:
+        avg_spectra(filename_matches[sets])
+    except ValueError as error:
+        print(error)
+        print('\nskipping the lame averaging for ', filename_matches[sets],'\n')
     try:
         make_rebin_avg_spec(filename_matches[sets])
     except IndexError as error:

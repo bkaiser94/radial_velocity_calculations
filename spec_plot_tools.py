@@ -29,6 +29,22 @@ parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2
 cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
 
+def naninfmax(input_array):
+    array=np.array(input_array)
+    #print(array.shape)
+    #print(array.T.shape)
+    array=array.T[0,0]
+    mask_array=np.copy(array[~np.isnan(array)])
+    mask_array= mask_array[~np.isinf(mask_array)]
+    return np.max(mask_array)
+
+def naninfmin(input_array):
+    array=np.array(input_array)
+    array=array.T[0,0]
+    mask_array=np.copy(array[~np.isnan(array)])
+    mask_array= mask_array[~np.isinf(mask_array)]
+    return np.min(mask_array)
+
 def air_to_vac(wavelengths):
     
     """
@@ -738,13 +754,24 @@ def rebin_spec(input_filename, desired_waves, desired_dlambda):
         rebin_flux_list.append(np.sum(target_flux*rebin_factors))
         rebin_sky_list.append(np.sum(sky* rebin_factors))
         rebin_noise2_list.append(np.sum(noise2*rebin_factors**2))
-        
-    #plt.plot(desired_waves, rebin_flux_list, label='rebinned spectrum')
-    #plt.plot(target_spec[0], target_spec[1], label='original spectrum')
-    #plt.xlabel('Wavelength (Angstroms)')
-    #plt.ylabel(header['UNITS'])
-    #plt.legend()
-    #plt.show()
+    
+    ##plt.plot(desired_waves, rebin_flux_list, label='rebinned spectrum')
+    ##plt.plot(target_spec[0], target_spec[1], label='original spectrum')
+    ##plt.xlabel('Wavelength (Angstroms)')
+    ##plt.ylabel(header['UNITS'])
+    ##plt.legend()
+    ##plt.show()
+    ####### This is an attempt at masking out the values from the merging of spectra that cover different setups
+    #rebin_flux_array=np.array(rebin_flux_list)
+    #rebin_sky_array= np.array(rebin_sky_list)
+    #rebin_noise2_array=np.array(rebin_noise2_list)
+    #nan_wants= np.where(rebin_flux_array==0.)
+    #print('nan_wants:',nan_wants)
+    #rebin_flux_array[nan_wants]==np.nan
+    #rebin_sky_array[nan_wants]==np.nan
+    #rebin_noise2_array[nan_wants]=np.nan
+    #return [desired_waves, rebin_flux_array, rebin_sky_array, rebin_noise2_array, desired_dlambda]
+    ########^^^ That isn't ready yet #######
     return [desired_waves, np.array(rebin_flux_list), np.array(rebin_sky_list), np.array(rebin_noise2_list), desired_dlambda]
     
     

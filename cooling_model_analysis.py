@@ -35,8 +35,8 @@ default_ms_method='Hurley'
 
 universe_age= 13.8 #Gyr
 percent_range=0.68 #error bar coverage for total age estimate.
-null_age_val=20. #usually 20
-#null_age_val=50. #I'm experimenting though for the moment
+#null_age_val=20. #usually 20
+null_age_val=50. #I'm experimenting though for the moment
 default_limit_universe=True
 #default_z=0.0001 #allegedly thick disk value
 default_z=0.02 #approximately solar
@@ -58,21 +58,21 @@ default_z=0.02 #approximately solar
 #target_teff_err=190
 
 ##2356
-wd_name='WDJ2356-209'
-target_logg=7.98
-target_logg_err=0.07
-target_teff= 4040. #K
-target_teff_err=110.
+#wd_name='WDJ2356-209'
+#target_logg=7.98
+#target_logg_err=0.07
+#target_teff= 4040. #K
+#target_teff_err=110.
 
 #target_teff=3000.
 
 
 ##1644
-#wd_name='GaiaJ1644-0449'
-#target_logg=7.77
-#target_logg_err= 0.23
-#target_teff= 3830.
-#target_teff_err= 230.
+wd_name='GaiaJ1644-0449'
+target_logg=7.77
+target_logg_err= 0.23
+target_teff= 3830.
+target_teff_err= 230.
 
 #J1150
 #from Gentile Fusillo et al. 2019
@@ -113,13 +113,13 @@ interp_kind='cubic'
 #target_logg=8.26
 #target_teff= 4310. #K
 ##############################
-cummings_m_ranges= [
-    [[-np.inf,0.555],[np.nan,np.nan]],
-    [[0.555,0.717],[0.080,0.476]],
-    [[0.717,0.856],[0.187,0.199]],
-    [[0.856,1.24],[0.107,0.471]],
-    [[1.24,np.inf],[0.,0.]]
-    ]
+#cummings_m_ranges= [
+    #[[-np.inf,0.555],[np.nan,np.nan]],
+    #[[0.555,0.717],[0.080,0.476]],
+    #[[0.717,0.856],[0.187,0.199]],
+    #[[0.856,1.24],[0.107,0.471]],
+    #[[1.24,np.inf],[0.,0.]]
+    #]
 
 #setting the progenitor mass to be huge for masses greater than largest allowed so that the MS lifetime is essentially 0.
 #setting the masses to produce Nan's for  progenitor mass if Mwd is below the range covered.
@@ -131,8 +131,13 @@ cummings_m_ranges= [
     #[[0.856,1.24],[0.107,0.471]],
     #[[1.24,np.inf],[0.,0.]]
     #]
-
-
+cummings_m_ranges= [
+    [[-np.inf,0.52],[np.nan,np.nan]],
+    [[0.52,0.717],[0.080,0.476]],
+    [[0.717,0.856],[0.187,0.199]],
+    [[0.856,1.24],[0.107,0.471]],
+    [[1.24,np.inf],[np.nan,np.nan]]
+    ]
 
 def get_progenitor_mass(mass_wd):
     def mfunc(mass_wd, coeffs):
@@ -494,17 +499,19 @@ print('total_ages.shape', total_ages.shape)
 print((teffm_to_age(target_teff, wd_mass_vals)*1e-9).shape)
 print(get_ms_lifetime(wd_mass_vals).shape)
 #plt.plot(wd_mass_vals, get_ms_lifetime(wd_mass_vals))
-plt.axvline(x=0.5, linestyle='--', color='k')
-plt.axhline(y=10, linestyle='--', color='k')
+#plt.axvline(x=0.5, linestyle='--', color='k')
+#plt.axhline(y=10, linestyle='--', color='k')
+plt.axvline(x=spt.naninfmax(cummings_m_ranges), color='r', linestyle='--', label=r'IFMR $M_{WD}$ Range')
+plt.axvline(x=spt.naninfmin(cummings_m_ranges), color='r', linestyle='--')
 plt.axhline(y=13.8, color='k', label='13.8 Gyr')
-plt.plot(wd_mass_vals, total_ages, label='Total Age z='+str(default_z))
-plt.plot(wd_mass_vals, lowz_total_ages, label='Total Age z='+str(0.0001))
+plt.plot(wd_mass_vals, total_ages, label='Total Age Z='+str(default_z))
+plt.plot(wd_mass_vals, lowz_total_ages, label='Total Age Z='+str(0.0001))
 plt.plot(wd_mass_vals, cooling_ages, label='WD Cooling Age')
-plt.plot(wd_mass_vals, ms_ages, label='MS lifetime from'+default_ms_method)
-plt.plot(wd_mass_vals, lowz_ms_ages, label='lowz MS lifetime from'+default_ms_method)
-plt.plot(wd_mass_vals, get_ms_lifetime(wd_mass_vals, method='Fontaine'), label='Fontaine')
-plt.scatter(approx_masses, approx_ages, color='r', label='Grid vals with Teff ~3800K')
-plt.hist(target_mass_dist, normed=True, label='WD Mass distribution')
+plt.plot(wd_mass_vals, ms_ages, label='Z='+str(default_z)+'MS lifetime from' +default_ms_method)
+plt.plot(wd_mass_vals, lowz_ms_ages, label='Z='+str(0.0001)+' MS lifetime from' +default_ms_method)
+#plt.plot(wd_mass_vals, get_ms_lifetime(wd_mass_vals, method='Fontaine'), label='Fontaine')
+#plt.scatter(approx_masses, approx_ages, color='r', label='Grid vals with Teff ~3800K')
+plt.hist(target_mass_dist, normed=True, label='WD Mass distribution', color='k')
 plt.scatter(0.56,  teffm_to_age(target_teff, 0.56)*1e-9+get_ms_lifetime(0.56), label='M=0.56 at teff'+str(target_teff))
 plt.xlabel('M_wd in solar masses')
 #plt.ylabel('MS lifetime (Gyr)')

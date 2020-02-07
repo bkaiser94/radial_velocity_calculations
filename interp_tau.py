@@ -42,22 +42,22 @@ fe_index=np.where(DBels=='Fe')[0][0]
 mg_index=np.where(DBels=='Mg')[0][0]
 k_index=np.where(DBels=='K ')[0][0]
 
-#for grav,subtau in zip(ggDB_array,tauDB_array):
-    #li_taus=  subtau[li_index][:]
-    #ca_taus= subtau[ca_index][:]
-    #na_taus=subtau[na_index][:]
-    #fe_taus=subtau[fe_index][:]
-    #print(li_taus.shape)
-    #print(subtau[:][0].shape)
-    #print(subtau.shape)
-    #plt.plot(np.log10(ttDB_array),li_taus, label='Li logg='+str(grav), marker='o')
-    #plt.plot(np.log10(ttDB_array),ca_taus, label='Ca logg='+str(grav), marker='o')
-    #plt.plot(np.log10(ttDB_array),na_taus, label='Na logg='+str(grav), marker='o')
-#plt.legend(loc='best')
-#plt.xlabel('log10(Teff)')
-#plt.ylabel('tau_Li')
-#plt.title("'DB' diffusion timescales from MWDD/Fontaine et al. 2015")
-#plt.show()
+for grav,subtau in zip(ggDB_array,tauDB_array):
+    li_taus=  subtau[li_index][:]
+    ca_taus= subtau[ca_index][:]
+    na_taus=subtau[na_index][:]
+    fe_taus=subtau[fe_index][:]
+    print(li_taus.shape)
+    print(subtau[:][0].shape)
+    print(subtau.shape)
+    plt.plot(np.log10(ttDB_array),li_taus, label='Li logg='+str(grav), marker='o')
+    plt.plot(np.log10(ttDB_array),ca_taus, label='Ca logg='+str(grav), marker='o')
+    plt.plot(np.log10(ttDB_array),na_taus, label='Na logg='+str(grav), marker='o')
+plt.legend(loc='best')
+plt.xlabel('log10(Teff)')
+plt.ylabel(r'log10($\tau$)')
+plt.title("'DB' diffusion timescales from MWDD/Fontaine et al. 2015")
+plt.show()
 
 
 for grav,subtau, color  in zip(ggDB_array,tauDB_array, color_wheel):
@@ -66,20 +66,26 @@ for grav,subtau, color  in zip(ggDB_array,tauDB_array, color_wheel):
     na_taus=subtau[na_index][:]
     fe_taus=subtau[fe_index][:]
     mg_taus=subtau[mg_index][:]
+    k_taus=subtau[k_index][:]
     #print(li_taus.shape)
     #print(subtau[:][0].shape)
     #print(subtau.shape)
     #plt.plot(ttDB_array,li_taus-ca_taus, label='Li-Ca logg='+str(grav), marker='s', color=color)
     #plt.plot(ttDB_array,na_taus-ca_taus, label='Na-Ca logg='+str(grav), marker='^', color=color)
     #plt.plot(ttDB_array,mg_taus-ca_taus, label='Mg-Ca logg='+str(grav), marker='o', color=color)
-    #plt.plot(ttDB_array,fe_taus-ca_taus, label='Fe-Ca logg='+str(grav), marker='<', color=color)
-    ##plt.plot(ttDB_array,na_taus-fe_taus, label='Fe-Ca logg='+str(grav), marker='^', color=color)
-#plt.legend(loc='best')
-#plt.xlabel('Teff')
-##plt.xscale('log')
-#plt.ylabel(r'$\tau_{X}-\tau_{Ca}$')
-#plt.title("'DB' diffusion timescales from MWDD/Fontaine et al. 2015")
-#plt.show()
+    plt.plot(ttDB_array,fe_taus-ca_taus, label='Fe-Ca logg='+str(grav), marker='<', color=color)
+    plt.plot(ttDB_array,k_taus-ca_taus, label='K-Ca logg='+str(grav), marker='+', color=color)
+    #plt.plot(ttDB_array,na_taus-fe_taus, label='Fe-Ca logg='+str(grav), marker='^', color=color)
+    
+    
+    #plt.plot(np.log10(ttDB_array),fe_taus-ca_taus, label='Fe-Ca logg='+str(grav), marker='<', color=color)
+    #plt.plot(np.log10(ttDB_array),k_taus-ca_taus, label='K-Ca logg='+str(grav), marker='+', color=color)
+plt.legend(loc='best')
+plt.xlabel('Teff')
+#plt.xscale('log')
+plt.ylabel(r'$\tau_{X}-\tau_{Ca}$')
+plt.title("'DB' diffusion timescales from MWDD/Fontaine et al. 2015")
+plt.show()
 
 #print(tauDB_array.shape)
 #print(tauDB_array[0][0][:].shape)
@@ -133,6 +139,8 @@ def extrapolate_tau_single_logg( element,  input_logg= 8.0, teff_max=teff_max, p
     valid_taus= db_table[valid_teff_inds][element]
     log_valid_teffs= np.log10(valid_teffs)
     poly_coeffs= np.polyfit(log_valid_teffs, valid_taus, 1) #it's going to only be a linear fit to the log-log space, tau is already logged
+    if plot_all:
+            plt.scatter(log_valid_teffs, valid_taus, label=element+ ' DB grid, logg='+str(input_logg))
     return poly_coeffs
 
 def make_extrap_cross_logg(element, teff_max=teff_max):
@@ -149,17 +157,18 @@ def extrapolate_single_el_tau(target_teff, element,  input_logg= 8.0, teff_max=t
     #valid_taus= db_table[valid_teff_inds][element]
     #log_valid_teffs= np.log10(valid_teffs)
     #poly_coeffs= np.polyfit(log_valid_teffs, valid_taus, 1) #it's going to only be a linear fit to the log-log space, tau is already logged
-    poly_coeffs=extrapolate_tau_single_logg(element,  input_logg= input_logg, teff_max=teff_max, plot_all=False)
+    poly_coeffs=extrapolate_tau_single_logg(element,  input_logg= input_logg, teff_max=teff_max, plot_all=plot_all)
     target_tau= np.polyval(poly_coeffs, np.log10(target_teff))
     test_teffs=np.log10(np.linspace(3000,teff_max, 100))
     if plot_all:
         plt.plot(test_teffs, np.polyval(poly_coeffs, test_teffs), label='test extrapolation'+str(input_logg))
-        plt.scatter(log_valid_teffs, valid_taus, label='grid')
+        #plt.scatter(log_valid_teffs, valid_taus, label='grid')
         plt.scatter(np.log10(target_teff), target_tau, label='target', color='r')
         plt.legend(loc='best')
         plt.xlabel('log10(Teff)')
         plt.ylabel('Tau')
         plt.title(element)
+        plt.show()
     else:
         pass
     #plt.show()
@@ -218,7 +227,7 @@ if __name__ == '__main__':
     #target_teff_err= 230.
     
     
-    #wd_name='WDJ2356-209'
+    wd_name='WDJ2356-209'
     target_logg=7.98
     target_logg_err=0.07
     target_teff= 4040. #K
@@ -230,27 +239,37 @@ if __name__ == '__main__':
     #target_teff= 4310. #K
     #target_teff_err=190
     
-    n_points=1e4
+    n_points=1e5
     logg_dist=np.random.normal(loc=target_logg, scale=target_logg_err, size=n_points)
     teff_dist= np.random.normal(loc=target_teff, scale=target_teff_err, size=n_points)
     tau_li_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Li')
     tau_ca_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Ca')
     tau_na_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Na')
     tau_fe_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Fe')
+    tau_k_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'K')
     stop= time.time()
     print(stop-start)
     print((stop-start)/60.)
     print('Na', extrapolate_tau_x_logg(target_teff, target_logg, 'Na'))
-    print('Na', extrapolate_single_el_tau(target_teff, 'Na'))
-    print('ca', extrapolate_tau_x_logg(target_teff, target_logg, 'Ca'))
-    print('Ca', extrapolate_single_el_tau(target_teff, 'Ca'))
+    print('Na', extrapolate_single_el_tau(target_teff, 'Na', plot_all=True))
+    print('Ca', extrapolate_tau_x_logg(target_teff, target_logg, 'Ca'))
+    print('K', extrapolate_tau_x_logg(target_teff, target_logg, 'K'))
+    print('Ca', extrapolate_single_el_tau(target_teff, 'Ca', plot_all=True))
     print('Li', extrapolate_tau_x_logg(target_teff, target_logg, 'Li'))
-    print('Li', extrapolate_single_el_tau(target_teff, 'Li'))
-    plt.hist(tau_li_dist, label='Li', alpha=0.2)
-    plt.hist(tau_ca_dist, label='Ca', alpha=0.2)
-    plt.hist(tau_na_dist, label='Na', alpha=0.2)
-    plt.hist(tau_fe_dist, label='Fe', alpha=0.2)
+    print('Li', extrapolate_single_el_tau(target_teff, 'Li', plot_all=True))
+    print('Fe', extrapolate_tau_x_logg(target_teff, target_logg, 'Fe'))
+    plt.show()
+    #bins=np.arange(4.5,7., 0.05)
+    #bins=np.arange(4.0,9.0, 0.05)
+    bins=np.arange(3.,9.0, 0.05)
+    #plt.hist(tau_li_dist, label='Li', alpha=0.2, bins=bins)
+    plt.hist(tau_ca_dist, label='Ca', alpha=0.2, bins=bins)
+    #plt.hist(tau_na_dist, label='Na', alpha=0.2, bins=bins)
+    plt.hist(tau_fe_dist, label='Fe', alpha=0.2,bins=bins)
+    plt.hist(tau_k_dist, label='K', alpha=0.2,bins=bins)
     plt.legend()
+    plt.title(wd_name)
+    plt.xlabel(r'$\tau_{el}$')
     plt.show()
     plt.hist(logg_dist)
     plt.axvline(x=7.5, linestyle='--')

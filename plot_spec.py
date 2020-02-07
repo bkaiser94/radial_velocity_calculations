@@ -56,8 +56,8 @@ sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #sdss_path= sdss_path+'G0_K5/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 
-#tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
-tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
+tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
+#tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
 #print(filenames)
 plot_wavelength=True
 plot_400m2_tell= False
@@ -67,7 +67,7 @@ plot_400m2_tell= False
 
 #norm_range=[7042,7046]
 #norm_range=[7490,7510] #outside telluric
-#norm_range=[7470, 7530]
+norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
 #norm_range=[7860.,8050.]
 #norm_range=[8074,8140]
@@ -76,14 +76,14 @@ plot_400m2_tell= False
 #norm_range=[6090,6240]
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
-norm_range=[6640,6670]#20190530 400M1 norm range
+#norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 #norm_range=[3800, 4000]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
@@ -93,7 +93,7 @@ norm_range=[6640,6670]#20190530 400M1 norm range
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
 #file_setting= 'two_arm_compare_SDSS'
-file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
+#file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
 
 single_iterate= False
 double_iterate= False #file_settings change these in their little sections ahead if they should be changed
@@ -103,11 +103,11 @@ if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('ravg_fwctb*1150*fits')
     #filenames=glob('ravg_fwctb*2126*fits')
-    filenames=glob('ravg_fwctb*SDSS*n*fits')
+    #filenames=glob('ravg_fwctb*SDSS*n*fits')
     #filenames=glob('*avg_fwctb*DQpec*fits')
     #filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
-    #filenames=glob('avg_fwctb*Gaia*1453*')
+    filenames=glob('ravg_fwctb*Gaia*1644*')
     #filenames=glob('avg_fwctb*eg274*fits')
     #filenames=glob('ravg_fwctb*aia*1644*fits')
     #filenames=glob('avg_wctb*fits')
@@ -129,8 +129,9 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
+    filenames=glob('fwctb*')
     #filenames=glob('fwctb*LTT*')
-    filenames=glob('fwctb*SDSS*n*')
+    #filenames=glob('fwctb*SDSS*n*')
     #filenames=glob('fwctb*2356*')
     single_iterate=True
     double_iterate=False
@@ -686,7 +687,7 @@ if single_iterate:
         #plt.scatter(header['BMJD_TDB'], np.sum(target_spec[1]*dlambda))
         #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
         #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
-        #plot_spectrum(target_spec, filename, header, smooth=True, norm=True)
+        plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=pix_width, kernel_type='box')
         #target_spec[1]=header['airmass']
         #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
         #plot_spectrum(target_spec, str(header['airmass']), header, norm=False, smooth=True, kernel_type='box', pix_width=10)
@@ -695,7 +696,7 @@ if single_iterate:
         #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
         #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
         #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-        plot_sky(filename, offset=0, line_labels=False, convolve=False)
+        #plot_sky(filename, offset=0, line_labels=False, convolve=False)
         #if header['airmass']<1.5:
             #plot_sky(filename, offset=0)
         #else:
@@ -704,7 +705,7 @@ if single_iterate:
         #plot_SNR_from_file(filename)
         #plot_dwavelength(target_spec, filename)
         #spt.show_plot(show_telluric=False, show_legend=False)
-        #spt.show_plot(show_legend=False, line_id='')
+        #spt.show_plot(show_legend=False, line_id='alkali')
         #plt.legend()
         #plt.show()
         counter+=1
@@ -716,8 +717,8 @@ if single_iterate:
     #plt.ylabel(r'$f_{\nu}$ (arbitrary units)')
     #plt.legend(loc='best')
     #plt.show()
-    #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=40)
-    spt.show_plot(show_legend=True, line_id='', convert_to_air=True)
+    plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+    spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
     #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
     #plt.xlabel('BMJD_TDB')
     #plt.show()
