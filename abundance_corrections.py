@@ -100,6 +100,24 @@ def el1el2_DP_el3el2(target_teff, log_el1el2, log_el3el2, desired_log_el3el2, el
     
     return t_el3el2, dp_el1el2
 
+def get_el1el2_wrt_time(log_el1el2, time, el1_tau, el2_tau):
+    """
+    Not for steady state start. This assumes declining from early phase abundance
+    """
+    return log_el1el2 + time*1e6*np.log10(np.e)*((10.**el2_tau-10.**el1_tau)/(10.**el1_tau * 10.**el2_tau))
+
+def el1el2_DP_el3el2_ftimes(target_teff, log_el1el2, log_el3el2, time,  el1, el2, el3,  logg=8.0, steady_state_start=False, cross_extrap=True):
+    if cross_extrap:
+        el1_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el1)
+        el2_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el2)
+        el3_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el3)
+    else:
+        el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg)
+        el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg)
+        el3_logtau= itau.extrapolate_single_el_tau(target_teff, el3, input_logg=logg)
+    log_el1el2_dp= get_el1el2_wrt_time(log_el1el2, time, el1_logtau, el2_logtau)
+    log_el3el2_dp= get_el1el2_wrt_time(log_el3el2, time, el3_logtau, el2_logtau)
+    return log_el1el2_dp, log_el3el2_dp
 
 def recover_lost_element_number(t_passed, log_elHe_atm, log_m_cvz, el, el_tau):
     """

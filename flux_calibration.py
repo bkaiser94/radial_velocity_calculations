@@ -29,6 +29,7 @@ import cal_params as cp
 import get_cal_params as gcp
 import model_manipulation as mm
 
+from plot_spec import plot_telluric_spectrum, norm_spectrum
 
 
 cwd= os.getcwd()
@@ -43,6 +44,8 @@ model_poly_degree= 5
 #sens_fit_method='poly/poly' #400M2 method generally, gets sens curve by dividing the polynomial observed by polynomial model
 #sens_fit_method='empirical' #400M1 method generally, gets sens curve by dividing the obs flux directly by the model flux and then fitting a polynomial
 division_extra_deg = 2
+
+norm_range=[6630,6690]
 
 header_char=':'
 header_delim= '\t'
@@ -71,12 +74,12 @@ standard_directory= cp.standard_dir
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-#standard_name='EG274'
+standard_name='EG274'
 #standard_name = 'GD153'
 #standard_name= 'LTT3218'
 #standard_name='Feige110'
 #standard_name= 'LTT7987'
-standard_name='GD71'
+#standard_name='GD71'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
 ##observed_file = 'wcmtb.feige67930blue.fits'
@@ -85,7 +88,13 @@ standard_name='GD71'
 ##observed_file= 'wcmtb.ltt3218930blue.fits'
 
 #observed_file='ravg_wctb.GD71_400m2_fix.fits'
-observed_file='ravg_wctb.GD71_400m1.fits'
+#observed_file='ravg_wctb.GD71_400m1.fits'
+
+#observed_file='ravg_wctb.EG274_400m1_fix.fits'
+#observed_file='ravg_wctb.LTT7987_400m1.fits'
+#observed_file='ravg_wctb.LTT7987_400m2.fits'
+#observed_file='ravg_wctb.EG274_400m2.fits'
+observed_file='avg_wctb.EG274_400m2.fits'
 
 
 #observed_file = "wcmtb.GD108930blue.fits"
@@ -273,8 +282,14 @@ else:
 
 
 plt.title('model versus observed')
-plt.plot(stand_waves1, stand_flux1,label = 'model')
-plt.plot(obs_waves1, obs_flux1, label = 'observed')
+
+norm_stand_spec=norm_spectrum([stand_waves1, stand_flux1], norm_range)
+norm_obs_spec=norm_spectrum([obs_waves1, obs_flux1], norm_range)
+#plt.plot(stand_waves1, stand_flux1,label = 'model')
+#plt.plot(obs_waves1, obs_flux1, label = 'observed')
+plt.plot(norm_stand_spec[0], norm_stand_spec[1],label = 'model')
+plt.plot(norm_obs_spec[0], norm_obs_spec[1], label = 'observed')
+plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30)
 #plt.scatter(stand_waves1, stand_flux1,label = 'model')
 #plt.scatter(obs_waves1, obs_flux1, label = 'observed', color='r')
 #plt.legend()
@@ -520,6 +535,7 @@ def limit_to_telluric(obs_waves1,residuals, plot_all= True):
         plt.xlabel('Wavelength (Angstroms)')
         plt.plot(obs_waves1, residuals, label='Residual factors before')
         plt.plot(factor_spec[0], factor_spec[1], label='Telluric factors')
+        plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30)
         plt.xlim(np.nanmin(factor_spec[0]), np.nanmax(factor_spec[0]))
         spt.show_plot()
     return factor_spec

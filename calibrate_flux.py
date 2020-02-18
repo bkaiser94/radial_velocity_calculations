@@ -30,6 +30,8 @@ from astropy import constants as const
 
 import spec_plot_tools as spt
 
+from plot_spec import plot_telluric_spectrum, plot_spectrum
+
 speclistname = "listWCTB"
 
 color_list = ['k', 'r', 'g', 'b', 'm', 'cyan', 'purple']
@@ -39,11 +41,14 @@ speclist = speclist.T
 target_list = speclist[0]
 sens_curve_list = speclist[1]
 
+norm_range=[7470, 7530]
+tell_range= [7430, 7800]
 bad_noise_sub = 100
-do_tell_corr= False
+do_tell_corr= True
 do_rv_barycorr=False
 do_ext_corr= True
 plot_across_night=False
+do_tell_waves=True
 
 #parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 #cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
@@ -77,6 +82,7 @@ summed_flux = []
 summed_counts =[]
 times = []
 airmasses= []
+model_wavelength=7607 #that's the minimum of the model band
 for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     sens_curve_coeffs = np.genfromtxt(sens_curve_file)
     i= fits.open(target_file)
@@ -90,6 +96,30 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     bkg_counts = i[2].data
     noise_spec = i[3].data #don't need to divide this by the exposure time since it's normalized already in proportion to whatever units we use.
     dlambda=i[4].data
+    if do_tell_waves:
+        print('\n\n\nCorrect the wavelengths based on the telluric features.\nor change do_tell_waves=False\n\n\n')
+        tell_name= glob('telluric_thru*'+ sens_curve_file)[0]
+        print('tell_name', tell_name)
+        tell_corr_spec= np.genfromtxt(tell_name, skip_header=1).T
+        #model_wavelength=7607 #that's the minimum of the model band
+        plot_spectrum([wavelengths, counts], target_file, header, smooth=True, norm=True, pix_width=5, kernel_type='box', norm_range=norm_range)
+        #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30)
+        plt.plot(tell_corr_spec[0], tell_corr_spec[1], label='Telluric residuals')
+        plt.axvline(x=model_wavelength, color='k', linestyle='--')
+        plt.xlim(tell_range)
+        plt.ylim(0,1.5)
+        plt.xlabel(r'Wavelength ($\AA$)')
+        plt.legend()
+        plt.show()
+        if count==0:
+            model_wavelength = float(raw_input("Model spec wavelength>>>"))
+        obs_wavelength= float(raw_input("Observed spec wavelength ("+str(model_wavelength)+ " for no change)>>>"))
+        wave_offset=model_wavelength-obs_wavelength
+        wavelengths=wavelengths+wave_offset
+        header.append(card=('tell_off', wave_offset, 'wavelength offset by tellurics'))
+    else:
+        header.append(card=('tell_off', False, 'wavelength offset by tellurics'))
+        pass
     #noise_spec = bad_noise_vals(noise_spec) #remove negative noise values and exceedingly high ones
     sens_curve = np.polyval(sens_curve_coeffs,wavelengths)
     #plt.plot(sens_curve)
@@ -119,6 +149,16 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
         #plt.plot(wavelengths, flux/np.nanmean(flux), label='normalized '+target_file)
         #plt.xlim(np.nanmin(wavelengths), np.nanmax(wavelengths))
         #spt.show_plot()
+        #plot_spectrum([wavelengths, flux], target_file, header, smooth=True, norm=True, pix_width=5, kernel_type='box', norm_range=norm_range)
+        ##plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30)
+        #plt.plot(wavelengths, interp_tell_corr, label='Interp Telluric residuals')
+        #plt.plot(tell_corr_spec[0], tell_corr_spec[1], label='Telluric residuals')
+        #plt.axvline(x=model_wavelength, color='k', linestyle='--')
+        #plt.xlim(tell_range)
+        #plt.ylim(0,1.5)
+        #plt.xlabel(r'Wavelength ($\AA$)')
+        #plt.legend()
+        #plt.show()
         flux= flux/interp_tell_corr
         header.append(card=('tellcorr', True, 'Telluric Corrections performed'))
     else:
