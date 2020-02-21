@@ -115,8 +115,8 @@ interp_kind='cubic'
 ##############################
 #cummings_m_ranges= [
     #[[-np.inf,0.555],[np.nan,np.nan]],
-    #[[0.555,0.717],[0.080,0.476]],
-    #[[0.717,0.856],[0.187,0.199]],
+    #[[0.555,0.717],[0.080,0.489]],
+    #[[0.717,0.856],[0.187,0.184]],
     #[[0.856,1.24],[0.107,0.471]],
     #[[1.24,np.inf],[0.,0.]]
     #]
@@ -126,15 +126,15 @@ interp_kind='cubic'
 #I artificially changed the bounds in the below set so that the min mass is 0.52 This is decidedly outside Jeff's target area
 #cummings_m_ranges= [
     #[[-np.inf,0.52],[np.nan,np.nan]],
-    #[[0.52,0.717],[0.080,0.476]],
-    #[[0.717,0.856],[0.187,0.199]],
+    #[[0.52,0.717],[0.080,0.489]],
+    #[[0.717,0.856],[0.187,0.184]],
     #[[0.856,1.24],[0.107,0.471]],
     #[[1.24,np.inf],[0.,0.]]
     #]
 cummings_m_ranges= [
     [[-np.inf,0.52],[np.nan,np.nan]],
-    [[0.52,0.717],[0.080,0.476]],
-    [[0.717,0.856],[0.187,0.199]],
+    [[0.52,0.717],[0.080,0.489]],
+    [[0.717,0.856],[0.187,0.184]],
     [[0.856,1.24],[0.107,0.471]],
     [[1.24,np.inf],[np.nan,np.nan]]
     ]
@@ -402,9 +402,37 @@ plt.show()
 plt.plot(sort_trim_vals)
 plt.show()
 
+
+
 print('Minimum total age: ', np.nanmin(trimmed_total_age_dist), 'Gyr')
 print('Median total age: ', np.nanmedian(trimmed_total_age_dist), 'Gyr')
 
+
+prog_bins=np.arange(0.0,12, 0.05)
+#prog_bins=50
+plt.hist(clean_and_trim_age(get_progenitor_mass(target_mass_dist),limit_universe=False)[0], alpha=0.2, bins=prog_bins, normed=True, label='prog. mass for all logg in defined IFMR')
+plt.hist(clean_and_trim_age(get_progenitor_mass(bounded_masses), limit_universe=False)[0], alpha=0.2, bins=prog_bins, normed=True, label='prog. mass for WD masses in M/L total age bin')
+plt.hist(clean_and_trim_age(get_progenitor_mass(trimmed_mass_dist), limit_universe=False)[0], alpha=0.2, bins=prog_bins, normed=True, label='prog. mass for total ages < age of universe')
+plt.legend()
+plt.title(wd_name)
+plt.xlabel('Prog. Mass (M_sol)')
+plt.show()
+
+
+test_wd_masses=np.linspace(0.25, 1.5, 1000)
+plt.plot(test_wd_masses, get_progenitor_mass(test_wd_masses),marker='o')
+#plt.plot(test_wd_masses, clean_and_trim_age(get_progenitor_mass(test_wd_masses),limit_universe=False))
+plt.ylabel('Progenitor Mass (M_sol)')
+plt.xlabel('WD Mass (M_sol)')
+plt.title('InverseCummings et al. 2018 IFMR with downside extended down to 0.52 from default 0.55')
+plt.show()
+
+plt.plot(get_progenitor_mass(test_wd_masses),test_wd_masses, marker='o')
+#plt.plot(test_wd_masses, clean_and_trim_age(get_progenitor_mass(test_wd_masses),limit_universe=False))
+plt.xlabel('Progenitor Mass (M_sol)')
+plt.ylabel('WD Mass (M_sol)')
+plt.title('Inverted Inverse Cummings et al. 2018 IFMR with downside extended down to 0.52 from default 0.55')
+plt.show()
 
 ############################
 ###########################

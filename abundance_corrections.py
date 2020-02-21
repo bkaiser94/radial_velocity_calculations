@@ -72,6 +72,28 @@ def get_time_since_accretion(target_teff, log_atm_ratio, log_desired_ratio, el1,
     #print("t_coeffs", t_coeffs)
     return t_coeffs*pollutant_term
 
+def get_t_relHe_fwd(el, target_teff, log_elHe_atm, log_elHe_des, logg=8.0, cross_extrap=True):
+    """
+    Take the present-day value for log10(el/He) and figure out how long would have to pass for diffusion to lower
+    the overall photospheric abundance to log_elHe_des
+    
+    """
+    if cross_extrap:
+        el_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el)
+    else:
+        el_logtau= itau.extrapolate_single_el_tau(target_teff, el, input_logg=logg)
+    return (log_elHe_atm- log_elHe_des)*np.log(10.)*10.**(el_logtau)
+
+def get_relHe_fwd(el, time,  target_teff, log_elHe_atm, logg=8.0, cross_extrap=True):
+    """
+    time input in Myr, it will be converted to years inside this function
+    """
+    if cross_extrap:
+        el_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el)
+    else:
+        el_logtau= itau.extrapolate_single_el_tau(target_teff, el, input_logg=logg)
+    time=time*1e6
+    return log_elHe_atm+np.log10(np.e)*(-time/(10.**el_logtau))
 
 def LiCa_DP_NaCa(target_teff, log_LiCa, log_NaCa, desired_log_NaCa, logg=8.0, steady_state_start=False, cross_extrap=True):
     """
@@ -102,6 +124,8 @@ def el1el2_DP_el3el2(target_teff, log_el1el2, log_el3el2, desired_log_el3el2, el
 
 def get_el1el2_wrt_time(log_el1el2, time, el1_tau, el2_tau):
     """
+    time in Myr
+    
     Not for steady state start. This assumes declining from early phase abundance
     """
     return log_el1el2 + time*1e6*np.log10(np.e)*((10.**el2_tau-10.**el1_tau)/(10.**el1_tau * 10.**el2_tau))
