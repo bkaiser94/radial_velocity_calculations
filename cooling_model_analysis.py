@@ -38,6 +38,7 @@ percent_range=0.68 #error bar coverage for total age estimate.
 #null_age_val=20. #usually 20
 null_age_val=50. #I'm experimenting though for the moment
 default_limit_universe=True
+default_randomize=True
 #default_z=0.0001 #allegedly thick disk value
 default_z=0.02 #approximately solar
 
@@ -57,7 +58,7 @@ default_z=0.02 #approximately solar
 #target_teff= 4310. #K
 #target_teff_err=190
 
-##2356
+#2356
 #wd_name='WDJ2356-209'
 #target_logg=7.98
 #target_logg_err=0.07
@@ -90,7 +91,8 @@ desired_NaCa= -1.1 #Sioux county meteorite, achondrite
 
 
 
-n=100000
+#n=100000
+n=int(1e6)
 
 
 simon_mass= 0.45
@@ -118,7 +120,7 @@ interp_kind='cubic'
     #[[0.555,0.717],[0.080,0.489]],
     #[[0.717,0.856],[0.187,0.184]],
     #[[0.856,1.24],[0.107,0.471]],
-    #[[1.24,np.inf],[0.,0.]]
+    #[[1.24,np.inf],[np.nan,np.nan]]
     #]
 
 #setting the progenitor mass to be huge for masses greater than largest allowed so that the MS lifetime is essentially 0.
@@ -131,15 +133,30 @@ interp_kind='cubic'
     #[[0.856,1.24],[0.107,0.471]],
     #[[1.24,np.inf],[0.,0.]]
     #]
+    
+#Now that I've fixed the typos, I've determined that the actual minimum WD mass for which the result isn't stupid unreasonable is M_prog=M_wd, which is 0.532 (well slightly less than that, but 3 digits seems like enough)
+#cummings_m_ranges= [
+    #[[-np.inf,0.532],[np.nan,np.nan]],
+    #[[0.532,0.717],[0.080,0.489]],
+    #[[0.717,0.856],[0.187,0.184]],
+    #[[0.856,1.24],[0.107,0.471]],
+    #[[1.24,np.inf],[np.nan,np.nan]]
+    #]
+    
+    
+#those same values but with the uncertainties on each one also included. I'm not going to rescale the 
+#boundaries to make it continuous for the randomized values as well because that would then require 
+#randomizing each one and there's no guarantee that randomly selected values would even by continuous. 
+
 cummings_m_ranges= [
-    [[-np.inf,0.52],[np.nan,np.nan]],
-    [[0.52,0.717],[0.080,0.489]],
-    [[0.717,0.856],[0.187,0.184]],
-    [[0.856,1.24],[0.107,0.471]],
-    [[1.24,np.inf],[np.nan,np.nan]]
+    [[-np.inf,0.532],[np.nan,np.nan],[np.nan,np.nan]],
+    [[0.532,0.717],[0.080,0.489],[0.016,0.030]],
+    [[0.717,0.856],[0.187,0.184],[0.061,0.199]],
+    [[0.856,1.24],[0.107,0.471],[0.016,0.077]],
+    [[1.24,np.inf],[np.nan,np.nan],[np.nan,np.nan]]
     ]
 
-def get_progenitor_mass(mass_wd):
+def get_progenitor_mass(mass_wd, randomize=False):
     def mfunc(mass_wd, coeffs):
         return (mass_wd-coeffs[1])/coeffs[0]
     arrayvalue=True #if input is a float or not
@@ -152,14 +169,19 @@ def get_progenitor_mass(mass_wd):
         massrange= element[0]            
         if arrayvalue:
             inplay= np.where((mass_wd > massrange[0]) & (mass_wd <= massrange[1]))
-            output_masses[inplay]= mfunc(mass_wd[inplay], element[1])
+            if randomize:
+                random_element=[np.random.normal(loc=element[1][0], scale=element[2][0],size=mass_wd[inplay].shape),np.random.normal(loc=element[1][1], scale=element[2][1],size=mass_wd[inplay].shape)]
+                #print("random_element", random_element)
+                output_masses[inplay]= mfunc(mass_wd[inplay], random_element)
+            else:
+                output_masses[inplay]= mfunc(mass_wd[inplay], element[1])
         else:
             if((mass_wd > massrange[0])&(mass_wd < massrange[1])):
                 output_masses= mfunc(mass_wd, element[1])
     return output_masses
 
-def get_ms_lifetime(mass_wd, method=default_ms_method, z=default_z):
-    prog_mass= get_progenitor_mass(mass_wd)
+def get_ms_lifetime(mass_wd, method=default_ms_method, z=default_z, randomize=False):
+    prog_mass= get_progenitor_mass(mass_wd, randomize=randomize)
     if method=='Fontaine':
         return 10*prog_mass**(-2.5)
     elif method=='MIST':
@@ -317,7 +339,8 @@ target_age_dist=operate_on_dist(target_teff_dist, target_mass_dist, teffm_to_age
 #target_age_dist=operate_on_dist(target_teff_dist, simon_mass_dist, teffm_to_age)*1e-9 #Gyr units
 simon_age_dist=operate_on_dist(target_teff_dist, simon_mass_dist, teffm_to_age)*1e-9 #Gyr units
 
-ms_age_dist=get_ms_lifetime(target_mass_dist)
+#ms_age_dist=get_ms_lifetime(target_mass_dist)
+ms_age_dist=get_ms_lifetime(target_mass_dist, randomize=default_randomize)
 lowz_ms_age_dist=get_ms_lifetime(target_mass_dist, z=0.0001)
 #ms_age_dist=get_ms_lifetime(simon_mass_dist)
 
@@ -424,14 +447,14 @@ plt.plot(test_wd_masses, get_progenitor_mass(test_wd_masses),marker='o')
 #plt.plot(test_wd_masses, clean_and_trim_age(get_progenitor_mass(test_wd_masses),limit_universe=False))
 plt.ylabel('Progenitor Mass (M_sol)')
 plt.xlabel('WD Mass (M_sol)')
-plt.title('InverseCummings et al. 2018 IFMR with downside extended down to 0.52 from default 0.55')
+plt.title('InverseCummings et al. 2018 IFMR with downside extended down to 0.532 from default 0.55')
 plt.show()
 
 plt.plot(get_progenitor_mass(test_wd_masses),test_wd_masses, marker='o')
 #plt.plot(test_wd_masses, clean_and_trim_age(get_progenitor_mass(test_wd_masses),limit_universe=False))
 plt.xlabel('Progenitor Mass (M_sol)')
 plt.ylabel('WD Mass (M_sol)')
-plt.title('Inverted Inverse Cummings et al. 2018 IFMR with downside extended down to 0.52 from default 0.55')
+plt.title('Inverted Inverse Cummings et al. 2018 IFMR with downside extended down to 0.532 from default 0.55')
 plt.show()
 
 ############################
