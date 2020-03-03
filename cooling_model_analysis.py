@@ -39,8 +39,9 @@ percent_range=0.68 #error bar coverage for total age estimate.
 null_age_val=50. #I'm experimenting though for the moment
 default_limit_universe=True
 default_randomize=True
-#default_z=0.0001 #allegedly thick disk value
-default_z=0.02 #approximately solar
+massloss_default=True
+default_z=0.0001 #allegedly thick disk value
+#default_z=0.02 #approximately solar
 
 
 #madeup
@@ -156,7 +157,7 @@ cummings_m_ranges= [
     [[1.24,np.inf],[np.nan,np.nan],[np.nan,np.nan]]
     ]
 
-def get_progenitor_mass(mass_wd, randomize=False):
+def get_progenitor_mass(mass_wd, randomize=False, only_lose_mass=massloss_default):
     def mfunc(mass_wd, coeffs):
         return (mass_wd-coeffs[1])/coeffs[0]
     arrayvalue=True #if input is a float or not
@@ -175,9 +176,17 @@ def get_progenitor_mass(mass_wd, randomize=False):
                 output_masses[inplay]= mfunc(mass_wd[inplay], random_element)
             else:
                 output_masses[inplay]= mfunc(mass_wd[inplay], element[1])
+            
         else:
             if((mass_wd > massrange[0])&(mass_wd < massrange[1])):
                 output_masses= mfunc(mass_wd, element[1])
+    if only_lose_mass:
+        gained_mass=np.where((output_masses-mass_wd)<0)
+        print("shape of those with calculated progenitors", output_masses.shape)
+        output_masses[gained_mass]=np.nan
+        print("shape of those that actually lost mass", output_masses[~np.isnan(output_masses)].shape)
+    else:
+        pass
     return output_masses
 
 def get_ms_lifetime(mass_wd, method=default_ms_method, z=default_z, randomize=False):
@@ -369,6 +378,7 @@ clean_total_age_dist[np.where(clean_total_age_dist> null_age_val)] = null_age_va
 
 #trimmed_total_age_dist=clean_and_trim_age(total_age_dist)
 trimmed_total_age_dist, trimmed_mass_dist=clean_and_trim_age(total_age_dist,wd_mass_dist= target_mass_dist)
+throway_trimming, trimmed_teff_dist=clean_and_trim_age(total_age_dist,wd_mass_dist= target_teff_dist)
 trimmed_lowz_total_age_dist=clean_and_trim_age(lowz_total_age_dist)
 
 #ln_trim_ages= np.log(trimmed_total_age_dist)
@@ -404,6 +414,10 @@ bounding_range=np.where((trimmed_total_age_dist < highbound) & (trimmed_total_ag
 bounded_masses= trimmed_mass_dist[bounding_range]
 ml_mass_vals= trimmed_mass_dist[np.where((trimmed_total_age_dist > sub_edges[max_arg])&(trimmed_total_age_dist < sub_edges[max_arg]+bin_widths))]
 
+print('min WD mass included in age of universe:', np.min(trimmed_mass_dist))
+minarg= np.argmin(trimmed_mass_dist)
+print('Teff of that min WD mass:', trimmed_teff_dist[minarg])
+print('total age of that min WD mass:', trimmed_total_age_dist[minarg])
 print("\n***********\n")
 print("low total age:", lowbound)
 print("high total age:", highbound)
@@ -420,9 +434,15 @@ plt.hist(bounded_masses, alpha =0.2, label='bounded_masses', bins=these_bins, no
 plt.hist(target_mass_dist, alpha=0.2, label='target_mass_dist', bins=these_bins, normed=True)
 plt.hist(trimmed_mass_dist, alpha=0.2, label='trimmed_mass_dist', bins=these_bins, normed=True)
 plt.legend()
+plt.title(wd_name)
+
 plt.xlabel('Mass (M_sol)')
 plt.show()
 plt.plot(sort_trim_vals)
+plt.show()
+
+plt.hist(trimmed_teff_dist, normed=True)
+plt.xlabel('Teff of trimmed masses')
 plt.show()
 
 

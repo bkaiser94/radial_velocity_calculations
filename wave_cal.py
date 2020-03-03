@@ -99,7 +99,8 @@ trace_band_width=190#super wide search range
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 50 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+#sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+sigma_multi_side=2
 #sigma_multi_side= 1 #multiple of sigma value of trace gaussian that should be distance out to go for extraction windo
 
 #core_sides=  5

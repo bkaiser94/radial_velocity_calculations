@@ -56,8 +56,8 @@ sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #sdss_path= sdss_path+'G0_K5/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 
-tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
-#tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
+#tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
+tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
 #print(filenames)
 plot_wavelength=True
 plot_400m2_tell= False
@@ -67,7 +67,7 @@ plot_400m2_tell= False
 
 #norm_range=[7042,7046]
 #norm_range=[7490,7510] #outside telluric
-#norm_range=[7470, 7530]
+norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
 #norm_range=[7860.,8050.]
 #norm_range=[8074,8140]
@@ -77,13 +77,13 @@ plot_400m2_tell= False
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-norm_range=[6630,6690]#wider double norm range
+#norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 #norm_range=[3800, 4000]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
@@ -93,7 +93,7 @@ norm_range=[6630,6690]#wider double norm range
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
 #file_setting= 'two_arm_compare_SDSS'
-file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
+#file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
 
 single_iterate= False
 double_iterate= False #file_settings change these in their little sections ahead if they should be changed
@@ -493,267 +493,269 @@ def plot_diff_spec(spec1, spec2, filename1, filename2, header, smooth=False, ker
     plt.ylim(bottom=np.nanmin(diff_flux)-0.5)
     return
 
+if __name__ == '__main__':
 
-if file_setting== 'compare_SDSS':
-    target_spec1, header1, target_noise1= spt.retrieve_spec(filename)
-    #target_spec1, header1, target_noise1= spt.retrieve_sdss_spec(filename)
-    target_spec1[0]=target_spec1[0]+wavelength_offset
-    target_spec1= norm_spectrum(target_spec1, norm_range)
-    for filename2 in sdss_names:
-        target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2)
-        #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
-        target_spec2=norm_spectrum(target_spec2, norm_range)
-        #plt.ylim(top=np.nanmax(np.hstack([target_spec2[1], target_spec1[1]]))+0.5)
-        plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
-        plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box')
-        #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='gaussian')
-        #plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box')
-        #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-        #plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-        plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width)
-        #plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
-        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
-        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
-        plt.axhline(y=0, linestyle='--', color='k')
-        #plt.legend()
-        plt.title(filename+ ' & '+ filename2.split('/')[-1])
-        #plt.show()
-        spt.show_plot(line_id='alkali')
-        
-if file_setting=='all_SDSS':
-    for filename1 in filenames:
-        target_spec1, header1, target_noise1= spt.retrieve_sdss_spec(filename1)
-        target_spec1=norm_spectrum(target_spec1, norm_range)
+    if file_setting== 'compare_SDSS':
+        target_spec1, header1, target_noise1= spt.retrieve_spec(filename)
+        #target_spec1, header1, target_noise1= spt.retrieve_sdss_spec(filename)
+        target_spec1[0]=target_spec1[0]+wavelength_offset
+        target_spec1= norm_spectrum(target_spec1, norm_range)
         for filename2 in sdss_names:
             target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2)
-            target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
+            #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
             target_spec2=norm_spectrum(target_spec2, norm_range)
-            plt.ylim(top=np.nanpercentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
-            plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width= sdss_pix_width)
-            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+            #plt.ylim(top=np.nanmax(np.hstack([target_spec2[1], target_spec1[1]]))+0.5)
+            plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
+            plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box')
+            #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='gaussian')
+            #plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box')
+            #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+            #plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+            plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width)
+            #plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
-            #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)        plt.axhline(y=0, linestyle='--', color='k')
+            #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
+            plt.axhline(y=0, linestyle='--', color='k')
             #plt.legend()
-            plt.title(filename1+ ' & '+ filename2.split('/')[-1])
+            plt.title(filename+ ' & '+ filename2.split('/')[-1])
             #plt.show()
-            spt.show_plot(line_id='alkali', convert_to_air=False)
-    #plt.legend()
-    #plt.show()
-
-if file_setting=='command':
-        target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
-        target_spec1[0]=target_spec1[0]+wavelength_offset
-        target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
-        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True, kernel_type='box')
-        plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=False, kernel_type='box', pix_width=pix_width)
-        #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box')
-        #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width*2)
-        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=False, kernel_type='box', pix_width=pix_width)
-        #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=10)
-        #plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=10)
-        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=False)
-        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
-        #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
-        plt.axhline(y=0, linestyle='--', color='k')
+            spt.show_plot(line_id='alkali')
+            
+    if file_setting=='all_SDSS':
+        for filename1 in filenames:
+            target_spec1, header1, target_noise1= spt.retrieve_sdss_spec(filename1)
+            target_spec1=norm_spectrum(target_spec1, norm_range)
+            for filename2 in sdss_names:
+                target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2)
+                target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
+                target_spec2=norm_spectrum(target_spec2, norm_range)
+                plt.ylim(top=np.nanpercentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
+                plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width= sdss_pix_width)
+                plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+                #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
+                #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
+                #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)        plt.axhline(y=0, linestyle='--', color='k')
+                #plt.legend()
+                plt.title(filename1+ ' & '+ filename2.split('/')[-1])
+                #plt.show()
+                spt.show_plot(line_id='alkali', convert_to_air=False)
         #plt.legend()
         #plt.show()
-        spt.show_plot()
-        
-if file_setting=='two_arm':
-    #sdss_names = glob(sdss_path+'*1555*.fits')
-    #sdss_names = glob(sdss_path+'*1159*.fits')
-    #sdss_spec, sdssheader, sdss_noise= spt.retrieve_sdss_spec(sdss_names[0])
-    #plot_spectrum(sdss_spec, sdss_names[0], sdssheader, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-    #plt.xlim(3700,9000)
-    #spt.show_plot() 
-    for m1_name, m2_name in filenames:
-        target_spec1, header1, target_noise1= spt.retrieve_spec(m1_name)
-        target_spec2, header2, target_noise2= spt.retrieve_spec(m2_name)
-        
-        ##sdss_spec= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
-        #target_spec1[0]=target_spec1[0]+wavelength_offset
-        #plot_sky(m1_name, offset=0)
-        #plot_sky(m2_name, offset=0)
-        
-        plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=False, kernel_type='box')
-        plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=False, kernel_type='box')
-        
-        #plt.scatter(target_spec1[0],target_spec1[1], color='b')
-        #plt.scatter(target_spec2[0], target_spec2[1], color='r')
-        #plt.show()
-        #dl1=target_spec1[0]-np.roll(target_spec1[0],1)
-        #dl2=target_spec2[0]-np.roll(target_spec2[0],1)
-        #plt.scatter(target_spec1[0][1:],dl1[1:], color='b', label='400M1')
-        #plt.scatter(target_spec2[0][1:],dl2[1:] , color='r', label='400M2')
-        #plt.ylabel(r'$\Delta \lambda (\AA)$')
-        #plt.xlabel(r'Wavelength ($\AA$)')
-        #plt.title(header1['date-obs']+'\t'+header2['date-obs'])
-        #plt.legend()
-        #plt.show()
-        
-        
-        #target_spec2=norm_spectrum(target_spec2, norm_range)
-        #target_spec1=norm_spectrum(target_spec1, norm_range)
-        #plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='box')
-        #plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='box')
-        
-        #target_spec2=norm_spectrum(target_spec2, norm_range)
-        #target_spec1=norm_spectrum(target_spec1, norm_range)
-        #plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=False, kernel_type='gaussian')
-        #plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=False, kernel_type='gaussian')
-        
-        #plot_dwavelength(target_spec1, m1_name)
-        #plot_dwavelength(target_spec2,m2_name)
-        
-        #plot_spectrum(target_spec1, m1_name, header1, norm=False, smooth=True, kernel_type='box')
-        #plot_spectrum(target_spec2, m2_name, header2, norm=False, smooth=True, kernel_type='box')
-        
-        #try:
-            #hdu1= fits.open(m1_name)
-            #dlambda1=  hdu1[4].data
-            #hdu2= fits.open(m2_name)
-            #dlambda2= hdu2[4].data
-            #nu_spec1= spt.flambda_to_fnu(target_spec1, dlambda1)
-            #nu_spec2=spt.flambda_to_fnu(target_spec2, dlambda2)
-            #plot_spectrum(nu_spec2, 'fnu2', header2, smooth=False, norm=False, kernel_type='box')
-            #plot_spectrum(nu_spec1, 'fnu1', header1,smooth=False, norm=False, kernel_type='box')
-            #plt.ylabel(r'$f_{\nu}$ $10^{-28} erg cm^{-2} s}^{-1} Hz^{-1}$')
-            #plt.title(m1_name)
-        #except IndexError as error:
-            #print(error)
-        
-        #plot_spectrum(sdss_spec, sdss_names[0], sdssheader, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-        
-        #plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
-        plt.xlim(3700,9000)
-        spt.show_plot(line_id='alkali', convert_to_air=True)
-    spt.show_plot()
-        
-if file_setting=='two_arm_compare_SDSS':
-    target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
-    target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
-    
-    
-    target_spec1[0]=spt.air_to_vac(target_spec1[0])
-    target_spec2[0]=spt.air_to_vac(target_spec2[0])
-    
-    #target_spec1= spt.flambda_to_fnu(target_spec1)
-    #target_spec2=spt.flambda_to_fnu(target_spec2)
-    
-    target_spec1=norm_spectrum(target_spec1, norm_range)
-    target_spec2= norm_spectrum(target_spec2, norm_range)
-    
-    for sdss_filename in sdss_names:
-        
-        sdss_spec, sdss_header, sdss_noise2= spt.retrieve_sdss_spec(sdss_filename, wave_medium='vac')
-        
-        #sdss_spec[0]=spt.vac_to_air(sdss_spec[0])
-        
-        sdss_spec= spt.clean_spectrum(sdss_spec, 3700, 9000, [])
-        
-        
-        #sdss_spec=spt.flambda_to_fnu(sdss_spec)
-        
-        sdss_spec= norm_spectrum(sdss_spec, norm_range)
-        
-        
-        print('header1 see_sig', header1['SEE_SIG'])
-        print('header2 see_sig', header2['SEE_SIG'])
-        print('median dlambda spec1:', get_median_dlambda(target_spec1))
-        print('median dlambda spec2:', get_median_dlambda(target_spec2))
-        print('median dlambda sdss spec:', get_median_dlambda(sdss_spec))
-        print('scaling factor:', get_median_dlambda(target_spec1)/get_median_dlambda(sdss_spec))
-        print('scaling factor:', get_median_dlambda(target_spec2)/get_median_dlambda(sdss_spec))
-        plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1], sdss_spec[1]]), 99.9)+0.5)
-        
-        plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], sdss_header, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='r')
-        #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
-        plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='g')
-        plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='b')
-        #plot_dwavelength(target_spec1, filename1, read_in=False)
-        #plot_dwavelength(target_spec2, filename2, read_in=False)
-        #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
-        plt.xlim(3700,9000)
-        #plt.ylabel(r'$F_{\nu}$ (normalized)')
-        spt.show_plot(line_id='alkali', convert_to_air=True)
-        
-if single_iterate:
-    counter=0
-    for filename in filenames:
-        target_spec, header, target_noise= spt.retrieve_spec(filename)
-        hdu= fits.open(filename)
-        dlambda= hdu[4].data
-        #target_spec[0]=target_spec[0]+wavelength_offset
-        #print(filename, 'mean: ', np.nanmean(target_spec[1]))
-        #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
-        #conv_spec= convolve_spectrum(target_spec, header)
-        #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
-        #plt.scatter(header['BMJD_TDB'], np.sum(target_spec[1]*dlambda))
-        #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
-        #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
-        plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=pix_width, kernel_type='box')
-        #target_spec[1]=header['airmass']
-        #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
-        #plot_spectrum(target_spec, str(header['airmass']), header, norm=False, smooth=True, kernel_type='box', pix_width=10)
-        #plot_spectrum(target_spec, filename, header, norm=True, smooth=False,offset=counter*-0.2, kernel_type='box')
-        #plot_spectrum(target_spec, filename, header, norm=True, smooth=True, kernel_type='box', offset=counter)
-        #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
-        #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
-        #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-        #plot_sky(filename, offset=0, line_labels=False, convolve=False)
-        #if header['airmass']<1.5:
-            #plot_sky(filename, offset=0)
-        #else:
-            #pass
-        #plot_SNR(target_spec, target_noise, filename)
-        #plot_SNR_from_file(filename)
-        #plot_dwavelength(target_spec, filename)
-        #plot_telluric_spectrum([3700, 9000], smooth=False, pix_width=30)
-        #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
-        #spt.show_plot(show_telluric=False, show_legend=False)
-        #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
-        #plt.legend()
-        #plt.show()
-        
-        counter+=1
-        #try:
-            #plt.title(header['airoftyp'])
-        #except KeyError:
-            #pass
-    #plt.xlim(3700,9000)
-    #plt.ylabel(r'$f_{\nu}$ (arbitrary units)')
-    #plt.legend(loc='best')
-    #plt.show()
-    #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
-    spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
-    #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
-    #plt.xlabel('BMJD_TDB')
-    #plt.show()
-    #spt.show_plot(show_legend=True, show_telluric=True)
-    #spt.show_plot(show_telluric=True, )
-    #plt.legend()
-    #plt.show()
-    plot_pix_shifts(filenames)
-else:
-    pass
 
-
-if double_iterate:
-    for filename1 in filenames:
-        target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
-        for filename2 in filenames:
+    if file_setting=='command':
+            target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
+            target_spec1[0]=target_spec1[0]+wavelength_offset
             target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
-            plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True, kernel_type='box')
+            #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True, kernel_type='box')
+            plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=False, kernel_type='box', pix_width=pix_width)
+            #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box')
+            #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width*2)
+            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=False, kernel_type='box', pix_width=pix_width)
+            #plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=10)
+            #plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=10)
+            #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=False)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
-            #plot_spectrum(target_spec1, filename1, header1, norm=False, smooth=True, kernel_type='box')
-            #plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box')
             plt.axhline(y=0, linestyle='--', color='k')
             #plt.legend()
             #plt.show()
             spt.show_plot()
-else:
-    pass
+            
+    if file_setting=='two_arm':
+        #sdss_names = glob(sdss_path+'*1555*.fits')
+        #sdss_names = glob(sdss_path+'*1159*.fits')
+        #sdss_spec, sdssheader, sdss_noise= spt.retrieve_sdss_spec(sdss_names[0])
+        #plot_spectrum(sdss_spec, sdss_names[0], sdssheader, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+        #plt.xlim(3700,9000)
+        #spt.show_plot() 
+        for m1_name, m2_name in filenames:
+            target_spec1, header1, target_noise1= spt.retrieve_spec(m1_name)
+            target_spec2, header2, target_noise2= spt.retrieve_spec(m2_name)
+            
+            ##sdss_spec= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
+            #target_spec1[0]=target_spec1[0]+wavelength_offset
+            #plot_sky(m1_name, offset=0)
+            #plot_sky(m2_name, offset=0)
+            
+            plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=False, kernel_type='box')
+            plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=False, kernel_type='box')
+            
+            #plt.scatter(target_spec1[0],target_spec1[1], color='b')
+            #plt.scatter(target_spec2[0], target_spec2[1], color='r')
+            #plt.show()
+            #dl1=target_spec1[0]-np.roll(target_spec1[0],1)
+            #dl2=target_spec2[0]-np.roll(target_spec2[0],1)
+            #plt.scatter(target_spec1[0][1:],dl1[1:], color='b', label='400M1')
+            #plt.scatter(target_spec2[0][1:],dl2[1:] , color='r', label='400M2')
+            #plt.ylabel(r'$\Delta \lambda (\AA)$')
+            #plt.xlabel(r'Wavelength ($\AA$)')
+            #plt.title(header1['date-obs']+'\t'+header2['date-obs'])
+            #plt.legend()
+            #plt.show()
+            
+            
+            #target_spec2=norm_spectrum(target_spec2, norm_range)
+            #target_spec1=norm_spectrum(target_spec1, norm_range)
+            #plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='box')
+            #plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='box')
+            
+            #target_spec2=norm_spectrum(target_spec2, norm_range)
+            #target_spec1=norm_spectrum(target_spec1, norm_range)
+            #plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=False, kernel_type='gaussian')
+            #plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=False, kernel_type='gaussian')
+            
+            #plot_dwavelength(target_spec1, m1_name)
+            #plot_dwavelength(target_spec2,m2_name)
+            
+            #plot_spectrum(target_spec1, m1_name, header1, norm=False, smooth=True, kernel_type='box')
+            #plot_spectrum(target_spec2, m2_name, header2, norm=False, smooth=True, kernel_type='box')
+            
+            #try:
+                #hdu1= fits.open(m1_name)
+                #dlambda1=  hdu1[4].data
+                #hdu2= fits.open(m2_name)
+                #dlambda2= hdu2[4].data
+                #nu_spec1= spt.flambda_to_fnu(target_spec1, dlambda1)
+                #nu_spec2=spt.flambda_to_fnu(target_spec2, dlambda2)
+                #plot_spectrum(nu_spec2, 'fnu2', header2, smooth=False, norm=False, kernel_type='box')
+                #plot_spectrum(nu_spec1, 'fnu1', header1,smooth=False, norm=False, kernel_type='box')
+                #plt.ylabel(r'$f_{\nu}$ $10^{-28} erg cm^{-2} s}^{-1} Hz^{-1}$')
+                #plt.title(m1_name)
+            #except IndexError as error:
+                #print(error)
+            
+            #plot_spectrum(sdss_spec, sdss_names[0], sdssheader, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+            
+            #plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
+            plt.xlim(3700,9000)
+            spt.show_plot(line_id='alkali', convert_to_air=True)
+        spt.show_plot()
+            
+    if file_setting=='two_arm_compare_SDSS':
+        target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
+        target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
+        
+        
+        target_spec1[0]=spt.air_to_vac(target_spec1[0])
+        target_spec2[0]=spt.air_to_vac(target_spec2[0])
+        
+        #target_spec1= spt.flambda_to_fnu(target_spec1)
+        #target_spec2=spt.flambda_to_fnu(target_spec2)
+        
+        target_spec1=norm_spectrum(target_spec1, norm_range)
+        target_spec2= norm_spectrum(target_spec2, norm_range)
+        
+        for sdss_filename in sdss_names:
+            
+            sdss_spec, sdss_header, sdss_noise2= spt.retrieve_sdss_spec(sdss_filename, wave_medium='vac')
+            
+            #sdss_spec[0]=spt.vac_to_air(sdss_spec[0])
+            
+            sdss_spec= spt.clean_spectrum(sdss_spec, 3700, 9000, [])
+            
+            
+            #sdss_spec=spt.flambda_to_fnu(sdss_spec)
+            
+            sdss_spec= norm_spectrum(sdss_spec, norm_range)
+            
+            
+            print('header1 see_sig', header1['SEE_SIG'])
+            print('header2 see_sig', header2['SEE_SIG'])
+            print('median dlambda spec1:', get_median_dlambda(target_spec1))
+            print('median dlambda spec2:', get_median_dlambda(target_spec2))
+            print('median dlambda sdss spec:', get_median_dlambda(sdss_spec))
+            print('scaling factor:', get_median_dlambda(target_spec1)/get_median_dlambda(sdss_spec))
+            print('scaling factor:', get_median_dlambda(target_spec2)/get_median_dlambda(sdss_spec))
+            plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1], sdss_spec[1]]), 99.9)+0.5)
+            
+            plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], sdss_header, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='r')
+            #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
+            plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='g')
+            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='b')
+            #plot_dwavelength(target_spec1, filename1, read_in=False)
+            #plot_dwavelength(target_spec2, filename2, read_in=False)
+            #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
+            plt.xlim(3700,9000)
+            #plt.ylabel(r'$F_{\nu}$ (normalized)')
+            spt.show_plot(line_id='alkali', convert_to_air=True)
+            
+    if single_iterate:
+        counter=0
+        for filename in filenames:
+            target_spec, header, target_noise= spt.retrieve_spec(filename)
+            hdu= fits.open(filename)
+            dlambda= hdu[4].data
+            #target_spec[0]=target_spec[0]+wavelength_offset
+            #print(filename, 'mean: ', np.nanmean(target_spec[1]))
+            #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
+            #conv_spec= convolve_spectrum(target_spec, header)
+            #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
+            #plt.scatter(header['BMJD_TDB'], np.sum(target_spec[1]*dlambda))
+            #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
+            #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=pix_width, kernel_type='box')
+            #plot_spectrum(target_spec, filename, header, smooth=True, norm=True,  kernel_type='gaussian')
+            #target_spec[1]=header['airmass']
+            #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
+            #plot_spectrum(target_spec, str(header['airmass']), header, norm=False, smooth=True, kernel_type='box', pix_width=10)
+            #plot_spectrum(target_spec, filename, header, norm=True, smooth=False,offset=counter*-0.2, kernel_type='box')
+            #plot_spectrum(target_spec, filename, header, norm=True, smooth=True, kernel_type='box', offset=counter)
+            #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
+            #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
+            #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
+            plot_sky(filename, offset=0, line_labels=False, convolve=False)
+            #if header['airmass']<1.5:
+                #plot_sky(filename, offset=0)
+            #else:
+                #pass
+            #plot_SNR(target_spec, target_noise, filename)
+            #plot_SNR_from_file(filename)
+            #plot_dwavelength(target_spec, filename)
+            #plot_telluric_spectrum([3700, 9000], smooth=False, pix_width=30)
+            plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
+            #spt.show_plot(show_telluric=False, show_legend=False)
+            spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
+            #plt.legend()
+            #plt.show()
+            
+            counter+=1
+            #try:
+                #plt.title(header['airoftyp'])
+            #except KeyError:
+                #pass
+        #plt.xlim(3700,9000)
+        #plt.ylabel(r'$f_{\nu}$ (arbitrary units)')
+        #plt.legend(loc='best')
+        #plt.show()
+        #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+        spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
+        #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
+        #plt.xlabel('BMJD_TDB')
+        #plt.show()
+        #spt.show_plot(show_legend=True, show_telluric=True)
+        #spt.show_plot(show_telluric=True, )
+        #plt.legend()
+        #plt.show()
+        plot_pix_shifts(filenames)
+    else:
+        pass
+
+
+    if double_iterate:
+        for filename1 in filenames:
+            target_spec1, header1, target_noise1= spt.retrieve_spec(filename1)
+            for filename2 in filenames:
+                target_spec2, header2, target_noise2= spt.retrieve_spec(filename2)
+                plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True, kernel_type='box')
+                #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
+                #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
+                #plot_spectrum(target_spec1, filename1, header1, norm=False, smooth=True, kernel_type='box')
+                #plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box')
+                plt.axhline(y=0, linestyle='--', color='k')
+                #plt.legend()
+                #plt.show()
+                spt.show_plot()
+    else:
+        pass
 

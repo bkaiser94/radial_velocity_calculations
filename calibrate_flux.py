@@ -30,8 +30,6 @@ from astropy import constants as const
 
 import spec_plot_tools as spt
 
-from plot_spec import plot_telluric_spectrum, plot_spectrum
-
 speclistname = "listWCTB"
 
 color_list = ['k', 'r', 'g', 'b', 'm', 'cyan', 'purple']
@@ -44,11 +42,17 @@ sens_curve_list = speclist[1]
 norm_range=[7470, 7530]
 tell_range= [7430, 7800]
 bad_noise_sub = 100
-do_tell_corr= True
+do_tell_corr= False
 do_rv_barycorr=False
 do_ext_corr= True
 plot_across_night=False
-do_tell_waves=True
+do_tell_waves=False
+
+if do_tell_waves:
+    from plot_spec import plot_telluric_spectrum, plot_spectrum
+
+else:
+    pass
 
 #parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 #cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
