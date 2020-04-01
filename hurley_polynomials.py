@@ -93,6 +93,53 @@ def get_t_ms(mass, z=default_z):
         ],axis=0)*1e-3
 
 
+
+def get_B(mass):
+    """
+    un-numbered equation below equation(38)
+    """
+    return np.max([3e4, 500+1.75e4 * mass**0.6], axis=0)
+
+
+def get_D(mass, zeta, mass_HeF=2.5):
+    """
+    
+    un-numbered equation above equation (39) 
+    
+    I'm pretty sure I need to add in a linear interpolation element to cover the gap (if there is one) between mass_HeF and 2.5
+    """
+    D_lo=5.37+0.135*zeta
+    D_hi=np.max([-1.0,0.975*D_lo-0.18*mass, 0.5*D_lo-0.06*mass],axis=0)
+    lo_inds=np.where(mass <= mass_HeF)
+    hi_inds= np.where(mass >= 2.5)
+    D_hi[lo_inds]=D_lo
+    return 10**D_hi
+
+def get_core_luminosity_rel(mass, mass_core, mass_HeF=2.5):
+    B=get_B(mass)
+    p_array=np.ones(mass.shape)
+    q_array=np.ones(mass.shape)
+    low_inds= np.where(mass <= mass_HeF)
+    high_inds= np.where(mass > mass_HeF)
+    p_array[low_inds]=6
+    p_array[high_inds]=5
+    q_array[low_inds]=3
+    q_array[high_inds]=2
+    
+    
+    return
+
+
+def get_t_hems(mass):
+    """
+    Eq. (79) from Hurley et al. 2000
+    """
+    return (0.4129 + 18.81 * mass**4+1.853*mass**6)/mass**6.5
+
+def get_t_he():
+    
+    
+    return
 #test_mass=1.
 #print('zeta', zeta(default_z))
 #print('t_bgb', get_t_bgb(default_z, test_mass))

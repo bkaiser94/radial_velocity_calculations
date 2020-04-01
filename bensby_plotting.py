@@ -45,6 +45,13 @@ def get_ages():
     hi_error=bensby_table['B_Age']-bensby_table['Age']
     return bensby_table['Age'], [low_error,hi_error]
 
+def get_ALi():
+    low_error=bensby_table['ALi']- bensby_table['b_ALi']
+    hi_error=bensby_table['B_ALi']-bensby_table['ALi']
+    return bensby_table['ALi'], [low_error,hi_error]
+
+
+
 
 
 def plot_el1el2_FeH(el1,el2,error_bars=True):
@@ -83,9 +90,13 @@ def plot_el1el2_age(el1, el2, error_bars=True, mask_err_free=True):
     plt.xlabel('Age (Gyr)')
     return
 
-def get_lica():
+def get_lica(with_errors=False):
     lica=bensby_table['ALi']-bensby_table['Ca/Fe']-bensby_table['Fe/H']-lodders_table.loc['Li']['A_el']
-    return lica
+    if with_errors:
+        pass
+        bensby_table['ALi']-bensby_table['Ca/Fe']-bensby_table['Fe/H']-lodders_table.loc['Li']['A_el']
+    else:
+        return lica
 
 def plot_lica_FeH_pop():
     lica=get_lica()
@@ -124,47 +135,58 @@ def plot_lica_age_pop():
 
     return
 
+def plot_lica_age():
+    
+    return
+
+def plot_ALi_FeH():
+    ALi, ALi_err= get_ALi()
+    plt.errorbar(bensby_table['Fe/H'], ALi, xerr=bensby_table['e_Fe/H'], yerr=ALi_err, linestyle='None', marker='o', label='BL2018')
+    plt.xlabel('[Fe/H]')
+    plt.ylabel('A(Li)')
+    return
+
 if __name__ == '__main__':
     #bensby_table.pprint()
 
     naca, naca_err= get_rel_abund('Na', 'Ca')
     lica=get_lica()
 
-    #plt.errorbar(bensby_table['Fe/H'], naca, xerr=bensby_table['e_Fe/H'], yerr=naca_err, linestyle='None', capsize=0, marker='o')
-    #plt.show()
+    plt.errorbar(bensby_table['Fe/H'], naca, xerr=bensby_table['e_Fe/H'], yerr=naca_err, linestyle='None', capsize=0, marker='o')
+    plt.show()
 
-    #plot_el1el2_FeH('Na','Ca', error_bars=True)
-    #plt.show()
+    plot_el1el2_FeH('Na','Ca', error_bars=True)
+    plt.show()
 
-    #plot_el1el2_FeH('Na','Ca', error_bars=False)
-    #plt.show()
+    plot_el1el2_FeH('Na','Ca', error_bars=False)
+    plt.show()
 
     age, age_err=get_ages()
 
-    #plt.errorbar(age, naca, xerr=age_err, yerr=naca_err, linestyle='None', capsize=0, marker='o')
-    #plt.show()
+    plt.errorbar(age, naca, xerr=age_err, yerr=naca_err, linestyle='None', capsize=0, marker='o')
+    plt.show()
 
-    #plot_el1el2_age('Na', 'Ca',error_bars=False)
-    #plot_el1el2_age('Na', 'Ca', mask_err_free=False)
-    #plt.show()
+    plot_el1el2_age('Na', 'Ca',error_bars=False)
+    plot_el1el2_age('Na', 'Ca', mask_err_free=False)
+    plt.show()
 
-    #plt.scatter(bensby_table['td/d'], bensby_table['td/h'])
-    #plt.xscale('log')
-    #plt.yscale('log')
-    #plt.show()
+    plt.scatter(bensby_table['td/d'], bensby_table['td/h'])
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.show()
 
-    #plt.scatter(bensby_table['td/d'], naca)
-    #plt.xlabel('P(thick disk)/P(thin disk)')
-    #plt.ylabel('[Na/Ca]')
-    #plt.xscale('log')
-    #plt.show()
+    plt.scatter(bensby_table['td/d'], naca)
+    plt.xlabel('P(thick disk)/P(thin disk)')
+    plt.ylabel('[Na/Ca]')
+    plt.xscale('log')
+    plt.show()
 
 
-    #plt.scatter(bensby_table['td/d'], bensby_table['Ca/Fe'])
-    #plt.xlabel('P(thick disk)/P(thin disk)')
-    #plt.ylabel('[Ca/Fe]')
-    #plt.xscale('log')
-    #plt.show()
+    plt.scatter(bensby_table['td/d'], bensby_table['Ca/Fe'])
+    plt.xlabel('P(thick disk)/P(thin disk)')
+    plt.ylabel('[Ca/Fe]')
+    plt.xscale('log')
+    plt.show()
 
     thick_disk_stars=np.where((bensby_table['td/d']>1) & (bensby_table['td/h']> 1))
 

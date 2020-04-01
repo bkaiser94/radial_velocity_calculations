@@ -53,11 +53,11 @@ default_z=0.0001 #allegedly thick disk value
 
 
 ##1330
-#wd_name='SDSSJ1330+6435'
-#target_logg= 8.26
-#target_logg_err=0.15
-#target_teff= 4310. #K
-#target_teff_err=190
+wd_name='SDSSJ1330+6435'
+target_logg= 8.26
+target_logg_err=0.15
+target_teff= 4310. #K
+target_teff_err=190
 
 #2356
 #wd_name='WDJ2356-209'
@@ -70,11 +70,11 @@ default_z=0.0001 #allegedly thick disk value
 
 
 ##1644
-wd_name='GaiaJ1644-0449'
-target_logg=7.77
-target_logg_err= 0.23
-target_teff= 3830.
-target_teff_err= 230.
+#wd_name='GaiaJ1644-0449'
+#target_logg=7.77
+#target_logg_err= 0.23
+#target_teff= 3830.
+#target_teff_err= 230.
 
 #J1150
 #from Gentile Fusillo et al. 2019
@@ -92,8 +92,8 @@ desired_NaCa= -1.1 #Sioux county meteorite, achondrite
 
 
 
-#n=100000
-n=int(1e6)
+n=100000
+#n=int(1e6)
 
 
 simon_mass= 0.45
@@ -298,6 +298,8 @@ target_mass_dist=operate_on_dist(target_teff_dist, target_logg_dist,loggteff_to_
 print(target_mass_dist.shape)
 print(target_logg_dist.shape)
 print(target_teff_dist.shape)
+print('Target mean mass:', np.mean(target_mass_dist), '+/-', np.std(target_mass_dist))
+
 
 calc_pro_masses= get_progenitor_mass(target_mass_dist)
 test_masses= np.linspace(0.2, 1.3, 100)

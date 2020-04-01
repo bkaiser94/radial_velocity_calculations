@@ -56,8 +56,8 @@ sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #sdss_path= sdss_path+'G0_K5/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 
-#tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
-tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
+tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
+#tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
 #print(filenames)
 plot_wavelength=True
 plot_400m2_tell= False
@@ -712,10 +712,10 @@ if __name__ == '__main__':
             #plot_SNR(target_spec, target_noise, filename)
             #plot_SNR_from_file(filename)
             #plot_dwavelength(target_spec, filename)
-            #plot_telluric_spectrum([3700, 9000], smooth=False, pix_width=30)
-            plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
+            plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+            #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
-            spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
+            #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
             #plt.legend()
             #plt.show()
             

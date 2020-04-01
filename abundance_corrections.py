@@ -180,23 +180,31 @@ def get_accreted_mass( el, log_elHe,t_passed, teff=5000., logg=8.0,log_q=-5.0, m
     return log_m_acc
 
 
-def easy_dist_decline(wd_row, el1, el2, el3, desired_log_el3el2, n_points=n_points, plot_all=False):
+def easy_dist_decline(wd_row, el1, el2, el3, desired_log_el3el2, n_points=n_points, plot_all=False, start_he=False):
     teff_dist=np.random.normal(loc=wd_row['teff'], scale=wd_row['teff_err'], size=n_points)
     logg_dist= np.random.normal(loc=wd_row['logg'], scale=wd_row['logg_err'], size=n_points)
-    def get_el(el):
-        el_stem= el.lower()+'/he'
+    def get_el(el, el2=el2):
+        if start_he:
+            el_stem= el.lower()+'/he'
+        else:
+            el_stem=el.lower()+'/'+el2.lower()
         el_abund= wd_row[el_stem]
         el_err= wd_row[el_stem+'_err']
         return el_abund, el_err
-    def make_el_dist(el):
-        el_abund, el_err= get_el(el)
+    def make_el_dist(el, el2=el2):
+        el_abund, el_err= get_el(el, el2)
         el_dist= np.random.normal(loc=el_abund, scale= el_err, size=n_points)
         return el_dist
-    el1_dist= make_el_dist(el1)
-    el2_dist= make_el_dist(el2)
-    el3_dist= make_el_dist(el3)
-    log_el1el2= el1_dist-el2_dist
-    log_el3el2= el3_dist-el2_dist
+    if start_he:
+        el1_dist= make_el_dist(el1)
+        el2_dist= make_el_dist(el2)
+        el3_dist= make_el_dist(el3)
+        log_el1el2= el1_dist-el2_dist
+        log_el3el2= el3_dist-el2_dist
+    else:
+        print('doing simultaneous decline')
+        log_el1el2= make_el_dist(el1, el2=el2)
+        log_el3el2=make_el_dist(el3,el2=el2)
     t_decline, dp_el1el2= el1el2_DP_el3el2(teff_dist, log_el1el2, log_el3el2, desired_log_el3el2, el1, el2, el3, logg=logg_dist, cross_extrap=True)
     
     dp_el1el2=dp_el1el2[~np.isinf(dp_el1el2)]
