@@ -25,8 +25,8 @@ from b_coeffs import b_coeffs
 
 #nothing
 
-#default_z=0.0001 #allegedly thick disk value
-default_z=0.02 #approximately solar
+default_z=0.0001 #allegedly thick disk value
+#default_z=0.02 #approximately solar
 
 
 def make_match(value, array):
@@ -159,23 +159,48 @@ def get_t_he(mass,z):
         """
         un-numbered equation below equation(38)
         """
-        return np.max([3e4, 500+1.75e4 * mass**0.6], axis=0)
+        print('mass.shape', mass.shape)
+        first_entry=np.ones(mass.shape)*3e4
+        the_array=np.array([first_entry, 500+1.75e4 * mass**0.6])
+        print("the_array.shape",the_array.shape)
+        #return np.max(np.array([3e4, 500+1.75e4 * mass**0.6]), axis=0)
+        return np.max(the_array, axis=0)
 
 
-    def get_D(mass, zeta_val, mass_HeF=2.5):
+    def get_D(mass):
         """
         
         un-numbered equation above equation (39) 
         
         I'm pretty sure I need to add in a linear interpolation element to cover the gap (if there is one) between mass_HeF and 2.5
         """
-        D_lo=5.37+0.135*zeta
-        D_hi=np.max([-1.0,0.975*D_lo-0.18*mass, 0.5*D_lo-0.06*mass],axis=0)
+        D_lo=5.37+0.135*zeta_val
+        def get_D_hi(mass):
+            try:
+                the_array=np.array([-1.0*np.ones(mass.shape),0.975*D_lo-0.18*mass, 0.5*D_lo-0.06*mass])
+            except AttributeError:
+                the_array=np.array([-1.0,0.975*D_lo-0.18*mass, 0.5*D_lo-0.06*mass])
+            return np.max(the_array,axis=0)
+        D_hi= get_D_hi(mass)
+        #Need D intermediate to cover values between mass_HeF and 2.5, which are not the same value, so I do need the linear interpolation over this range.
+        mid_inds=np.where((mass > mass_HeF) & (mass < 2.5))
+        slope=(get_D_hi(2.5)-D_lo)/(2.5-mass_HeF)
+        D_mid= slope*(mass[mid_inds]-mass_HeF)+D_lo
         lo_inds=np.where(mass <= mass_HeF)
         hi_inds= np.where(mass >= 2.5)
         D_hi[lo_inds]=D_lo
+        D_hi[mid_inds]=D_mid
         return 10**D_hi
-
+    def get_m_x(mass):
+        print(get_B(mass).shape, 'B shape')
+        return (get_B(mass)/get_D(mass))**(1./3)
+    #def p(mass):
+        #"""
+        #un-numbered equation below eq 38
+        #"""
+        #p_array=np.ones(mass.shape)
+        #hi_inds=np.where(mass > 2.5)
+        #return 
     #def get_core_luminosity_rel(mass, mass_core):
         #"""
         #equation (37) and others described in the paragraph between equations (65,66) of Hurley et al. 2000
@@ -210,6 +235,8 @@ def get_t_he(mass,z):
         second_term=1+alpha4*np.exp(15*(mass-mass_HeF))
         return first_term*second_term
     
+    m_x=get_m_x(mass)
+    #m_x=1
     output_t_he=np.ones(mass.shape)
     lo_inds=np.where(mass< mass_HeF)
     hi_inds=np.where(mass >= mass_HeF)
@@ -218,7 +245,7 @@ def get_t_he(mass,z):
     #output_t_he[lo_inds]=lo_times
     output_t_he[hi_inds]=hi_times
     
-    return output_t_he, t_bgb
+    return output_t_he, t_bgb, m_x
 #test_mass=1.
 #print('zeta', zeta(default_z))
 #print('t_bgb', get_t_bgb(default_z, test_mass))
@@ -246,8 +273,17 @@ def get_t_he(mass,z):
 if __name__ == '__main__':
     #test_masses=np.random.normal(2,0.2, 1000)
     test_masses=np.linspace(0.8,10,1000)
-    test_t_he, test_t_bgb= get_t_he(test_masses, default_z)
+    test_t_he, test_t_bgb, test_m_x= get_t_he(test_masses, default_z)
     print('average t_he:', np.mean(test_t_he), 'average t_bgb:', np.mean(test_t_bgb))
+    print('average m_x:', np.mean(test_m_x))
+    
+    plt.scatter(test_masses, test_m_x)
+    plt.xlabel('Mass')
+    plt.ylabel(r'$M_x$')
+    plt.axvline(get_mass_HeF(default_z), linestyle='--', color='k', label='M_HeF')
+    plt.axvline(2.5, label='M=2.5', color='r', linestyle='--')
+    plt.legend()
+    plt.show()
     
     plt.scatter(test_masses, test_t_he)
     plt.xlabel('Mass')
