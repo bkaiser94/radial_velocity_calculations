@@ -21,11 +21,12 @@ import scipy.interpolate as scinterp
 
 import cal_params as cp
 from a_coeffs import a_coeffs
+from b_coeffs import b_coeffs
 
 #nothing
 
-default_z=0.0001 #allegedly thick disk value
-#default_z=0.02 #approximately solar
+#default_z=0.0001 #allegedly thick disk value
+default_z=0.02 #approximately solar
 
 
 def make_match(value, array):
@@ -50,6 +51,41 @@ def a(z,index):
     a_out=a_index[0]+a_index[1]*zeta_val+a_index[2]*zeta_val**2+a_index[3]*zeta_val**3
     #print('a_'+str(index),a_out)
     return a_out
+
+def b(z,index):
+    b_string="b"+str(index)
+    zeta_val=zeta(z)
+    def b_func(b_row):
+        return b_row[0]+b_row[1]*zeta_val+b_row[2]*zeta_val**2+b_row[3]*zeta_val**3
+    try:
+        b_row=b_coeffs[b_string]
+        b_val=b_func(b_row)
+        return b_val
+    except KeyError:
+        if index==40:
+            return max(b_func(b_coeffs["b40_static"]),1.0)
+        elif index==41:
+            bprime=b_func(b_coeffs["b'41"])
+            return bprime**(b_func(b_coeffs["b42"]))
+        elif index==44:
+            bprime= b_func(b_coeffs["b'44"])
+            return bprime**5
+        else:
+            print("\n\n************")
+            print("\n\nWARNING\n\n")
+            print("b with index"+str(index) +" does not appear to exist in the b_coeffs dict and it isn't currently coded as an exception in b() in hurley_polynomials.py. You need to go look at b_coeffs.py and hurley_polynomials.py")
+            print("\n\n************")
+            return
+
+def get_mass_HeF(z):
+    """
+    eq(2) from Hurley et al. 2000
+    
+    Input "z", which is 'metallicity' but actually the metal mass fraction of the star.
+    
+    """
+    
+    return 1.995+0.25*zeta(z)+0.087*zeta(z)**2
 
 def get_t_bgb(z,mass):
     #print('a_1',a(z,1))
@@ -94,40 +130,6 @@ def get_t_ms(mass, z=default_z):
 
 
 
-def get_B(mass):
-    """
-    un-numbered equation below equation(38)
-    """
-    return np.max([3e4, 500+1.75e4 * mass**0.6], axis=0)
-
-
-def get_D(mass, zeta, mass_HeF=2.5):
-    """
-    
-    un-numbered equation above equation (39) 
-    
-    I'm pretty sure I need to add in a linear interpolation element to cover the gap (if there is one) between mass_HeF and 2.5
-    """
-    D_lo=5.37+0.135*zeta
-    D_hi=np.max([-1.0,0.975*D_lo-0.18*mass, 0.5*D_lo-0.06*mass],axis=0)
-    lo_inds=np.where(mass <= mass_HeF)
-    hi_inds= np.where(mass >= 2.5)
-    D_hi[lo_inds]=D_lo
-    return 10**D_hi
-
-def get_core_luminosity_rel(mass, mass_core, mass_HeF=2.5):
-    B=get_B(mass)
-    p_array=np.ones(mass.shape)
-    q_array=np.ones(mass.shape)
-    low_inds= np.where(mass <= mass_HeF)
-    high_inds= np.where(mass > mass_HeF)
-    p_array[low_inds]=6
-    p_array[high_inds]=5
-    q_array[low_inds]=3
-    q_array[high_inds]=2
-    
-    
-    return
 
 
 def get_t_hems(mass):
@@ -136,10 +138,87 @@ def get_t_hems(mass):
     """
     return (0.4129 + 18.81 * mass**4+1.853*mass**6)/mass**6.5
 
-def get_t_he():
+def get_t_he(mass,z):
+    """
+    equation (57) from Hurley et al. 2000
     
     
-    return
+    Also obtains t_BGB as an intermediate step, but I'll have it return that as well I think since it's already computed.
+    
+    Returns output_t_he, t_bgb
+    
+    so it's a tuple, so you should receive it with 2 variables that will then each be arrays.
+    """
+    mass_HeF=get_mass_HeF(z)
+    print("Z=",z)
+    print('mass_HeF', mass_HeF)
+    zeta_val=zeta(z)
+    t_bgb=get_t_bgb(z,mass)
+    
+    def get_B(mass):
+        """
+        un-numbered equation below equation(38)
+        """
+        return np.max([3e4, 500+1.75e4 * mass**0.6], axis=0)
+
+
+    def get_D(mass, zeta_val, mass_HeF=2.5):
+        """
+        
+        un-numbered equation above equation (39) 
+        
+        I'm pretty sure I need to add in a linear interpolation element to cover the gap (if there is one) between mass_HeF and 2.5
+        """
+        D_lo=5.37+0.135*zeta
+        D_hi=np.max([-1.0,0.975*D_lo-0.18*mass, 0.5*D_lo-0.06*mass],axis=0)
+        lo_inds=np.where(mass <= mass_HeF)
+        hi_inds= np.where(mass >= 2.5)
+        D_hi[lo_inds]=D_lo
+        return 10**D_hi
+
+    #def get_core_luminosity_rel(mass, mass_core):
+        #"""
+        #equation (37) and others described in the paragraph between equations (65,66) of Hurley et al. 2000
+        #"""
+        #B=get_B(mass)
+        #p_array=np.ones(mass.shape)
+        #q_array=np.ones(mass.shape)
+        #low_inds= np.where(mass <= mass_HeF)
+        #high_inds= np.where(mass > mass_HeF)
+        #p_array[low_inds]=6
+        #p_array[high_inds]=5
+        #q_array[low_inds]=3
+        #q_array[high_inds]=2
+        
+        
+        #return
+    def hi_t_he(mass, t_bgb):
+        """
+        high-mass part of the piecewise function in equation (57)
+        """
+        numerator=t_bgb*b(z,41)*mass**b(z,42)+b(z,43)*mass**5
+        denominator=b(z,44)+mass**5
+        return numerator/denominator
+    
+    def lo_t_he(mass,mass_core, t_bgb):
+        """
+        low-mass part of the piecewise function in equation (57)
+        """
+        alpha4=(hi_t_he(mass_HeF, t_bgb)-b(z,39))/b(z,39)
+        mu=(mass-mass_core)/(mass_HeF-mass_core)
+        first_term=b(z,39)+(get_t_hems(mass_core)-b(z,39))*(1-mu)**b(z,40)
+        second_term=1+alpha4*np.exp(15*(mass-mass_HeF))
+        return first_term*second_term
+    
+    output_t_he=np.ones(mass.shape)
+    lo_inds=np.where(mass< mass_HeF)
+    hi_inds=np.where(mass >= mass_HeF)
+    hi_times= hi_t_he(mass[hi_inds], t_bgb[hi_inds])
+    #lo_times= lo_t_he(mass[lo_inds],mass_core[lo_inds],t_bgb[lo_inds])
+    #output_t_he[lo_inds]=lo_times
+    output_t_he[hi_inds]=hi_times
+    
+    return output_t_he, t_bgb
 #test_mass=1.
 #print('zeta', zeta(default_z))
 #print('t_bgb', get_t_bgb(default_z, test_mass))
@@ -163,3 +242,44 @@ def get_t_he():
 #plt.show()
 
 
+
+if __name__ == '__main__':
+    #test_masses=np.random.normal(2,0.2, 1000)
+    test_masses=np.linspace(0.8,10,1000)
+    test_t_he, test_t_bgb= get_t_he(test_masses, default_z)
+    print('average t_he:', np.mean(test_t_he), 'average t_bgb:', np.mean(test_t_bgb))
+    
+    plt.scatter(test_masses, test_t_he)
+    plt.xlabel('Mass')
+    plt.ylabel('t_he (Myr)')
+    plt.show()
+    
+    
+    plt.scatter(test_masses, test_t_bgb)
+    plt.xlabel('Mass')
+    plt.ylabel('t_bgb (Myr)')
+    plt.show()
+    
+    plt.scatter(test_t_bgb, test_t_he)
+    plt.ylabel('t_he(Myr)')
+    plt.xlabel('t_bgb (Myr)')
+    plt.show()
+    
+    plt.scatter(test_masses, test_t_he/test_t_bgb)
+    plt.xlabel('Mass')
+    plt.ylabel('t_he/t_bgb')
+    plt.axvline(get_mass_HeF(default_z), linestyle='--', color='k')
+    plt.show()
+    
+    plt.hist(test_masses)
+    plt.title('Masses')
+    plt.show()
+    
+    plt.title('t_he')
+    plt.hist(test_t_he)
+    plt.show()
+    
+    plt.title('t_bgb')
+    plt.hist(test_t_bgb)
+    plt.show()
+    
