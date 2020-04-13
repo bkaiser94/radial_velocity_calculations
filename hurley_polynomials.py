@@ -32,8 +32,8 @@ from b_coeffs import b_coeffs
 
 #nothing
 
-default_z=0.0001 #allegedly thick disk value
-#default_z=0.02 #approximately solar
+#default_z=0.0001 #allegedly thick disk value
+default_z=0.02 #approximately solar
 
 
 def make_match(value, array):
@@ -274,7 +274,7 @@ def get_t_he(mass,z):
         """
         first_entry=np.ones(mass.shape)*-4.8
         the_array=np.array([first_entry, np.min([-5.7+0.8*mass, -4.1+0.14*mass],axis=0)])
-        return np.max(the_array, axis=0)
+        return 10.**np.max(the_array, axis=0)
     
     def get_L_HeI(mass):
         def get_hi_L_HeI(mass):
@@ -298,6 +298,7 @@ def get_t_he(mass,z):
     D = get_D(mass) # I decided I also want this essentially indefinitely defined.
     B= get_B(mass)
     A_H_prime=get_A_H_prime(mass)
+    print('A_H_prime:', A_H_prime)
     #L_bgb=1.
     L_bgb=get_L_bgb(mass)
     #L_x= 1.
@@ -319,7 +320,7 @@ def get_t_he(mass,z):
         
         """
         first_term=1/((p-1)*A_H_prime*D)
-        second_term= (D/L_bgb)**((p-1)/p)
+        second_term= (D/L_bgb)**((p-1.)/p)
         return t_bgb+first_term*second_term
     
     def get_t_x(mass=mass):
@@ -331,7 +332,7 @@ def get_t_he(mass,z):
         
         t_inf1= get_t_inf1(mass=mass)
         first_term=t_inf1-t_bgb
-        second_term=(L_bgb/L_x)**((p-1)/p)
+        second_term=(L_bgb/L_x)**((p-1.)/p)
         
         return t_inf1-(first_term)*second_term
     
@@ -349,7 +350,7 @@ def get_t_he(mass,z):
         """
         equation (43)
         """
-        L_HeI= np.ones(mass.shape) # *****to be replaced with the actual formula in the future
+        #L_HeI= np.ones(mass.shape) # *****to be replaced with the actual formula in the future
         t_array=np.ones(mass.shape)
         def get_t_lo():
             first_term= 1./((p-1)*A_H_prime*D)
@@ -390,10 +391,42 @@ def get_t_he(mass,z):
         
         return t_array
     
+    def get_mass_core_alt(mass, t):
+        """
+        eq (34)
+        
+        """
+        
+        t_inf=t_bgb+1/(A_H_prime*D*(p-1))*(D/L_bgb)**((p-1)/p)
+        
+        return ((p-1)*A_H_prime*D*(t_inf-t))**(1/(1-p))
+    
     ########
     
     t_HeI= get_t_HeI(mass)
     mass_core= get_mass_core_gb(t_HeI)
+    alt_HeI_mass_core= get_mass_core_alt(mass, t_HeI)
+    alt_bgb_mass_core = get_mass_core_alt(mass, t_bgb)
+    
+    print('\n\n')
+    print('np.log10(t_bgb):', np.log10(t_bgb))
+    print('(t_HeI-t_bgb)/t_bgb', (t_HeI-t_bgb)/t_bgb)
+    print("t_HeI", t_HeI)
+    print('t_inf1', get_t_inf1())
+    print('t_x', get_t_x())
+    print('t_inf2', get_t_inf2())
+    print('L_bgb', L_bgb)
+    print('L_HeI', L_HeI, 'np.log10(L_HeI)', np.log10(L_HeI))
+    print('L_x', L_x)
+    print("D", D)
+    print('b(z,39)', b(z, 39))
+    print('b(z,40)', b(z,40))
+    print('\n')
+    print('mass_core (from eq 39)', mass_core)
+    print('alt_HeI_mass_core (from eq34 with t_HeI)', alt_HeI_mass_core)
+    print("alt_bgb_mass_core (from eq34 with t_bgb", alt_bgb_mass_core)
+    
+    print('\n\n')
     
     #########3
     
@@ -416,6 +449,9 @@ def get_t_he(mass,z):
         return first_term*second_term
     
     #m_x=1
+    
+    print('hi_t_he(mass_HeF)', hi_t_he(mass_HeF, get_t_bgb(z, mass_HeF)))
+    
     output_t_he=np.ones(mass.shape)
     lo_inds=np.where(mass< mass_HeF)
     hi_inds=np.where(mass >= mass_HeF)
@@ -423,12 +459,47 @@ def get_t_he(mass,z):
     #lo_times= lo_t_he(mass[lo_inds],mass_core[lo_inds],t_bgb[lo_inds])
     hi_times= hi_t_he(mass, t_bgb)[hi_inds]
     lo_times= lo_t_he(mass,mass_core,t_bgb)[lo_inds]
-    #output_t_he[lo_inds]=lo_times
+    output_t_he[lo_inds]=lo_times
     output_t_he[hi_inds]=hi_times
     
-    plt.scatter(mass, mass_core)
+    #plt.scatter(mass, A_H_prime)
+    #plt.xlabel('Mass')
+    #plt.ylabel('A_H_prime')
+    #plt.show()
+    
+    plt.scatter(mass, D)
+    plt.xlabel('mass')
+    plt.ylabel('D')
+    plt.axvline(mass_HeF, linestyle='--', color='k', label='M_HeF')
+    plt.axvline(2.5, label='M=2.5', color='r', linestyle='--')
+    plt.legend()
+    plt.show()
+    
+    plt.plot(mass, mass_core, label='Core Mass')
+    plt.plot(mass, m_x, label='M_x')
+    plt.legend()
+    plt.xlabel('Mass')
+    plt.show()
+    
+    plt.scatter(mass, np.log10(L_HeI))
+    plt.xlabel('Mass')
+    plt.ylabel('L_HeI')
+    plt.show()
+    
+    plt.plot(mass, mass_core, label='eq 39')
+    plt.plot(mass, alt_HeI_mass_core, label='eq34 t_HeI')
+    plt.plot(mass, alt_bgb_mass_core, label='eq 34 t_bgb')
     plt.xlabel('Mass')
     plt.ylabel('Core Mass')
+    plt.legend()
+    plt.show()
+    
+    plt.plot(mass, mass_core/mass, label='eq 39')
+    plt.plot(mass, alt_HeI_mass_core/mass, label='eq34 t_HeI')
+    plt.plot(mass, alt_bgb_mass_core/mass, label='eq 34 t_bgb')
+    plt.xlabel('Mass')
+    plt.ylabel('Core Mass/Mass')
+    plt.legend()
     plt.show()
     
     return output_t_he, t_bgb, m_x
@@ -459,6 +530,7 @@ def get_t_he(mass,z):
 if __name__ == '__main__':
     #test_masses=np.random.normal(2,0.2, 1000)
     test_masses=np.linspace(0.8,10,1000)
+    #test_masses=np.array([1.0,2.0,5.0])
     test_t_he, test_t_bgb, test_m_x= get_t_he(test_masses, default_z)
     print('average t_he:', np.mean(test_t_he), 'average t_bgb:', np.mean(test_t_bgb))
     print('average m_x:', np.mean(test_m_x))
