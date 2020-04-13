@@ -1,7 +1,14 @@
 """
 Created by Ben Kaiser (UNC-Chapel Hill) 2020-01-06
 
-This is essentially a Python implementation of some of the routines/equations presented in Hurley, Pols, and Tout 2000 with an emphasis (and probably entirety of implementation) focused on being used for white dwarf progenitor MS lifetimes.
+This is essentially a Python implementation of some of the routines/equations presented in Hurley, Pols, and 
+Tout 2000 with an emphasis (and probably entirety of implementation) focused on being used for white dwarf 
+progenitor MS lifetimes. 
+
+Actually not so much just the main-sequence lifetimes; I'm actually focusing on the total time spent by the 
+progenitor before being a white dwarf, so that would include the time to giant branch, the time as a giant, and 
+then also the core-helium burning time. I'm most likely still going to skip the AGB contribution since it's 
+comparatively brief according to the Hurley et al. 2000 paper (assuming I read it correctly). 
 
 
 """
@@ -47,8 +54,24 @@ def a(z,index):
     a_coeffs list either as a result.
     """
     zeta_val=zeta(z)
-    a_index=a_coeffs[index]
-    a_out=a_index[0]+a_index[1]*zeta_val+a_index[2]*zeta_val**2+a_index[3]*zeta_val**3
+    a_string="a"+str(index)
+    def a_func(a_index):
+        return a_index[0]+a_index[1]*zeta_val+a_index[2]*zeta_val**2+a_index[3]*zeta_val**3
+    try:
+        a_index=a_coeffs[a_string]
+        return a_func(a_index)
+    except KeyError:
+        if index== 29:
+            a_string="a'29"
+            a_index=a_coeffs[a_string]
+            return a_func(a_index)**a_func(a_coeffs["a32"])
+        else:
+            print("\n\n************")
+            print("\n\nWARNING\n\n")
+            print("a with index"+str(index) +" does not appear to exist in the a_coeffs dict and it isn't currently coded as an exception in a() in hurley_polynomials.py. You need to go look at a_coeffs.py and hurley_polynomials.py")
+            print("\n\n************")
+            return
+    #a_out=a_index[0]+a_index[1]*zeta_val+a_index[2]*zeta_val**2+a_index[3]*zeta_val**3
     #print('a_'+str(index),a_out)
     return a_out
 
@@ -70,6 +93,12 @@ def b(z,index):
         elif index==44:
             bprime= b_func(b_coeffs["b'44"])
             return bprime**5
+        elif index==11:
+            bprime=b_func(b_coeffs["b'11"])
+            return bprime**2
+        elif index==13:
+            bprime=b_func(b_coeffs["b'13"])
+            return bprime**2
         else:
             print("\n\n************")
             print("\n\nWARNING\n\n")
@@ -127,6 +156,18 @@ def get_t_ms(mass, z=default_z):
         get_mu(z,mass)*t_bgb,
         get_x(z)*t_bgb
         ],axis=0)*1e-3
+
+
+def get_L_bgb(mass, z=default_z):
+    """
+    eq (10)
+    
+    """
+    c2=9.301992
+    c3=4.637345
+    numerator=a(z,27)*mass**a(z,31)+a(z,28)*mass**c2
+    denominator=a(z,29)+a(z,30)*mass**c3+mass**a(z,32)
+    return numerator/denominator
 
 
 
@@ -191,32 +232,171 @@ def get_t_he(mass,z):
         D_hi[lo_inds]=D_lo
         D_hi[mid_inds]=D_mid
         return 10**D_hi
+    
+    
     def get_m_x(mass):
+        """
+        equation (38). Exponent can be set to 1/3 because the difference of p and q is a constant 3 actually.
+        """
         print(get_B(mass).shape, 'B shape')
         return (get_B(mass)/get_D(mass))**(1./3)
-    #def p(mass):
-        #"""
-        #un-numbered equation below eq 38
-        #"""
-        #p_array=np.ones(mass.shape)
-        #hi_inds=np.where(mass > 2.5)
-        #return 
-    #def get_core_luminosity_rel(mass, mass_core):
-        #"""
-        #equation (37) and others described in the paragraph between equations (65,66) of Hurley et al. 2000
-        #"""
-        #B=get_B(mass)
-        #p_array=np.ones(mass.shape)
-        #q_array=np.ones(mass.shape)
-        #low_inds= np.where(mass <= mass_HeF)
-        #high_inds= np.where(mass > mass_HeF)
-        #p_array[low_inds]=6
-        #p_array[high_inds]=5
-        #q_array[low_inds]=3
-        #q_array[high_inds]=2
+    def get_p(mass):
+        """
+        un-numbered equation below eq 38
+        
+        only the mass <= mass_HeF should matter as of 2020-04-12 because the t_he timescales only care about p for that mass range.
+        """
+        p_array=np.ones(mass.shape)
+        hi_inds=np.where(mass >= 2.5)
+        lo_inds=np.where(mass <= mass_HeF)
+        p_array[hi_inds]=5.
+        p_array[lo_inds]=6.
+        return p_array
+    
+    def get_q(mass):
+        """
+        un-numbered equation below eq 38
         
         
-        #return
+        
+        """
+        q_array=np.ones(mass.shape)
+        hi_inds= np.where(mass >= 2.5)
+        lo_inds= np.where(mass <= mass_HeF)
+        q_array[hi_inds]=2.
+        q_array[lo_inds]=3.
+        return q_array
+    
+    def get_A_H_prime(mass):
+        """
+        un-numbered equation above (44) 
+        
+        """
+        first_entry=np.ones(mass.shape)*-4.8
+        the_array=np.array([first_entry, np.min([-5.7+0.8*mass, -4.1+0.14*mass],axis=0)])
+        return np.max(the_array, axis=0)
+    
+    def get_L_HeI(mass):
+        def get_hi_L_HeI(mass):
+            numerator= b(z,11)+b(z,12)*mass**3.8
+            denominator=b(z,13)+mass**2
+            return numerator/denominator
+        alpha_1= (b(z,9)*mass_HeF**b(z,10)-get_hi_L_HeI(mass_HeF))/(get_hi_L_HeI(mass_HeF))
+        def get_lo_L_HeI(mass):
+            numerator=b(z,9)*mass**b(z,10)
+            denominator=1+alpha_1*np.exp(15.*(mass-mass_HeF))
+            return numerator/denominator
+        hi_inds= np.where(mass >= mass_HeF)
+        lo_inds=np.where(mass < mass_HeF)
+        L_array= np.ones(mass.shape)
+        L_array[hi_inds]=get_hi_L_HeI(mass[hi_inds])
+        L_array[lo_inds]=get_lo_L_HeI(mass[lo_inds])
+        return L_array
+    
+    p= get_p(mass) #I want this to be defined as a local variable that is "global" within the function so I don't have to call it in all of the functions that are coming up.
+    q= get_q(mass)
+    D = get_D(mass) # I decided I also want this essentially indefinitely defined.
+    B= get_B(mass)
+    A_H_prime=get_A_H_prime(mass)
+    #L_bgb=1.
+    L_bgb=get_L_bgb(mass)
+    #L_x= 1.
+    L_HeI=get_L_HeI(mass)
+    m_x=get_m_x(mass)
+    
+    
+    def get_core_luminosity_rel(mass_core):
+        """
+        equation (37)
+        """
+        return np.min([B*mass_core**q, D*mass_core**p], axis=0)
+    
+    L_x= get_core_luminosity_rel(m_x)
+    
+    def get_t_inf1(mass=mass):
+        """
+        Equation (40) of Hurley et al. 2000
+        
+        """
+        first_term=1/((p-1)*A_H_prime*D)
+        second_term= (D/L_bgb)**((p-1)/p)
+        return t_bgb+first_term*second_term
+    
+    def get_t_x(mass=mass):
+        
+        """
+        equation (41)
+        
+        """
+        
+        t_inf1= get_t_inf1(mass=mass)
+        first_term=t_inf1-t_bgb
+        second_term=(L_bgb/L_x)**((p-1)/p)
+        
+        return t_inf1-(first_term)*second_term
+    
+    def get_t_inf2(mass=mass):
+        """
+        equation (42)
+        
+        """
+        t_x=get_t_x(mass=mass)
+        first_term=1./((q-1)*A_H_prime*B)
+        second_term=(B/L_x)**((q-1.)/q)
+        return t_x + first_term*second_term
+    
+    def get_t_HeI(mass):
+        """
+        equation (43)
+        """
+        L_HeI= np.ones(mass.shape) # *****to be replaced with the actual formula in the future
+        t_array=np.ones(mass.shape)
+        def get_t_lo():
+            first_term= 1./((p-1)*A_H_prime*D)
+            second_term=(D/L_HeI)**((p-1)/p)
+            return get_t_inf1()-first_term*second_term
+        def get_t_hi():
+            first_term=1/((q-1)*A_H_prime*B)
+            second_term=(B/L_HeI)**((q-1)/q)
+            
+            return get_t_inf2()-first_term*second_term
+        hi_t_vals= get_t_hi()
+        lo_t_vals=get_t_lo()
+        hi_inds= np.where(L_HeI > L_x)
+        lo_inds= np.where(L_HeI <= L_x)
+        t_array[hi_inds]= hi_t_vals[hi_inds]
+        t_array[lo_inds]=lo_t_vals[lo_inds]
+        return t_array
+    
+    def get_mass_core_gb(time):
+        """
+        Equation (39) from Hurley et al. 2000
+        
+        """
+        def get_lo_core_mass(time):
+            
+            return ((p-1)*A_H_prime*D*(get_t_inf1()-time))**(1./(1-p))
+        
+        def get_hi_core_mass(time):
+            
+            return ((q-1)*A_H_prime*B*(get_t_inf2() -time))**(1./(1-q))
+        
+        t_x= get_t_x()
+        hi_inds= np.where(time > t_x)
+        lo_inds= np.where(time <= t_x)
+        t_array=np.ones(time.shape)
+        t_array[lo_inds]=get_lo_core_mass(time)[lo_inds]
+        t_array[hi_inds]=get_hi_core_mass(time)[hi_inds]
+        
+        return t_array
+    
+    ########
+    
+    t_HeI= get_t_HeI(mass)
+    mass_core= get_mass_core_gb(t_HeI)
+    
+    #########3
+    
     def hi_t_he(mass, t_bgb):
         """
         high-mass part of the piecewise function in equation (57)
@@ -235,15 +415,21 @@ def get_t_he(mass,z):
         second_term=1+alpha4*np.exp(15*(mass-mass_HeF))
         return first_term*second_term
     
-    m_x=get_m_x(mass)
     #m_x=1
     output_t_he=np.ones(mass.shape)
     lo_inds=np.where(mass< mass_HeF)
     hi_inds=np.where(mass >= mass_HeF)
-    hi_times= hi_t_he(mass[hi_inds], t_bgb[hi_inds])
+    #hi_times= hi_t_he(mass[hi_inds], t_bgb[hi_inds])
     #lo_times= lo_t_he(mass[lo_inds],mass_core[lo_inds],t_bgb[lo_inds])
+    hi_times= hi_t_he(mass, t_bgb)[hi_inds]
+    lo_times= lo_t_he(mass,mass_core,t_bgb)[lo_inds]
     #output_t_he[lo_inds]=lo_times
     output_t_he[hi_inds]=hi_times
+    
+    plt.scatter(mass, mass_core)
+    plt.xlabel('Mass')
+    plt.ylabel('Core Mass')
+    plt.show()
     
     return output_t_he, t_bgb, m_x
 #test_mass=1.
