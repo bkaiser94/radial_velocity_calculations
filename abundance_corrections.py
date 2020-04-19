@@ -139,6 +139,10 @@ def el1el2_DP_el3el2_ftimes(target_teff, log_el1el2, log_el3el2, time,  el1, el2
         el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg)
         el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg)
         el3_logtau= itau.extrapolate_single_el_tau(target_teff, el3, input_logg=logg)
+    print(el1, 'log tau', el1_logtau)
+    print(el2, 'log tau', el2_logtau)
+    print(el3, 'log tau', el3_logtau)
+    
     log_el1el2_dp= get_el1el2_wrt_time(log_el1el2, time, el1_logtau, el2_logtau)
     log_el3el2_dp= get_el1el2_wrt_time(log_el3el2, time, el3_logtau, el2_logtau)
     return log_el1el2_dp, log_el3el2_dp

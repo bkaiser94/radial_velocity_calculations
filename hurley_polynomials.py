@@ -191,8 +191,8 @@ def get_t_he(mass,z):
     so it's a tuple, so you should receive it with 2 variables that will then each be arrays.
     """
     mass_HeF=get_mass_HeF(z)
-    print("Z=",z)
-    print('mass_HeF', mass_HeF)
+    #print("Z=",z)
+    #print('mass_HeF', mass_HeF)
     zeta_val=zeta(z)
     t_bgb=get_t_bgb(z,mass)
     
@@ -200,10 +200,10 @@ def get_t_he(mass,z):
         """
         un-numbered equation below equation(38)
         """
-        print('mass.shape', mass.shape)
+        #print('mass.shape', mass.shape)
         first_entry=np.ones(mass.shape)*3e4
         the_array=np.array([first_entry, 500+1.75e4 * mass**0.6])
-        print("the_array.shape",the_array.shape)
+        #print("the_array.shape",the_array.shape)
         #return np.max(np.array([3e4, 500+1.75e4 * mass**0.6]), axis=0)
         return np.max(the_array, axis=0)
 
@@ -298,7 +298,7 @@ def get_t_he(mass,z):
     D = get_D(mass) # I decided I also want this essentially indefinitely defined.
     B= get_B(mass)
     A_H_prime=get_A_H_prime(mass)
-    print('A_H_prime:', A_H_prime)
+    #print('A_H_prime:', A_H_prime)
     #L_bgb=1.
     L_bgb=get_L_bgb(mass)
     #L_x= 1.
@@ -408,25 +408,25 @@ def get_t_he(mass,z):
     alt_HeI_mass_core= get_mass_core_alt(mass, t_HeI)
     alt_bgb_mass_core = get_mass_core_alt(mass, t_bgb)
     
-    print('\n\n')
-    print('np.log10(t_bgb):', np.log10(t_bgb))
-    print('(t_HeI-t_bgb)/t_bgb', (t_HeI-t_bgb)/t_bgb)
-    print("t_HeI", t_HeI)
-    print('t_inf1', get_t_inf1())
-    print('t_x', get_t_x())
-    print('t_inf2', get_t_inf2())
-    print('L_bgb', L_bgb)
-    print('L_HeI', L_HeI, 'np.log10(L_HeI)', np.log10(L_HeI))
-    print('L_x', L_x)
-    print("D", D)
-    print('b(z,39)', b(z, 39))
-    print('b(z,40)', b(z,40))
-    print('\n')
-    print('mass_core (from eq 39)', mass_core)
-    print('alt_HeI_mass_core (from eq34 with t_HeI)', alt_HeI_mass_core)
-    print("alt_bgb_mass_core (from eq34 with t_bgb", alt_bgb_mass_core)
+    #print('\n\n')
+    #print('np.log10(t_bgb):', np.log10(t_bgb))
+    #print('(t_HeI-t_bgb)/t_bgb', (t_HeI-t_bgb)/t_bgb)
+    #print("t_HeI", t_HeI)
+    #print('t_inf1', get_t_inf1())
+    #print('t_x', get_t_x())
+    #print('t_inf2', get_t_inf2())
+    #print('L_bgb', L_bgb)
+    #print('L_HeI', L_HeI, 'np.log10(L_HeI)', np.log10(L_HeI))
+    #print('L_x', L_x)
+    #print("D", D)
+    #print('b(z,39)', b(z, 39))
+    #print('b(z,40)', b(z,40))
+    #print('\n')
+    #print('mass_core (from eq 39)', mass_core)
+    #print('alt_HeI_mass_core (from eq34 with t_HeI)', alt_HeI_mass_core)
+    #print("alt_bgb_mass_core (from eq34 with t_bgb", alt_bgb_mass_core)
     
-    print('\n\n')
+    #print('\n\n')
     
     #########3
     
@@ -450,7 +450,7 @@ def get_t_he(mass,z):
     
     #m_x=1
     
-    print('hi_t_he(mass_HeF)', hi_t_he(mass_HeF, get_t_bgb(z, mass_HeF)))
+    #print('hi_t_he(mass_HeF)', hi_t_he(mass_HeF, get_t_bgb(z, mass_HeF)))
     
     output_t_he=np.ones(mass.shape)
     lo_inds=np.where(mass< mass_HeF)
@@ -467,42 +467,42 @@ def get_t_he(mass,z):
     #plt.ylabel('A_H_prime')
     #plt.show()
     
-    plt.scatter(mass, D)
-    plt.xlabel('mass')
-    plt.ylabel('D')
-    plt.axvline(mass_HeF, linestyle='--', color='k', label='M_HeF')
-    plt.axvline(2.5, label='M=2.5', color='r', linestyle='--')
-    plt.legend()
-    plt.show()
+    #plt.scatter(mass, D)
+    #plt.xlabel('mass')
+    #plt.ylabel('D')
+    #plt.axvline(mass_HeF, linestyle='--', color='k', label='M_HeF')
+    #plt.axvline(2.5, label='M=2.5', color='r', linestyle='--')
+    #plt.legend()
+    #plt.show()
     
-    plt.plot(mass, mass_core, label='Core Mass')
-    plt.plot(mass, m_x, label='M_x')
-    plt.legend()
-    plt.xlabel('Mass')
-    plt.show()
+    #plt.plot(mass, mass_core, label='Core Mass')
+    #plt.plot(mass, m_x, label='M_x')
+    #plt.legend()
+    #plt.xlabel('Mass')
+    #plt.show()
     
-    plt.scatter(mass, np.log10(L_HeI))
-    plt.xlabel('Mass')
-    plt.ylabel('L_HeI')
-    plt.show()
+    #plt.scatter(mass, np.log10(L_HeI))
+    #plt.xlabel('Mass')
+    #plt.ylabel('L_HeI')
+    #plt.show()
     
-    plt.plot(mass, mass_core, label='eq 39')
-    plt.plot(mass, alt_HeI_mass_core, label='eq34 t_HeI')
-    plt.plot(mass, alt_bgb_mass_core, label='eq 34 t_bgb')
-    plt.xlabel('Mass')
-    plt.ylabel('Core Mass')
-    plt.legend()
-    plt.show()
+    #plt.plot(mass, mass_core, label='eq 39')
+    #plt.plot(mass, alt_HeI_mass_core, label='eq34 t_HeI')
+    #plt.plot(mass, alt_bgb_mass_core, label='eq 34 t_bgb')
+    #plt.xlabel('Mass')
+    #plt.ylabel('Core Mass')
+    #plt.legend()
+    #plt.show()
     
-    plt.plot(mass, mass_core/mass, label='eq 39')
-    plt.plot(mass, alt_HeI_mass_core/mass, label='eq34 t_HeI')
-    plt.plot(mass, alt_bgb_mass_core/mass, label='eq 34 t_bgb')
-    plt.xlabel('Mass')
-    plt.ylabel('Core Mass/Mass')
-    plt.legend()
-    plt.show()
-    
-    return output_t_he, t_bgb, m_x
+    #plt.plot(mass, mass_core/mass, label='eq 39')
+    #plt.plot(mass, alt_HeI_mass_core/mass, label='eq34 t_HeI')
+    #plt.plot(mass, alt_bgb_mass_core/mass, label='eq 34 t_bgb')
+    #plt.xlabel('Mass')
+    #plt.ylabel('Core Mass/Mass')
+    #plt.legend()
+    #plt.show()
+    return (output_t_he+t_bgb)*1e-3
+    #return output_t_he, t_bgb
 #test_mass=1.
 #print('zeta', zeta(default_z))
 #print('t_bgb', get_t_bgb(default_z, test_mass))
@@ -531,17 +531,17 @@ if __name__ == '__main__':
     #test_masses=np.random.normal(2,0.2, 1000)
     test_masses=np.linspace(0.8,10,1000)
     #test_masses=np.array([1.0,2.0,5.0])
-    test_t_he, test_t_bgb, test_m_x= get_t_he(test_masses, default_z)
+    test_t_he, test_t_bgb= get_t_he(test_masses, default_z)
     print('average t_he:', np.mean(test_t_he), 'average t_bgb:', np.mean(test_t_bgb))
-    print('average m_x:', np.mean(test_m_x))
+    #print('average m_x:', np.mean(test_m_x))
     
-    plt.scatter(test_masses, test_m_x)
-    plt.xlabel('Mass')
-    plt.ylabel(r'$M_x$')
-    plt.axvline(get_mass_HeF(default_z), linestyle='--', color='k', label='M_HeF')
-    plt.axvline(2.5, label='M=2.5', color='r', linestyle='--')
-    plt.legend()
-    plt.show()
+    #plt.scatter(test_masses, test_m_x)
+    #plt.xlabel('Mass')
+    #plt.ylabel(r'$M_x$')
+    #plt.axvline(get_mass_HeF(default_z), linestyle='--', color='k', label='M_HeF')
+    #plt.axvline(2.5, label='M=2.5', color='r', linestyle='--')
+    #plt.legend()
+    #plt.show()
     
     plt.scatter(test_masses, test_t_he)
     plt.xlabel('Mass')

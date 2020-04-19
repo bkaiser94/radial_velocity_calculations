@@ -39,8 +39,11 @@ test_side = test_width/2
 
 pix_width=5
 sdss_pix_width = 10
-#sdss_scale_factor=20.6 #BOSS scaling
-sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+sdss_scale_factor=20.6 #BOSS scaling
+#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+sdss_seeing=0.7 #arcsec seeing
+sdss_see_sig=sdss_seeing/2.355/ pixel_scale
+
 #wavelength_offset=60
 #wavelength_offset=20
 #wavelength_offset=15
@@ -83,11 +86,11 @@ norm_range=[7470, 7530]
 #norm_range=[3800, 4000]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-#file_setting= 'compare_SDSS'
+file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -155,8 +158,9 @@ elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
-    sdss_names = glob(sdss_path+'*.fits')
+    #sdss_names = glob(sdss_path+'*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
+    sdss_names = glob(sdss_path+'*K*.fits')
     #sdss_names = glob(sdss_path+'SDSS*.fits')
     #sdss_names = glob(sdss_path+'*WDpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
@@ -244,8 +248,15 @@ def convolve_spectrum(target_spec, header, kernel_type='gaussian', pix_width=pix
         spec_conv = conv.convolve(fluxes, see_kernel)
     elif kernel_type=='sdss_match':
         see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
-        see_sig= sdss_scale_factor*see_sig
-        see_kernel = conv.Gaussian1DKernel(see_sig, mode = 'oversample')
+        conv_see_sig= np.sqrt(see_sig**2- sdss_see_sig**2)
+        print('sdss_see_sig', sdss_see_sig)
+        print('see_sig', see_sig)
+        print('conv_see_sig', conv_see_sig)
+        #see_sig= sdss_scale_factor*see_sig
+        conv_see_sig=conv_see_sig*sdss_scale_factor
+        
+        #see_kernel = conv.Gaussian1DKernel(see_sig, mode = 'oversample')
+        see_kernel=conv.Gaussian1DKernel(conv_see_sig, mode='oversample')
         see_kernel.normalize()
         spec_conv = conv.convolve(fluxes, see_kernel)
         pix_kernel = conv.Box1DKernel(width = int(sdss_scale_factor*pix_width), mode = 'oversample')
