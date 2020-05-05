@@ -70,7 +70,7 @@ plot_400m2_tell= False
 
 #norm_range=[7042,7046]
 #norm_range=[7490,7510] #outside telluric
-norm_range=[7470, 7530]
+#norm_range=[7470, 7530]
 #norm_range=[7517,7556] #20190528
 #norm_range=[7860.,8050.]
 #norm_range=[8074,8140]
@@ -79,18 +79,18 @@ norm_range=[7470, 7530]
 #norm_range=[6090,6240]
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
-#norm_range=[6640,6670]#20190530 400M1 norm range
+norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 #norm_range=[3800, 4000]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-file_setting= 'compare_SDSS'
+#file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -715,7 +715,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
             #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
             #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            plot_sky(filename, offset=0, line_labels=False, convolve=False)
+            #plot_sky(filename, offset=0, line_labels=False, convolve=False)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:
@@ -723,7 +723,7 @@ if __name__ == '__main__':
             #plot_SNR(target_spec, target_noise, filename)
             #plot_SNR_from_file(filename)
             #plot_dwavelength(target_spec, filename)
-            plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+            #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
             #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)

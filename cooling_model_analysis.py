@@ -62,21 +62,21 @@ default_z=0.02 #approximately solar
 #target_teff_err=190
 
 #2356
-wd_name='WDJ2356-209'
-target_logg=7.98
-target_logg_err=0.07
-target_teff= 4040. #K
-target_teff_err=110.
+#wd_name='WDJ2356-209'
+#target_logg=7.98
+#target_logg_err=0.07
+#target_teff= 4040. #K
+#target_teff_err=110.
 
 #target_teff=3000.
 
 
 ##1644
-#wd_name='GaiaJ1644-0449'
-#target_logg=7.77
-#target_logg_err= 0.23
-#target_teff= 3830.
-#target_teff_err= 230.
+wd_name='GaiaJ1644-0449'
+target_logg=7.77
+target_logg_err= 0.23
+target_teff= 3830.
+target_teff_err= 230.
 
 #J1150
 #from Gentile Fusillo et al. 2019

@@ -11,6 +11,8 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.table import Table, Column
+from astropy.table import join as ATjoin
+from astropy.table import hstack as AThstack
 import periodictable as pt
 from astropy import units as u
 from astropy import constants as const
@@ -27,6 +29,16 @@ bensby_table=Table.read(bensby_file)
 lodders_table=Table.read(lodders_file)
 
 lodders_table.add_index('element')
+
+
+
+#Bensby et al. 2014 probability cuts for populations
+
+thin_disk_bound_tdd= 0.5 #below this value is likely thin disk
+thick_disk_bound_tdd=2.0 #potential thick disk stars
+halo_bound_tdh= 1. #only cut here is TD/H < 1 for likely halo. That's it.
+
+inbetween_range_tdd= [thin_disk_bound_tdd, thick_disk_bound_tdd]
 
 def get_rel_abund(el1, el2):
     """
@@ -48,7 +60,11 @@ def get_ages():
 def get_ALi():
     low_error=bensby_table['ALi']- bensby_table['b_ALi']
     hi_error=bensby_table['B_ALi']-bensby_table['ALi']
-    return bensby_table['ALi'], [low_error,hi_error]
+    print(hi_error)
+    print(type(hi_error))
+    #return bensby_table['ALi'], np.array([low_error,hi_error])
+    #return bensby_table['ALi'],[low_error.data,hi_error.data]
+    return bensby_table['ALi'],low_error, hi_error
 
 
 
@@ -117,19 +133,26 @@ def plot_lica_FeH_pop():
     return
 
 
-def plot_lica_age_pop():
+def plot_lica_age_pop(colors=['b','b','b','b'],marker='o'):
     lica=get_lica()
-    thick_disk_stars=np.where((bensby_table['td/d']>1) & (bensby_table['td/h']> 1))
+  
+    thick_disk_stars=np.where(bensby_table['td/d']<=thin_disk_bound_tdd)
 
-    plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Bensby Thick Disk', linestyle='None', marker='o')
+    plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Thin Disk', linestyle='None', marker=marker, color=colors[0])
     
-    thick_disk_stars=np.where(bensby_table['td/d']<1)
+    thick_disk_stars=np.where((bensby_table['td/d']>=thick_disk_bound_tdd) & (bensby_table['td/h']>= halo_bound_tdh))
 
-    plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Bensby Thin Disk', linestyle='None', marker='o')
+    plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Thick Disk', linestyle='None', marker=marker, color=colors[1])
     
-    thick_disk_stars=np.where(bensby_table['td/h']<1)
+    
+    thick_disk_stars=np.where(bensby_table['td/h']<halo_bound_tdh)
 
-    plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Bensby Halo', linestyle='None', marker='o' )
+    plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Halo', linestyle='None', marker=marker, color=colors[2])
+    
+    thick_disk_stars=np.where((bensby_table['td/d']<thick_disk_bound_tdd)&(bensby_table['td/d']> thin_disk_bound_tdd))
+
+    plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='In Between', linestyle='None', marker=marker, color=colors[3])
+    
     plt.xlabel('Age (Gyr)')
     plt.ylabel('[Li/Ca]')
 
@@ -139,9 +162,59 @@ def plot_lica_age():
     
     return
 
-def plot_ALi_FeH():
-    ALi, ALi_err= get_ALi()
-    plt.errorbar(bensby_table['Fe/H'], ALi, xerr=bensby_table['e_Fe/H'], yerr=ALi_err, linestyle='None', marker='o', label='BL2018')
+def plot_ALi_FeH(colors=['b','b','b','b'],marker='o'):
+    #ALi, ALi_err= get_ALi()
+    ALi, ALi_lo, ALi_hi= get_ALi()
+    #ALi_err=ALi_err.T
+    print(type(ALi))
+    #print(type(ALi_err))
+    #print(ALi)
+    #print(ALi_err)
+    print('ALi.shape', ALi.shape)
+    #print('ALi_err.shape', ALi_err.shape)
+    #thick_disk_stars=np.where(bensby_table['td/d']<=thin_disk_bound_tdd)
+
+    #plt.errorbar(bensby_table['Fe/H'][thick_disk_stars], ALi[thick_disk_stars], xerr=bensby_table['e_Fe/H'][thick_disk_stars],yerr=ALi_err[thick_disk_stars],label='Thin Disk', linestyle='None', marker=marker, color=colors[0])
+    
+    #thick_disk_stars=np.where((bensby_table['td/d']>=thick_disk_bound_tdd) & (bensby_table['td/h']>= halo_bound_tdh))
+
+    #plt.errorbar(bensby_table['Fe/H'][thick_disk_stars], ALi[thick_disk_stars], xerr=bensby_table['e_Fe/H'][thick_disk_stars],yerr=ALi_err[thick_disk_stars],label='Thick Disk', linestyle='None', marker=marker, color=colors[1])
+    
+    
+    #thick_disk_stars=np.where(bensby_table['td/h']<halo_bound_tdh)
+
+    #plt.errorbar(bensby_table['Fe/H'][thick_disk_stars], ALi[thick_disk_stars], xerr=bensby_table['e_Fe/H'][thick_disk_stars],yerr=ALi_err[thick_disk_stars],label='Halo', linestyle='None', marker=marker, color=colors[2])
+    
+    #thick_disk_stars=np.where((bensby_table['td/d']<thick_disk_bound_tdd)&(bensby_table['td/d']> thin_disk_bound_tdd))
+
+    #plt.errorbar(bensby_table['Fe/H'][thick_disk_stars], ALi[thick_disk_stars], xerr=bensby_table['e_Fe/H'][thick_disk_stars],yerr=ALi_err[thick_disk_stars],label='In Between', linestyle='None', marker=marker, color=colors[3])
+    
+    #######
+    
+    
+    thick_disk_stars=np.where((bensby_table['td/d']<thick_disk_bound_tdd)&(bensby_table['td/d']> thin_disk_bound_tdd))
+
+    plt.errorbar(bensby_table['Fe/H'][thick_disk_stars], ALi[thick_disk_stars], xerr=bensby_table['e_Fe/H'][thick_disk_stars],yerr=[ALi_lo[thick_disk_stars], ALi_hi[thick_disk_stars]],label='In Between', linestyle='None', marker=marker, color=colors[3])
+    thick_disk_stars=np.where(bensby_table['td/d']<=thin_disk_bound_tdd)
+
+    #print(ALi_err[thick_disk_stars])
+
+
+    plt.errorbar(bensby_table['Fe/H'][thick_disk_stars], ALi[thick_disk_stars], xerr=bensby_table['e_Fe/H'][thick_disk_stars],yerr=[ALi_lo[thick_disk_stars], ALi_hi[thick_disk_stars]],label='Thin Disk', linestyle='None', marker=marker, color=colors[0])
+    
+    thick_disk_stars=np.where((bensby_table['td/d']>=thick_disk_bound_tdd) & (bensby_table['td/h']>= halo_bound_tdh))
+
+    plt.errorbar(bensby_table['Fe/H'][thick_disk_stars], ALi[thick_disk_stars], xerr=bensby_table['e_Fe/H'][thick_disk_stars],yerr=[ALi_lo[thick_disk_stars], ALi_hi[thick_disk_stars]],label='Thick Disk', linestyle='None', marker=marker, color=colors[1])
+    
+    
+    thick_disk_stars=np.where(bensby_table['td/h']<halo_bound_tdh)
+
+    plt.errorbar(bensby_table['Fe/H'][thick_disk_stars], ALi[thick_disk_stars], xerr=bensby_table['e_Fe/H'][thick_disk_stars],yerr=[ALi_lo[thick_disk_stars], ALi_hi[thick_disk_stars]],label='Halo', linestyle='None', marker=marker, color=colors[2])
+    
+    
+    ###########
+    #plt.errorbar(bensby_table['Fe/H'], ALi, xerr=bensby_table['e_Fe/H'], yerr=ALi_err, linestyle='None', marker='o', label='BL2018')
+    
     plt.xlabel('[Fe/H]')
     plt.ylabel('A(Li)')
     return
@@ -151,6 +224,9 @@ if __name__ == '__main__':
 
     naca, naca_err= get_rel_abund('Na', 'Ca')
     lica=get_lica()
+    
+    plot_ALi_FeH()
+    plt.show()
 
     plt.errorbar(bensby_table['Fe/H'], naca, xerr=bensby_table['e_Fe/H'], yerr=naca_err, linestyle='None', capsize=0, marker='o')
     plt.show()
