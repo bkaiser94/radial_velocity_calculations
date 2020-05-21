@@ -110,7 +110,13 @@ def get_lica(with_errors=False):
     lica=bensby_table['ALi']-bensby_table['Ca/Fe']-bensby_table['Fe/H']-lodders_table.loc['Li']['A_el']
     if with_errors:
         pass
-        bensby_table['ALi']-bensby_table['Ca/Fe']-bensby_table['Fe/H']-lodders_table.loc['Li']['A_el']
+        ALi, ALi_lo_error, ALi_hi_error= get_ALi()
+        def combine_errors(this_error):
+            return np.sqrt(this_error**2+ bensby_table['e_Ca/Fe']**2+bensby_table['e_Fe/H']**2+lodders_table.loc['Li']['A_el_err']**2)
+        lica_lo_error=combine_errors(ALi_lo_error)
+        lica_hi_error=combine_errors(ALi_hi_error)
+        lica=bensby_table['ALi']-bensby_table['Ca/Fe']-bensby_table['Fe/H']-lodders_table.loc['Li']['A_el']
+        return lica, [lica_lo_error, lica_hi_error]
     else:
         return lica
 
@@ -133,25 +139,69 @@ def plot_lica_FeH_pop():
     return
 
 
-def plot_lica_age_pop(colors=['b','b','b','b'],marker='o'):
-    lica=get_lica()
-  
+def plot_lica_age_pop(colors=['b','b','b','b'],marker='o', rep_errors=False):
+    if rep_errors:
+        lica, lica_error= get_lica(with_errors=True)
+    else:
+        lica=get_lica()
+    star_age, star_age_error= get_ages()
+    pop_id_array=np.int_(np.zeros(bensby_table['td/d'].shape) )#array to be comprised of numbers that represent the population to which each star should belong; going to be added to as we go here.
+    
     thick_disk_stars=np.where(bensby_table['td/d']<=thin_disk_bound_tdd)
+    
+    pop_id_array[thick_disk_stars]=0
+    #plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Thin Disk', linestyle='None', marker=marker, color=colors[0])
 
     plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Thin Disk', linestyle='None', marker=marker, color=colors[0])
     
     thick_disk_stars=np.where((bensby_table['td/d']>=thick_disk_bound_tdd) & (bensby_table['td/h']>= halo_bound_tdh))
+    
+    pop_id_array[thick_disk_stars]=1
 
     plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Thick Disk', linestyle='None', marker=marker, color=colors[1])
     
     
     thick_disk_stars=np.where(bensby_table['td/h']<halo_bound_tdh)
+    
+    pop_id_array[thick_disk_stars]=2
+
 
     plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Halo', linestyle='None', marker=marker, color=colors[2])
     
     thick_disk_stars=np.where((bensby_table['td/d']<thick_disk_bound_tdd)&(bensby_table['td/d']> thin_disk_bound_tdd))
+    
+    pop_id_array[thick_disk_stars]=3
 
     plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='In Between', linestyle='None', marker=marker, color=colors[3])
+    
+    #I'm going to hold off on making new versions of the plotting itself until I've determined it looks different conclusively
+    rep_range=[8,9.5] #Age range that the representative point will be pulled from; it will be the max [Li/Ca] from that group.
+    
+    if rep_errors:
+        med_age_error=np.nanmedian(star_age_error, axis=1)
+        med_lica_error=np.nanmedian(lica_error, axis=1)
+        sorted_order= np.argsort(lica)
+        indices= np.indices(lica.shape)[0] #need an array of indices because I'm going to have to cut it down and need to retain the original indices.
+        print("star_age.shape", star_age.shape)
+        in_range=np.where((star_age > rep_range[0]) & (star_age < rep_range[1]))
+        print('in_range', in_range)
+        print(indices.shape)
+        max_arg= np.argmax(lica[in_range])
+        max_index= indices[in_range][max_arg]
+        print('max_index', max_index)
+        print('max_lica', lica[max_index])
+        print('max age', star_age[max_index])
+        print('med_age_error', med_age_error)
+        print('med_lica_error', med_lica_error)
+        print(med_age_error.shape)
+        print(np.array(star_age[max_index]).shape)
+        print(colors[pop_id_array[max_index]])
+        #plt.errorbar(np.array([star_age[max_index]]), np.array([lica[max_index]]), xerr=np.array([med_age_error]), marker=marker, linestyle='None', color=colors[pop_id_array[max_index]])
+        #plt.errorbar(star_age[max_index], lica[max_index], xerr=np.array([med_age_error]).T, marker=marker, linestyle='None', color=colors[pop_id_array[max_index]])
+        plt.errorbar(star_age[max_index], lica[max_index], xerr=np.array([med_age_error]).T, yerr=np.array([med_lica_error]).T , marker=marker, linestyle='None', color=colors[pop_id_array[max_index]])
+    else:
+        pass
+    
     
     plt.xlabel('Age (Gyr)')
     plt.ylabel('[Li/Ca]')
@@ -221,7 +271,20 @@ def plot_ALi_FeH(colors=['b','b','b','b'],marker='o'):
 
 if __name__ == '__main__':
     #bensby_table.pprint()
-
+    
+    lica, lica_error= get_lica(with_errors=True)
+    plt.hist(lica_error[0], bins=20)
+    plt.xlabel('[Li/Ca] error lower bound')
+    plt.show()
+    
+    plt.hist(lica_error[1], bins=20)
+    plt.xlabel('[Li/Ca] error upper bound')
+    plt.show()
+    
+    plot_lica_age_pop(rep_errors=True)
+    plt.show()
+    
+    
     naca, naca_err= get_rel_abund('Na', 'Ca')
     lica=get_lica()
     
@@ -238,8 +301,22 @@ if __name__ == '__main__':
     plt.show()
 
     age, age_err=get_ages()
+    age_err_array=np.array(age_err)
+    print('age_err_array.shape', age_err_array.shape)
+    med_age_errs= np.nanmedian(age_err_array, axis=1)
+    print('med_age_errs', med_age_errs)
 
     plt.errorbar(age, naca, xerr=age_err, yerr=naca_err, linestyle='None', capsize=0, marker='o')
+    plt.xlabel('Age')
+    plt.ylabel('[Na/Ca]')
+    plt.show()
+    
+    plt.hist(age_err_array[0])
+    plt.xlabel('lower errors on age')
+    plt.show()
+    
+    plt.hist(age_err_array[1])
+    plt.xlabel('upper errors on age')
     plt.show()
 
     plot_el1el2_age('Na', 'Ca',error_bars=False)
