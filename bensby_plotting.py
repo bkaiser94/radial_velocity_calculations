@@ -47,9 +47,13 @@ def get_rel_abund(el1, el2):
     
     This cannot be done with lithium. Nor can it be done with Iron. Actually I suppose it could be done with Iron, but the answer will be 0 for every single star since they'll be [Fe/H] minus [Fe/H].
     """
-    
-    el1el2= bensby_table[el1+'/Fe']-bensby_table[el2+'/Fe']
-    el1el2_err= np.sqrt(bensby_table['e_'+el1+'/Fe']**2+bensby_table['e_'+el2+'/Fe']**2)
+    try:
+        el1el2= bensby_table[el1+'/Fe']-bensby_table[el2+'/Fe']
+        el1el2_err= np.sqrt(bensby_table['e_'+el1+'/Fe']**2+bensby_table['e_'+el2+'/Fe']**2)
+    except KeyError as error:
+        print('\n\n****************\nKeyError:',error,'\n****************\n\n')
+        el1el2= bensby_table[el1+'/Fe']
+        el1el2_err= bensby_table['e_'+el1+'/Fe']
     return el1el2, el1el2_err
 
 def get_ages():
@@ -175,7 +179,8 @@ def plot_lica_age_pop(colors=['b','b','b','b'],marker='o', rep_errors=False):
     plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='In Between', linestyle='None', marker=marker, color=colors[3])
     
     #I'm going to hold off on making new versions of the plotting itself until I've determined it looks different conclusively
-    rep_range=[8,9.5] #Age range that the representative point will be pulled from; it will be the max [Li/Ca] from that group.
+    #rep_range=[8,9.5] #Age range that the representative point will be pulled from; it will be the max [Li/Ca] from that group.
+    rep_range=[3.5,4.5]
     
     if rep_errors:
         med_age_error=np.nanmedian(star_age_error, axis=1)
@@ -186,7 +191,10 @@ def plot_lica_age_pop(colors=['b','b','b','b'],marker='o', rep_errors=False):
         in_range=np.where((star_age > rep_range[0]) & (star_age < rep_range[1]))
         print('in_range', in_range)
         print(indices.shape)
-        max_arg= np.argmax(lica[in_range])
+        
+        #max_arg= np.argmax(lica[in_range])
+        max_arg= np.argmin(lica[in_range]) #I realize this is actually the minimum now, but it's easier to not rename all of the following variables
+        
         max_index= indices[in_range][max_arg]
         print('max_index', max_index)
         print('max_lica', lica[max_index])
@@ -271,6 +279,10 @@ def plot_ALi_FeH(colors=['b','b','b','b'],marker='o'):
 
 if __name__ == '__main__':
     #bensby_table.pprint()
+    
+    
+    plot_el1el2_FeH('Ca','Fe', error_bars=True)
+    plt.show()
     
     lica, lica_error= get_lica(with_errors=True)
     plt.hist(lica_error[0], bins=20)
