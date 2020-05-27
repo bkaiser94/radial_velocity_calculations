@@ -34,6 +34,10 @@ cooling_model_file=cp.ref_dir+'WD_cooling_models/'+cooling_model_file
 #default_ms_method='Hurley'
 default_ms_method='Hurley_He'
 
+output_dir= '/Users/BenKaiser/Desktop/'
+
+export_total_ages=False
+
 universe_age= 13.8 #Gyr
 percent_range=0.68 #error bar coverage for total age estimate.
 #percent_range=0.95
@@ -55,11 +59,11 @@ default_z=0.02 #approximately solar
 
 
 ##1330
-#wd_name='SDSSJ1330+6435'
-#target_logg= 8.26
-#target_logg_err=0.15
-#target_teff= 4310. #K
-#target_teff_err=190
+wd_name='SDSSJ1330+6435'
+target_logg= 8.26
+target_logg_err=0.15
+target_teff= 4310. #K
+target_teff_err=190
 
 #2356
 #wd_name='WDJ2356-209'
@@ -72,11 +76,11 @@ default_z=0.02 #approximately solar
 
 
 ##1644
-wd_name='GaiaJ1644-0449'
-target_logg=7.77
-target_logg_err= 0.23
-target_teff= 3830.
-target_teff_err= 230.
+#wd_name='GaiaJ1644-0449'
+#target_logg=7.77
+#target_logg_err= 0.23
+#target_teff= 3830.
+#target_teff_err= 230.
 
 #J1150
 #from Gentile Fusillo et al. 2019
@@ -90,6 +94,13 @@ desired_NaCa= -1.1 #Sioux county meteorite, achondrite
 
 ############################3
 ##############################
+prob_char=['+', '-', ' ','.'] #characters to be replaced
+rep_char=['p','m','_',''] #characters to use to replace those other characters
+def get_output_name(wd_name=wd_name):
+    name_string=wd_name
+    for prob, rep in zip(prob_char, rep_char):
+        name_string=name_string.replace(prob,rep)
+    return output_dir+name_string+'_tot_age_MC.csv'
 
 
 
@@ -426,6 +437,20 @@ print("total percentage in distribution", np.max(cumprob))
 
 print('bin_widths', bin_widths)
 print('max val', max_val)
+
+
+if export_total_ages:
+    print('\n\n************\n')
+
+    output_name= get_output_name()
+    print('Saving', output_name)
+    np.savetxt(output_name, trimmed_total_age_dist)
+    print('Saved')
+
+    print('\n************\n\n')
+else:
+    print('Skipping saving of MC total ages because export_total_ages=',export_total_ages)
+
 
 lowbound=np.nanmin(sort_edges[inbounds])
 highbound= np.nanmax(sort_edges[inbounds])+bin_widths
