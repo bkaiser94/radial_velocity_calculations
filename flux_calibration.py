@@ -87,8 +87,8 @@ standard_name='GD71'
 ##observed_file = 'wcmtb.eg274930blue.fits'
 ##observed_file= 'wcmtb.ltt3218930blue.fits'
 
-observed_file='ravg_wctb.GD71_400m2.fits'
-#observed_file='ravg_wctb.GD71_400m1.fits'
+#observed_file='ravg_wctb.GD71_400m2.fits'
+observed_file='ravg_wctb.GD71_400m1.fits'
 
 #observed_file='ravg_wctb.EG274_400m1_fix.fits'
 #observed_file='ravg_wctb.LTT7987_400m1.fits'

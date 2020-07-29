@@ -99,8 +99,8 @@ trace_band_width=190#super wide search range
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 50 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-#sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side=2
+sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+#sigma_multi_side=2
 #sigma_multi_side= 1 #multiple of sigma value of trace gaussian that should be distance out to go for extraction windo
 
 #core_sides=  5
@@ -1074,7 +1074,7 @@ for counter, img in enumerate(speclist):
         header.append(card = ('see_sig', seeing_sig, 'Sigma of Gauss seeing fit (pixels)'))
         header.append(card = ('see_FWHM', seeing_FWHM, 'Seeing (pixels)'))
         header.append(card = ('skipflat', skip_flat, 'flatfielding skipped or not'))
-        header.append(card=('trc_mthd',trace_method, 'trace_method Method of identifying trace')
+        header.append(card=('trc_mthd',trace_method, 'trace_method Method of identifying trace'))
         header.append(card=('trc_off', trace_offset, 'offset of ext trace from fit'))
         header.append(card=('width', core_sides*2+1, 'width of extracted region for trace'))
         header.append(card=('bkgwidth', bkg_core_sides*2+1, 'width of bkg regions'))

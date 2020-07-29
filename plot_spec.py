@@ -86,13 +86,13 @@ norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[3800, 4000]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
-#file_setting= 'all_SDSS'
+file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
 #file_setting= 'two_arm_compare_SDSS'
@@ -171,7 +171,7 @@ elif file_setting=='compare_SDSS':
 elif file_setting=='all_SDSS':
     #sdss_names= glob(sdss_path+'*sdss*')
     #sdss_names = glob(sdss_path+'*.fits')
-    sdss_names = glob(sdss_path+'SDSS*.fits')
+    sdss_names = glob(sdss_path+'SDSSJ1636*.fits')
     filenames=sdss_names
     single_iterate=False
     double_iterate=False
@@ -542,8 +542,13 @@ if __name__ == '__main__':
                 target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
                 target_spec2=norm_spectrum(target_spec2, norm_range)
                 plt.ylim(top=np.nanpercentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
-                plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width= sdss_pix_width)
-                plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+                plot_spectrum(target_spec1, filename1.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width= sdss_pix_width)
+                plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+                tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
+                #tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
+                plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, tell_filename=tell_filename)
+                tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
+                plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30,tell_filename=tell_filename)
                 #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
                 #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
                 #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)        plt.axhline(y=0, linestyle='--', color='k')
@@ -706,7 +711,7 @@ if __name__ == '__main__':
             #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=pix_width, kernel_type='box')
-            #plot_spectrum(target_spec, filename, header, smooth=True, norm=True,  kernel_type='gaussian')
+            #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
             #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
             #plot_spectrum(target_spec, str(header['airmass']), header, norm=False, smooth=True, kernel_type='box', pix_width=10)
@@ -726,7 +731,7 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
-            #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
+            spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
             #plt.legend()
             #plt.show()
             

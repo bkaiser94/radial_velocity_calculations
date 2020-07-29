@@ -57,13 +57,20 @@ default_z=0.02 #approximately solar
 #target_teff= 6000. #K
 #target_teff_err=190
 
+##1636
+wd_name='SDSSJ1636+1619'
+target_logg= 8.10
+target_logg_err=0.06
+target_teff= 4410. #K
+target_teff_err=200
+
 
 ##1330
-wd_name='SDSSJ1330+6435'
-target_logg= 8.26
-target_logg_err=0.15
-target_teff= 4310. #K
-target_teff_err=190
+#wd_name='SDSSJ1330+6435'
+#target_logg= 8.26
+#target_logg_err=0.15
+#target_teff= 4310. #K
+#target_teff_err=190
 
 #2356
 #wd_name='WDJ2356-209'

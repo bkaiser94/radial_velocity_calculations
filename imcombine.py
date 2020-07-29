@@ -48,11 +48,17 @@ print('median image generated')
 og_name= imlist[0]
 
 dec_parts = og_name.split('.')
-mid_sub_parts= dec_parts[1].split('_')
+mid_sub_parts= dec_parts[0].split('_')
+
+print('dec_parts', dec_parts)
+
+print('mid_sub_parts:', mid_sub_parts)
 
 mid_new_name= '_'.join(mid_sub_parts[1:])
-tail_end= ''.join(dec_parts[2:])
-full_new_name= '.'.join(['med_'+dec_parts[0], mid_new_name, tail_end])
+
+print('mid_new_name:', mid_new_name)
+tail_end= ''.join(dec_parts[1:])
+full_new_name= '.'.join(['med_'+mid_new_name, tail_end])
 
 print('full_new_name:', full_new_name)
 

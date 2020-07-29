@@ -479,7 +479,7 @@ def plot_line_markers(nist_file, wavelength_key='obs_wl_vac(A)', convert_to_air=
             pass
     return
 
-def show_plot(show_telluric=True, show_legend=True, line_id='', convert_to_air=False, label_pos=1.5,):
+def show_plot(show_telluric=True, show_legend=True, line_id='', convert_to_air=False, label_pos=1.5,actually_show=True):
     if show_legend:
         plt.legend(loc='best')
     else:
@@ -494,7 +494,10 @@ def show_plot(show_telluric=True, show_legend=True, line_id='', convert_to_air=F
         plot_line_markers(line_list_file, convert_to_air=convert_to_air, label_pos=label_pos)
     else:
         pass
-    plt.show()
+    if actually_show:
+        plt.show()
+    else:
+        pass
     return
 
 def get_photon_energy(wavelengths):
