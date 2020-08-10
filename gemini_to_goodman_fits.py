@@ -45,7 +45,6 @@ def convert_file(filename):
     except KeyError:
         print("Key error caught")
         print('converting', filename)
-        header['comment']= 'The delta lambda values in extension 4  are not real at present'
         header.append(card=('convertd', True, 'Gemini to Goodman conversion performed'))
         try:
             flux_opt=data_all[0,0,:]
@@ -80,14 +79,15 @@ def convert_file(filename):
             #EXPTIME this is already handled in the default headers of Gemini
             
             ####
-            
-            
+            dlambda=np.copy(np.roll(wavelength, -1) - wavelength)
+            #now make the last wavelength behave correctly by just making it be the same as the second to last value
+            dlambda[-1]=dlambda[-2]
             output_hdu=fits.PrimaryHDU(wavelength, header=header)
             hdu1=fits.ImageHDU(flux_opt)
             standin_ones=np.ones(flux_opt.shape)
             hdu2=fits.ImageHDU(background)
             hdu3=fits.ImageHDU(noise)
-            hdu4=fits.ImageHDU(standin_ones)
+            hdu4=fits.ImageHDU(dlambda)
             hdulist=fits.HDUList([output_hdu,hdu1,hdu2,hdu3,hdu4])
             hdulist.writeto(new_filename, overwrite=True)
         except IndexError:
