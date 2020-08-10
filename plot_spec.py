@@ -37,7 +37,7 @@ test_wavelength = 4686
 test_width = 40
 test_side = test_width/2
 
-pix_width=5
+pix_width=3
 sdss_pix_width = 10
 sdss_scale_factor=20.6 #BOSS scaling
 #sdss_scale_factor= 1.467 #SDSS spectrograph scaling
@@ -86,13 +86,13 @@ norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[3800, 4000]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
-file_setting= 'all_SDSS'
+#file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
 #file_setting= 'two_arm_compare_SDSS'
@@ -104,13 +104,13 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('ravg_fwctb*fits')
+    #filenames=glob('ravg_fwctb*fits')
     #filenames=glob('*ravg*2356*fits')
     #filenames=glob('ravg_fwctb*1150*fits')
     #filenames=glob('ravg_fwctb*2126*fits')
     #filenames=glob('ravg_fwctb*SDSS*n*fits')
     #filenames=glob('*avg_fwctb*DQpec*fits')
-    #filenames=glob('ravg_wctb*fits')
+    filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
     #filenames=glob('ravg_fwctb*Gaia*1644*')
     #filenames=glob('avg_fwctb*eg274*fits')
@@ -701,7 +701,7 @@ if __name__ == '__main__':
         for filename in filenames:
             target_spec, header, target_noise= spt.retrieve_spec(filename)
             hdu= fits.open(filename)
-            dlambda= hdu[4].data
+            #dlambda= hdu[4].data
             #target_spec[0]=target_spec[0]+wavelength_offset
             #print(filename, 'mean: ', np.nanmean(target_spec[1]))
             #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
@@ -710,7 +710,7 @@ if __name__ == '__main__':
             #plt.scatter(header['BMJD_TDB'], np.sum(target_spec[1]*dlambda))
             #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=pix_width, kernel_type='box')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=pix_width, kernel_type='gaussian')
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
             #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
