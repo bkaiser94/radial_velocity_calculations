@@ -39,8 +39,8 @@ test_side = test_width/2
 
 pix_width=3
 sdss_pix_width = 10
-sdss_scale_factor=20.6 #BOSS scaling
-#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+#sdss_scale_factor=20.6 #BOSS scaling
+sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 sdss_seeing=0.7 #arcsec seeing
 sdss_see_sig=sdss_seeing/2.355/ pixel_scale
 
@@ -86,11 +86,11 @@ norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[3800, 4000]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-#file_setting= 'compare_SDSS'
+file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -104,13 +104,13 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    #filenames=glob('ravg_fwctb*fits')
+    filenames=glob('ravg_fwctb*fits')
     #filenames=glob('*ravg*2356*fits')
     #filenames=glob('ravg_fwctb*1150*fits')
     #filenames=glob('ravg_fwctb*2126*fits')
     #filenames=glob('ravg_fwctb*SDSS*n*fits')
     #filenames=glob('*avg_fwctb*DQpec*fits')
-    filenames=glob('ravg_wctb*fits')
+    #filenames=glob('ravg_wctb*fits')
     #filenames=glob('*avg_fwctb*eg274*')
     #filenames=glob('ravg_fwctb*Gaia*1644*')
     #filenames=glob('avg_fwctb*eg274*fits')
@@ -160,8 +160,8 @@ elif file_setting=='compare_SDSS':
     print('filename:', filename)
     #sdss_names = glob(sdss_path+'*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
-    sdss_names = glob(sdss_path+'*K*.fits')
-    #sdss_names = glob(sdss_path+'SDSS*.fits')
+    #sdss_names = glob(sdss_path+'*K*.fits')
+    sdss_names = glob(sdss_path+'SDSS*.fits')
     #sdss_names = glob(sdss_path+'*WDpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     print('sdss_names:',sdss_names)
@@ -516,7 +516,7 @@ if __name__ == '__main__':
             #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
             target_spec2=norm_spectrum(target_spec2, norm_range)
             #plt.ylim(top=np.nanmax(np.hstack([target_spec2[1], target_spec1[1]]))+0.5)
-            plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
+            plt.ylim(top=np.nanpercentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
             plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box')
             #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='gaussian')
             #plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box')
@@ -710,7 +710,7 @@ if __name__ == '__main__':
             #plt.scatter(header['BMJD_TDB'], np.sum(target_spec[1]*dlambda))
             #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=pix_width, kernel_type='gaussian')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=header['see_sig'], kernel_type='gaussian')
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
             #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)

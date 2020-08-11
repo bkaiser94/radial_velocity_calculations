@@ -22,7 +22,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import astropy.io.fits as fits
 import glob
+from astropy.time import Time
+from astropy import coordinates as coords
+from astropy import units as u
+from astropy import constants as const
 
+cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
 def clean_filename(filename):
     file_parts=filename.split('.') #0 is object, 1 is ms, 2 is fits
@@ -96,6 +101,21 @@ def convert_file(filename):
             header.append(card=('ENVWIN', header['WINDSPEE']*3.6, "Wind Speed [km/hr] at start of exposure "))
             #ENVDIR
             header.append(card=('ENVDIR', header['WINDDIRE'], "Wind Direction at start of exposure"))
+            
+            
+            #I need-ish the BMJD_TDB version of the time in advance of calibrate_flux.py
+            input_year = header['OPENDATE'] #gps-synched date
+            input_hours = header['OPENTIME'] #gps-synched time
+            exp_time= header['EXPTIME']*u.s
+            input_times = input_year+'T'+input_hours #formatting correctly
+            obs_time = Time(input_times, format = 'isot', scale = 'utc',location = cerro_pachon_location)
+            obs_time= obs_time+exp_time/2.
+            ra = header['RA']
+            dec = header['DEC']
+            target_coord = coords.SkyCoord(ra, dec, frame = 'icrs', unit= (u.hourangle, u.deg), )
+            bary_corr =obs_time.tdb.light_travel_time(target_coord)
+            bmjd_tdb_val = (obs_time.tdb+ bary_corr.tdb).mjd
+            header.append(card = ('BMJD_TDB', bmjd_tdb_val, "exp. midpoint value from OPENDATE and OPENTIME headers"))
             ####
             dlambda=np.copy(np.roll(wavelength, -1) - wavelength)
             #now make the last wavelength behave correctly by just making it be the same as the second to last value

@@ -42,9 +42,10 @@ sens_curve_list = speclist[1]
 norm_range=[7470, 7530]
 tell_range= [7430, 7800]
 bad_noise_sub = 100
-do_tell_corr= False
+do_tell_corr= True
 do_rv_barycorr=False
-do_ext_corr= True
+#do_ext_corr= True
+default_ext_corr=True
 plot_across_night=False
 do_tell_waves=False
 
@@ -91,6 +92,16 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     sens_curve_coeffs = np.genfromtxt(sens_curve_file)
     i= fits.open(target_file)
     header = fits.getheader(target_file)
+    
+    if 'goodman' in header['INSTRUME'].lower():
+        instrument='goodman'
+        do_ext_corr=default_ext_corr
+    elif 'gmos-n' in header['INSTRUME'].lower():
+        instrument='gmos-n'
+        do_ext_corr=False
+    else:
+        print("No instrument recognized for deciding extinction correction.")
+        print('header["INSTRUME"]', header['INSTRUME'])
     exptime = header['EXPTIME']
     wavelengths= i[0].data
     #counts = i[1].data/np.float_(exptime) #need counts/second
