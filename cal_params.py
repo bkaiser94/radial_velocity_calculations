@@ -62,7 +62,7 @@ goodman_unbinned_pixscale= 0.15 #arcsec/pixel
 #need to add 930-ZZcetired
 
 
-
+#Goodman cal_params
 
 cal_params={
     'SYZY_930':{
@@ -165,6 +165,13 @@ cal_params={
             }
         }
     }
+                
+gemini_params={
+    'linelistname':'no_linelist',
+    'offset':0,
+    'trimregions':[],
+    'air_corr': True,
+    'setupname':'Gemini'}
 
 
 #######################
@@ -200,6 +207,10 @@ telluric_lines=[
     [8798.,10338.],
     [10500.,20000.]]
 
+#Gemini-North Hamamatsu in the setup centered on 6500 angstroms
+gem_gaps=[
+    [5942.,5986.],
+    [7023.,7080.]]
 
 #systemic velocities taken from Simbad. See Page 37 of General Clemens VII for further info.
 #all velocities in km/s
@@ -260,7 +271,17 @@ standard_dict={
         'sens_filename':'GD71_sensitivity_curve.txt',
         'balmer_masks':balmer_lines_wide,
         'other_masks': telluric_lines},
+     'eg131':{
+         'ra': '19:20:34.86',
+         'dec':'-07:40:02.57',
+         'sys_vel':0.,
+         'filename':'gemini_north_standards/eg131_flambda.dat',
+         'sens_filename': 'EG131_sensitivity_curve.txt',
+         'balmer_masks':balmer_lines_wide,
+         'other_masks':telluric_lines+gem_gaps}
     }
+     
+#EG 131 does not need Balmer masks because it is a DC. Actually no it's not; it does need the Balmer masks. I don't know where we concluded that but now that I've looked it up in Simbad to find the RV, which I realized in hindsight should have actually been 0 for a DC since no absorption, it turns out EG 131 is a DBZQA. Which is pretty much every letter a dwarf can have, which would make it nearly the opposite of a DC. I don't know what was going on with me and Erik that we concluded it was a DC. ----- Actually ACTUALLY maybe this is still wrong.... the only match was actually EGGR 131 which I think is different from EG131... to be continued. End conclusion, it's a DC at low enough resolution... because it actually has absorption. It's more or less the same as my other objects though, so there's that.
 
 #dictionary to be used for plotting atmospheric emission lines so elements are a consistent color marker
 airline_color={
@@ -311,15 +332,18 @@ flux_cal_dict={
     'model_poly_degree':{
         '930blue':7,
         '400m1':7,
-        '400m2':5},
+        '400m2':5,
+        'Gemini':7},
     'obs_poly_degree':{
         '930blue':9,
         '400m1':5,
-        '400m2':7},
+        '400m2':7,
+        'Gemini':7},
     'sens_fit_method':{
         '930blue':'poly/poly',
         '400m1':'empirical',
-        '400m2':'poly/poly'}
+        '400m2':'poly/poly',
+        'Gemini':'poly/poly'}
     }
 
 line_id_dict={

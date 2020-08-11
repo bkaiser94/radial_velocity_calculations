@@ -16,7 +16,11 @@ import cal_params as cp
 
 
 def get_cal_params(header):
-    setup_dict= cp.cal_params[header['GRATING']][header['CAM_TARG']][header['GRT_TARG']][header['INSTCONF']]
+    if 'goodman' in header['INSTRUME'].lower():
+        setup_dict= cp.cal_params[header['GRATING']][header['CAM_TARG']][header['GRT_TARG']][header['INSTCONF']]
+    elif 'gmos-n' in header['INSTRUME'].lower():
+        print('GMOS-N spectrum detected')
+        setup_dict=cp.gemini_params
     return setup_dict
 
 def identify_standard(header):

@@ -79,7 +79,10 @@ standard_directory= cp.standard_dir
 #standard_name= 'LTT3218'
 #standard_name='Feige110'
 #standard_name= 'LTT7987'
-standard_name='GD71'
+#standard_name='GD71'
+standard_name='EG131'
+
+observed_file='ravg_wctb.EG131_gemini_600B.fits'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
 ##observed_file = 'wcmtb.feige67930blue.fits'
@@ -88,7 +91,7 @@ standard_name='GD71'
 ##observed_file= 'wcmtb.ltt3218930blue.fits'
 
 #observed_file='ravg_wctb.GD71_400m2.fits'
-observed_file='ravg_wctb.GD71_400m1.fits'
+#observed_file='ravg_wctb.GD71_400m1.fits'
 
 #observed_file='ravg_wctb.EG274_400m1_fix.fits'
 #observed_file='ravg_wctb.LTT7987_400m1.fits'
@@ -263,7 +266,7 @@ def rescale_flux(stand_flux1):
     """
     standard_type= standard_info['filename'].split('/')[-2]
     print('standard_type:', standard_type)
-    if standard_type == 'xshooter_standards':
+    if ((standard_type == 'xshooter_standards') or (standard_type=='gemini_north_standards')) :
         print('should be resetting fluxes')
         stand_flux1= stand_flux1*1e16 #converts to 10**-16 flux vals hopefully
     else:
@@ -352,8 +355,8 @@ else:
 
 standard_type= standard_info['filename'].split('/')[-2]
 print('standard_type:', standard_type)
-if standard_type == 'xshooter_standards':
-    print('no bin widths provided for model because X-Shooter')
+if ((standard_type == 'xshooter_standards') or (standard_type=='gemini_north_standards')) :
+    print('no bin widths provided for model because X-Shooter... or Gemini-North')
     model_bin_widths= np.copy(np.roll(stand_waves1, -1) - stand_waves1)
     print(stand_waves1.shape, stand_flux1.shape, model_bin_widths.shape)
     stand_waves1= stand_waves1[:-1]
@@ -522,7 +525,14 @@ def limit_to_telluric(obs_waves1,residuals, plot_all= True):
     """
     hold_telluric_lines = cp.telluric_lines
     hold_standard_lines = standard_info['balmer_masks']
+    
     hold_telluric_lines= spt.check_overlaps(hold_telluric_lines, hold_standard_lines, np.nanmax(obs_waves1), np.nanmin(obs_waves1))
+    if setup_dict['setupname']=='Gemini':
+        print('Gemini observation so need segment gaps')
+        hold_gaps=cp.gem_gaps
+        hold_telluric_lines=spt.check_overlaps(hold_telluric_lines, hold_gaps, np.nanmax(obs_waves1), np.nanmin(obs_waves1))
+    else:
+        pass
     io_telluric_lines= spt.make_inside_out(hold_telluric_lines, np.nanmin(obs_waves1), np.nanmax(obs_waves1))
     #inverted masks of telluric lines, so that the things that aren't telluric lines are masked
     output_factors = np.copy(residuals)
