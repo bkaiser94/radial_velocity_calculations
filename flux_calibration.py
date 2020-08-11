@@ -9,6 +9,7 @@ necessary options after at least changing targets... doesn't seem really worth i
 
 Step 5 of Reduction
 """
+from __future__ import print_function
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -39,8 +40,8 @@ sub_dir = cwd.split('/')[-1]
 #poly_degree=3
 #poly_degree= 5 #order of polynomials from before 20190506
 #poly_degree=7
-poly_degree=7
-model_poly_degree= 5
+#poly_degree=7
+#model_poly_degree= 5
 #sens_fit_method='poly/poly' #400M2 method generally, gets sens curve by dividing the polynomial observed by polynomial model
 #sens_fit_method='empirical' #400M1 method generally, gets sens curve by dividing the obs flux directly by the model flux and then fitting a polynomial
 division_extra_deg = 2
@@ -50,17 +51,12 @@ norm_range=[6630,6690]
 header_char=':'
 header_delim= '\t'
 
-ext_corr=True #correct extinction
+#ext_corr=True #correct extinction
 use_fnu=False
 
-#standard_directory = '~/Desktop/standards/'
-#standard_directory = '/Users/BenKaiser/Desktop/standards/'
+
 standard_directory= cp.standard_dir
-#standard_file = "foke/fgd108.dat"
-#standard_file = 'foke/ffeige67.dat'
-#standard_file = 'fhamuy/fltt6248.dat'
-#standard_file= 'fhamuy/feg274.dat'
-#standard_file= 'ctio_standards/fltt3218.dat'
+
 
 
 #output_filename = "GD108_sensitivity_curve.txt"
@@ -229,6 +225,15 @@ if use_fnu:
 else:
     pass
 
+if 'goodman' in header['INSTRUME'].lower():
+    instrument='goodman'
+    ext_corr=True
+elif 'gmos-n' in header['INSTRUME'].lower():
+    instrument='gmos-n'
+    ext_corr=False
+else:
+    print("No instrument recognized for deciding extinction correction.")
+    print('header["INSTRUME"]', header['INSTRUME'])
 
 
 if ext_corr:
@@ -239,16 +244,19 @@ obs_waves1=obs_spec[0]
 obs_flux1=obs_spec[1]
 
 
+
 setup_dict= gcp.get_cal_params(header)
 setup_name=setup_dict['setupname']
 sens_fit_method= cp.flux_cal_dict['sens_fit_method'][setup_name]
+poly_degree=cp.flux_cal_dict['obs_poly_degree'][setup_name]
+model_poly_degree=cp.flux_cal_dict['model_poly_degree'][setup_name]
 
 #standard_file = standard_directory+standard_file
 standard_info = get_star_info(standard_name)
-print type(standard_info['balmer_masks'])
-print type(standard_info['other_masks'])
+print(type(standard_info['balmer_masks']))
+print(type(standard_info['other_masks']))
 wavelength_masks=standard_info['balmer_masks']+standard_info['other_masks']
-print "wavelength_masks:", wavelength_masks
+print("wavelength_masks:", wavelength_masks)
 
 stand_array = np.genfromtxt(glob(standard_info['filename'])[0]).T
 #output_filename= standard_dict['sens_filename']
@@ -327,7 +335,7 @@ stand_waves1= spt.barycentric_vel_uncorr(header, stand_waves1)
 
 do_offset= bool(raw_input("Do you need to do a wavelength offset?(Enter nothing to skip; Enter anything to do it.)>>>"))
 if do_offset:
-    print "Enter the approximate wavelength for the same feature in the model and observed spectra for offset"
+    print("Enter the approximate wavelength for the same feature in the model and observed spectra for offset")
     model_wavelength = float(raw_input("Model spec wavelength>>>"))
     obs_wavelength= float(raw_input("Observed spec wavelength>>>"))
     #dotted_pixel=0
@@ -347,7 +355,7 @@ if do_offset:
     #plt.show()
     spt.show_plot()
 else:
-    print "Skipping offsetting"
+    print("Skipping offsetting")
     
 
 #plt.plot(stand_waves1, stand_flux1, label='unbinned')
@@ -371,10 +379,14 @@ print('degrading model spec')
 rebin_model_spec= degrade_model(np.vstack([stand_waves1, stand_flux1, model_bin_widths]),  np.vstack([obs_waves1, obs_flux1, obs_dlambda]), header)
 
 
-plt.plot(stand_waves1, stand_flux1, label='unbinned model')
+#plt.plot(stand_waves1, stand_flux1, label='unbinned model')
+plt.scatter(stand_waves1, stand_flux1, label='unbinned model')
 plt.plot(rebin_model_spec[0], rebin_model_spec[1], label='rebinned model_spec')
 plt.legend()
 plt.show()
+
+original_stand_waves=np.copy(stand_waves1)
+original_stand_flux=np.copy(stand_flux1)
 
 stand_waves1=rebin_model_spec[0]
 stand_flux1= rebin_model_spec[1]
@@ -388,8 +400,13 @@ plt.title('interpolated model versus standard model')
 #interp_model_flux = np.interp(obs_waves1, stand_waves1, stand_flux1) #
 interpolator = scinterp.CubicSpline(stand_waves1, stand_flux1)
 interp_model_flux= interpolator(obs_waves1)
+
+other_interpolator=scinterp.CubicSpline(original_stand_waves,original_stand_flux)
+other_interp_flux=other_interpolator(obs_waves1)
+plt.plot(original_stand_waves,original_stand_flux, label='original model points', linestyle='None', marker='o',color='magenta')
 plt.plot(obs_waves1, interp_model_flux, label = 'interpolated')
 plt.plot(stand_waves1, stand_flux1, label = 'model')
+plt.plot(obs_waves1, other_interp_flux, label='original model interpolated')
 plt.legend(loc='best')
 plt.show()
 
@@ -451,6 +468,11 @@ calc_waves=np.linspace(min_wave, max_wave,1000)
 plt.plot(obs_waves1, obs_flux1, label= 'observed', marker= 'o', linestyle='none')
 plt.plot(obs_waves, obs_flux, label= 'observed used', marker= 'o', linestyle='none')
 plt.plot(obs_waves1, np.polyval(obs_curve, obs_waves1), label = 'curve')
+
+#obs_interpolator=scinterp.CubicSpline(obs_waves,obs_flux)
+#obs_interp_flux=obs_interpolator(obs_waves1)
+#plt.plot(obs_waves1, obs_interp_flux, label='interpolated obs')
+
 plt.legend(loc='best')
 plt.show()
 
@@ -471,6 +493,10 @@ elif sens_fit_method=='empirical':
     sens_curve_points=obs_flux/stand_flux
     sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
     plt.plot(obs_waves, sens_curve_points, label = 'used obs curve/model curve', marker = 'o', linestyle = 'none')
+elif sens_fit_method=='poly/interp':
+    sens_curve_points=np.polyval(obs_curve,calc_waves)/other_interpolator(calc_waves)
+    sens_curve_fit=np.polyfit(obs_waves, obs_flux/stand_flux,poly_degree) #20190618
+    plt.plot(calc_waves, sens_curve_points, label = 'used obs curve/model curve', marker = 'o', linestyle = 'none')
 else:
     print('no valid sens_fit_method selected, currently selected:')
     print(sens_fit_method)
@@ -504,8 +530,8 @@ plt.ylabel('Flux (ergs/cm/cm/s/A 1e-16)')
 #plt.show()
 spt.show_plot()
 
-def get_residuals(plot_all = False):
-    residuals= fcal_obs/interp_model_flux
+def get_residuals(model_flux=interp_model_flux, plot_all = False):
+    residuals= fcal_obs/model_flux
     if plot_all:
         plt.plot(obs_waves1, residuals)
         plt.xlabel('wavelength ($\AA$)')
@@ -530,7 +556,7 @@ def limit_to_telluric(obs_waves1,residuals, plot_all= True):
     if setup_dict['setupname']=='Gemini':
         print('Gemini observation so need segment gaps')
         hold_gaps=cp.gem_gaps
-        hold_telluric_lines=spt.check_overlaps(hold_telluric_lines, hold_gaps, np.nanmax(obs_waves1), np.nanmin(obs_waves1))
+        #hold_telluric_lines=spt.check_overlaps(hold_telluric_lines, hold_gaps, np.nanmax(obs_waves1), np.nanmin(obs_waves1))
     else:
         pass
     io_telluric_lines= spt.make_inside_out(hold_telluric_lines, np.nanmin(obs_waves1), np.nanmax(obs_waves1))
@@ -550,14 +576,21 @@ def limit_to_telluric(obs_waves1,residuals, plot_all= True):
         spt.show_plot()
     return factor_spec
 
-residuals= get_residuals(plot_all=True)
-telluric_factor_spec= limit_to_telluric(obs_waves1, residuals)
+
+if cp.flux_cal_dict['sens_fit_method'][setup_name]=='poly/interp':
+    print('using residuals of interpolation')
+    residuals= get_residuals(model_flux=other_interp_flux, plot_all=True)
+    telluric_factor_spec= limit_to_telluric(obs_waves1, residuals)
+    plt.plot(obs_waves1, other_interp_flux, label='model')
+else:
+    residuals= get_residuals(plot_all=True)
+    telluric_factor_spec= limit_to_telluric(obs_waves1, residuals)
+    plt.plot(obs_waves1, interp_model_flux, label='model')
 
 
 plt.title('telluric corrected spectrum')
 #plt.plot(obs_waves1, fcal_obs/residuals, label='flux-calibrated observation/residuals')
 plt.plot(obs_waves1, fcal_obs/telluric_factor_spec[1], label='flux-calibrated observation/residuals')
-plt.plot(obs_waves1, interp_model_flux, label='model')
 plt.xlabel('wavelength ($\AA$)')
 if use_fnu:
     plt.ylabel('Flux(10**-28 erg/s/cm^2/Hz)')

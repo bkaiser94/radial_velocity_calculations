@@ -78,6 +78,24 @@ def convert_file(filename):
             header.append(card=('SLIT', header['MASKNAME'],'slit name'))
             #EXPTIME this is already handled in the default headers of Gemini
             
+            #I realized there were a number of headers that actually get called at the end of flux_calibration.py and are listed in "in_headers[]" in cal_params.py:
+            
+            #WIDTH there isn't a match to this since Erik does optimal extraction. I'll just fill in 7 as the default so the code runs
+            header.append(card=('WIDTH', 7, "made-up width of extraction to allow code to run"))
+            
+            #SEE_FWHM already handled
+            
+            #ENVHUM
+            header.append(card=('ENVHUM', header['HUMIDITY'], "Relative Humidity at start of exposure  "))
+            
+            #ENVPRE
+            header.append(card=('ENVPRE', header['PRESSUR2']/100., "Atmospheric Pressure [hPS] at start of exposur "))
+            #ENVTEM
+            header.append(card=('ENVTEM', header['TAMBIENT'], "Outside Temperature [C] at start of exposure "))
+            #ENVWIN
+            header.append(card=('ENVWIN', header['WINDSPEE']*3.6, "Wind Speed [km/hr] at start of exposure "))
+            #ENVDIR
+            header.append(card=('ENVDIR', header['WINDDIRE'], "Wind Direction at start of exposure"))
             ####
             dlambda=np.copy(np.roll(wavelength, -1) - wavelength)
             #now make the last wavelength behave correctly by just making it be the same as the second to last value

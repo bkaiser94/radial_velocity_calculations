@@ -331,19 +331,19 @@ soar_diameter= 4.1 #SOAR diameter in meters
 flux_cal_dict={
     'model_poly_degree':{
         '930blue':7,
-        '400m1':7,
+        '400m1':5,
         '400m2':5,
-        'Gemini':7},
+        'Gemini':5},
     'obs_poly_degree':{
         '930blue':9,
-        '400m1':5,
+        '400m1':7,
         '400m2':7,
         'Gemini':7},
     'sens_fit_method':{
         '930blue':'poly/poly',
         '400m1':'empirical',
         '400m2':'poly/poly',
-        'Gemini':'poly/poly'}
+        'Gemini':'poly/interp'}
     }
 
 line_id_dict={
