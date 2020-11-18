@@ -73,12 +73,12 @@ standard_directory= cp.standard_dir
 #standard_name='EG274'
 #standard_name = 'GD153'
 #standard_name= 'LTT3218'
-#standard_name='Feige110'
+standard_name='Feige110'
 #standard_name= 'LTT7987'
 #standard_name='GD71'
-standard_name='EG131'
+#standard_name='EG131'
 
-observed_file='ravg_wctb.EG131_gemini_600B.fits'
+#observed_file='ravg_wctb.EG131_gemini_600B.fits'
 
 ##observed_file = "wcmtb.GD108930blue.fits"
 ##observed_file = 'wcmtb.feige67930blue.fits'
@@ -116,7 +116,7 @@ observed_file='ravg_wctb.EG131_gemini_600B.fits'
 #observed_file='avg_wctb.Feige110second_400m2.fits'
 #observed_file='avg_wctb.Feige110_400m1.fits'
 
-#observed_file='avg_wctb.Feige110_400m2.fits'
+observed_file='ravg_wctb.Feige110_400m2.fits'
 
 #observed_file='avg_wctb.GD153_400m2.fits'
 #observed_file='avg_wctb.GD153_400m1.fits'
@@ -234,6 +234,8 @@ elif 'gmos-n' in header['INSTRUME'].lower():
 else:
     print("No instrument recognized for deciding extinction correction.")
     print('header["INSTRUME"]', header['INSTRUME'])
+    print("Guess we'll just assume it's Goodman since they somehow lost the instrument name around 2020-10-21...and set ext_corr=True...")
+    ext_corr=True
 
 
 if ext_corr:

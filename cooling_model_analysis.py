@@ -23,6 +23,7 @@ import hurley_polynomials as hp
 
 
 cooling_model_file='COModel_ThinH.csv'
+#cooling_model_file='COModel_ThickH.csv'
 
 wd_file='temp_wd_abundances.csv'
 
@@ -58,11 +59,11 @@ default_z=0.02 #approximately solar
 #target_teff_err=190
 
 ##1636
-wd_name='SDSSJ1636+1619'
-target_logg= 8.10
-target_logg_err=0.06
-target_teff= 4410. #K
-target_teff_err=200
+#wd_name='SDSSJ1636+1619'
+#target_logg= 8.10
+#target_logg_err=0.06
+#target_teff= 4410. #K
+#target_teff_err=200
 
 
 ##1330
@@ -96,6 +97,28 @@ target_teff_err=200
 #target_logg_err=2.24414e-01
 #target_teff= 3454.718922
 #target_teff_err= 126.986438
+
+#WASP 98-B
+#wd_name='WASP 98-B'
+#target_logg=8.03
+#target_logg_err=0.07
+#target_teff= 8730.
+#target_teff_err= 220.
+
+##GaiaJ0600-4414 CPM companion He-atmosphere
+wd_name="GaiaJ0600-4414 CPM companion He-atmosphere"
+target_logg= 7.99
+target_logg_err=0.25
+target_teff=5333.
+target_teff_err=340.
+
+#GaiaJ0600-4414 CPM companion H-atmosphere
+#I have determined that as of 2020-11-18 my code actually can't handle the thick-H models well at all. The interpolation scheme goes insane. Probably am going to need to do something about that
+#wd_name="GaiaJ0600-4414 CPM companion H-atmosphere"
+#target_logg= 8.07
+#target_logg_err=0.27
+#target_teff=5455.
+#target_teff_err=367.
 
 desired_NaCa= -1.1 #Sioux county meteorite, achondrite
 

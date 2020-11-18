@@ -731,6 +731,7 @@ def rebin_spec(input_filename, desired_waves, desired_dlambda):
     
     All values need to be in units of f_lambda ... so the noise2 calculation is almost certainly wrong at the moment
     
+    Created by Ben Kaiser (UNC-Chapel Hill)
     """
     target_spec, header, target_noise = retrieve_spec(input_filename)
     noise2= target_noise[1]**2
@@ -784,6 +785,8 @@ def rebin_generic_spec(input_spec, input_dlambda, desired_waves, desired_dlambda
     Takes any spectrum as an input and rebins it; this version is less efficient than rebin_spec() if you're doing it 
     on the reduced Goodman spectra because it wont' simultaneously rebin the sky and noise and stuff, which 
     the other one does. This function does, however, actually just work on whatever you give it.
+    
+    Created by Ben Kaiser (UNC-Chapel Hill)
     
     """
     target_low_edges, target_high_edges= get_edges(input_spec[0],input_dlambda)

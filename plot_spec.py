@@ -86,11 +86,11 @@ norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[3800, 4000]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-file_setting= 'compare_SDSS'
+#file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -710,7 +710,7 @@ if __name__ == '__main__':
             #plt.scatter(header['BMJD_TDB'], np.sum(target_spec[1]*dlambda))
             #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=header['see_sig'], kernel_type='gaussian')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
             #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
@@ -731,7 +731,7 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
-            #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
+            spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
             #plt.legend()
             #plt.show()
             

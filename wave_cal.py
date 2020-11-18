@@ -640,6 +640,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         pass
     target_light= target_light-bkg_light
     if do_wavelengths:
+        global need_offset
         if need_offset:
             for x_spot in line_x_checks:
                 plt.axvline( x= x_spot, color = 'r')
@@ -660,7 +661,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
             offset = emission_pixel-dotted_pixel
             global store_offset
             store_offset= offset
-            global need_offset
+            #global need_offset
             need_offset=False
             #print "skipping offsetting. Change lines 261 - 264 if you want otherwise."
         else:

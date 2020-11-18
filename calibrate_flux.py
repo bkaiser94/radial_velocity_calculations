@@ -102,6 +102,9 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     else:
         print("No instrument recognized for deciding extinction correction.")
         print('header["INSTRUME"]', header['INSTRUME'])
+        print("Guess we'll just assume it's Goodman since they somehow lost the instrument name around 2020-10-21...and set ext_corr=True...")
+        do_ext_corr=True
+
     exptime = header['EXPTIME']
     wavelengths= i[0].data
     #counts = i[1].data/np.float_(exptime) #need counts/second
