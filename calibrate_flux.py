@@ -22,7 +22,7 @@ import sys
 from astropy.io import fits
 from glob import glob
 import scipy.optimize as sciop
-import cosmics
+#import cosmics
 from astropy.time import Time
 from astropy import coordinates as coords
 from astropy import units as u

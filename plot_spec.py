@@ -86,10 +86,10 @@ norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[3800, 4000]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
-#file_setting='all_fwctb'
+file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
@@ -378,6 +378,7 @@ def plot_pix_shifts(file_list):
         #plt.errorbar(header['BMJD_TDB'], header['airofavg'], yerr=header['airofstd'], color='b')
         plt.errorbar(header['ROTATOR'], header['airofavg'], yerr=header['airofstd'], color='b', marker='o', markersize=4)
         #plt.scatter( header['BMJD_TDB'],header['ROTATOR'], color='b')
+        #plt.scatter( header['AIRMASS'],header['ROTATOR'], color='b')
         #plt.errorbar(header['AIRMASS'], header['airofavg'], yerr=header['airofstd'], color='b')
     #plt.xlabel('BMDJ_TDB')
     plt.xlabel('ROTATOR')
@@ -731,7 +732,7 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
-            spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
+            #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
             #plt.legend()
             #plt.show()
             
