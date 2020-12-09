@@ -86,7 +86,7 @@ def calc_sq_dist(target_spec, model_spec, error_spec = np.array([]), free_parame
         norm_difs = (interp_model[1]-target_spec[1])**2/np.float_(error_spec[1])**2
         #norm_difs = np.abs(interp_model[1]-target_spec[1])/np.float_(interp_model[1])
     else:
-        print "no uncertainties provided"
+        print("no uncertainties provided")
         norm_difs =(interp_model[1]-target_spec[1])**2/np.float_(interp_model[1])
     #norm_difs = np.abs(interp_model[1]-target_spec[1])
 
@@ -189,6 +189,13 @@ def convolve_model_new(model_spec, header, slit_width=slit_width):
         see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(pix_slit_width), mode = 'oversample')
         see_kernel.normalize()
         model_conv = conv.convolve(fluxes, see_kernel,boundary='extend')
+    except TypeError as error:
+        #print error
+        #print "so making it odd"
+        pix_slit_width= pix_slit_width+1
+        see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(pix_slit_width), mode = 'oversample')
+        see_kernel.normalize()
+        model_conv = conv.convolve(fluxes, see_kernel,boundary='extend')
     model_out = np.vstack([wavelengths, model_conv])
     return model_out
 
@@ -250,7 +257,7 @@ def fit_parabola(xvals, yvals, dof=1, plot_fit= False, fixed_minimum=fixed_minim
             calc_bounds= parabola_func(bound_points, popt)-miny-delta_chi2[dof]
         else:
             calc_bounds= parabola_func(bound_points, popt[0],popt[1],popt[2])-miny-delta_chi2[dof]
-        print "calc_bounds", calc_bounds
+        print( "calc_bounds", calc_bounds)
         plt.plot(bound_points, calc_bounds, color='b')
         plt.scatter(bound_points, [0, -1*delta_chi2[dof], 0], color='b')
         #plt.plot(minx,miny, marker='o', color='r')

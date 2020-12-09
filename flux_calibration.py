@@ -17,7 +17,7 @@ import sys
 from astropy.io import fits
 from glob import glob
 import scipy.optimize as sciop
-import cosmics
+#import cosmics
 from astropy.time import Time
 from astropy import coordinates as coords
 from astropy import units as u
@@ -334,12 +334,22 @@ stand_waves1= spt.barycentric_vel_uncorr(header, stand_waves1)
 #plt.legend()
 #plt.show()
 
-
-do_offset= bool(raw_input("Do you need to do a wavelength offset?(Enter nothing to skip; Enter anything to do it.)>>>"))
+try:
+    do_offset= bool(raw_input("Do you need to do a wavelength offset?(Enter nothing to skip; Enter anything to do it.)>>>"))
+except NameError as error:
+    print("NameError:", error)
+    print('Presumably in Python 3 instead of 2 because "raw_input" is not recognized')
+    do_offset= bool(input("Do you need to do a wavelength offset?(Enter nothing to skip; Enter anything to do it.)>>>"))
 if do_offset:
     print("Enter the approximate wavelength for the same feature in the model and observed spectra for offset")
-    model_wavelength = float(raw_input("Model spec wavelength>>>"))
-    obs_wavelength= float(raw_input("Observed spec wavelength>>>"))
+    try:
+        model_wavelength = float(raw_input("Model spec wavelength>>>"))
+        obs_wavelength= float(raw_input("Observed spec wavelength>>>"))
+    except NameError as error:
+        print("NameError:", error)
+        print('Presumably in Python 3 instead of 2 because "raw_input" is not recognized')
+        model_wavelength = float(input("Model spec wavelength>>>"))
+        obs_wavelength= float(input("Observed spec wavelength>>>"))
     #dotted_pixel=0
     #emission_pixel=0
     offset = model_wavelength-obs_wavelength

@@ -26,7 +26,7 @@ start = time.time()
 #plt.rc('font', size =18)
 
 #print start
-import wdatmos
+#import wdatmos
 import spec_plot_tools as spt
 import cal_params as cp
 
