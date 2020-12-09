@@ -20,7 +20,7 @@ import os
 from astropy.io import fits
 from glob import glob
 import scipy.optimize as sciop
-import cosmics
+#import cosmics
 from astropy.time import Time
 from astropy import coordinates as coords
 from astropy import units as u
@@ -114,6 +114,7 @@ flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
 bkg_shift= 30 #standard shift used
+#bkg_shift=15
 #bkg_shift=35
 #bkg_shift= 64
 ##bkg_shift=70
@@ -459,7 +460,10 @@ def normalize_flat(masterflatfile=masterflatfile, plot_all = False):
 
 ######
 def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[0], trace_method=trace_method):
-    target_band=target_med[trace_band_mid-trace_band_width/2:trace_band_mid+trace_band_width/2,:]
+    try:
+        target_band=target_med[trace_band_mid-trace_band_width/2:trace_band_mid+trace_band_width/2,:]
+    except TypeError:
+        target_band=target_med[int(trace_band_mid-trace_band_width/2):int(trace_band_mid+trace_band_width/2),:]
     band_inds= np.indices(target_band.shape)
     x_positions= band_inds[1,1]
     y_pos = band_inds[0].T[0]
@@ -653,9 +657,14 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
             #plt.yscale('log')
             plt.show()
             #offset = 0
-            dotted_pixel = float(raw_input("dotted line pixel>>>"))
-            emission_pixel= float(raw_input("emission line pixel>>>"))
-            
+            try:
+                dotted_pixel = float(raw_input("dotted line pixel>>>"))
+                emission_pixel= float(raw_input("emission line pixel>>>"))
+            except NameError as error:
+                print("NameError:", error)
+                print('Presumably in Python 3 instead of 2 because "raw_input" is not recognized')
+                dotted_pixel = float(input("dotted line pixel>>>"))
+                emission_pixel= float(input("emission line pixel>>>"))
             #dotted_pixel=0
             #emission_pixel=0
             offset = emission_pixel-dotted_pixel

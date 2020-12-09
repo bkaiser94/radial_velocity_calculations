@@ -105,7 +105,7 @@ def extract_spectrum(img_data, header, polynomials= [0,0], core_sides=2., bkg_co
     #plt.show()
     #noise_spectrum = np.copy(np.sqrt(target_light + bkg_light + y_trace_width*header['RDNOISE'])) #old way 2018-10-31
     noise_spectrum= np.copy(np.sqrt(target_noise2_list+bkg_noise2_list)) #combination of noises of the background pixels and the target trace pixels.
-    print "noise_spectrum.shape", noise_spectrum.shape
+    print("noise_spectrum.shape", noise_spectrum.shape)
     target_light= target_light-bkg_light
     noise_spectrum = noise_spectrum/target_light #normalized noise values by the target spectrum, so now unitless.
     target_light= target_light/header['EXPTIME'] #converting to counts/s
