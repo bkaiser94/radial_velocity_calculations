@@ -42,7 +42,7 @@ sens_curve_list = speclist[1]
 norm_range=[7470, 7530]
 tell_range= [7430, 7800]
 bad_noise_sub = 100
-do_tell_corr= True
+do_tell_corr= False
 do_rv_barycorr=False
 #do_ext_corr= True
 default_ext_corr=True
@@ -89,6 +89,7 @@ times = []
 airmasses= []
 model_wavelength=7607 #that's the minimum of the model band
 for target_file, sens_curve_file in zip(target_list, sens_curve_list):
+    print(target_file, sens_curve_file)
     sens_curve_coeffs = np.genfromtxt(sens_curve_file)
     i= fits.open(target_file)
     header = fits.getheader(target_file)

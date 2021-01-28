@@ -39,10 +39,12 @@ test_side = test_width/2
 
 pix_width=3
 sdss_pix_width = 10
-#sdss_scale_factor=20.6 #BOSS scaling
-sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+sdss_scale_factor=20.6 #BOSS scaling
+#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 sdss_seeing=0.7 #arcsec seeing
 sdss_see_sig=sdss_seeing/2.355/ pixel_scale
+
+sdss_flux_scale_factor=0.5 #factor by which to multiply normalized SDSS spectrum before subtracting in compare_SDSS
 
 #wavelength_offset=60
 #wavelength_offset=20
@@ -59,8 +61,8 @@ sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #sdss_path= sdss_path+'G0_K5/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 
-tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
-#tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
+#tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
+tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
 #print(filenames)
 plot_wavelength=True
 plot_400m2_tell= False
@@ -71,6 +73,7 @@ plot_400m2_tell= False
 #norm_range=[7042,7046]
 #norm_range=[7490,7510] #outside telluric
 #norm_range=[7470, 7530]
+#norm_range=[7440, 7550]
 #norm_range=[7517,7556] #20190528
 #norm_range=[7860.,8050.]
 #norm_range=[8074,8140]
@@ -79,17 +82,18 @@ plot_400m2_tell= False
 #norm_range=[6090,6240]
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
-norm_range=[6640,6670]#20190530 400M1 norm range
-#norm_range=[6630,6690]#wider double norm range
+#norm_range=[6640,6670]#20190530 400M1 norm range
+norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 #norm_range=[3800, 4000]
+#norm_range=[8640,8790]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
-file_setting='all_fwctb'
+#file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
@@ -105,6 +109,7 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     filenames=glob('ravg_fwctb*fits')
+    #filenames=glob('ravg_zfwctb*fits')
     #filenames=glob('*ravg*2356*fits')
     #filenames=glob('ravg_fwctb*1150*fits')
     #filenames=glob('ravg_fwctb*2126*fits')
@@ -135,7 +140,8 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*')
+    #filenames=glob('fwctb*')
+    filenames=glob('fwctb*PSR*47_*')
     #filenames=glob('fwctb*LTT*')
     #filenames=glob('fwctb*SDSS*n*')
     #filenames=glob('fwctb*2356*')
@@ -158,10 +164,11 @@ elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
-    #sdss_names = glob(sdss_path+'*.fits')
+    sdss_names = glob(sdss_path+'*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
-    sdss_names = glob(sdss_path+'SDSS*.fits')
+    #sdss_names = glob(sdss_path+'SDSS*.fits')
+    #sdss_names = glob(sdss_path+'LHS*.fits')
     #sdss_names = glob(sdss_path+'*WDpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     print('sdss_names:',sdss_names)
@@ -200,7 +207,8 @@ elif file_setting =='two_arm_compare_SDSS':
     print(file_setting)
     filename1=sys.argv[1]
     filename2=sys.argv[2]
-    sdss_names = glob(sdss_path+'*SDSS*.fits')
+    #sdss_names = glob(sdss_path+'*SDSS*.fits')
+    sdss_names = glob(sdss_path+'*LHS*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     single_iterate=False
     double_iterate=False
@@ -341,10 +349,13 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
     return
 
 
-def plot_telluric_spectrum(wave_range, pix_width=pix_width, smooth=False, kernel_type='gaussian', kernel_width= 300., tell_filename=tell_filename):
+def plot_telluric_spectrum(wave_range, pix_width=pix_width, smooth=False, kernel_type='gaussian', kernel_width= 300., tell_filename=tell_filename, color= 'None'):
     tell_spec= spt.retrieve_telluric_model(tell_filename, wave_range)
     #plt.plot(tell_spec[0], tell_spec[1], label='Telluric absorption')
-    plot_spectrum(tell_spec, 'Telluric Absorption', '', smooth=smooth, kernel_type=kernel_type, pix_width=pix_width, kernel_width=kernel_width)
+    if color == 'None':
+        plot_spectrum(tell_spec, 'Telluric Absorption', '', smooth=smooth, kernel_type=kernel_type, pix_width=pix_width, kernel_width=kernel_width)
+    else:
+        plot_spectrum(tell_spec, 'Telluric Absorption', '', smooth=smooth, kernel_type=kernel_type, pix_width=pix_width, kernel_width=kernel_width, color=color)
     return
 
 
@@ -431,7 +442,7 @@ def get_median_dlambda(input_spec):
     return np.nanmedian(input_spec[0]-np.roll(input_spec[0],1))
 
     
-def plot_sky(filename, offset=0, line_labels=True, convolve=False):
+def plot_sky(filename, offset=0, line_labels=True, convolve=False, color='None'):
     hdu=fits.open(filename)
     wavelengths=np.copy(hdu[0].data)
     sky=np.copy(hdu[2].data)
@@ -472,7 +483,10 @@ def plot_sky(filename, offset=0, line_labels=True, convolve=False):
     print("need to put dlambda into this part again since we're about to move around wavelengths in the future.")
     if plot_wavelength:
         plt.xlabel(r'Wavelength ($\AA$)')
-        plt.plot(hdu[0].data, sky, label=filename+' sky')
+        if color== 'None':
+            plt.plot(hdu[0].data, sky, label=filename+' sky')
+        else:
+            plt.plot(hdu[0].data, sky, label=filename+' sky', color=color)
         #plt.plot(hdu[0].data, sky, label=filename, color=color)
         #plt.plot(hdu[0].data, sky, label=hdu[0].header['airmass'])
     else:
@@ -483,23 +497,36 @@ def plot_sky(filename, offset=0, line_labels=True, convolve=False):
     return
 
 def plot_diff_spec(spec1, spec2, filename1, filename2, header, smooth=False, kernel_type='gaussian', norm=False):
-    plot_spectrum(spec1, filename1, header, norm=norm, smooth=smooth, kernel_type=kernel_type)
-    plot_spectrum(spec2, filename2, header, norm=norm, smooth=smooth, kernel_type=kernel_type)
+    #plot_spectrum(spec1, filename1, header, norm=norm, smooth=smooth, kernel_type=kernel_type)
+    #plot_spectrum(spec2, filename2, header, norm=norm, smooth=smooth, kernel_type=kernel_type)
     title_string= filename1+' - ' + filename2
     if norm:
         #spec1[1]=spec1[1]/np.nanmean(spec1[1][norm_range[0]:norm_range[1]])
         #spec2[1]=spec2[1]/np.nanmean(spec2[1][norm_range[0]:norm_range[1]])
         spec1=norm_spectrum(spec1, norm_range)
         spec2=norm_spectrum(spec2, norm_range)
+        spec2[1]=spec2[1]
         title_string= title_string+ ' normed'+str(norm_range)
         plt.ylabel('Flux (normed)')
         #spec1[1]=spec1[1]/np.nanmax(spec1[1])
         #spec2[1]=spec2[1]/np.nanmax(spec2[1])
     else:
         pass
-    diff_flux=spec1[1]-spec2[1]
+    try:
+        diff_flux=spec1[1]-spec2[1]
+    except ValueError as error:
+        print("ValueError:", error)
+        print("Probably tried to subtract an SDSS spectrum from a Goodman spectrum, so we need to rebin")
+        greater_spec_index=np.greater(spec1[1].shape[0], spec2[1].shape[0])
+        print(spec1[1].shape[0], spec2[1].shape[0],np.greater(spec1[1].shape[0], spec2[1].shape[0]))
+        if greater_spec_index==False:
+            spec1_hdu=fits.open(filename1)
+            spec1_dlambda=spec1_hdu[4].data
+            spec2_dlambda=np.copy(np.roll(spec2[0], -1) - spec2[0])
+            spec2=spt.rebin_generic_spec(spec2[:,:-1], spec2_dlambda[:-1], spec1[0], spec1_dlambda)
+            diff_flux=spec1[1]-spec2[1]
     diff_spec=np.vstack([spec1[0], diff_flux])
-    #plot_spectrum(diff_spec, filename1+' - ' + filename2, header, smooth=smooth, kernel_type=kernel_type)     
+    plot_spectrum(diff_spec, filename1+' - ' + filename2, header, smooth=smooth, kernel_type=kernel_type)     
     #plot_spectrum(diff_spec, title_string, header, smooth=smooth, kernel_type=kernel_type)
     plt.ylim(top=np.nanmax([spec1[1],spec2[1]])+0.5)
     plt.ylim(bottom=np.nanmin(diff_flux)-0.5)
@@ -509,23 +536,29 @@ if __name__ == '__main__':
 
     if file_setting== 'compare_SDSS':
         target_spec1, header1, target_noise1= spt.retrieve_spec(filename)
+        filename1=filename
         #target_spec1, header1, target_noise1= spt.retrieve_sdss_spec(filename)
         target_spec1[0]=target_spec1[0]+wavelength_offset
-        target_spec1= norm_spectrum(target_spec1, norm_range)
+        #target_spec1= norm_spectrum(target_spec1, norm_range)
         for filename2 in sdss_names:
-            target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2)
+            target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2, wave_medium='air')
             #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
-            target_spec2=norm_spectrum(target_spec2, norm_range)
+            #target_spec2=norm_spectrum(target_spec2, norm_range)
+            #target_spec2[1]=target_spec2[1]*sdss_flux_scale_factor
             #plt.ylim(top=np.nanmax(np.hstack([target_spec2[1], target_spec1[1]]))+0.5)
-            plt.ylim(top=np.nanpercentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
-            plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box')
+            #plt.ylim(top=np.nanpercentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
             #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='gaussian')
             #plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box')
             #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-            #plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-            plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width)
+            plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='k')
+            
+            plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
+            
+            #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='k')
+            plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='gaussian', pix_width=0.5*header1['see_sig'], color='b')
+            plot_sky(filename, offset=0, line_labels=False, convolve=False, color='g')
             #plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-            #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
+            #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
             plt.axhline(y=0, linestyle='--', color='k')
@@ -595,9 +628,9 @@ if __name__ == '__main__':
             #plot_sky(m1_name, offset=0)
             #plot_sky(m2_name, offset=0)
             
-            plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=False, kernel_type='box')
+            #plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=False, kernel_type='box')
             plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=False, kernel_type='box')
-            
+            plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=False, kernel_type='box')
             #plt.scatter(target_spec1[0],target_spec1[1], color='b')
             #plt.scatter(target_spec2[0], target_spec2[1], color='r')
             #plt.show()
@@ -646,7 +679,7 @@ if __name__ == '__main__':
             
             #plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
             plt.xlim(3700,9000)
-            spt.show_plot(line_id='alkali', convert_to_air=True)
+        spt.show_plot(line_id='alkali', convert_to_air=True)
         spt.show_plot()
             
     if file_setting=='two_arm_compare_SDSS':
@@ -686,10 +719,10 @@ if __name__ == '__main__':
             print('scaling factor:', get_median_dlambda(target_spec2)/get_median_dlambda(sdss_spec))
             plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1], sdss_spec[1]]), 99.9)+0.5)
             
-            plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], sdss_header, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='r')
+            plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header2, norm=True, smooth=True, kernel_type='gaussian', pix_width=pix_width, color='r')
             #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
-            plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='g')
-            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='box', pix_width=pix_width, color='b')
+            plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=False, kernel_type='gaussian',  color='g')
+            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=False, kernel_type='gaussian',  color='b')
             #plot_dwavelength(target_spec1, filename1, read_in=False)
             #plot_dwavelength(target_spec2, filename2, read_in=False)
             #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
@@ -702,6 +735,9 @@ if __name__ == '__main__':
         for filename in filenames:
             target_spec, header, target_noise= spt.retrieve_spec(filename)
             hdu= fits.open(filename)
+            
+            #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
+            
             #dlambda= hdu[4].data
             #target_spec[0]=target_spec[0]+wavelength_offset
             #print(filename, 'mean: ', np.nanmean(target_spec[1]))
@@ -711,7 +747,8 @@ if __name__ == '__main__':
             #plt.scatter(header['BMJD_TDB'], np.sum(target_spec[1]*dlambda))
             #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
+            #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=header['see_sig'], kernel_type='gaussian')
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
             #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
@@ -746,8 +783,8 @@ if __name__ == '__main__':
         #plt.legend(loc='best')
         #plt.show()
         #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
-        plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
-        plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
+        #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+        #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
         spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
         #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
         #plt.xlabel('BMJD_TDB')

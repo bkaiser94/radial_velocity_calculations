@@ -30,8 +30,8 @@ import spec_plot_tools as spt
 
 plot_skips= 20
 
-#listfile = 'listFWCTB'
-listfile = 'listSDSSJ1252'
+listfile = 'listFWCTB'
+#listfile = 'listSDSSJ1252'
 target_list = np.genfromtxt(listfile, dtype ='str')
 #output_list = []
 #output_list_name = 'listZFWCTB' #zero rv is the new letter tacked onto the front. I'm pretty sure the only thing we should be changing is the wavelength values in the zero index anyway
@@ -84,7 +84,8 @@ for rv, target_file in zip(model_rvs, target_list):
     hdu1= fits.ImageHDU(file_flux)
     hdu2 = fits.ImageHDU(file_bkg_flux)
     hdu3 = fits.ImageHDU(file_noise)
-    hdulist = fits.HDUList([hdu, hdu1, hdu2, hdu3])
+    hdu4=fits.ImageHDU(i[4].data)
+    hdulist = fits.HDUList([hdu, hdu1, hdu2, hdu3, hdu4])
     hdulist.writeto(new_name, overwrite = True)
     #plt.plot(file_waves, file_flux+count, label = target_file)
     #plt.plot(file_waves, file_flux+count, label = target_file, linestyle = 'none', marker = '.')

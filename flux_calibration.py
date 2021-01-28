@@ -46,7 +46,9 @@ sub_dir = cwd.split('/')[-1]
 #sens_fit_method='empirical' #400M1 method generally, gets sens curve by dividing the obs flux directly by the model flux and then fitting a polynomial
 division_extra_deg = 2
 
-norm_range=[6630,6690]
+#norm_range=[6630,6690]
+norm_range=[4500,4700]
+
 
 header_char=':'
 header_delim= '\t'
@@ -68,12 +70,12 @@ standard_directory= cp.standard_dir
 #standard_file = standard_directory+standard_file
 
 ##standard_name = "GD108"
-#standard_name = 'Feige67'
+standard_name = 'Feige67'
 #standard_name = 'LTT6248'
 #standard_name='EG274'
 #standard_name = 'GD153'
 #standard_name= 'LTT3218'
-standard_name='Feige110'
+#standard_name='Feige110'
 #standard_name= 'LTT7987'
 #standard_name='GD71'
 #standard_name='EG131'
@@ -86,6 +88,10 @@ standard_name='Feige110'
 ##observed_file = 'wcmtb.eg274930blue.fits'
 ##observed_file= 'wcmtb.ltt3218930blue.fits'
 
+#observed_file='ravg_wctb.eg274_930_blue.fits'
+observed_file='ravg_wctb.feige67_930_blue.fits'
+#observed_file='ravg_wctb.LTT6248_930_blue.fits'
+
 #observed_file='ravg_wctb.GD71_400m2.fits'
 #observed_file='ravg_wctb.GD71_400m1.fits'
 
@@ -93,7 +99,8 @@ standard_name='Feige110'
 #observed_file='ravg_wctb.LTT7987_400m1.fits'
 #observed_file='ravg_wctb.LTT7987_400m2.fits'
 #observed_file='ravg_wctb.EG274_400m2.fits'
-#observed_file='avg_wctb.EG274_400m2.fits'
+
+#observed_file='avg_wctb.Feige110_400m2.fits'
 
 
 #observed_file = "wcmtb.GD108930blue.fits"
@@ -116,7 +123,9 @@ standard_name='Feige110'
 #observed_file='avg_wctb.Feige110second_400m2.fits'
 #observed_file='avg_wctb.Feige110_400m1.fits'
 
-observed_file='ravg_wctb.Feige110_400m2.fits'
+#observed_file='ravg_wctb.Feige110_400m2.fits'
+
+#observed_file='ravg_wctb.LTT3218_400m2.fits'
 
 #observed_file='avg_wctb.GD153_400m2.fits'
 #observed_file='avg_wctb.GD153_400m1.fits'
@@ -589,15 +598,20 @@ def limit_to_telluric(obs_waves1,residuals, plot_all= True):
     return factor_spec
 
 
-if cp.flux_cal_dict['sens_fit_method'][setup_name]=='poly/interp':
-    print('using residuals of interpolation')
-    residuals= get_residuals(model_flux=other_interp_flux, plot_all=True)
-    telluric_factor_spec= limit_to_telluric(obs_waves1, residuals)
-    plt.plot(obs_waves1, other_interp_flux, label='model')
-else:
-    residuals= get_residuals(plot_all=True)
-    telluric_factor_spec= limit_to_telluric(obs_waves1, residuals)
-    plt.plot(obs_waves1, interp_model_flux, label='model')
+try:
+    if cp.flux_cal_dict['sens_fit_method'][setup_name]=='poly/interp':
+        print('using residuals of interpolation')
+        residuals= get_residuals(model_flux=other_interp_flux, plot_all=True)
+        telluric_factor_spec= limit_to_telluric(obs_waves1, residuals)
+        plt.plot(obs_waves1, other_interp_flux, label='model')
+    else:
+        residuals= get_residuals(plot_all=True)
+        telluric_factor_spec= limit_to_telluric(obs_waves1, residuals)
+        plt.plot(obs_waves1, interp_model_flux, label='model')
+except IndexError as error:
+    telluric_factor_spec=np.vstack([obs_waves1,residuals/residuals])
+    print('IndexError:', error)
+    print("You're probably using a setup that has not strong telluric absorption regions, so we'll skip the telluric absorption stuff")
 
 
 plt.title('telluric corrected spectrum')

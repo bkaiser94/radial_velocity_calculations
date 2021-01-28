@@ -72,13 +72,13 @@ cal_params={
                     'linelistname':'JJ_FeAr_lines.txt',
                     'offset':90,
                     'trimregions': blue_default_trim,
-                    'air_corr':True,
+                    'air_corr':False,
                     'setupname':'930blue'},
                 'Red':{
                     'linelistname':'JJ_FeAr_lines.txt',
                     'offset':90,
                     'trimregions':red_default_trim,
-                    'air_corr': True,
+                    'air_corr': False,
                     'setupname':'930blue'}
                 }
             }
@@ -117,6 +117,7 @@ cal_params={
                     'setupname':'400m2'},
                 'Red':{
                     'linelistname':'400m2_HgArNe_calc20190814.txt',
+                    #'linelistname':'400M2_HgAr.txt',
                     'offset':0,
                     'trimregions':red_default_trim,
                     'air_corr':True,
@@ -165,7 +166,9 @@ cal_params={
             }
         }
     }
-                
+
+#I have that second dict entry for the 400 l/mm grism because they reversed the order of the name 'SYZY_400' became "400_SYZY", so apparently I did something crazy instead of just being simple.
+
 gemini_params={
     'linelistname':'no_linelist',
     'offset':0,
@@ -278,7 +281,15 @@ standard_dict={
          'filename':'gemini_north_standards/eg131_flambda.dat',
          'sens_filename': 'EG131_sensitivity_curve.txt',
          'balmer_masks':balmer_lines_wide,
-         'other_masks':telluric_lines+gem_gaps}
+         'other_masks':telluric_lines+gem_gaps},
+     'ltt6248':{
+         'ra': '15:38:59.65',
+         'dec':'-28:35:36.97',
+         'sys_vel': -125.7,
+         'filename':'ctio_standards/fltt6248.dat',
+         'sens_filename': 'LTT6248_sensitivity_curve.txt',
+         'balmer_masks':balmer_lines_wide,
+         'other_masks':telluric_lines}
     }
      
 #EG 131 does not need Balmer masks because it is a DC. Actually no it's not; it does need the Balmer masks. I don't know where we concluded that but now that I've looked it up in Simbad to find the RV, which I realized in hindsight should have actually been 0 for a DC since no absorption, it turns out EG 131 is a DBZQA. Which is pretty much every letter a dwarf can have, which would make it nearly the opposite of a DC. I don't know what was going on with me and Erik that we concluded it was a DC. ----- Actually ACTUALLY maybe this is still wrong.... the only match was actually EGGR 131 which I think is different from EG131... to be continued. End conclusion, it's a DC at low enough resolution... because it actually has absorption. It's more or less the same as my other objects though, so there's that.
@@ -328,23 +339,41 @@ soar_diameter= 4.1 #SOAR diameter in meters
 
 #####
 
+#flux_cal_dict={
+    #'model_poly_degree':{
+        #'930blue':7,
+        #'400m1':5,
+        #'400m2':5,
+        #'Gemini':5},
+    #'obs_poly_degree':{
+        #'930blue':9,
+        #'400m1':7,
+        #'400m2':7,
+        #'Gemini':7},
+    #'sens_fit_method':{
+        #'930blue':'poly/poly',
+        #'400m1':'empirical',
+        #'400m2':'poly/poly',
+        #'Gemini':'poly/interp'}
+    #}
+    
 flux_cal_dict={
-    'model_poly_degree':{
-        '930blue':7,
-        '400m1':5,
-        '400m2':5,
-        'Gemini':5},
-    'obs_poly_degree':{
-        '930blue':9,
-        '400m1':7,
-        '400m2':7,
-        'Gemini':7},
-    'sens_fit_method':{
-        '930blue':'poly/poly',
-        '400m1':'empirical',
-        '400m2':'poly/poly',
-        'Gemini':'poly/interp'}
-    }
+'model_poly_degree':{
+    '930blue':7,
+    '400m1':5,
+    '400m2':5,
+    'Gemini':5},
+'obs_poly_degree':{
+    '930blue':9,
+    '400m1':7,
+    '400m2':7,
+    'Gemini':7},
+'sens_fit_method':{
+    '930blue':'empirical',
+    '400m1':'empirical',
+    '400m2':'poly/poly',
+    'Gemini':'poly/interp'}
+}
 
 line_id_dict={
     'alkali':'alkali_lines_vac.csv',

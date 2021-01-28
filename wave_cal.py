@@ -86,21 +86,21 @@ trace_offset =0#amount by which the calculated trace needs to be offset to end u
 #trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=105 #y-pixel for Keaton's object 2019-03-07 2019-03-25 commented out
 #trace_band_mid=110
-trace_band_mid=105
+trace_band_mid=105 #usual extraction search center point
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=130 #
 #trace_band_width=16
-#trace_band_width = 90 #pixel width to determine the center of the trace 2019-03-25 commented out
+#trace_band_width = 100 #pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
-trace_band_width=190#super wide search range
+trace_band_width=190#usual extraction search window
 #trace_band_width= 14 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 50 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-#sigma_multi_side=2
+#sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+sigma_multi_side=2
 #sigma_multi_side= 1 #multiple of sigma value of trace gaussian that should be distance out to go for extraction windo
 
 #core_sides=  5
@@ -114,14 +114,16 @@ flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
 bkg_shift= 30 #standard shift used
-#bkg_shift=15
+#bkg_shift=40
 #bkg_shift=35
 #bkg_shift= 64
 ##bkg_shift=70
 #bkg_shift=15
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 #bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
-bkg_side_multi=2. #mutliple of core_sides that that  bkg_core_sides should be later
+#bkg_side_multi=2. #mutliple of core_sides that that  bkg_core_sides should be later
+bkg_side_multi=3. #mutliple of core_sides that that  bkg_core_sides should be later
+
 bkg_max_side= bkg_shift/2.-5
 lamp_sigma_guess= 2
 line_search_width = 3#formerly 3 20190502
@@ -137,7 +139,8 @@ seeing_range = [1200, 1220]
 #see_fit_bounds = ([50, 0, 0.7, 0],[18000, 1000, trace_band_width, 2000]) #(lower, upper) bounds on the fit for the seeing.
 seeing_p0= [2000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
 #see_fit_bounds = ([50, 0, 0.7, 0],[1e8, trace_band_width, trace_band_width, 1e8]) #(lower, upper) bounds on the fit for the seeing.
-see_fit_bounds = ([5, 0, 0.7, 0],[1e8, trace_band_width, 7.1, 1e8]) #(lower, upper) bounds on the fit for the seeing.
+#see_fit_bounds = ([5, 0, 0.7, 0],[1e8, trace_band_width, 7.1, 1e8]) #(lower, upper) bounds on the fit for the seeing. #way before 2021-01-25
+see_fit_bounds = ([5, 0, 0.5, 0],[1e8, trace_band_width, 7.1, 1e8]) #(lower, upper) bounds on the fit for the seeing. #way after 2021-01-25
 #minimum sigma value corresponds to seeing of 0.5" for 2x2 binned pixels and max is 5" seeing
 
 box_dict= {
@@ -473,7 +476,14 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     plt.show()
     seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
     seeing_p0[1]=np.argmax(seeing_band)
-    seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds, fixed_width=False)
+    try:
+        seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds, fixed_width=False)
+    except RuntimeError as error:
+        print("RuntimeError:", error)
+        seeing_popt=see_fit_bounds[0]
+        seeing_popt[2]=1.
+        print('\n\n*************\nWARNING! SEEING COULD NOT BE FIT FOR THIS OBJECT IN THE NORMAL BAND! ASSIGNING VALUE OF', seeing_popt,' FOR ALL OF seeing_popt AS THAT SHOULD BE THE BEST POSSIBLE. EXAMINE RAW IMAGES TO MAKE SURE THERE IS NOT AN ISSUE!\n**************\n\n')
+        print('That corresponds to a seeing of', 2*np.sqrt(2*np.log(2))*seeing_popt[2]*0.3, '"\nand an extraction width of ', seeing_popt[2]*sigma_multi_side,'pixels\n\n')
     seeing_sigma = seeing_popt[2]
     print(seeing_popt)
     print("Seeing sigma: ", seeing_popt[2])
@@ -513,7 +523,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
                 max_fluxes.append(subset_popt[0])
                 coll_seeing_sigmas.append(subset_popt[2])
             else:
-                print("seeing sigma was on the low boundary so we're not including it: x=", rebinned_x_positions[0][rebin_counter])
+                print("seeing sigma was on the low boundary so we're not including it: x=", rebinned_x_positions[0][rebin_counter], subset_popt[2], 'pixels', 'seeing would be', subset_popt[2]*0.3*2*np.sqrt(2*np.log(2)),'"')
                 y_positions.append(np.nan)
                 max_fluxes.append(np.nan)
                 coll_seeing_sigmas.append(np.nan)
