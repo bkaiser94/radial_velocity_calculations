@@ -20,6 +20,8 @@ import cal_params as cp
 
 n_points=1e5
 
+n_points=int(1e4)
+
 def declining_phase(target_teff, log_el1_over_el2, time,el1, el2, logg=8.0, steady_state_start=False, cross_extrap=True):
     """
     provide log_el1_over_el2 as an absolute number ratio not the one normalized to solar abundances.
@@ -231,6 +233,77 @@ def easy_dist_decline(wd_row, el1, el2, el3, desired_log_el3el2, n_points=n_poin
     else:
         pass
     return
+
+def easy_dist_ssp(wd_row,elements,n_points=n_points, plot_all=False, tau_rand=False, tau_add=0.2):
+    string1= elements[0].lower()+'/'+elements[1].lower()
+    string2=elements[2].lower()+'/'+elements[1].lower()
+    #times= np.arange(0, t_max+t_step, t_step)
+    
+    
+    target_el1el2=wd_row[string1]
+    target_el3el2=wd_row[string2]
+    logg=wd_row['logg']
+    teff=wd_row['teff']
+    teff_dist=np.random.normal(loc=teff, scale=wd_row['teff_err'], size=n_points)
+    logg_dist= np.random.normal(loc=logg, scale=wd_row['logg_err'], size=n_points)
+    el1el2_dist=np.random.normal(loc=target_el1el2,scale=wd_row[string1+'_err'],size=n_points)
+    el3el2_dist=np.random.normal(loc=target_el3el2,scale=wd_row[string2+'_err'],size=n_points)
+    def get_ssp(teff, logg, el1el2, el3el2, elements, plot_all=plot_all,tau_rand=False, tau_add=tau_add):
+        tau_el1=itau.extrapolate_tau_x_logg(teff, logg, elements[0])
+        tau_el2=itau.extrapolate_tau_x_logg(teff, logg, elements[1])
+        tau_el3=itau.extrapolate_tau_x_logg(teff, logg, elements[2])
+        
+        tau2_tau1= tau_el2-tau_el1
+        tau2_tau3=tau_el2-tau_el3
+        if tau_rand:
+            #print('tau2_tau1.shape',tau2_tau1.shape)
+            tau2_tau1=np.random.normal(loc=tau2_tau1,scale=tau_add)
+            tau2_tau3=np.random.normal(loc=tau2_tau3,scale=tau_add)
+            print("tau_"+elements[0]+"-tau_"+elements[1], -1*np.mean(tau2_tau1),"+/-",np.std(tau2_tau1))
+            print("tau_"+elements[2]+"-tau_"+elements[1], -1*np.mean(tau2_tau3),"+/-",np.std(tau2_tau3))
+            #print('tau2_tau1.shape',tau2_tau1.shape)
+        else:
+            
+            pass
+        
+        
+        el1el2=el1el2+tau2_tau1
+        el3el2=el3el2+tau2_tau3
+        if plot_all:
+            plt.hist(tau_el1-tau_el2, alpha=0.5,label='no addition',normed=True)
+            plt.hist(-1*tau2_tau1, alpha=0.5, label='addition',normed=True)
+            plt.title(r'$\tau$' + elements[0]+'-'+ elements[1])
+            plt.legend()
+            plt.show()
+            
+            plt.hist(tau_el3-tau_el2, label='no addition',normed=True)
+            plt.hist(-1*tau2_tau3, alpha=0.5, label='addition',normed=True)
+            plt.title(r'$\tau$' + elements[2]+'-'+ elements[1])
+            plt.legend()
+            plt.show()
+            
+        return el1el2, el3el2
+    target_ssp_el1el2,target_ssp_el3el2=get_ssp(teff,logg, target_el1el2, target_el3el2,elements)
+    el1el2_ssp_dist, el3el2_ssp_dist=get_ssp(teff_dist,logg_dist, el1el2_dist, el3el2_dist,elements,tau_rand=tau_rand)
+    print('target_ssp', elements[0],elements[1],target_ssp_el1el2)
+    print('target_ssp', elements[2], elements[1], target_ssp_el3el2)
+    print('dist ssp',elements[0], elements[1], np.median(el1el2_ssp_dist), np.mean(el1el2_ssp_dist), np.std(el1el2_ssp_dist))
+    print('dist ssp',elements[2], elements[1], np.median(el3el2_ssp_dist), np.mean(el3el2_ssp_dist), np.std(el3el2_ssp_dist))
+    if plot_all:
+        
+        plt.hist(el1el2_ssp_dist)
+        plt.axvline(target_ssp_el1el2)
+        plt.title(elements[0]+'/'+elements[1])
+        plt.show()
+        get_ssp(teff_dist,logg_dist, el1el2_dist, el3el2_dist,elements)
+        plt.hist(el3el2_ssp_dist)
+        plt.axvline(target_ssp_el3el2)
+        plt.title(elements[2]+'/'+elements[1])
+        plt.show()
+        plt.scatter(el3el2_ssp_dist,el1el2_ssp_dist)
+        plt.plot(target_ssp_el3el2,target_ssp_el1el2,marker='*', markersize=14)
+        plt.show()
+    return target_ssp_el1el2, target_ssp_el3el2, np.std(el1el2_ssp_dist), np.std(el3el2_ssp_dist)
 
 
 if __name__ == '__main__':

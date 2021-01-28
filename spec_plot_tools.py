@@ -1044,3 +1044,41 @@ def get_ew(filename, wave_range, cont_method= 'avg', cont_width=20, plot_all=Fal
    
     return ew, ew_noise
     
+    
+def initiate_science_plot():
+    """
+    Create all of the conditions required for a Science figure. I'm going to be calling this a ton of times anyway, so I figured I should get it right now.
+    
+    """
+    #import matplotlib
+    #matplotlib.use('pdf')
+    #import importlib
+    #importlib.reload(plt)
+    plt.rc('font',family='Microsoft Sans Serif',size=9)
+
+
+    
+    return
+
+def start_ApJ_fig(width_cols=1, constrained_layout=True, width_height=[1.,1.]):
+    """
+    width_cols: the width of the figure in column widths for 2-column ApJ layout. Default is the width of a single column in the 2-column format.. Must be an integer! (and only 1 or 2)
+    
+    
+    width_height: is a list of the width and height dimensions of the desired figure that you already have. It is only the ratio of these two values that matters as they are rescaled by the desired width in units of columns as specified by width_cols
+    """
+    
+    single_col_width=3.3522420091324205
+    double_col_width=7.100005949910059
+    if width_cols==1:
+        new_width=single_col_width
+    elif width_cols==2:
+        new_width=double_col_width
+    else:
+        print('No valid width_cols value specified:', width_cols)
+    height_over_width=width_height[1]/width_height[0]
+    new_height=new_width*height_over_width
+    plt.figure(figsize=(new_width, new_height), constrained_layout=constrained_layout)
+    
+    return
+
