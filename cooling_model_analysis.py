@@ -80,7 +80,26 @@ default_z=0.02 #approximately solar
 #target_teff= 4040. #K
 #target_teff_err=110.
 
-#target_teff=3000.
+##J2317 Hollands et al 2021 parameters
+#wd_name='WDJ2317+1830'
+#target_logg=8.64
+#target_logg_err=0.03
+#target_teff= 4210. #K
+#target_teff_err=50.
+
+#J1824 Hollands et al 2021 parameters
+wd_name='WDJ1824+1213'
+target_logg=7.41
+target_logg_err=0.07
+target_teff= 3350. #K
+target_teff_err=50.
+
+##LHS2534 Hollands et al 2021 parameters
+#wd_name='LHS2534'
+#target_logg=7.97
+#target_logg_err=0.04
+#target_teff= 4780. #K
+#target_teff_err=50.
 
 
 ##1644
@@ -106,11 +125,11 @@ default_z=0.02 #approximately solar
 #target_teff_err= 220.
 
 ##GaiaJ0600-4414 CPM companion He-atmosphere
-wd_name="GaiaJ0600-4414 CPM companion He-atmosphere"
-target_logg= 7.99
-target_logg_err=0.25
-target_teff=5333.
-target_teff_err=340.
+#wd_name="GaiaJ0600-4414 CPM companion He-atmosphere"
+#target_logg= 7.99
+#target_logg_err=0.25
+#target_teff=5333.
+#target_teff_err=340.
 
 #GaiaJ0600-4414 CPM companion H-atmosphere
 #I have determined that as of 2020-11-18 my code actually can't handle the thick-H models well at all. The interpolation scheme goes insane. Probably am going to need to do something about that
@@ -138,7 +157,7 @@ def get_output_name(wd_name=wd_name):
 #n=100000
 n=int(1e6)
 
-
+bin_widths=0.1 #default width of age bin widths for histogram.
 simon_mass= 0.45
 simon_mass_err= 0.12
 
@@ -450,7 +469,7 @@ print('trimmed_total_age_dist.shape', trimmed_total_age_dist.shape)
 print(wd_name)
 print('relative remaining fraction', np.float_(trimmed_total_age_dist.shape[0])/total_age_dist.shape[0])
 
-trim_vals, trim_edges, trim_patches= plt.hist(trimmed_total_age_dist, bins=np.arange(0,null_age_val+0.1, 0.1), label='total ages limited to universe', normed=True, alpha=0.2)
+trim_vals, trim_edges, trim_patches= plt.hist(trimmed_total_age_dist, bins=np.arange(0,null_age_val+bin_widths, bin_widths), label='total ages limited to universe', normed=True, alpha=0.2)
 sub_edges=trim_edges[:-1] #remove the last edge to make the length the same as the probability values
 sort_order= np.argsort(-1*trim_vals) #by multiplying by a negative you make the largest values the smallest effectively. Thanks stackoverflow!
 bin_widths=np.median(trim_edges-np.roll(trim_edges,1))
