@@ -21,6 +21,9 @@ import cal_params as cp
 n_points=1e5
 
 n_points=int(1e4)
+limit_indicator=99. #value above which if the absolute value of the error on a measurement is above it indicates it should be a limit
+
+
 
 def declining_phase(target_teff, log_el1_over_el2, time,el1, el2, logg=8.0, steady_state_start=False, cross_extrap=True):
     """
@@ -238,7 +241,8 @@ def easy_dist_ssp(wd_row,elements,n_points=n_points, plot_all=False, tau_rand=Fa
     string1= elements[0].lower()+'/'+elements[1].lower()
     string2=elements[2].lower()+'/'+elements[1].lower()
     #times= np.arange(0, t_max+t_step, t_step)
-    
+    reset_el1el2_err=False
+    reset_el3el2_err= False
     
     target_el1el2=wd_row[string1]
     target_el3el2=wd_row[string2]
@@ -246,8 +250,16 @@ def easy_dist_ssp(wd_row,elements,n_points=n_points, plot_all=False, tau_rand=Fa
     teff=wd_row['teff']
     teff_dist=np.random.normal(loc=teff, scale=wd_row['teff_err'], size=n_points)
     logg_dist= np.random.normal(loc=logg, scale=wd_row['logg_err'], size=n_points)
-    el1el2_dist=np.random.normal(loc=target_el1el2,scale=wd_row[string1+'_err'],size=n_points)
-    el3el2_dist=np.random.normal(loc=target_el3el2,scale=wd_row[string2+'_err'],size=n_points)
+    if np.abs(wd_row[string1+'_err']) > limit_indicator:
+        el1el2_dist=np.random.normal(loc=target_el1el2,scale=0,size=n_points) #the errorbar provided is too large one way or the other and so actually indicates a limit
+        reset_el1el2_err=True
+    else:
+        el1el2_dist=np.random.normal(loc=target_el1el2,scale=wd_row[string1+'_err'],size=n_points)
+    if np.abs(wd_row[string2+'_err']) > limit_indicator:
+        el3el2_dist=np.random.normal(loc=target_el3el2,scale=0,size=n_points)
+        reset_el3el2_err=True
+    else:
+        el3el2_dist=np.random.normal(loc=target_el3el2,scale=wd_row[string2+'_err'],size=n_points)
     def get_ssp(teff, logg, el1el2, el3el2, elements, plot_all=plot_all,tau_rand=False, tau_add=tau_add):
         tau_el1=itau.extrapolate_tau_x_logg(teff, logg, elements[0])
         tau_el2=itau.extrapolate_tau_x_logg(teff, logg, elements[1])
@@ -303,7 +315,15 @@ def easy_dist_ssp(wd_row,elements,n_points=n_points, plot_all=False, tau_rand=Fa
         plt.scatter(el3el2_ssp_dist,el1el2_ssp_dist)
         plt.plot(target_ssp_el3el2,target_ssp_el1el2,marker='*', markersize=14)
         plt.show()
-    return target_ssp_el1el2, target_ssp_el3el2, np.std(el1el2_ssp_dist), np.std(el3el2_ssp_dist)
+    el1el2_err= np.std(el1el2_ssp_dist)
+    el3el2_err=np.std(el3el2_ssp_dist)
+    if reset_el3el2_err:
+        el3el2_err=wd_row[string2+'_err']
+    if reset_el1el2_err:
+        el1el2_err=wd_row[string1+'_err']
+    else:
+        pass
+    return target_ssp_el1el2, target_ssp_el3el2,el1el2_err, el3el2_err
 
 
 if __name__ == '__main__':
