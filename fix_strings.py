@@ -28,10 +28,10 @@ def fix_display_string(input_string):
                       "WD J1644–0449",
                       "WD J2356–209"]
     for bad_string, good_string in zip(bad_string_list, good_string_list):
-        print('bad_string:', bad_string)
-        print('input_string:', input_string)
+        #print('bad_string:', bad_string)
+        #print('input_string:', input_string)
         output_string=input_string.replace(bad_string, good_string)
-        print('output_string:', output_string)
+        #print('output_string:', output_string)
         if input_string!= output_string:
             return output_string
         else:

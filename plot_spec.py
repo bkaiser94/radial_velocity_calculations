@@ -39,8 +39,8 @@ test_side = test_width/2
 
 pix_width=3
 sdss_pix_width = 10
-sdss_scale_factor=20.6 #BOSS scaling
-#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+#sdss_scale_factor=20.6 #BOSS scaling
+sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 sdss_seeing=0.7 #arcsec seeing
 sdss_see_sig=sdss_seeing/2.355/ pixel_scale
 
@@ -109,6 +109,8 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     filenames=glob('ravg_fwctb*fits')
+    #filenames=glob('ravg_fwctb*WISE*fits')
+
     #filenames=glob('ravg_zfwctb*fits')
     #filenames=glob('*ravg*2356*fits')
     #filenames=glob('ravg_fwctb*1150*fits')
@@ -207,8 +209,9 @@ elif file_setting =='two_arm_compare_SDSS':
     print(file_setting)
     filename1=sys.argv[1]
     filename2=sys.argv[2]
-    #sdss_names = glob(sdss_path+'*SDSS*.fits')
-    sdss_names = glob(sdss_path+'*LHS*.fits')
+    #sdss_names = glob(sdss_path+'*Dwarf*.fits')
+    sdss_names = glob(sdss_path+'*sdss*.fits')
+    #sdss_names = glob(sdss_path+'*LHS*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     single_iterate=False
     double_iterate=False
@@ -719,8 +722,8 @@ if __name__ == '__main__':
             print('scaling factor:', get_median_dlambda(target_spec2)/get_median_dlambda(sdss_spec))
             plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1], sdss_spec[1]]), 99.9)+0.5)
             
-            plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header2, norm=True, smooth=True, kernel_type='gaussian', pix_width=pix_width, color='r')
-            #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
+            #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header2, norm=True, smooth=True, kernel_type='gaussian', pix_width=pix_width, color='r')
+            plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=False, kernel_type='sdss_match', pix_width=pix_width, color='r')
             plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=False, kernel_type='gaussian',  color='g')
             plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=False, kernel_type='gaussian',  color='b')
             #plot_dwavelength(target_spec1, filename1, read_in=False)
@@ -748,7 +751,7 @@ if __name__ == '__main__':
             #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
             #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
@@ -758,7 +761,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
             #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
             #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            #plot_sky(filename, offset=0, line_labels=False, convolve=False)
+            #plot_sky(filename, offset=0, line_labels=True, convolve=False)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:
@@ -784,7 +787,7 @@ if __name__ == '__main__':
         #plt.show()
         #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
         #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
-        #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
+        plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
         spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
         #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
         #plt.xlabel('BMJD_TDB')

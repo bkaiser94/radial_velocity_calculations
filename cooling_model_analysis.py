@@ -88,22 +88,22 @@ default_z=0.02 #approximately solar
 #target_teff_err=50.
 
 #J1824 Hollands et al 2021 parameters
-wd_name='WDJ1824+1213'
-target_logg=7.41
-target_logg_err=0.07
-target_teff= 3350. #K
-target_teff_err=50.
+#wd_name='WDJ1824+1213'
+#target_logg=7.41
+#target_logg_err=0.07
+#target_teff= 3350. #K
+#target_teff_err=50.
 
 ##LHS2534 Hollands et al 2021 parameters
-#wd_name='LHS2534'
-#target_logg=7.97
-#target_logg_err=0.04
-#target_teff= 4780. #K
-#target_teff_err=50.
+wd_name='LHS2534'
+target_logg=7.97
+target_logg_err=0.04
+target_teff= 4780. #K
+target_teff_err=50.
 
 
 ##1644
-#wd_name='GaiaJ1644-0449'
+#wd_name='WD J1644-0449'
 #target_logg=7.77
 #target_logg_err= 0.23
 #target_teff= 3830.
@@ -117,12 +117,27 @@ target_teff_err=50.
 #target_teff= 3454.718922
 #target_teff_err= 126.986438
 
+#J2339-0424 from Klein et al. 2021
+#wd_name='GALEX J2339-0424'
+#target_logg=7.93
+#target_logg_err=0.09
+#target_teff= 13735
+#target_teff_err= 500
+
+#GD378 from Klein et al. 2021
+#wd_name='GD 378'
+#target_logg=7.93
+#target_logg_err=0.06
+#target_teff= 15620
+#target_teff_err= 500
+
 #WASP 98-B
 #wd_name='WASP 98-B'
 #target_logg=8.03
 #target_logg_err=0.07
 #target_teff= 8730.
 #target_teff_err= 220.
+
 
 ##GaiaJ0600-4414 CPM companion He-atmosphere
 #wd_name="GaiaJ0600-4414 CPM companion He-atmosphere"
