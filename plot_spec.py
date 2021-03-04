@@ -210,8 +210,8 @@ elif file_setting =='two_arm_compare_SDSS':
     filename1=sys.argv[1]
     filename2=sys.argv[2]
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
-    sdss_names = glob(sdss_path+'*sdss*.fits')
-    #sdss_names = glob(sdss_path+'*LHS*.fits')
+    #sdss_names = glob(sdss_path+'*sdss*.fits')
+    sdss_names = glob(sdss_path+'*LHS*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     single_iterate=False
     double_iterate=False
@@ -696,8 +696,8 @@ if __name__ == '__main__':
         #target_spec1= spt.flambda_to_fnu(target_spec1)
         #target_spec2=spt.flambda_to_fnu(target_spec2)
         
-        target_spec1=norm_spectrum(target_spec1, norm_range)
-        target_spec2= norm_spectrum(target_spec2, norm_range)
+        #target_spec1=norm_spectrum(target_spec1, norm_range)
+        #target_spec2= norm_spectrum(target_spec2, norm_range)
         
         for sdss_filename in sdss_names:
             
@@ -710,7 +710,7 @@ if __name__ == '__main__':
             
             #sdss_spec=spt.flambda_to_fnu(sdss_spec)
             
-            sdss_spec= norm_spectrum(sdss_spec, norm_range)
+            #sdss_spec= norm_spectrum(sdss_spec, norm_range)
             
             
             print('header1 see_sig', header1['SEE_SIG'])
@@ -723,9 +723,9 @@ if __name__ == '__main__':
             plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1], sdss_spec[1]]), 99.9)+0.5)
             
             #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header2, norm=True, smooth=True, kernel_type='gaussian', pix_width=pix_width, color='r')
-            plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=False, kernel_type='sdss_match', pix_width=pix_width, color='r')
-            plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=False, kernel_type='gaussian',  color='g')
-            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=False, kernel_type='gaussian',  color='b')
+            plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=False, smooth=False, kernel_type='sdss_match', pix_width=pix_width, color='r')
+            plot_spectrum(target_spec1, filename1, header1, norm=False, smooth=False, kernel_type='gaussian',  color='g')
+            plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=False, kernel_type='gaussian',  color='b')
             #plot_dwavelength(target_spec1, filename1, read_in=False)
             #plot_dwavelength(target_spec2, filename2, read_in=False)
             #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)

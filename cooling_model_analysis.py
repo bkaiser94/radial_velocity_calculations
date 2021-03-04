@@ -49,6 +49,7 @@ default_randomize=True
 massloss_default=True
 #default_z=0.0001 #allegedly thick disk value
 default_z=0.02 #approximately solar
+#default_z=2.0 #super enriched
 
 
 #madeup
@@ -95,11 +96,11 @@ default_z=0.02 #approximately solar
 #target_teff_err=50.
 
 ##LHS2534 Hollands et al 2021 parameters
-wd_name='LHS2534'
-target_logg=7.97
-target_logg_err=0.04
-target_teff= 4780. #K
-target_teff_err=50.
+#wd_name='LHS2534'
+#target_logg=7.97
+#target_logg_err=0.04
+#target_teff= 4780. #K
+#target_teff_err=50.
 
 
 ##1644
@@ -125,11 +126,39 @@ target_teff_err=50.
 #target_teff_err= 500
 
 #GD378 from Klein et al. 2021
-#wd_name='GD 378'
-#target_logg=7.93
-#target_logg_err=0.06
-#target_teff= 15620
+wd_name='GD 378'
+target_logg=7.93
+target_logg_err=0.06
+target_teff= 15620
+target_teff_err= 500
+
+##PG 1225-079
+#wd_name='PG 1225-079'
+#target_logg=7.97
+#target_logg_err=0.06 #assume same error bars as other white dwarfs from Klein et al. 2021 paper
+#target_teff= 9940
 #target_teff_err= 500
+
+#SDSS J1242+5226
+#wd_name='SDSS J1242+5226'
+#target_logg=7.93
+#target_logg_err=0.06 #assume same error bars as other white dwarfs from Klein et al. 2021 paper
+#target_teff= 10710
+#target_teff_err= 500
+
+##SDSS J0314-0827 parameters from Coutu et al. 2019; picked because kind of high mass DZ
+#wd_name='SDSS J0314-0827'
+#target_logg=8.21
+#target_logg_err=0.5 #assume same error bars as other white dwarfs from Klein et al. 2021 paper
+#target_teff= 11810
+#target_teff_err= 625
+
+#SDSS J1626+6319 parameters from Coutu et al. 2019; picked because kind of high mass DZ
+#wd_name='SDSS J1622+6319'
+#target_logg=8.39
+#target_logg_err=0.2 #assume same error bars as other white dwarfs from Klein et al. 2021 paper
+#target_teff= 11586
+#target_teff_err= 785
 
 #WASP 98-B
 #wd_name='WASP 98-B'
@@ -529,6 +558,7 @@ minarg= np.argmin(trimmed_mass_dist)
 print('Teff of that min WD mass:', trimmed_teff_dist[minarg])
 print('total age of that min WD mass:', trimmed_total_age_dist[minarg])
 print("\n***********\n")
+print(wd_name)
 print("low total age:", lowbound)
 print("high total age:", highbound)
 print("most likely total age:", max_val)

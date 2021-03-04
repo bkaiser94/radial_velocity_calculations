@@ -27,6 +27,8 @@ def fix_display_string(input_string):
                       "WD J2356–209",
                       "WD J1644–0449",
                       "WD J2356–209"]
+    #bad_string_list=['']
+    #good_string_list=['']
     for bad_string, good_string in zip(bad_string_list, good_string_list):
         #print('bad_string:', bad_string)
         #print('input_string:', input_string)
