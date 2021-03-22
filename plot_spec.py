@@ -79,6 +79,7 @@ plot_400m2_tell= False
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
+#norm_range=[4551,4590]
 #norm_range=[6090,6240]
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
@@ -90,7 +91,7 @@ norm_range=[6630,6690]#wider double norm range
 #norm_range=[8640,8790]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
@@ -99,7 +100,7 @@ file_setting='all_avg'
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
-#file_setting= 'two_arm_compare_SDSS'
+file_setting= 'two_arm_compare_SDSS'
 #file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
 
 single_iterate= False
@@ -211,7 +212,7 @@ elif file_setting =='two_arm_compare_SDSS':
     filename2=sys.argv[2]
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'*sdss*.fits')
-    sdss_names = glob(sdss_path+'*LHS*.fits')
+    sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     single_iterate=False
     double_iterate=False
@@ -723,15 +724,16 @@ if __name__ == '__main__':
             plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1], sdss_spec[1]]), 99.9)+0.5)
             
             #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header2, norm=True, smooth=True, kernel_type='gaussian', pix_width=pix_width, color='r')
-            plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=False, smooth=False, kernel_type='sdss_match', pix_width=pix_width, color='r')
-            plot_spectrum(target_spec1, filename1, header1, norm=False, smooth=False, kernel_type='gaussian',  color='g')
-            plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=False, kernel_type='gaussian',  color='b')
+            plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
+            plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='gaussian',  color='g')
+            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='gaussian',  color='b')
             #plot_dwavelength(target_spec1, filename1, read_in=False)
             #plot_dwavelength(target_spec2, filename2, read_in=False)
             #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
             plt.xlim(3700,9000)
             #plt.ylabel(r'$F_{\nu}$ (normalized)')
-            spt.show_plot(line_id='alkali', convert_to_air=True)
+            #spt.show_plot(line_id='alkali', convert_to_air=True)
+            spt.show_plot(line_id='mystery', convert_to_air=True)
             
     if single_iterate:
         counter=0
@@ -751,7 +753,7 @@ if __name__ == '__main__':
             #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=header['see_sig'], kernel_type='gaussian')
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
             #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)

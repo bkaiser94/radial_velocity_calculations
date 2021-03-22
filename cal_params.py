@@ -311,7 +311,9 @@ line_color_dict={
     'Na': 'red',
     'K': 'blue',
     'Rb': 'magenta',
-    'Ca': 'cyan'
+    'Ca': '#001a4b',
+    'MgH':'#6e76c1',
+    '?': '#f39117'
         }
 
 #dictionary of guesses for the box1d model used to generate the shape for background skylines
@@ -377,7 +379,9 @@ flux_cal_dict={
 
 line_id_dict={
     'alkali':'alkali_lines_vac.csv',
-    'ca':'Ca_1_2_lines_vac.csv'
+    'ca':'Ca_1_2_lines_vac.csv',
+    'cool_wd':'all_lines_cool_WD.csv',
+    'mystery':'mystery_lines.csv'
     }
 
 
