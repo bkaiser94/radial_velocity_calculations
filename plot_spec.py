@@ -84,10 +84,10 @@ plot_400m2_tell= False
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-norm_range=[6630,6690]#wider double norm range
+#norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
-#norm_range=[3800, 4000]
+norm_range=[3900, 4000]
 #norm_range=[8640,8790]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
@@ -97,10 +97,10 @@ norm_range=[6630,6690]#wider double norm range
 #file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
-#file_setting= 'all_SDSS'
+file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
-file_setting= 'two_arm_compare_SDSS'
+#file_setting= 'two_arm_compare_SDSS'
 #file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
 
 single_iterate= False
@@ -167,12 +167,12 @@ elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
-    sdss_names = glob(sdss_path+'*Dwarf*.fits')
+    #sdss_names = glob(sdss_path+'*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
-    #sdss_names = glob(sdss_path+'SDSS*.fits')
+    sdss_names = glob(sdss_path+'SDSS*.fits')
     #sdss_names = glob(sdss_path+'LHS*.fits')
-    #sdss_names = glob(sdss_path+'*WDpec*.fits')
+    #sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     print('sdss_names:',sdss_names)
     single_iterate=True
@@ -181,7 +181,8 @@ elif file_setting=='compare_SDSS':
 elif file_setting=='all_SDSS':
     #sdss_names= glob(sdss_path+'*sdss*')
     #sdss_names = glob(sdss_path+'*.fits')
-    sdss_names = glob(sdss_path+'SDSSJ1636*.fits')
+    sdss_names = glob(sdss_path+'*DQpec*.fits')
+    #sdss_names = glob(sdss_path+'SDSSJ1636*.fits')
     filenames=sdss_names
     single_iterate=False
     double_iterate=False
@@ -529,6 +530,12 @@ def plot_diff_spec(spec1, spec2, filename1, filename2, header, smooth=False, ker
             spec2_dlambda=np.copy(np.roll(spec2[0], -1) - spec2[0])
             spec2=spt.rebin_generic_spec(spec2[:,:-1], spec2_dlambda[:-1], spec1[0], spec1_dlambda)
             diff_flux=spec1[1]-spec2[1]
+        else:
+            spec2_hdu=fits.open(filename2)
+            spec2_dlambda=spec2_hdu[4].data
+            spec1_dlambda=np.copy(np.roll(spec1[0], -1) - spec1[0])
+            spec1=spt.rebin_generic_spec(spec1[:,:-1], spec1_dlambda[:-1], spec2[0], spec2_dlambda)
+            diff_flux=spec1[1]-spec2[1]
     diff_spec=np.vstack([spec1[0], diff_flux])
     plot_spectrum(diff_spec, filename1+' - ' + filename2, header, smooth=smooth, kernel_type=kernel_type)     
     #plot_spectrum(diff_spec, title_string, header, smooth=smooth, kernel_type=kernel_type)
@@ -546,7 +553,7 @@ if __name__ == '__main__':
         #target_spec1= norm_spectrum(target_spec1, norm_range)
         for filename2 in sdss_names:
             target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2, wave_medium='air')
-            #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
+            target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
             #target_spec2=norm_spectrum(target_spec2, norm_range)
             #target_spec2[1]=target_spec2[1]*sdss_flux_scale_factor
             #plt.ylim(top=np.nanmax(np.hstack([target_spec2[1], target_spec1[1]]))+0.5)
@@ -559,11 +566,12 @@ if __name__ == '__main__':
             plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
             
             #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='k')
-            plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='gaussian', pix_width=0.5*header1['see_sig'], color='b')
-            plot_sky(filename, offset=0, line_labels=False, convolve=False, color='g')
+            plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='gaussian', pix_width=0.5*header1['see_sig'])
+            plot_sky(filename, offset=0, line_labels=False, convolve=False)
             #plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
+            #plot_diff_spec(target_spec2, target_spec1, filename2, filename1, header1, smooth=True, norm=True)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
             plt.axhline(y=0, linestyle='--', color='k')
             #plt.legend()
@@ -577,23 +585,57 @@ if __name__ == '__main__':
             target_spec1=norm_spectrum(target_spec1, norm_range)
             for filename2 in sdss_names:
                 target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2)
-                target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
+                #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
                 target_spec2=norm_spectrum(target_spec2, norm_range)
-                plt.ylim(top=np.nanpercentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
-                plot_spectrum(target_spec1, filename1.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width= sdss_pix_width)
-                plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-                tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
-                #tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
-                plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, tell_filename=tell_filename)
+                #plt.ylim(top=np.nanpercentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
+                
+                
+                #plot_spectrum(target_spec1, filename1.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width= sdss_pix_width)
+                #plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+                #tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
+                
+                
+                
+                smooth_spec1=convolve_spectrum(target_spec1, header1, kernel_type='box', pix_width=sdss_pix_width, kernel_width=slit_width)
+                smooth_spec2=convolve_spectrum(target_spec2, header2, kernel_type='box', pix_width=sdss_pix_width, kernel_width=slit_width)
+                
+                
+                
+                
+                #plt.plot((const.c/(target_spec1[0]*u.angstrom)).to(u.Hz),target_spec1[1],label=filename1.split('/')[-1])
+                #plt.plot((const.c/(target_spec2[0]*u.angstrom)).to(u.Hz),target_spec2[1],label=filename2.split('/')[-1])
+                #plt.plot((const.c/(target_spec1[0]*u.angstrom)).to(u.Hz),spt.flambda_to_fnu(smooth_spec1)[1],label=filename1.split('/')[-1])
+                #plt.plot((const.c/(target_spec2[0]*u.angstrom)).to(u.Hz),spt.flambda_to_fnu(smooth_spec2)[1],label=filename2.split('/')[-1])
+                
+                plt.plot(target_spec1[0],spt.flambda_to_fnu(smooth_spec1)[1],label=filename1.split('/')[-1])
+                plt.plot(target_spec2[0],spt.flambda_to_fnu(smooth_spec2)[1],label=filename2.split('/')[-1])
+                
+                #rv=1000
+                #target_spec2[0]=spt.get_doppler_shifted(target_spec2[0],rv)
+                #plt.plot(target_spec2[0],spt.flambda_to_fnu(smooth_spec2)[1],label=filename2.split('/')[-1]+' w/ RV of'+str(rv)+' km/s')
+                
+                wave_shift=-151
+                plt.plot(target_spec2[0]+wave_shift,spt.flambda_to_fnu(smooth_spec2)[1],label=filename2.split('/')[-1]+' w/ shift of ' + str(wave_shift) + ' A')
+                
+                ###tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
+                ###plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, tell_filename=tell_filename)
+                
                 tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
-                plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30,tell_filename=tell_filename)
+                #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30,tell_filename=tell_filename)
                 #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=True, norm=True)
-                #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
-                #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)        plt.axhline(y=0, linestyle='--', color='k')
-                #plt.legend()
+                
+                ####plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=True)
+                ####plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)        plt.axhline(y=0, linestyle='--', color='k')
+                ####plt.legend()
+                
+                
                 plt.title(filename1+ ' & '+ filename2.split('/')[-1])
                 #plt.show()
-                spt.show_plot(line_id='alkali', convert_to_air=False)
+                plt.legend()
+                plt.show()
+                #spt.show_plot(line_id='alkali', convert_to_air=False)
+                #spt.show_plot(line_id='mystery', convert_to_air=False)
+                
         #plt.legend()
         #plt.show()
 
@@ -753,7 +795,7 @@ if __name__ == '__main__':
             #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=header['see_sig'], kernel_type='gaussian')
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=header['see_sig'], kernel_type='gaussian')
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
             #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)

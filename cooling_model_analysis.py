@@ -410,6 +410,7 @@ def loggteff_to_logTc(teff, logg):
 target_mass=  loggteff_to_m(target_teff, target_logg)
 print('Target mass:', target_mass)
 
+
 #target_mass_dist=loggteff_to_m(target_teff_dist, target_logg_dist)
 target_mass_dist=operate_on_dist(target_teff_dist, target_logg_dist,loggteff_to_m)
 print(target_mass_dist.shape)

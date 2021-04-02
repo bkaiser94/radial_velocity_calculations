@@ -1082,3 +1082,8 @@ def start_ApJ_fig(width_cols=1, constrained_layout=True, width_height=[1.,1.]):
     
     return
 
+
+def make_spec_hump(cent_wave,wave_sigma,amp):
+    
+    return
+
