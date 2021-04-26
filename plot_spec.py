@@ -84,10 +84,10 @@ plot_400m2_tell= False
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-#norm_range=[6630,6690]#wider double norm range
+norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
-norm_range=[3900, 4000]
+#norm_range=[3900, 4000]
 #norm_range=[8640,8790]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
@@ -97,8 +97,8 @@ norm_range=[3900, 4000]
 #file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
-file_setting= 'all_SDSS'
-#file_setting= 'two_arm'
+#file_setting= 'all_SDSS'
+file_setting= 'two_arm'
 #file_setting= 'all_super'
 #file_setting= 'two_arm_compare_SDSS'
 #file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
@@ -190,8 +190,8 @@ elif file_setting=='all_SDSS':
 elif file_setting== 'two_arm':
     #m1_names =glob('avg_fwctb*400m1*fits')
     #m2_names= glob('avg_fwctb*400m2*fits')
-    m1_names =glob('ravg_fwctb*400m1*fits')
-    m2_names= glob('ravg_fwctb*400m2*fits')
+    m1_names =glob('ravg_fwctb*LHS*400m1*fits')
+    m2_names= glob('ravg_fwctb*LHS*400m2*fits')
     #m1_names =glob('ravg_fwctb*1644*400m1*fits')
     #m2_names= glob('ravg_fwctb*1644*400m2*fits')
     #m1_names =glob('super_fwctb*400m1*fits')
@@ -590,14 +590,14 @@ if __name__ == '__main__':
                 #plt.ylim(top=np.nanpercentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
                 
                 
-                #plot_spectrum(target_spec1, filename1.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width= sdss_pix_width)
-                #plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+                plot_spectrum(target_spec1, filename1.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width= sdss_pix_width)
+                plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
                 #tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
                 
                 
                 
-                smooth_spec1=convolve_spectrum(target_spec1, header1, kernel_type='box', pix_width=sdss_pix_width, kernel_width=slit_width)
-                smooth_spec2=convolve_spectrum(target_spec2, header2, kernel_type='box', pix_width=sdss_pix_width, kernel_width=slit_width)
+                #smooth_spec1=convolve_spectrum(target_spec1, header1, kernel_type='box', pix_width=sdss_pix_width, kernel_width=slit_width)
+                #smooth_spec2=convolve_spectrum(target_spec2, header2, kernel_type='box', pix_width=sdss_pix_width, kernel_width=slit_width)
                 
                 
                 
@@ -607,15 +607,15 @@ if __name__ == '__main__':
                 #plt.plot((const.c/(target_spec1[0]*u.angstrom)).to(u.Hz),spt.flambda_to_fnu(smooth_spec1)[1],label=filename1.split('/')[-1])
                 #plt.plot((const.c/(target_spec2[0]*u.angstrom)).to(u.Hz),spt.flambda_to_fnu(smooth_spec2)[1],label=filename2.split('/')[-1])
                 
-                plt.plot(target_spec1[0],spt.flambda_to_fnu(smooth_spec1)[1],label=filename1.split('/')[-1])
-                plt.plot(target_spec2[0],spt.flambda_to_fnu(smooth_spec2)[1],label=filename2.split('/')[-1])
+                #plt.plot(target_spec1[0],spt.flambda_to_fnu(smooth_spec1)[1],label=filename1.split('/')[-1])
+                #plt.plot(target_spec2[0],spt.flambda_to_fnu(smooth_spec2)[1],label=filename2.split('/')[-1])
                 
                 #rv=1000
                 #target_spec2[0]=spt.get_doppler_shifted(target_spec2[0],rv)
                 #plt.plot(target_spec2[0],spt.flambda_to_fnu(smooth_spec2)[1],label=filename2.split('/')[-1]+' w/ RV of'+str(rv)+' km/s')
                 
-                wave_shift=-151
-                plt.plot(target_spec2[0]+wave_shift,spt.flambda_to_fnu(smooth_spec2)[1],label=filename2.split('/')[-1]+' w/ shift of ' + str(wave_shift) + ' A')
+                #wave_shift=-151
+                #plt.plot(target_spec2[0]+wave_shift,spt.flambda_to_fnu(smooth_spec2)[1],label=filename2.split('/')[-1]+' w/ shift of ' + str(wave_shift) + ' A')
                 
                 ###tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
                 ###plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, tell_filename=tell_filename)
@@ -629,12 +629,14 @@ if __name__ == '__main__':
                 ####plt.legend()
                 
                 
-                plt.title(filename1+ ' & '+ filename2.split('/')[-1])
+                #plt.title(filename1+ ' & '+ filename2.split('/')[-1])
                 #plt.show()
-                plt.legend()
-                plt.show()
+                #plt.legend()
+                #plt.show()
                 #spt.show_plot(line_id='alkali', convert_to_air=False)
                 #spt.show_plot(line_id='mystery', convert_to_air=False)
+                #spt.show_plot(line_id='cyclotron3900', convert_to_air=False)
+                spt.show_plot(line_id='cyclotron3800', convert_to_air=False)
                 
         #plt.legend()
         #plt.show()
@@ -725,7 +727,8 @@ if __name__ == '__main__':
             
             #plt.ylim(top=np.percentile(np.hstack([target_spec1[1], target_spec2[1]]),99.9)*1.1)
             plt.xlim(3700,9000)
-        spt.show_plot(line_id='alkali', convert_to_air=True)
+        #spt.show_plot(line_id='alkali', convert_to_air=True)
+        spt.show_plot(show_legend=True, line_id='ca', convert_to_air=True)
         spt.show_plot()
             
     if file_setting=='two_arm_compare_SDSS':
@@ -832,7 +835,8 @@ if __name__ == '__main__':
         #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
         #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
         plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
-        spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
+        #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
+        spt.show_plot(show_legend=True, line_id='ca', convert_to_air=True)
         #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
         #plt.xlabel('BMJD_TDB')
         #plt.show()

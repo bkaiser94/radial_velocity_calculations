@@ -313,7 +313,8 @@ line_color_dict={
     'Rb': 'magenta',
     'Ca': '#001a4b',
     'MgH':'#6e76c1',
-    '?': '#f39117'
+    '?': '#f39117',
+    'cyclotron': '#001a4b'
         }
 
 #dictionary of guesses for the box1d model used to generate the shape for background skylines
@@ -381,7 +382,9 @@ line_id_dict={
     'alkali':'alkali_lines_vac.csv',
     'ca':'Ca_1_2_lines_vac.csv',
     'cool_wd':'all_lines_cool_WD.csv',
-    'mystery':'mystery_lines.csv'
+    'mystery':'mystery_lines.csv',
+    'cyclotron3900':'cyclotron_B91MG_3900A_n3.csv',
+    'cyclotron3800':'cyclotron_B94MG_3800A_n3.csv'
     }
 
 
