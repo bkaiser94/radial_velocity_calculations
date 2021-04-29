@@ -46,38 +46,71 @@ def extract_spectrum(img_data, header, polynomials= [0,0], core_sides=2., bkg_co
         target_light= np.append(target_light,[xsum])
        
         #up_bkg=img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+bkg_core_sides+1),x_pos]
-        
-        up_bkg=img_data[bkg_trace(x_pos, sign='plus')-bkg_core_sides:bkg_trace(x_pos, sign='plus')+bkg_core_sides+1,x_pos]
-        #down_bkg= img_data[np.int_(poly_curve_y[x_pos]-bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]-bkg_shift+bkg_core_sides+1),x_pos]
-        down_bkg= img_data[bkg_trace(x_pos, sign='minus')-bkg_core_sides:bkg_trace(x_pos, sign='minus') +bkg_core_sides+1,x_pos]
-        bkg_comb= np.append(up_bkg, down_bkg)
-        if bkg_method=='poly':
-            #up_bkg_coords= np.arange(bkg_trace(x_pos, sign='plus')-bkg_core_sides,bkg_trace(x_pos, sign='plus')+bkg_core_sides+1, 1)
-            #down_bkg_coords= np.arange(bkg_trace(x_pos, sign='minus')-bkg_core_sides,bkg_trace(x_pos, sign='minus')+bkg_core_sides+1, 1)
-            up_bkg_coords=y_positions[bkg_trace(x_pos, sign='plus')-bkg_core_sides:bkg_trace(x_pos, sign='plus')+bkg_core_sides+1,x_pos]
-            down_bkg_coords= y_positions[bkg_trace(x_pos, sign='minus')-bkg_core_sides:bkg_trace(x_pos, sign='minus') +bkg_core_sides+1,x_pos]
-            bkg_coords= np.append(up_bkg_coords, down_bkg_coords)
-            
+        if bkg_method == 'opp_get_bright' :
+            bkg_comb=img_data[bkg_trace(x_pos, sign='plus')-core_sides:bkg_trace(x_pos, sign='plus')+core_sides+1,x_pos]
+            bkg_coords=y_positions[bkg_trace(x_pos, sign='plus')-core_sides:bkg_trace(x_pos, sign='plus')+core_sides+1,x_pos]
             trace_coords= np.arange(spt.discrete_int(poly_curve_y[x_pos])-core_sides, spt.discrete_int(poly_curve_y[x_pos])+core_sides+1, 1)
-            #print('bkg_coords', bkg_coords)
-            #print('bkg_comb', bkg_comb)
-            bkg_polynomial= np.polyfit(bkg_coords, bkg_comb, bkg_poly_deg)
             if x_pos%1000 == 0:
-                plt.plot(img_data[:,x_pos], label="Full cross section of flux", linestyle= 'none', marker='o')
-                plt.plot(bkg_coords, bkg_comb, label='bkg points', linestyle='none', marker='o')
-                rep_coords= np.linspace(np.nanmin(bkg_coords), np.nanmax(bkg_coords), 1000)
-                plt.plot(rep_coords, np.polyval(bkg_polynomial, rep_coords), label='bkg fit')
-                plt.plot(trace_coords, trace_vals, label='trace flux')
-                plt.title("spext plot:"+  str(x_pos))
-                plt.xlabel('y coord')
-                plt.ylabel('counts')
-                plt.legend()
-                plt.show()
-            bkg_calc_vals= np.polyval(bkg_polynomial, trace_coords)
-            bkg_sum= np.sum(bkg_calc_vals)
-        elif bkg_method== 'avg':
-            bkg_sum= trace_vals.shape[0]*np.copy(np.mean(bkg_comb)) #take the mean of the bkg portion of the sky
-            
+                    plt.plot(img_data[:,x_pos], label="Full cross section of flux", linestyle= 'none', marker='o')
+                    plt.plot(bkg_coords, bkg_comb, label='bkg points', linestyle='none', marker='o')
+                    rep_coords= np.linspace(np.nanmin(bkg_coords), np.nanmax(bkg_coords), 1000)
+                    #plt.plot(rep_coords, np.polyval(bkg_polynomial, rep_coords), label='bkg fit')
+                    plt.plot(trace_coords, trace_vals, label='trace flux')
+                    plt.title("spext plot:"+  str(x_pos))
+                    plt.xlabel('y coord')
+                    plt.ylabel('counts')
+                    plt.legend()
+                    plt.show()
+            bkg_sum = trace_vals.shape[0]*np.copy(np.mean(bkg_comb))
+        
+        elif bkg_method == 'opp_get_dim':
+            bkg_comb=img_data[bkg_trace(x_pos, sign='plus')-core_sides:bkg_trace(x_pos, sign='plus')+core_sides+1,x_pos]
+            bkg_coords=y_positions[bkg_trace(x_pos, sign='plus')-core_sides:bkg_trace(x_pos, sign='plus')+core_sides+1,x_pos]
+            trace_coords= np.arange(spt.discrete_int(poly_curve_y[x_pos])-core_sides, spt.discrete_int(poly_curve_y[x_pos])+core_sides+1, 1)
+            if x_pos%1000 == 0:
+                    plt.plot(img_data[:,x_pos], label="Full cross section of flux", linestyle= 'none', marker='o')
+                    plt.plot(bkg_coords, bkg_comb, label='bkg points', linestyle='none', marker='o')
+                    rep_coords= np.linspace(np.nanmin(bkg_coords), np.nanmax(bkg_coords), 1000)
+                    #plt.plot(rep_coords, np.polyval(bkg_polynomial, rep_coords), label='bkg fit')
+                    plt.plot(trace_coords, trace_vals, label='trace flux')
+                    plt.title("spext plot:"+  str(x_pos))
+                    plt.xlabel('y coord')
+                    plt.ylabel('counts')
+                    plt.legend()
+                    plt.show()
+            bkg_sum = trace_vals.shape[0]*np.copy(np.mean(bkg_comb))
+        else:
+            up_bkg=img_data[bkg_trace(x_pos, sign='plus')-bkg_core_sides:bkg_trace(x_pos, sign='plus')+bkg_core_sides+1,x_pos]
+            #down_bkg= img_data[np.int_(poly_curve_y[x_pos]-bkg_shift-bkg_core_sides):np.int_(poly_curve_y[x_pos]-bkg_shift+bkg_core_sides+1),x_pos]
+            down_bkg= img_data[bkg_trace(x_pos, sign='minus')-bkg_core_sides:bkg_trace(x_pos, sign='minus') +bkg_core_sides+1,x_pos]
+            bkg_comb= np.append(up_bkg, down_bkg)
+            if bkg_method=='poly':
+                #up_bkg_coords= np.arange(bkg_trace(x_pos, sign='plus')-bkg_core_sides,bkg_trace(x_pos, sign='plus')+bkg_core_sides+1, 1)
+                #down_bkg_coords= np.arange(bkg_trace(x_pos, sign='minus')-bkg_core_sides,bkg_trace(x_pos, sign='minus')+bkg_core_sides+1, 1)
+                up_bkg_coords=y_positions[bkg_trace(x_pos, sign='plus')-bkg_core_sides:bkg_trace(x_pos, sign='plus')+bkg_core_sides+1,x_pos]
+                down_bkg_coords= y_positions[bkg_trace(x_pos, sign='minus')-bkg_core_sides:bkg_trace(x_pos, sign='minus') +bkg_core_sides+1,x_pos]
+                bkg_coords= np.append(up_bkg_coords, down_bkg_coords)
+                
+                trace_coords= np.arange(spt.discrete_int(poly_curve_y[x_pos])-core_sides, spt.discrete_int(poly_curve_y[x_pos])+core_sides+1, 1)
+                #print('bkg_coords', bkg_coords)
+                #print('bkg_comb', bkg_comb)
+                bkg_polynomial= np.polyfit(bkg_coords, bkg_comb, bkg_poly_deg)
+                if x_pos%1000 == 0:
+                    plt.plot(img_data[:,x_pos], label="Full cross section of flux", linestyle= 'none', marker='o')
+                    plt.plot(bkg_coords, bkg_comb, label='bkg points', linestyle='none', marker='o')
+                    rep_coords= np.linspace(np.nanmin(bkg_coords), np.nanmax(bkg_coords), 1000)
+                    plt.plot(rep_coords, np.polyval(bkg_polynomial, rep_coords), label='bkg fit')
+                    plt.plot(trace_coords, trace_vals, label='trace flux')
+                    plt.title("spext plot:"+  str(x_pos))
+                    plt.xlabel('y coord')
+                    plt.ylabel('counts')
+                    plt.legend()
+                    plt.show()
+                bkg_calc_vals= np.polyval(bkg_polynomial, trace_coords)
+                bkg_sum= np.sum(bkg_calc_vals)
+            elif bkg_method== 'avg':
+                bkg_sum= trace_vals.shape[0]*np.copy(np.mean(bkg_comb)) #take the mean of the bkg portion of the sky
+                
             
         #plt.legend()
         #print "trace_vals.shape", trace_vals.shape
@@ -88,8 +121,8 @@ def extract_spectrum(img_data, header, polynomials= [0,0], core_sides=2., bkg_co
         #bkg_sum= np.sum(img_data[np.int_(poly_curve_y[x_pos]+bkg_shift-core_sides):np.int_(poly_curve_y[x_pos]+bkg_shift+core_sides+1),x_pos])
         bkg_light= np.append(bkg_light,[bkg_sum])
         bkg_noise2_list= np.append(bkg_noise2_list, [bkg_noise2]) #list of noise values for a single pixel (resulting from the mean of the sky) for a given column
-        bkg_up_comb= np.append(bkg_up_comb, [np.sum(up_bkg)])
-        bkg_down_comb= np.append(bkg_down_comb, [np.sum(down_bkg)])
+        #bkg_up_comb= np.append(bkg_up_comb, [np.sum(up_bkg)]) #commented 2021-04-26
+        #bkg_down_comb= np.append(bkg_down_comb, [np.sum(down_bkg)])#commented 2021-04-26
     #plt.plot(bkg_up_comb, label='bkg_up_comb')
     #plt.plot(bkg_down_comb, label='bkg_down_comb')
     #plt.plot(target_light, label='target_light')
