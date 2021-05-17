@@ -39,8 +39,8 @@ test_side = test_width/2
 
 pix_width=3
 sdss_pix_width = 10
-#sdss_scale_factor=20.6 #BOSS scaling
-sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+sdss_scale_factor=20.6 #BOSS scaling
+#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 sdss_seeing=0.7 #arcsec seeing
 sdss_see_sig=sdss_seeing/2.355/ pixel_scale
 
@@ -74,7 +74,7 @@ plot_400m2_tell= False
 #norm_range=[7490,7510] #outside telluric
 #norm_range=[7470, 7530]
 #norm_range=[7440, 7550]
-norm_range=[7517,7556] #20190528
+#norm_range=[7517,7556] #20190528
 #norm_range=[7860.,8050.]
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
@@ -84,14 +84,14 @@ norm_range=[7517,7556] #20190528
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-#norm_range=[6630,6690]#wider double norm range
+norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 #norm_range=[3900, 4000]
 #norm_range=[8640,8790]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
@@ -100,7 +100,7 @@ file_setting='all_avg'
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
-#file_setting= 'two_arm_compare_SDSS'
+file_setting= 'two_arm_compare_SDSS'
 #file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
 
 single_iterate= False
@@ -109,8 +109,8 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('ravg_fwctb*other*fits')
-    #filenames=glob('ravg_fwctb*WISE*fits')
+    #filenames=glob('ravg_fwctb*other*fits')
+    filenames=glob('ravg_fwctb*WISE*fits')
 
     #filenames=glob('ravg_zfwctb*fits')
     #filenames=glob('*ravg*2356*fits')
@@ -127,6 +127,8 @@ if file_setting=='all_avg':
     #filenames=glob('avg_fwctb*fits')
     #filenames=glob('avg_fwctb*SDSSJ1252*')
     #filenames=glob('avg_*')
+    
+    filenames= sorted(filenames)
     single_iterate=True
     double_iterate=False
     #single_iterate=False
@@ -144,10 +146,12 @@ elif file_setting=='all_wctb':
 elif file_setting=='all_fwctb':
     print(file_setting)
     #filenames=glob('fwctb*')
-    filenames=glob('fwctb*PSR*47_*')
+    filenames=glob('fwctb*WISE*')
     #filenames=glob('fwctb*LTT*')
     #filenames=glob('fwctb*SDSS*n*')
     #filenames=glob('fwctb*2356*')
+    
+    filenames= sorted(filenames)
     single_iterate=True
     double_iterate=False
 
@@ -174,6 +178,8 @@ elif file_setting=='compare_SDSS':
     #sdss_names = glob(sdss_path+'LHS*.fits')
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
+    
+    sdss_names= sorted(sdss_names)
     print('sdss_names:',sdss_names)
     single_iterate=True
     double_iterate=False
@@ -214,7 +220,10 @@ elif file_setting =='two_arm_compare_SDSS':
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'*sdss*.fits')
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
-    sdss_names = glob(sdss_path+'*M*.fits')
+    #sdss_names = glob(sdss_path+'*M*.fits')
+    sdss_names = glob(sdss_path+'G0_K5/*G*.fits')
+    
+    sdss_names= sorted(sdss_names)
     single_iterate=False
     double_iterate=False
     
@@ -770,8 +779,8 @@ if __name__ == '__main__':
             
             #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header2, norm=True, smooth=True, kernel_type='gaussian', pix_width=pix_width, color='r')
             plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
-            plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=False, kernel_type='gaussian',  color='g')
-            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=False, kernel_type='gaussian',  color='b')
+            plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='gaussian',  color='g')
+            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='gaussian',  color='b')
             #plot_dwavelength(target_spec1, filename1, read_in=False)
             #plot_dwavelength(target_spec2, filename2, read_in=False)
             #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
@@ -799,7 +808,7 @@ if __name__ == '__main__':
             #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
             #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
@@ -809,7 +818,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
             #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
             #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            plot_sky(filename, offset=0, line_labels=False, convolve=False)
+            #plot_sky(filename, offset=0, line_labels=False, convolve=False)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:
@@ -823,7 +832,7 @@ if __name__ == '__main__':
             #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
             #plt.legend()
             #plt.show()
-            
+            #spt.show_plot(show_legend=True, line_id='ca', convert_to_air=True)
             counter+=1
             #try:
                 #plt.title(header['airoftyp'])
@@ -837,7 +846,7 @@ if __name__ == '__main__':
         #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
         #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
         #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
-        spt.show_plot(show_legend=True, line_id='ca', convert_to_air=True)
+        spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
         #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
         #plt.xlabel('BMJD_TDB')
         #plt.show()
