@@ -32,8 +32,8 @@ from glob import glob
 
 
 
+input_file_string='*thick*'
 #input_file_string='*thin*'
-input_file_string='*thin*'
 original_dir= os.getcwd()
 input_file_list=sorted(glob(input_file_string))
 output_dir='/Users/BenKaiser/Desktop/Bedard_WD_cooling_models/cleaned_individual_masses/'
@@ -47,6 +47,26 @@ mass_index=1
 decimal_index=1
 
 save_singles= True
+
+
+######################3
+#pairs of column names that need to be switched with each other.
+#['currentname','namethatitneedstobe']
+col_name_pairs=[
+    ['mass',"Mass"],
+    ['Log(g)','logg'],
+    ['R','rad'],
+    ['L','Lum'],
+    ['Log(rhoc)','log(rhoc)'],
+    ['Mx/M','M_x/M'],
+    ['Log(qx)','Log(q_x)'],
+    ['Lnu','Lum_nu']
+    ]
+
+def change_col_names(input_table):
+    
+    
+    return output_table
 #######################
 def clean_single_file(input_file, save_singles=save_singles):
 
@@ -198,6 +218,7 @@ def clean_single_file(input_file, save_singles=save_singles):
 
 ##########################
 
+
 def make_super_table(save_super_table=False):
     super_table=clean_single_file(input_file_list[0],save_singles=False)
     
@@ -207,16 +228,16 @@ def make_super_table(save_super_table=False):
     
     super_table.pprint()
     
+    single_input_file=input_file_list[0]
+    first_strings=single_input_file.split('_')[:mass_index]
+    last_strings=single_input_file.split('_')[mass_index+1:]
+    print('first_strings', first_strings)
+    print('last_strings', last_strings)
+    #name_strings=first_strings.extend(last_strings)
+    #print('name_strings', name_strings)
+    new_name='_'.join([first_strings[0],last_strings[0]])
+    output_filename='bedard2020_'+new_name.split('.')[0]+'_cleaned'+'.csv'
     if save_super_table:
-        single_input_file=input_file_list[0]
-        first_strings=single_input_file.split('_')[:mass_index]
-        last_strings=single_input_file.split('_')[mass_index+1:]
-        print('first_strings', first_strings)
-        print('last_strings', last_strings)
-        #name_strings=first_strings.extend(last_strings)
-        #print('name_strings', name_strings)
-        new_name='_'.join([first_strings[0],last_strings[0]])
-        output_filename='bedard2020_'+new_name.split('.')[0]+'_cleaned'+'.csv'
         print('output_filename:', output_filename)
         #single
         os.chdir(super_output_dir)
@@ -226,9 +247,49 @@ def make_super_table(save_super_table=False):
         os.chdir(original_dir)
     else:
         pass
-    return super_table
+    return output_filename
+
+#############
 
 
+def fix_col_names():
+    super_filename=make_super_table(save_super_table=False)
+    os.chdir(super_output_dir)
+    new_compiled_list=[]
+    with open(super_filename, 'r') as csvfile:
+        reader=csv.reader(csvfile, delimiter=',')
+        index=0
+        for row in reader:
+            if index==0:
+                print('name row', row)
+                for col_name_pair in col_name_pairs:
+                    row_index=0
+                    for name in row:
+                        if name==col_name_pair[0]:
+                            print('\n\nname match:',name, col_name_pair[0])
+                            print('current row:',row)
+                            row[row_index]=col_name_pair[1]
+                            print('new row:',row,'\n\n')
+                        else:
+                            pass
+                        row_index+=1
+            else:
+                pass
+            
+            new_compiled_list.append(row)
+            index+=1
+        #print(new_compiled_list)
+    file_parts=super_filename.split('.')
+    new_super_filename=file_parts[0]+'_colnames.'+file_parts[1]
+    with open(new_super_filename, 'w') as csvfile:
+        writer=csv.writer(csvfile,delimiter=',')
+        for row in new_compiled_list:
+            writer.writerow(row)
+    
+    print('file should be written.')
+    print('new_super_filename:',new_super_filename)
+
+    return
 
 
 ############
@@ -236,5 +297,5 @@ def make_super_table(save_super_table=False):
 #for input_file in input_file_list:
     #clean_single_file(input_file)
     
-make_super_table(save_super_table=False)
-
+#make_super_table(save_super_table=False)
+fix_col_names()

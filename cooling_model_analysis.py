@@ -22,8 +22,10 @@ import cal_params as cp
 import hurley_polynomials as hp
 
 
-cooling_model_file='COModel_ThinH.csv'
+#cooling_model_file='COModel_ThinH.csv'
 #cooling_model_file='COModel_ThickH.csv'
+#cooling_model_file='bedard2020_seq_thickH.csv'
+cooling_model_file='bedard2020_seq_thinH.csv'
 
 wd_file='temp_wd_abundances.csv'
 
@@ -104,11 +106,11 @@ default_z=0.02 #approximately solar
 
 
 ##1644
-#wd_name='WD J1644-0449'
-#target_logg=7.77
-#target_logg_err= 0.23
-#target_teff= 3830.
-#target_teff_err= 230.
+wd_name='WD J1644-0449'
+target_logg=7.77
+target_logg_err= 0.23
+target_teff= 3830.
+target_teff_err= 230.
 
 #J1150
 #from Gentile Fusillo et al. 2019
@@ -126,11 +128,11 @@ default_z=0.02 #approximately solar
 #target_teff_err= 500
 
 #GD378 from Klein et al. 2021
-wd_name='GD 378'
-target_logg=7.93
-target_logg_err=0.06
-target_teff= 15620
-target_teff_err= 500
+#wd_name='GD 378'
+#target_logg=7.93
+#target_logg_err=0.06
+#target_teff= 15620
+#target_teff_err= 500
 
 ##PG 1225-079
 #wd_name='PG 1225-079'
