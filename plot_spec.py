@@ -91,7 +91,7 @@ norm_range=[6630,6690]#wider double norm range
 #norm_range=[8640,8790]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
@@ -100,7 +100,7 @@ norm_range=[6630,6690]#wider double norm range
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
-file_setting= 'two_arm_compare_SDSS'
+#file_setting= 'two_arm_compare_SDSS'
 #file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
 
 single_iterate= False
@@ -109,9 +109,9 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
+    filenames=glob('ravg_fwctb*fits')
     #filenames=glob('ravg_fwctb*other*fits')
-    filenames=glob('ravg_fwctb*WISE*fits')
-
+    #filenames=glob('ravg_fwctb*WISE*fits')
     #filenames=glob('ravg_zfwctb*fits')
     #filenames=glob('*ravg*2356*fits')
     #filenames=glob('ravg_fwctb*1150*fits')
@@ -145,8 +145,8 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    #filenames=glob('fwctb*')
-    filenames=glob('fwctb*WISE*')
+    filenames=glob('fwctb*')
+    #filenames=glob('fwctb*WISE*')
     #filenames=glob('fwctb*LTT*')
     #filenames=glob('fwctb*SDSS*n*')
     #filenames=glob('fwctb*2356*')
