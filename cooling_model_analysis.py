@@ -22,15 +22,20 @@ import cal_params as cp
 import hurley_polynomials as hp
 
 
-#cooling_model_file='COModel_ThinH.csv'
-#cooling_model_file='COModel_ThickH.csv'
-cooling_model_file='bedard2020_seq_thickH.csv'
-#cooling_model_file='bedard2020_seq_thinH.csv'
+#print(sys.version.split())
+python_version_long=sys.version.split()[0]
+python_digits=python_version_long.split('.')
+python_version_number=float('.'.join([python_digits[0],python_digits[1]]))
+#print(python_version_number)
 
 #wd_file='temp_wd_abundances.csv'
 wd_file='20210527_all_wd_abundances_new_Blouin.csv'
 
+atm_type='thinH'
+#atm_type='thickH'
 
+#cooling_modeler='fontaine2001'
+cooling_modeler='bedard2020'
 
 #cooling_model_file=cp.ref_dir+'WD_cooling_models/'+cooling_model_file
 
@@ -48,7 +53,7 @@ percent_range=0.68 #error bar coverage for total age estimate.
 #percent_range=0.95
 #null_age_val=20. #usually 20
 null_age_val=50. #I'm experimenting though for the moment
-default_limit_universe=True
+default_limit_universe=False
 default_randomize=True
 massloss_default=True
 #default_z=0.0001 #allegedly thick disk value
@@ -63,20 +68,20 @@ default_z=0.02 #approximately solar
 #target_teff= 6000. #K
 #target_teff_err=190
 
-##1636
-#wd_name='SDSSJ1636+1619'
-#target_logg= 8.10
-#target_logg_err=0.06
-#target_teff= 4410. #K
-#target_teff_err=200
-
+##
+##1644
+#wd_name='WD J1644-0449'
+#target_logg=7.77
+#target_logg_err= 0.23
+#target_teff= 3830.
+#target_teff_err= 230.
 
 ##1330
 #wd_name='SDSSJ1330+6435'
 #target_logg= 8.26
 #target_logg_err=0.15
 #target_teff= 4310. #K
-#target_teff_err=190
+#target_teff_err=190.
 
 #2356
 #wd_name='WDJ2356-209'
@@ -85,12 +90,21 @@ default_z=0.02 #approximately solar
 #target_teff= 4040. #K
 #target_teff_err=110.
 
+###J1636
+wd_name='SDSSJ1636+1619'
+target_logg= 8.10
+target_logg_err=0.06
+target_teff= 4410. #K
+target_teff_err=200.
+
+
+
 ##J2317 Hollands et al 2021 parameters
-wd_name='WDJ2317+1830'
-target_logg=8.64
-target_logg_err=0.03
-target_teff= 4210. #K
-target_teff_err=50.
+#wd_name='WDJ2317+1830'
+#target_logg=8.64
+#target_logg_err=0.03
+#target_teff= 4210. #K
+#target_teff_err=50.
 
 ##J2317 Simon's new parameters
 #wd_name='WDJ2317+1830'
@@ -121,12 +135,6 @@ target_teff_err=50.
 #target_teff_err=50.
 
 
-##1644
-#wd_name='WD J1644-0449'
-#target_logg=7.77
-#target_logg_err= 0.23
-#target_teff= 3830.
-#target_teff_err= 230.
 
 #J1150
 #from Gentile Fusillo et al. 2019
@@ -214,7 +222,36 @@ def get_wd_parameters(wd_name, wd_file=wd_file):
 
 #####################
 
+#cooling_model_file='COModel_ThinH.csv'
+#cooling_model_file='COModel_ThickH.csv'
+#cooling_model_file='bedard2020_seq_thickH.csv'
+#cooling_model_file='bedard2020_seq_thinH.csv'
 
+
+
+interp_kind='cubic'
+#interp_kind='quintic'
+
+if cooling_modeler== 'bedard2020':
+    if atm_type=='thinH':
+        cooling_model_file='bedard2020_seq_thinH.csv'
+        interp_kind='cubic'
+        print("\n\n*****\n\nbedard2020 with thinH atmosphere selected.\nSetting interp_kind='cubic'\nBecause I know it works correctly-ish.")
+    elif atm_type=='thickH':
+        cooling_model_file='bedard2020_seq_thickH.csv'
+elif cooling_modeler=='fontaine2001':
+    if atm_type=='thinH':
+        cooling_model_file='COModel_ThinH.csv'
+        print("\n\n*****\n\nfontaine2001 with thinH atmosphere selected.\nSetting interp_kind='cubic'\nBecause I know it works correctly-ish.")
+        interp_kind='cubic'
+
+    elif atm_type=='thickH':
+        cooling_model_file='COModel_ThickH.csv'
+        print("\n\n fontaine2001 with thickH atmosphere doesn't actually work correctly for some reason with any interpolation, so... we're gonna stop here. Pick a different setting. We also have the bedard2020 cooling_modeler option, which I have hopefully gotten running by the time you see this message...\n\n")
+        sys.exit()
+else:
+    print('\n\n**********\n\nInvalid cooling_modeler and atm_type selected:')
+    print('cooling_modeler:',cooling_modeler,'atm_type:',atm_type,'\n********\n\n')
 
 cooling_model_file=cp.ref_dir+'WD_cooling_models/'+cooling_model_file
 
@@ -231,13 +268,15 @@ def get_output_name(wd_name=wd_name):
 
 
 
-n=100000
-#n=int(1e6)
+#n=100000
+n=int(1e6)
 #n=1000
 #n=10
 
-bin_widths=0.01 #default width of age bin widths for histogram.
-age_bin_widths=0.01
+#bin_widths=0.01
+#age_bin_widths=0.01
+bin_widths=0.1 #default width of age bin widths for histogram.
+age_bin_widths=0.1
 simon_mass= 0.45
 simon_mass_err= 0.12
 
@@ -253,9 +292,6 @@ given_target_mass= 0.5
 
 test_mass=0.5
 
-
-interp_kind='cubic'
-#interp_kind='quintic'
 
 #target_logg=8.26
 #target_teff= 4310. #K
@@ -291,11 +327,23 @@ interp_kind='cubic'
     
 #those same values but with the uncertainties on each one also included. I'm not going to rescale the 
 #boundaries to make it continuous for the randomized values as well because that would then require 
-#randomizing each one and there's no guarantee that randomly selected values would even by continuous. 
+#randomizing each one and there's no guarantee that randomly selected values would even be continuous. 
+#2021-05-28 This was the version (below this comment) that was in place for Kaiser et al. 2020/2021 (the Science paper on the discovery of lithium)
+#cummings_m_ranges= [
+    #[[-np.inf,0.532],[np.nan,np.nan],[np.nan,np.nan]],
+    #[[0.532,0.717],[0.080,0.489],[0.016,0.030]],
+    #[[0.717,0.856],[0.187,0.184],[0.061,0.199]],
+    #[[0.856,1.24],[0.107,0.471],[0.016,0.077]],
+    #[[1.24,np.inf],[np.nan,np.nan],[np.nan,np.nan]]
+    #]
+
+
+#2021-05-28 I'm going to get experimental here. Technically other checks outside the IFMR lower boundary should remove unphysical solutions, so I'm going to lower the IFMR lower boundary to a mass that would normally be mass-gaining for MS to WD, but remember the IFMR has randomized boundaries, so I'm going to try letting just the testing mass loss requirement perform the lower truncation in coordination with confinement to whatever total age.
+
 
 cummings_m_ranges= [
-    [[-np.inf,0.532],[np.nan,np.nan],[np.nan,np.nan]],
-    [[0.532,0.717],[0.080,0.489],[0.016,0.030]],
+    [[-np.inf,0.0001],[np.nan,np.nan],[np.nan,np.nan]],
+    [[0.0001,0.717],[0.080,0.489],[0.016,0.030]],
     [[0.717,0.856],[0.187,0.184],[0.061,0.199]],
     [[0.856,1.24],[0.107,0.471],[0.016,0.077]],
     [[1.24,np.inf],[np.nan,np.nan],[np.nan,np.nan]]
@@ -440,8 +488,8 @@ def teffm_to_age(teff, m):
     #print('teff_to_age.shape',output_vals.shape)
     try:
         print(output_vals.shape[1])
-        #return output_vals.T[0]
-        return output_vals[0]
+        return output_vals.T[0]
+        #return output_vals[0]
     except IndexError:
         return output_vals
     
@@ -484,8 +532,8 @@ print('Teff shape',cooling_table['Teff'][mass_subset_inds].shape)
 #interped_ages=teffm_to_age(cooling_table['Teff'][mass_subset_inds],cooling_table['Mass'][mass_subset_inds])
 interped_ages=operate_on_dist(cooling_table['Teff'][mass_subset_inds],cooling_table['Mass'][mass_subset_inds],teffm_to_age)
 #interped_ages=teffm_to_age(cooling_table['Teff'][mass_subset_inds], [test_mass,test_mass])
-for i in range(0,interped_ages.shape[0]):
-    print(cooling_table['Teff'][mass_subset_inds][i],interped_ages[i],cooling_table['Age'][mass_subset_inds][i])
+#for i in range(0,interped_ages.shape[0]):
+    #print(cooling_table['Teff'][mass_subset_inds][i],interped_ages[i],cooling_table['Age'][mass_subset_inds][i])
 
 plt.scatter(cooling_table['Teff'][mass_subset_inds], cooling_table['Age'][mass_subset_inds],label='grid points')
 plt.scatter(cooling_table['Teff'][mass_subset_inds], interped_ages, label='interpolated ages for mass '+str(test_mass))
@@ -529,6 +577,42 @@ plt.xlabel("Teff")
 plt.title('Mass = '+str(test_mass)+ '  Error of Cooling Ages for ' +interp_kind+' interpolation')
 #plt.xlim([0,10000])
 plt.show()
+
+unique_masses=np.unique(cooling_table['Mass'])
+#for test_mass in np.arange(0.2,1.3,0.05):
+color_list=['r','g','b','orange','k','pink','purple','brown','olive','cyan','yellow','dodgerblue','tomato','maroon','darkolivegreen','goldenrod','lime','burlywood','aquamarine','k','k','k','k','k','k']
+
+#sub_masses=np.where((unique_masses>=0.4) & (unique_masses <=1.2))
+#for test_mass,plot_color  in zip(unique_masses[sub_masses],color_list):
+for test_mass,plot_color  in zip(unique_masses,color_list):
+    print(test_mass)
+    mass_subset_inds=np.where(cooling_table['Mass']==test_mass)
+    #print(mass_subset_inds)
+    print('Teff shape',cooling_table['Teff'][mass_subset_inds].shape)
+    #interped_ages=teffm_to_age(cooling_table['Teff'][mass_subset_inds],cooling_table['Mass'][mass_subset_inds])
+    interped_ages=operate_on_dist(cooling_table['Teff'][mass_subset_inds],cooling_table['Mass'][mass_subset_inds],teffm_to_age)
+    #interped_ages=teffm_to_age(cooling_table['Teff'][mass_subset_inds], [test_mass,test_mass])
+    #for i in range(0,interped_ages.shape[0]):
+        #print(cooling_table['Teff'][mass_subset_inds][i],interped_ages[i],cooling_table['Age'][mass_subset_inds][i])
+
+    subsubset=np.where(cooling_table['Teff'][mass_subset_inds]<=11000.)
+    teff_subset=np.copy(cooling_table['Teff'][mass_subset_inds][subsubset])
+    interped_ages_subset=np.copy(interped_ages[subsubset])
+    cooling_subset=np.copy(cooling_table['Age'][mass_subset_inds][subsubset])
+    plt.plot(teff_subset, (interped_ages_subset-cooling_subset)*1e-9, label='Mass='+str(test_mass), color=plot_color)
+    #plt.plot(teff_subset, cooling_subset*1e-9,linestyle=':', color=plot_color)
+    #plt.plot(teff_subset, interped_ages_subset*1e-9,label='Mass='+str(test_mass),color=plot_color)
+plt.ylabel("Delta Cooling Age (Interpolated -  Grid Point) (Gyr)")
+#plt.ylabel("Cooling Age Grid (Gyr)")
+plt.xlabel("Teff (K)")
+#plt.title('All masses Error of Cooling Ages for ' +interp_kind+' interpolation')
+plt.title('All masses Error of Cooling Ages for ' +interp_kind+' '+cooling_modeler+' ' + atm_type)
+#plt.xlim([0,10000])
+plt.legend()
+plt.grid()
+plt.show()
+
+
 print('\n\n\n########end test checks##########\n\n\n')
 #########################
 
@@ -639,10 +723,12 @@ print('trimmed_total_age_dist.shape', trimmed_total_age_dist.shape)
 print(wd_name)
 print('relative remaining fraction', np.float_(trimmed_total_age_dist.shape[0])/total_age_dist.shape[0])
 
-try:
+#try:
+if python_version_number <3.:
     trim_vals, trim_edges, trim_patches= plt.hist(trimmed_total_age_dist, bins=np.arange(0,null_age_val+bin_widths, bin_widths), label='total ages limited to universe', normed=True, alpha=0.2)
-except AttributeError:
-    plt.show()
+#except AttributeError:
+elif python_version_number>=3.:
+    #plt.show()
     trim_vals, trim_edges, trim_patches= plt.hist(trimmed_total_age_dist, bins=np.arange(0,null_age_val+bin_widths, bin_widths), label='total ages limited to universe', density=True, alpha=0.2)
 sub_edges=trim_edges[:-1] #remove the last edge to make the length the same as the probability values
 sort_order= np.argsort(-1*trim_vals) #by multiplying by a negative you make the largest values the smallest effectively. Thanks stackoverflow!
@@ -789,14 +875,16 @@ print(np.nanpercentile(clean_total_age_dist,16),np.nanmedian(clean_total_age_dis
 print('\n\n\n#####\n\nclear out the plotting\n\n\n\n\n')
 plt.show()
 
-try:
+#try:
+if python_version_number < 3.:
     plt.hist(target_age_dist, bins=np.arange(0,null_age_val+0.25, 0.25),label='cooling ages', normed=True)
     #plt.hist(ms_age_dist[~np.isnan(ms_age_dist)], bins=50, alpha=0.4, label='ms ages')
     plt.hist(clean_total_age_dist, bins=np.arange(0,null_age_val+0.25, 0.25), alpha=0.5,label= 'logg-> M -> Total Ages', normed=True)
     plt.hist(trimmed_total_age_dist, bins=np.arange(0,null_age_val+bin_widths, bin_widths), label='total ages limited to universe', normed=True, alpha=0.2)
     #plt.hist(total_simon_dist, bins=np.arange(0,21, 0.25), alpha=0.5, label='Simon M -> total ages', normed=True)
     #plt.hist(trimmed_lowz_total_age_dist, bins=np.arange(0,null_age_val+0.1, 0.1), label='lowz total ages limited to universe', normed=True, alpha=0.2)
-except AttributeError:
+#except AttributeError:
+elif python_version_number>=3.:
     plt.show()
     plt.hist(target_age_dist, bins=np.arange(0,null_age_val+0.25, 0.25),label='cooling ages', density=True)
     #plt.hist(ms_age_dist[~np.isnan(ms_age_dist)], bins=50, alpha=0.4, label='ms ages')
@@ -804,7 +892,9 @@ except AttributeError:
     plt.hist(trimmed_total_age_dist, bins=np.arange(0,null_age_val+bin_widths, bin_widths), label='total ages limited to universe', density=True, alpha=0.2)
     #plt.hist(total_simon_dist, bins=np.arange(0,21, 0.25), alpha=0.5, label='Simon M -> total ages', normed=True)
     #plt.hist(trimmed_lowz_total_age_dist, bins=np.arange(0,null_age_val+0.1, 0.1), label='lowz total ages limited to universe', normed=True, alpha=0.2)
-
+else:
+    print('python_version_number',python_version_number, "somehow couldn't be <3. or >=3., so something is very wrong")
+    sys.exit()
 plt.xlabel('Age (Gyr)')
 plt.axvline(x=med_total_age, linestyle='--', color='k')
 plt.axvline(x=upper_total_age, linestyle='--', color='k')
@@ -823,9 +913,11 @@ clean_log_dist[np.isnan(clean_log_dist)]=null_age_val
 
 #clean_log_dist[np.where(clean_total_age_dist> 20.)] = 20.
 #plt.hist(clean_log_dist, bins=200, normed=True, color='g', alpha=0.5, label='Total Ages')
-try:
+#try:
+if python_version_number < 3.:
     plt.hist(clean_log_dist, bins=np.linspace(0,null_age_val+1,1000), normed=True, color='g', alpha=0.5, label='Total Ages')
-except AttributeError:
+#except AttributeError:
+elif python_version_number>=3.:
     plt.hist(clean_log_dist, bins=np.linspace(0,null_age_val+1,1000), density=True, color='g', alpha=0.5, label='Total Ages')
 plt.xlabel('log10(age(Gyr))')
 #plt.yscale('log')
@@ -886,10 +978,13 @@ plt.plot(wd_mass_vals, ms_ages, label=r'Progenitor $t_{BGB} + t_{He}$')
 #plt.plot(wd_mass_vals, lowz_ms_ages, label='Z='+str(0.0001)+' MS lifetime from' +default_ms_method)
 #plt.plot(wd_mass_vals, get_ms_lifetime(wd_mass_vals, method='Fontaine'), label='Fontaine')
 #plt.scatter(approx_masses, approx_ages, color='r', label='Grid vals with Teff ~3800K')
-try:
+#try:
+if python_version_number < 3.:
     plt.hist(target_mass_dist, normed=True, label=wd_name+' MC Masses', color='k')
-except:
-    plt.hist(target_mass_dist, density=True, stacked=True,label=wd_name+' MC Masses', color='k')
+#except:
+elif python_version_number>=3.:
+    mass_bins=np.arange(0.1,1.4,0.01)
+    plt.hist(target_mass_dist, density=True, stacked=True,label=wd_name+' MC Masses', color='k',bins=mass_bins)
 #plt.scatter(0.56,  teffm_to_age(target_teff, 0.56)*1e-9+get_ms_lifetime(0.56), label='M=0.56 at teff'+str(target_teff))
 plt.xlabel(r'$M_{wd}$ $(M_{\odot})$')
 #plt.ylabel('MS lifetime (Gyr)')
@@ -900,7 +995,7 @@ plt.ylim(0,15)
 #plt.title(wd_name)
 plt.show()
 
-approx_inds= np.where((cooling_table['Teff']< 4000) & (cooling_table['Teff']> 3500))
+approx_inds= np.where((cooling_table['Teff']< (target_teff+250)) & (cooling_table['Teff']> (target_teff-250)))
 approx_masses= cooling_table['Mass'][approx_inds]
 approx_loggs= cooling_table['logg'][approx_inds]
 approx_ages=cooling_table['Age'][approx_inds]*1e-9
@@ -929,13 +1024,40 @@ plt.xlabel('log g')
 plt.ylabel('Age (Gyr)')
 plt.show()
 
+if atm_type=='thinH':
+    alt_cooling_model_file='COModel_ThinH.csv'
+elif atm_type=='thickH':
+        alt_cooling_model_file='COModel_ThickH.csv'
+alt_cooling_model_file= cp.ref_dir+'WD_cooling_models/'+alt_cooling_model_file
+alt_cooling_table=Table.read(alt_cooling_model_file)
 
-plt.scatter(cooling_table['Teff'], cooling_table['logg'], label='cooling models')
+plt.scatter(cooling_table['Teff'], cooling_table['logg'], label='cooling models'+cooling_model_file.split('/')[-1],s=6,alpha=0.5)
+plt.scatter(alt_cooling_table['Teff'],alt_cooling_table['logg'],label='Fontaine2001 '+atm_type,s=6,alpha=0.5)
 plt.plot(target_teff, target_logg, marker='*', color='r', markersize=12)
 plt.xlabel('Teff (K)')
 plt.ylabel('log(g)')
+plt.legend()
 plt.title(cooling_model_file.split('/')[-1])
 plt.show()
+
+plt.scatter(np.log10(cooling_table['Teff']), np.log10(cooling_table['Lum']), label='cooling models '+cooling_model_file.split('/')[-1],s=6,alpha=0.5)
+plt.scatter(np.log10(alt_cooling_table['Teff']),np.log10(alt_cooling_table['Lum']),label='Fontaine2001 '+atm_type,s=6,alpha=0.5)
+#plt.plot(target_teff, target_logg, marker='*', color='r', markersize=12)
+plt.xlabel('log10(Teff (K))')
+plt.ylabel('log10(Luminosity)')
+plt.legend()
+plt.title(cooling_model_file.split('/')[-1])
+plt.show()
+
+plt.scatter(cooling_table['Teff'], cooling_table['rad'], label='cooling models'+cooling_model_file.split('/')[-1],s=6,alpha=0.5)
+plt.scatter(alt_cooling_table['Teff'],alt_cooling_table['rad'],label='Fontaine2001 '+atm_type,s=6,alpha=0.5)
+#plt.plot(target_teff, target_logg, marker='*', color='r', markersize=12)
+plt.xlabel('Teff (K)')
+plt.ylabel('Radius')
+plt.legend()
+plt.title(cooling_model_file.split('/')[-1])
+plt.show()
+
 
 
 plt.scatter(cooling_table['Teff'], cooling_table['Mass'], label='cooling models')
@@ -951,7 +1073,8 @@ given_mass= given_target_mass
 given_inds= np.where(cooling_table["Mass"]==given_mass)
 plt.scatter(cooling_table['Teff'][given_inds], cooling_table['Age'][given_inds], label='table vals for '+ str(given_mass))
 #print((cooling_table['Teff'][given_inds]).shape, teffm_to_age(cooling_table['Teff'][given_inds], given_mass))
-plt.scatter(cooling_table['Teff'][given_inds], teffm_to_age(cooling_table['Teff'][given_inds], given_mass), label='interpolated vals', color='r')
+#plt.scatter(cooling_table['Teff'][given_inds], teffm_to_age(cooling_table['Teff'][given_inds], given_mass).T, label='interpolated vals', color='r')
+plt.scatter(cooling_table['Teff'][given_inds], operate_on_dist(cooling_table['Teff'][given_inds], np.full((cooling_table['Teff'][given_inds]).shape, given_mass),teffm_to_age).T, label='interpolated vals Transposed', color='r')
 plt.plot(target_teff, target_age, marker='*', color='r', markersize=12, label='Target')
 plt.plot(target_teff, target_age2, marker='*', color='g', markersize=12, label='Target (from teff+logg)')
 plt.legend()
@@ -974,6 +1097,7 @@ allowed_inds= np.where(cooling_table['Mass']==given_target_mass)
 print('shapes again', teff_vals.shape, target_logg, loggteff_to_logTc(teff_vals, target_logg).shape)
 target_logg_array= np.ones(teff_vals.shape[0])*target_logg
 plt.plot(teff_vals, loggteff_to_logTc(teff_vals, target_logg_array), label='log(Tc)')
+plt.plot(teff_vals, loggteff_to_logTc(teff_vals, target_logg_array).T, label='log(Tc) transposed')
 plt.scatter(cooling_table['Teff'][allowed_inds], cooling_table['Log(Tc)'][allowed_inds], label='cooling table direct values for '+str(given_target_mass)+ 'M')
 plt.plot(target_teff, target_logTc, marker='*', label='target')
 plt.xlabel('Teff')
@@ -986,6 +1110,8 @@ plt.show()
 logg_vals= np.linspace(7., 8.5, 100)
 allowed_inds= np.where(cooling_table['Mass']==given_target_mass)
 plt.plot(logg_vals, loggteff_to_logTc(target_teff, logg_vals), label='log(Tc)')
+plt.plot(logg_vals, loggteff_to_logTc(target_teff, logg_vals).T, label='transposed log(Tc)')
+
 plt.scatter(cooling_table['logg'][allowed_inds], cooling_table['Log(Tc)'][allowed_inds], label='cooling table direct values for '+str(given_target_mass)+ 'M')
 plt.plot(target_logg, target_logTc, marker='*', label='target')
 plt.xlabel('logg')
