@@ -31,8 +31,8 @@ python_version_number=float('.'.join([python_digits[0],python_digits[1]]))
 #wd_file='temp_wd_abundances.csv'
 wd_file='20210527_all_wd_abundances_new_Blouin.csv'
 
-atm_type='thinH'
-#atm_type='thickH'
+#atm_type='thinH'
+atm_type='thickH'
 
 #cooling_modeler='fontaine2001'
 cooling_modeler='bedard2020'
@@ -53,7 +53,7 @@ percent_range=0.68 #error bar coverage for total age estimate.
 #percent_range=0.95
 #null_age_val=20. #usually 20
 null_age_val=50. #I'm experimenting though for the moment
-default_limit_universe=False
+default_limit_universe=True
 default_randomize=True
 massloss_default=True
 #default_z=0.0001 #allegedly thick disk value
@@ -61,12 +61,12 @@ default_z=0.02 #approximately solar
 #default_z=2.0 #super enriched
 
 
-#madeup
+##madeup
 #wd_name='made-up'
 #target_logg= 8.0
 #target_logg_err=0.15
-#target_teff= 6000. #K
-#target_teff_err=190
+#target_teff= 3000. #K
+#target_teff_err=180.
 
 ##
 ##1644
@@ -83,7 +83,7 @@ default_z=0.02 #approximately solar
 #target_teff= 4310. #K
 #target_teff_err=190.
 
-#2356
+####2356
 #wd_name='WDJ2356-209'
 #target_logg=7.98
 #target_logg_err=0.07
@@ -91,22 +91,22 @@ default_z=0.02 #approximately solar
 #target_teff_err=110.
 
 ###J1636
-wd_name='SDSSJ1636+1619'
-target_logg= 8.10
-target_logg_err=0.06
-target_teff= 4410. #K
-target_teff_err=200.
+#wd_name='SDSSJ1636+1619'
+#target_logg= 8.10
+#target_logg_err=0.06
+#target_teff= 4410. #K
+#target_teff_err=200.
 
 
 
 ##J2317 Hollands et al 2021 parameters
-#wd_name='WDJ2317+1830'
-#target_logg=8.64
-#target_logg_err=0.03
-#target_teff= 4210. #K
-#target_teff_err=50.
+wd_name='WDJ2317+1830'
+target_logg=8.64
+target_logg_err=0.03
+target_teff= 4210. #K
+target_teff_err=50.
 
-##J2317 Simon's new parameters
+#J2317 Simon's new parameters
 #wd_name='WDJ2317+1830'
 #target_logg=8.74
 #target_logg_err=0.06
@@ -120,7 +120,7 @@ target_teff_err=200.
 #target_teff= 3350. #K
 #target_teff_err=50.
 
-#J1824 Simon's new parameters
+#####J1824 Simon's new parameters
 #wd_name='WDJ1824+1213'
 #target_logg=7.53
 #target_logg_err=0.09
@@ -229,8 +229,8 @@ def get_wd_parameters(wd_name, wd_file=wd_file):
 
 
 
-interp_kind='cubic'
-#interp_kind='quintic'
+#interp_kind='cubic'
+interp_kind='quintic'
 
 if cooling_modeler== 'bedard2020':
     if atm_type=='thinH':
@@ -273,10 +273,10 @@ n=int(1e6)
 #n=1000
 #n=10
 
-#bin_widths=0.01
-#age_bin_widths=0.01
-bin_widths=0.1 #default width of age bin widths for histogram.
-age_bin_widths=0.1
+bin_widths=0.01
+age_bin_widths=0.01
+#bin_widths=0.1 #default width of age bin widths for histogram.
+#age_bin_widths=0.1
 simon_mass= 0.45
 simon_mass_err= 0.12
 
@@ -329,25 +329,25 @@ test_mass=0.5
 #boundaries to make it continuous for the randomized values as well because that would then require 
 #randomizing each one and there's no guarantee that randomly selected values would even be continuous. 
 #2021-05-28 This was the version (below this comment) that was in place for Kaiser et al. 2020/2021 (the Science paper on the discovery of lithium)
-#cummings_m_ranges= [
-    #[[-np.inf,0.532],[np.nan,np.nan],[np.nan,np.nan]],
-    #[[0.532,0.717],[0.080,0.489],[0.016,0.030]],
-    #[[0.717,0.856],[0.187,0.184],[0.061,0.199]],
-    #[[0.856,1.24],[0.107,0.471],[0.016,0.077]],
-    #[[1.24,np.inf],[np.nan,np.nan],[np.nan,np.nan]]
-    #]
+cummings_m_ranges= [
+    [[-np.inf,0.532],[np.nan,np.nan],[np.nan,np.nan]],
+    [[0.532,0.717],[0.080,0.489],[0.016,0.030]],
+    [[0.717,0.856],[0.187,0.184],[0.061,0.199]],
+    [[0.856,1.24],[0.107,0.471],[0.016,0.077]],
+    [[1.24,np.inf],[np.nan,np.nan],[np.nan,np.nan]]
+    ]
 
 
 #2021-05-28 I'm going to get experimental here. Technically other checks outside the IFMR lower boundary should remove unphysical solutions, so I'm going to lower the IFMR lower boundary to a mass that would normally be mass-gaining for MS to WD, but remember the IFMR has randomized boundaries, so I'm going to try letting just the testing mass loss requirement perform the lower truncation in coordination with confinement to whatever total age.
 
 
-cummings_m_ranges= [
-    [[-np.inf,0.0001],[np.nan,np.nan],[np.nan,np.nan]],
-    [[0.0001,0.717],[0.080,0.489],[0.016,0.030]],
-    [[0.717,0.856],[0.187,0.184],[0.061,0.199]],
-    [[0.856,1.24],[0.107,0.471],[0.016,0.077]],
-    [[1.24,np.inf],[np.nan,np.nan],[np.nan,np.nan]]
-    ]
+#cummings_m_ranges= [
+    #[[-np.inf,0.0001],[np.nan,np.nan],[np.nan,np.nan]],
+    #[[0.0001,0.717],[0.080,0.489],[0.016,0.030]],
+    #[[0.717,0.856],[0.187,0.184],[0.061,0.199]],
+    #[[0.856,1.24],[0.107,0.471],[0.016,0.077]],
+    #[[1.24,np.inf],[np.nan,np.nan],[np.nan,np.nan]]
+    #]
 
 def get_progenitor_mass(mass_wd, randomize=False, only_lose_mass=massloss_default):
     def mfunc(mass_wd, coeffs):
@@ -740,8 +740,11 @@ max_arg=np.argmax(trim_vals)
 max_val=sub_edges[max_arg]+(bin_widths*0.5)
 cumprob= np.cumsum(sort_trim_probs)
 inbounds=np.where(cumprob-percent_range < 0)
-print("max percentage", np.max(cumprob[inbounds]))
-print("total percentage in distribution", np.max(cumprob))
+try:
+    print("max percentage", np.max(cumprob[inbounds]))
+    print("total percentage in distribution", np.max(cumprob))
+except ValueError:
+    pass
 
 
 print('bin_widths', bin_widths)
@@ -1030,6 +1033,19 @@ elif atm_type=='thickH':
         alt_cooling_model_file='COModel_ThickH.csv'
 alt_cooling_model_file= cp.ref_dir+'WD_cooling_models/'+alt_cooling_model_file
 alt_cooling_table=Table.read(alt_cooling_model_file)
+
+
+bed_inds=np.where(cooling_table['Mass'] ==0.5)
+font_inds=np.where(alt_cooling_table['Mass']==0.5)
+
+plt.scatter(cooling_table['Teff'][bed_inds], cooling_table['Age'][bed_inds]*1e-9, label='cooling models'+cooling_model_file.split('/')[-1],s=6,alpha=0.5)
+plt.scatter(alt_cooling_table['Teff'][font_inds],alt_cooling_table['Age'][font_inds]*1e-9,label='Fontaine2001 '+atm_type,s=6,alpha=0.5)
+#plt.plot(target_teff, target_logg, marker='*', color='r', markersize=12)
+plt.xlabel('Teff (K)')
+plt.ylabel('Age (Gyr)')
+plt.legend()
+plt.title(cooling_model_file.split('/')[-1]+' for 0.5 M_sol WD')
+plt.show()
 
 plt.scatter(cooling_table['Teff'], cooling_table['logg'], label='cooling models'+cooling_model_file.split('/')[-1],s=6,alpha=0.5)
 plt.scatter(alt_cooling_table['Teff'],alt_cooling_table['logg'],label='Fontaine2001 '+atm_type,s=6,alpha=0.5)
