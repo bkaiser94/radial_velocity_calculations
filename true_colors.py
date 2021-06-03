@@ -34,3 +34,46 @@ import skimage.color
 
 import spec_plot_tools as spt
 import cal_params as cp
+
+
+def x1931(wave):
+    """
+    from equation 2 of Wyman et al. 2013
+    
+    wave should be in nanometers, I'm 99% sure; I didn't see Wyman et al. explicitly state to do 
+    so, but they discuss wavelengths in nm throughout the paper, so it's not a crazy leap.
+    
+    """
+    
+    return 1.065*np.exp(-0.5*((wave-595.8)/33.33)**2)+0.366 * np.exp(-0.5 * ((wave-446.8)/19.44)**2)
+
+def y1931(wave):
+    """
+    from equation 2 of Wyman et al. 2013
+    
+    wave should be in nanometers, I'm 99% sure; I didn't see Wyman et al. explicitly state to do 
+    so, but they discuss wavelengths in nm throughout the paper, so it's not a crazy leap.
+    
+    """
+
+    return  1.014 * np.exp(-0.5*((np.log(wave)-np.log(556.3))/0.075)**2)
+
+
+
+
+def z1931(wave):
+    """
+    from equation 2 of Wyman et al. 2013
+    
+    wave should be in nanometers, I'm 99% sure; I didn't see Wyman et al. explicitly state to do 
+    so, but they discuss wavelengths in nm throughout the paper, so it's not a crazy leap.
+    
+    """
+    
+    return 1.839 * np.exp(-0.5*((np.log(wave)-np.log(449.8))/0.051)**2)
+
+
+
+
+
+
