@@ -109,11 +109,11 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('ravg_fwctb*fits')
+    #filenames=glob('ravg_fwctb*fits')
     #filenames=glob('ravg_fwctb*other*fits')
     #filenames=glob('ravg_fwctb*WISE*fits')
     #filenames=glob('ravg_zfwctb*fits')
-    #filenames=glob('*ravg*2356*fits')
+    filenames=glob('*ravg*1501*fits')
     #filenames=glob('ravg_fwctb*1150*fits')
     #filenames=glob('ravg_fwctb*2126*fits')
     #filenames=glob('ravg_fwctb*SDSS*n*fits')
@@ -145,7 +145,7 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*')
+    #filenames=glob('fwctb*')
     #filenames=glob('fwctb*WISE*')
     #filenames=glob('fwctb*LTT*')
     #filenames=glob('fwctb*SDSS*n*')

@@ -29,12 +29,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 from astropy.io import fits
-import skimage.color
+from astropy import units as u
 
+import skimage.color
+import skimage.data
 
 import spec_plot_tools as spt
 import cal_params as cp
 
+
+#input_file='stitched_J1644_spectrum.fits'
+input_file='stitched_J2356_spectrum.fits'
+#input_file='ravg_fwctb.sdssj1501m0816_400m1.fits'
+
+#bb_teff=5800.
+#bb_teff=11000.
+bb_teff=3840.
+
+#visible_range=[340., 720.] #wavelengths in nm that should even be considered
+#visible_range=[600., 660.] #wavelengths in nm that should even be considered
+#visible_range=[380., 780.] #wavelengths in nm that should even be considered
+visible_range=[375.,725.]
 
 def x1931(wave):
     """
@@ -73,7 +88,135 @@ def z1931(wave):
     return 1.839 * np.exp(-0.5*((np.log(wave)-np.log(449.8))/0.051)**2)
 
 
+### I'm going to assume that the input spectrum will be in units of f_lambda because that's the spectrum I'll be using in the near-term.
+
+#the stellar true-color PHet simulation at the link on the next line gives the spectral radiance conversion from spectral power density, which is apparently just to multiply by pi, so not ground-breaking.
+#https://github.com/phetsims/blackbody-spectrum/blob/4d8b70c78ee85210d7b79661c65c5ba8732c8273/js/blackbody-spectrum/model/BlackbodyBodyModel.js
+
+def planck_function(wave, temperature):
+    """
+    Just using the form given in the Phet-stored values because it's easier
+    
+    returns Watts per square meter per micron with wavelength input in nanometers
+    
+    """
+    constA= 3.74192e-16
+    constB=1.438770e7
+    return constA / ((wave**5)*  (np.exp(constB/(wave * temperature))-1))
 
 
 
+input_spec,header, noise=spt.retrieve_spec(input_file)
+hdu=fits.open(input_file)
+delta_wave=np.copy(hdu[4].data)
 
+input_spec[0]=input_spec[0]*0.1 #converting angstroms to nm
+delta_wave=delta_wave*0.1 ##converting angstroms to nm
+input_spec[1]=input_spec[1]*10. #converting to nm^-1
+
+delta_wave_spec= np.vstack([np.copy(input_spec[0]),delta_wave])
+vis_delta_wave_spec=spt.clean_spectrum(delta_wave_spec,visible_range[0],visible_range[1],[])
+vis_input_spec=spt.clean_spectrum(input_spec, visible_range[0],visible_range[1],[])
+
+def get_CIE_val(spec, dwave, CIEfunc):
+    match_vals=CIEfunc(spec[0])
+    radiance_vals=spec[1]*np.pi
+    product_vals= match_vals*radiance_vals*dwave
+    return np.sum(product_vals)
+
+Xval=get_CIE_val(vis_input_spec,vis_delta_wave_spec[1],x1931)
+Yval=get_CIE_val(vis_input_spec,vis_delta_wave_spec[1],y1931)
+Zval=get_CIE_val(vis_input_spec,vis_delta_wave_spec[1],z1931)
+
+print('X', Xval)
+print('Y', Yval)
+print('Z', Zval)
+star_XYZ=np.array([Xval, Yval, Zval])
+renormed_XYZ=star_XYZ/np.max(star_XYZ)
+print('renormed_XYZ',renormed_XYZ)
+
+
+#blackbody_3800K=planck_function(vis_input_spec[0], 3800.)
+#blackbody_3800K=planck_function(vis_input_spec[0], 10000.)
+blackbody_3800K=planck_function(vis_input_spec[0], bb_teff)
+
+#blackbody_3800K[:]=1.
+blackbody_3800K[:]=0.
+
+#blackbody_3800K[np.where((vis_input_spec[0]>400.) & (vis_input_spec[0] < 500.))]=1.
+#blackbody_3800K[np.where((vis_input_spec[0]>550.) & (vis_input_spec[0] < 660.))]=1.
+
+blackbody_3800K[np.where((vis_input_spec[0]>400.) & (vis_input_spec[0] < 600.))]=1.
+
+
+bb_spec=np.vstack([vis_input_spec[0], blackbody_3800K])
+
+bb_Xval=get_CIE_val(bb_spec,vis_delta_wave_spec[1],x1931)
+bb_Yval=get_CIE_val(bb_spec,vis_delta_wave_spec[1],y1931)
+bb_Zval=get_CIE_val(bb_spec,vis_delta_wave_spec[1],z1931)
+
+bb_XYZ=np.array([bb_Xval,bb_Yval,bb_Zval])
+renormed_bb_XYZ=bb_XYZ/np.max(bb_XYZ)
+print('renormed_bb_XYZ', renormed_bb_XYZ)
+
+bb_rgb=skimage.color.xyz2rgb([[renormed_bb_XYZ]])
+
+
+#astronaut=skimage.data.astronaut()
+#print(astronaut.shape)
+#print(astronaut)
+star_rgb=skimage.color.xyz2rgb([[renormed_XYZ]])
+
+print('RGB', star_rgb)
+print(star_rgb.shape)
+print('RGB 255', star_rgb*255)
+print('RGB 130', star_rgb*130)
+
+
+print('BB RGB', bb_rgb)
+print('BB RGB 255', bb_rgb*255)
+print('BB RGB 130', bb_rgb*130)
+
+norm_blackbody_3800K=blackbody_3800K/np.max(blackbody_3800K)
+norm_vis_input=vis_input_spec[1]/np.max(vis_input_spec[1])
+
+plot_waves=np.arange(visible_range[0],visible_range[1],1.)
+plt.plot(plot_waves,x1931(plot_waves), label='x1931')
+plt.plot(plot_waves,y1931(plot_waves), label='y1931')
+plt.plot(plot_waves,z1931(plot_waves), label='z1931')
+plt.plot(vis_input_spec[0],vis_input_spec[1]/np.max(vis_input_spec[1]),label='WD J1644-0449')
+plt.plot(vis_input_spec[0], norm_blackbody_3800K, label=str(bb_teff)+' K Blackbody')
+plt.scatter(500, 2, c=star_rgb[0],edgecolors='k',s=80)
+plt.scatter(500, 1.8, c=bb_rgb[0],edgecolors='k',s=80)
+plt.text(510,1.8, str(bb_teff)+' K Blackbody True Color')
+plt.text(510,2,'WD J1644-0449 True Color')
+
+
+for single_val in plot_waves:
+    single_spec=np.vstack([[single_val],[1]])
+    this_X=get_CIE_val(single_spec,vis_delta_wave_spec[1][0],x1931)
+    this_Y=get_CIE_val(single_spec,vis_delta_wave_spec[1][0],y1931)
+    this_Z=get_CIE_val(single_spec,vis_delta_wave_spec[1][0],z1931)
+    this_XYZ=np.array([this_X,this_Y,this_Z])
+    renormed_this_XYZ=this_XYZ/np.max(this_XYZ)
+    this_rgb=skimage.color.xyz2rgb([[renormed_this_XYZ]])
+    plt.scatter(single_val, -0.25, c=this_rgb[0])
+    
+plt.legend()
+plt.show()
+
+plt.plot(vis_input_spec[0],x1931(vis_input_spec[0])*norm_vis_input*vis_delta_wave_spec[1],label='x1931 cross spec')
+plt.plot(vis_input_spec[0],y1931(vis_input_spec[0])*norm_vis_input*vis_delta_wave_spec[1],label='y1931 cross spec')
+plt.plot(vis_input_spec[0],z1931(vis_input_spec[0])*norm_vis_input*vis_delta_wave_spec[1],label='z1931 cross spec')
+#plt.legend()
+#plt.show()
+
+plt.plot(vis_input_spec[0],x1931(vis_input_spec[0])*1*vis_delta_wave_spec[1],label='x1931 cross 1')
+plt.plot(vis_input_spec[0],y1931(vis_input_spec[0])*1*vis_delta_wave_spec[1],label='y1931 cross 1')
+plt.plot(vis_input_spec[0],z1931(vis_input_spec[0])*1*vis_delta_wave_spec[1],label='z1931 cross 1')
+
+plt.plot(vis_input_spec[0],x1931(vis_input_spec[0])*norm_blackbody_3800K*vis_delta_wave_spec[1],label='x1931 cross norm BB '+ str(bb_teff)+' K')
+plt.plot(vis_input_spec[0],y1931(vis_input_spec[0])*norm_blackbody_3800K*vis_delta_wave_spec[1],label='y1931 cross norm BB '+ str(bb_teff)+' K')
+plt.plot(vis_input_spec[0],z1931(vis_input_spec[0])*norm_blackbody_3800K*vis_delta_wave_spec[1],label='z1931 cross norm BB '+ str(bb_teff)+' K')
+plt.legend()
+plt.show()
