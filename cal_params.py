@@ -46,6 +46,8 @@ standard_dir=ref_dir+'standards/'
 line_list_dir= ref_dir+'line_lists/'
 tell_dir= ref_dir+tell_dir
 abundance_dir= ref_dir+abundance_dir
+true_color_dir= ref_dir+'color_matching_functions/'
+
 
 airline_name='OstMart1992_airglow.txt'
 

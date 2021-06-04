@@ -100,11 +100,11 @@ default_z=0.02 #approximately solar
 
 
 ##J2317 Hollands et al 2021 parameters
-wd_name='WDJ2317+1830'
-target_logg=8.64
-target_logg_err=0.03
-target_teff= 4210. #K
-target_teff_err=50.
+#wd_name='WDJ2317+1830'
+#target_logg=8.64
+#target_logg_err=0.03
+#target_teff= 4210. #K
+#target_teff_err=50.
 
 #J2317 Simon's new parameters
 #wd_name='WDJ2317+1830'
@@ -121,11 +121,11 @@ target_teff_err=50.
 #target_teff_err=50.
 
 #####J1824 Simon's new parameters
-#wd_name='WDJ1824+1213'
-#target_logg=7.53
-#target_logg_err=0.09
-#target_teff= 3540. #K
-#target_teff_err=90.
+wd_name='WDJ1824+1213'
+target_logg=7.53
+target_logg_err=0.09
+target_teff= 3540. #K
+target_teff_err=90.
 
 ##LHS2534 Hollands et al 2021 parameters
 #wd_name='LHS2534'

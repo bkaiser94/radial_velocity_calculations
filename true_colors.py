@@ -30,6 +30,8 @@ import matplotlib.pyplot as plt
 import sys
 from astropy.io import fits
 from astropy import units as u
+from astropy.table import Table, Column
+
 
 import skimage.color
 import skimage.data
@@ -39,19 +41,44 @@ import cal_params as cp
 
 
 #input_file='stitched_J1644_spectrum.fits'
-input_file='stitched_J2356_spectrum.fits'
 #input_file='ravg_fwctb.sdssj1501m0816_400m1.fits'
+
+#wd_name='WD J1644-0449'
 
 #bb_teff=5800.
 #bb_teff=11000.
-bb_teff=3840.
+#bb_teff=3830.
+
+#input_file='stitched_J2356_spectrum.fits'
+#wd_name='WD J2356-209'
+#bb_teff=4040.
+
+#input_file='ravg_fwctb.WISEA0615m1247_400m1.fits'
+#wd_name='WISEA J0615-1247'
+#bb_teff=3300.
+
+input_file='ravg_fwctb.sdssj1501m0816_400m1.fits'
+wd_name='SDSS J1501-0816'
+bb_teff=4500.
 
 #visible_range=[340., 720.] #wavelengths in nm that should even be considered
 #visible_range=[600., 660.] #wavelengths in nm that should even be considered
 #visible_range=[380., 780.] #wavelengths in nm that should even be considered
 visible_range=[375.,725.]
 
-def x1931(wave):
+
+
+CIE1931_XYZ_file='RIT_CIE_XYZ_1931_colorfunctions.csv'
+CIE1931_XYZ_file=cp.true_color_dir+CIE1931_XYZ_file
+
+CIE1931_XYZ_table=Table.read(CIE1931_XYZ_file)
+#CIE1931_XYZ_table.pprint()
+
+#default_CIE_method='single_lobe'
+default_CIE_method='interp'
+
+
+def x1931(wave, method=default_CIE_method):
     """
     from equation 2 of Wyman et al. 2013
     
@@ -59,10 +86,12 @@ def x1931(wave):
     so, but they discuss wavelengths in nm throughout the paper, so it's not a crazy leap.
     
     """
-    
-    return 1.065*np.exp(-0.5*((wave-595.8)/33.33)**2)+0.366 * np.exp(-0.5 * ((wave-446.8)/19.44)**2)
+    if method=='single_lobe':
+        return 1.065*np.exp(-0.5*((wave-595.8)/33.33)**2)+0.366 * np.exp(-0.5 * ((wave-446.8)/19.44)**2)
+    elif method=='interp':
+        return np.interp(wave, CIE1931_XYZ_table['Wavelength (nm)'], CIE1931_XYZ_table['xbar'])
 
-def y1931(wave):
+def y1931(wave, method=default_CIE_method):
     """
     from equation 2 of Wyman et al. 2013
     
@@ -70,13 +99,14 @@ def y1931(wave):
     so, but they discuss wavelengths in nm throughout the paper, so it's not a crazy leap.
     
     """
+    if method=='single_lobe':
+        return  1.014 * np.exp(-0.5*((np.log(wave)-np.log(556.3))/0.075)**2)
+    elif method =='interp':
+        return np.interp(wave, CIE1931_XYZ_table['Wavelength (nm)'], CIE1931_XYZ_table['ybar'])
 
-    return  1.014 * np.exp(-0.5*((np.log(wave)-np.log(556.3))/0.075)**2)
 
 
-
-
-def z1931(wave):
+def z1931(wave, method=default_CIE_method):
     """
     from equation 2 of Wyman et al. 2013
     
@@ -84,8 +114,24 @@ def z1931(wave):
     so, but they discuss wavelengths in nm throughout the paper, so it's not a crazy leap.
     
     """
+    if method=='single_lobe':
+        return 1.839 * np.exp(-0.5*((np.log(wave)-np.log(449.8))/0.051)**2)
+    elif method=='interp':
+        return np.interp(wave, CIE1931_XYZ_table['Wavelength (nm)'], CIE1931_XYZ_table['zbar'])
+
+def get_CIE_val(spec, dwave, CIEfunc, method=default_CIE_method):
+    match_vals=CIEfunc(spec[0], method=method)
+    radiance_vals=spec[1]*np.pi
+    product_vals= match_vals*radiance_vals*dwave
+    return np.sum(product_vals)
+
+
+def get_CIE1931_XYZ(spec, dwave, method=default_CIE_method):
+    X=get_CIE_val(spec, dwave, x1931, method=method)
+    Y=get_CIE_val(spec, dwave,y1931, method=method)
+    Z=get_CIE_val(spec,dwave,z1931, method=method)
     
-    return 1.839 * np.exp(-0.5*((np.log(wave)-np.log(449.8))/0.051)**2)
+    return [X, Y, Z]
 
 
 ### I'm going to assume that the input spectrum will be in units of f_lambda because that's the spectrum I'll be using in the near-term.
@@ -118,11 +164,11 @@ delta_wave_spec= np.vstack([np.copy(input_spec[0]),delta_wave])
 vis_delta_wave_spec=spt.clean_spectrum(delta_wave_spec,visible_range[0],visible_range[1],[])
 vis_input_spec=spt.clean_spectrum(input_spec, visible_range[0],visible_range[1],[])
 
-def get_CIE_val(spec, dwave, CIEfunc):
-    match_vals=CIEfunc(spec[0])
-    radiance_vals=spec[1]*np.pi
-    product_vals= match_vals*radiance_vals*dwave
-    return np.sum(product_vals)
+#def get_CIE_val(spec, dwave, CIEfunc):
+    #match_vals=CIEfunc(spec[0])
+    #radiance_vals=spec[1]*np.pi
+    #product_vals= match_vals*radiance_vals*dwave
+    #return np.sum(product_vals)
 
 Xval=get_CIE_val(vis_input_spec,vis_delta_wave_spec[1],x1931)
 Yval=get_CIE_val(vis_input_spec,vis_delta_wave_spec[1],y1931)
@@ -135,18 +181,28 @@ star_XYZ=np.array([Xval, Yval, Zval])
 renormed_XYZ=star_XYZ/np.max(star_XYZ)
 print('renormed_XYZ',renormed_XYZ)
 
+interp_XYZ=np.array(get_CIE1931_XYZ(vis_input_spec,vis_delta_wave_spec[1], method='interp'))
+renormed_interp_XYZ=interp_XYZ/np.max(interp_XYZ)
+
+print('interp XYZ', interp_XYZ)
+print('renormed_interp_XYZ', renormed_interp_XYZ)
+
+
 
 #blackbody_3800K=planck_function(vis_input_spec[0], 3800.)
 #blackbody_3800K=planck_function(vis_input_spec[0], 10000.)
 blackbody_3800K=planck_function(vis_input_spec[0], bb_teff)
 
 #blackbody_3800K[:]=1.
-blackbody_3800K[:]=0.
+#blackbody_3800K[:]=0.
 
 #blackbody_3800K[np.where((vis_input_spec[0]>400.) & (vis_input_spec[0] < 500.))]=1.
 #blackbody_3800K[np.where((vis_input_spec[0]>550.) & (vis_input_spec[0] < 660.))]=1.
 
-blackbody_3800K[np.where((vis_input_spec[0]>400.) & (vis_input_spec[0] < 600.))]=1.
+#blackbody_3800K[np.where((vis_input_spec[0]>400.) & (vis_input_spec[0] < 600.))]=1.
+
+#blackbody_3800K[np.where((vis_input_spec[0]>350.) & (vis_input_spec[0] < 450.))]=1.
+
 
 
 bb_spec=np.vstack([vis_input_spec[0], blackbody_3800K])
@@ -181,27 +237,47 @@ norm_blackbody_3800K=blackbody_3800K/np.max(blackbody_3800K)
 norm_vis_input=vis_input_spec[1]/np.max(vis_input_spec[1])
 
 plot_waves=np.arange(visible_range[0],visible_range[1],1.)
-plt.plot(plot_waves,x1931(plot_waves), label='x1931')
-plt.plot(plot_waves,y1931(plot_waves), label='y1931')
-plt.plot(plot_waves,z1931(plot_waves), label='z1931')
-plt.plot(vis_input_spec[0],vis_input_spec[1]/np.max(vis_input_spec[1]),label='WD J1644-0449')
+#plt.plot(plot_waves,x1931(plot_waves, method='single_lobe'), label='x1931 single_lobe', color='r')
+#plt.plot(plot_waves,y1931(plot_waves, method='single_lobe'), label='y1931 single_lobe', color='g')
+#plt.plot(plot_waves,z1931(plot_waves, method='single_lobe'), label='z1931 single_lobe', color='b')
+plt.plot(plot_waves,x1931(plot_waves, method='interp'), label='x1931 interp', color='r', linestyle=':')
+plt.plot(plot_waves,y1931(plot_waves,method='interp'), label='y1931 interp',color='g', linestyle=':')
+plt.plot(plot_waves,z1931(plot_waves, method='interp'), label='z1931 interp', color='b', linestyle=':')
+plt.plot(vis_input_spec[0],vis_input_spec[1]/np.max(vis_input_spec[1]),label=wd_name)
 plt.plot(vis_input_spec[0], norm_blackbody_3800K, label=str(bb_teff)+' K Blackbody')
-plt.scatter(500, 2, c=star_rgb[0],edgecolors='k',s=80)
-plt.scatter(500, 1.8, c=bb_rgb[0],edgecolors='k',s=80)
+#plt.plot(vis_input_spec[0], norm_blackbody_3800K, label='contrived purple spectrum')
+plt.scatter(500, 2, c=star_rgb[0],edgecolors='k',s=160)
+plt.scatter(500, 1.8, c=bb_rgb[0],edgecolors='k',s=160)
 plt.text(510,1.8, str(bb_teff)+' K Blackbody True Color')
-plt.text(510,2,'WD J1644-0449 True Color')
+#plt.text(510,1.8, 'Contrived True Color')
 
+plt.text(510,2,wd_name+' True Color')
+
+
+#for single_val in plot_waves:
+    #single_spec=np.vstack([[single_val],[1]])
+    #this_X=get_CIE_val(single_spec,vis_delta_wave_spec[1][0],x1931,method='single_lobe')
+    #this_Y=get_CIE_val(single_spec,vis_delta_wave_spec[1][0],y1931,method='single_lobe')
+    #this_Z=get_CIE_val(single_spec,vis_delta_wave_spec[1][0],z1931,method='single_lobe')
+    #this_XYZ=np.array([this_X,this_Y,this_Z])
+    #renormed_this_XYZ=this_XYZ/np.max(this_XYZ)
+    #this_rgb=skimage.color.xyz2rgb([[renormed_this_XYZ]])
+    #plt.scatter(single_val, -0.25, c=this_rgb[0])
+    
+#plt.text(720,-0.25,'single_lobe')
 
 for single_val in plot_waves:
     single_spec=np.vstack([[single_val],[1]])
-    this_X=get_CIE_val(single_spec,vis_delta_wave_spec[1][0],x1931)
-    this_Y=get_CIE_val(single_spec,vis_delta_wave_spec[1][0],y1931)
-    this_Z=get_CIE_val(single_spec,vis_delta_wave_spec[1][0],z1931)
+    this_X=get_CIE_val(single_spec,vis_delta_wave_spec[1][0],x1931,method='interp')
+    this_Y=get_CIE_val(single_spec,vis_delta_wave_spec[1][0],y1931, method='interp')
+    this_Z=get_CIE_val(single_spec,vis_delta_wave_spec[1][0],z1931, method='interp')
     this_XYZ=np.array([this_X,this_Y,this_Z])
     renormed_this_XYZ=this_XYZ/np.max(this_XYZ)
     this_rgb=skimage.color.xyz2rgb([[renormed_this_XYZ]])
-    plt.scatter(single_val, -0.25, c=this_rgb[0])
-    
+    plt.scatter(single_val, -0.40, c=this_rgb[0])
+
+plt.text(720,-0.40,'interp')
+
 plt.legend()
 plt.show()
 
