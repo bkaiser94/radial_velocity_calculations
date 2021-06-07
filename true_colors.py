@@ -40,14 +40,14 @@ import spec_plot_tools as spt
 import cal_params as cp
 
 
-#input_file='stitched_J1644_spectrum.fits'
+input_file='stitched_J1644_spectrum.fits'
 #input_file='ravg_fwctb.sdssj1501m0816_400m1.fits'
 
-#wd_name='WD J1644-0449'
+wd_name='WD J1644-0449'
 
 #bb_teff=5800.
 #bb_teff=11000.
-#bb_teff=3830.
+bb_teff=3830.
 
 #input_file='stitched_J2356_spectrum.fits'
 #wd_name='WD J2356-209'
@@ -57,9 +57,9 @@ import cal_params as cp
 #wd_name='WISEA J0615-1247'
 #bb_teff=3300.
 
-input_file='ravg_fwctb.sdssj1501m0816_400m1.fits'
-wd_name='SDSS J1501-0816'
-bb_teff=4500.
+#input_file='ravg_fwctb.sdssj1501m0816_400m1.fits'
+#wd_name='SDSS J1501-0816'
+#bb_teff=4500.
 
 #visible_range=[340., 720.] #wavelengths in nm that should even be considered
 #visible_range=[600., 660.] #wavelengths in nm that should even be considered
@@ -156,6 +156,8 @@ input_spec,header, noise=spt.retrieve_spec(input_file)
 hdu=fits.open(input_file)
 delta_wave=np.copy(hdu[4].data)
 
+#input_spec[0]=input_spec[0]-650. #shifting wavelength values to try to line up absorption with color.
+
 input_spec[0]=input_spec[0]*0.1 #converting angstroms to nm
 delta_wave=delta_wave*0.1 ##converting angstroms to nm
 input_spec[1]=input_spec[1]*10. #converting to nm^-1
@@ -243,7 +245,10 @@ plot_waves=np.arange(visible_range[0],visible_range[1],1.)
 plt.plot(plot_waves,x1931(plot_waves, method='interp'), label='x1931 interp', color='r', linestyle=':')
 plt.plot(plot_waves,y1931(plot_waves,method='interp'), label='y1931 interp',color='g', linestyle=':')
 plt.plot(plot_waves,z1931(plot_waves, method='interp'), label='z1931 interp', color='b', linestyle=':')
+
 plt.plot(vis_input_spec[0],vis_input_spec[1]/np.max(vis_input_spec[1]),label=wd_name)
+#plt.plot(vis_input_spec[0],vis_input_spec[1]/np.max(vis_input_spec[1]),label=wd_name+  'with a -650 angstrom shift')
+
 plt.plot(vis_input_spec[0], norm_blackbody_3800K, label=str(bb_teff)+' K Blackbody')
 #plt.plot(vis_input_spec[0], norm_blackbody_3800K, label='contrived purple spectrum')
 plt.scatter(500, 2, c=star_rgb[0],edgecolors='k',s=160)
@@ -252,6 +257,7 @@ plt.text(510,1.8, str(bb_teff)+' K Blackbody True Color')
 #plt.text(510,1.8, 'Contrived True Color')
 
 plt.text(510,2,wd_name+' True Color')
+#plt.text(510,2,wd_name+'  Color for -650 angstrom shift')
 
 
 #for single_val in plot_waves:

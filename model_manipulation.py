@@ -30,9 +30,10 @@ fixed_minimum=False #Determines if delta-chi2 parabola fitting is done with the 
 
 first_conv_bin = 0.1 #width in angstroms of the first interpolation of the model to then be used in the convolution.
 test_loc = 1200 #pixel location in the target spectrum to look to get a pixel to wavelength value to use for the seeing
-slit_width = 1.0 #arcseconds
+#slit_width = 1.0 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 #slit_width = slit_width/pixel_scale #slit width in pixels
+slit_width=3.0
 
 
 delta_chi2= np.array(
@@ -197,6 +198,49 @@ def convolve_model_new(model_spec, header, slit_width=slit_width):
         see_kernel.normalize()
         model_conv = conv.convolve(fluxes, see_kernel,boundary='extend')
     model_out = np.vstack([wavelengths, model_conv])
+    return model_out
+
+
+def degrade_model(model_spec, target_spec, header):
+    """
+    receive the fits file input of the target because you need a number of things from the header.
+    """
+    #wavelengths = np.arange(np.nanmin(model_spec[0]), np.nanmax(model_spec[0]), first_conv_bin)
+    wavelengths=model_spec[0]
+    model_dlam=model_spec[0][1]-model_spec[0][0]
+    #fluxes = scinterp.interp1d(wavelengths)
+    #fluxes = np.interp(wavelengths, model_spec[0], model_spec[1])
+    fluxes=model_spec[1]
+    #interpolator= scinterp.CubicSpline(model_spec[0], model_spec[1])
+    #fluxes = interpolator(wavelengths)
+    dlam = target_spec[0][test_loc+1]-target_spec[0][test_loc] #angstroms per pixel at this location in the target
+    see_sig = float(header['SEE_SIG']) #sigma value of gaussian fit to do the 
+    #see_sig = see_sig*dlam/first_conv_bin #seeing value in units of indices of the model
+    see_sig=see_sig*dlam/model_dlam
+    #slit_width = slit_width/pixel_scale
+    #pix_slit_width = slit_width*dlam/first_conv_bin  #slit width value in units of indices of the model
+    pix_slit_width=slit_width/pixel_scale*dlam/model_dlam
+    #print "pix_slit_width", pix_slit_width, int(pix_slit_width)
+    try:
+        see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(pix_slit_width), mode = 'oversample')
+        see_kernel.normalize()
+        model_conv = conv.convolve(fluxes, see_kernel)
+    except ValueError as error:
+        #print error
+        #print "so making it odd"
+        pix_slit_width= pix_slit_width+1
+        see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(pix_slit_width), mode = 'oversample')
+        see_kernel.normalize()
+        model_conv = conv.convolve(fluxes, see_kernel)
+    #pix_width = dlam/first_conv_bin #width in pixels of model of a pixel from the original spectrum
+    #pix_width = dlam/model_dlam #width in pixels of model of a pixel from the original spectrum
+    ##print "pix_width", pix_width
+    #pix_kernel = conv.Box1DKernel(width = int(pix_width), mode = 'oversample')
+    #pix_kernel.normalize()
+    #model_conv = conv.convolve(model_conv, pix_kernel)
+    new_model=np.vstack([model_spec[0],model_conv])
+    model_out= spt.rebin_generic_spec(new_model, model_dlam, target_spec[0], dlam)
+    #model_out = np.vstack([wavelengths, model_conv])
     return model_out
 
 

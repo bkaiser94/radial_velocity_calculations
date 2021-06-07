@@ -41,12 +41,15 @@ ref_dir= '/Users/BenKaiser/Desktop/Goodman_ref_files/'
 wave_sol_dir= 'wavelength_solns/'
 tell_dir='telluric_libs/'
 abundance_dir='abundances/'
+model_spectra_dir='spectroscopic_models/'
 
 standard_dir=ref_dir+'standards/'
 line_list_dir= ref_dir+'line_lists/'
 tell_dir= ref_dir+tell_dir
 abundance_dir= ref_dir+abundance_dir
 true_color_dir= ref_dir+'color_matching_functions/'
+model_spectra_dir=ref_dir+model_spectra_dir
+
 
 
 airline_name='OstMart1992_airglow.txt'
