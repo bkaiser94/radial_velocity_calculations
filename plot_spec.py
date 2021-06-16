@@ -61,7 +61,8 @@ sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #sdss_path= sdss_path+'G0_K5/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 
-tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
+#tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
+tell_filename='LBL_A15_s0_w015_R0060000_T.fits'
 #tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
 #print(filenames)
 plot_wavelength=True
@@ -73,7 +74,7 @@ plot_400m2_tell= False
 #norm_range=[7042,7046]
 #norm_range=[7490,7510] #outside telluric
 #norm_range=[7470, 7530]
-#norm_range=[7440, 7550]
+norm_range=[7440, 7550]
 #norm_range=[7517,7556] #20190528
 #norm_range=[7860.,8050.]
 #norm_range=[8074,8140]
@@ -84,17 +85,17 @@ plot_400m2_tell= False
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-norm_range=[6630,6690]#wider double norm range
+#norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 #norm_range=[3900, 4000]
 #norm_range=[8640,8790]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
-file_setting='all_fwctb'
+#file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
@@ -138,7 +139,7 @@ if file_setting=='all_avg':
 elif file_setting=='all_wctb':
     print(file_setting)
     #filenames=glob('wctb*')
-    filenames=glob('wctb*1824*')
+    filenames=glob('wctb*1824*1213_*')
     #filenames=glob('wctb*Feige110_*')
     #filenames=glob('wctb*aia*2320*')
     single_iterate=True
@@ -148,7 +149,8 @@ elif file_setting=='all_wctb':
 elif file_setting=='all_fwctb':
     print(file_setting)
     #filenames=glob('fwctb*')
-    filenames=glob('fwctb*1430*')
+    filenames=glob('fwctb*1824*1213_*')
+    #filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
     #filenames=glob('fwctb*LTT*')
     #filenames=glob('fwctb*SDSS*n*')
@@ -852,7 +854,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter)
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
@@ -872,10 +874,10 @@ if __name__ == '__main__':
             #plot_SNR(target_spec, target_noise, filename)
             #plot_SNR_from_file(filename)
             #plot_dwavelength(target_spec, filename)
-            #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+            plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
-            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             #plt.legend()
             #plt.show()
             #spt.show_plot(show_legend=True, line_id='ca', convert_to_air=True)
@@ -888,7 +890,7 @@ if __name__ == '__main__':
         #plt.ylabel(r'$f_{\nu}$ (arbitrary units)')
         #plt.legend(loc='best')
         #plt.show()
-        #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+        plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
         #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
         #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
         #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
@@ -902,6 +904,7 @@ if __name__ == '__main__':
         #plt.show()
         plot_pix_shifts(filenames)
         plot_rot_time(filenames)
+        plot_head_2_head(filenames,'rotator','airmass')
         #plot_head_2_head(filenames,'ROTATOR','POSANGLE')
         plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
         plot_head_2_head(filenames,'BMJD_TDB','airofavg')

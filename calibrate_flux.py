@@ -29,7 +29,7 @@ from astropy import units as u
 from astropy import constants as const
 
 import spec_plot_tools as spt
-
+from plot_spec import plot_telluric_spectrum, plot_spectrum
 speclistname = "listWCTB"
 
 color_list = ['k', 'r', 'g', 'b', 'm', 'cyan', 'purple']
@@ -42,7 +42,7 @@ sens_curve_list = speclist[1]
 norm_range=[7470, 7530]
 tell_range= [7430, 7800]
 bad_noise_sub = 100
-do_tell_corr= False
+do_tell_corr= True
 do_rv_barycorr=False
 #do_ext_corr= True
 default_ext_corr=True
@@ -130,10 +130,25 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
         plt.xlabel(r'Wavelength ($\AA$)')
         plt.legend()
         plt.show()
-        if count==0:
+        #if count==0:
+            #try:
+                #model_wavelength = float(raw_input("Model spec wavelength>>>"))
+                #obs_wavelength= float(raw_input("Observed spec wavelength ("+str(model_wavelength)+ " for no change)>>>"))
+            #except NameError as error:
+                #print("NameError:", error)
+                #print('Presumably in Python 3 instead of 2 because "raw_input" is not recognized')
+                #model_wavelength= float(input("Model spec wavelength>>>"))
+                #obs_wavelength= float(input("Observed spec wavelength ("+str(model_wavelength)+ " for no change)>>>"))
+        try:
             model_wavelength = float(raw_input("Model spec wavelength>>>"))
-        obs_wavelength= float(raw_input("Observed spec wavelength ("+str(model_wavelength)+ " for no change)>>>"))
+            obs_wavelength= float(raw_input("Observed spec wavelength ("+str(model_wavelength)+ " for no change)>>>"))
+        except NameError as error:
+            print("NameError:", error)
+            print('Presumably in Python 3 instead of 2 because "raw_input" is not recognized')
+            model_wavelength= float(input("Model spec wavelength>>>"))
+            obs_wavelength= float(input("Observed spec wavelength ("+str(model_wavelength)+ " for no change)>>>"))
         wave_offset=model_wavelength-obs_wavelength
+        print('wave_offset',wave_offset)
         wavelengths=wavelengths+wave_offset
         header.append(card=('tell_off', wave_offset, 'wavelength offset by tellurics'))
     else:
@@ -168,16 +183,16 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
         #plt.plot(wavelengths, flux/np.nanmean(flux), label='normalized '+target_file)
         #plt.xlim(np.nanmin(wavelengths), np.nanmax(wavelengths))
         #spt.show_plot()
-        #plot_spectrum([wavelengths, flux], target_file, header, smooth=True, norm=True, pix_width=5, kernel_type='box', norm_range=norm_range)
+        plot_spectrum([wavelengths, flux], target_file, header, smooth=True, norm=True, pix_width=5, kernel_type='box', norm_range=norm_range)
         ##plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30)
-        #plt.plot(wavelengths, interp_tell_corr, label='Interp Telluric residuals')
-        #plt.plot(tell_corr_spec[0], tell_corr_spec[1], label='Telluric residuals')
-        #plt.axvline(x=model_wavelength, color='k', linestyle='--')
-        #plt.xlim(tell_range)
-        #plt.ylim(0,1.5)
-        #plt.xlabel(r'Wavelength ($\AA$)')
-        #plt.legend()
-        #plt.show()
+        plt.plot(wavelengths, interp_tell_corr, label='Interp Telluric residuals')
+        plt.plot(tell_corr_spec[0], tell_corr_spec[1], label='Telluric residuals')
+        plt.axvline(x=model_wavelength, color='k', linestyle='--')
+        plt.xlim(tell_range)
+        plt.ylim(0,1.5)
+        plt.xlabel(r'Wavelength ($\AA$)')
+        plt.legend()
+        plt.show()
         flux= flux/interp_tell_corr
         header.append(card=('tellcorr', True, 'Telluric Corrections performed'))
     else:

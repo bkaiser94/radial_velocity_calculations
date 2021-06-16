@@ -88,15 +88,15 @@ trace_offset =0#amount by which the calculated trace needs to be offset to end u
 trace_band_mid=105 #usual extraction search center point
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
-#trace_band_mid=130 #
+#trace_band_mid=62 #
 #trace_band_width=16
 #trace_band_width = 100 #pixel width to determine the center of the trace 2019-03-25 commented out
-#trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
+trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width=190#usual extraction search window
 #trace_band_width= 14 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
-trace_band_width = 50 #pixel width to determine the center of the trace
+#trace_band_width = 50 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 #sigma_multi_side=2
@@ -113,15 +113,15 @@ flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
 #bkg_shift= 30 #standard shift used
-bkg_shift=28
+#bkg_shift=28
 #bkg_shift=40
 #bkg_shift=35
 #bkg_shift= 64
 ##bkg_shift=70
-#bkg_shift=15
+bkg_shift=15
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
-bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
-#bkg_side_multi=2. #mutliple of core_sides that that  bkg_core_sides should be later
+#bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
+bkg_side_multi=2. #mutliple of core_sides that that  bkg_core_sides should be later
 #bkg_side_multi=3. #mutliple of core_sides that that  bkg_core_sides should be later
 
 bkg_max_side= bkg_shift/2.-5
@@ -740,14 +740,33 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
                 lamp_params, lamp_cov = fit_gaussian_curve(plotting_x_coords, lamp_light, [lamp_p0[0], lamp_line_guess, lamp_p0[2], lamp_p0[3]], line_search_width, bounds= lamp_bounds)
                 #if ((np.abs(lamp_params[0]) > 1.) and (np.abs(lamp_params[2])< 20) and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1)):
                 if ((np.abs(lamp_params[0]) > 1.)  and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1e-3)):
-                    peaks_found.append(lamp_params[1])
-                    wave_peaks_found.append(lamp_line_wave)
-                    #plt.plot(plotting_x_coords, lamp_light, label = 'lamp data', color = 'blue')
-                    plt.plot(plotting_x_coords, gaussian_curve(plotting_x_coords, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
-                    plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
-                    #for x_spot in line_x_checks2:
-                        #plt.axvline( x= x_spot, color = 'k',linestyle = '--')
-                    plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
+                    print('Going one layer deeper on the fit')
+                    lamp_params, lamp_cov = fit_gaussian_curve(plotting_x_coords, lamp_light, lamp_params, line_search_width, bounds= lamp_bounds)
+                    if ((np.abs(lamp_params[0]) > 1.)  and (lamp_params[0] > 0) and (np.abs(lamp_line_guess-lamp_params[1]) < line_search_width) and  (np.abs(lamp_params[2])> 1e-3)):
+                        print('survived the second cut')
+                        peaks_found.append(lamp_params[1])
+                        wave_peaks_found.append(lamp_line_wave)
+                        #plt.plot(plotting_x_coords, lamp_light, label = 'lamp data', color = 'blue')
+                        plt.plot(plotting_x_coords, gaussian_curve(plotting_x_coords, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
+                        plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
+                        #for x_spot in line_x_checks2:
+                            #plt.axvline( x= x_spot, color = 'k',linestyle = '--')
+                        plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
+                    else:
+                        print('did not survive second cut')
+                        
+                        #commented 2021-06-11 and replaced with the second level of hell above.
+                    #peaks_found.append(lamp_params[1])
+                    #wave_peaks_found.append(lamp_line_wave)
+                    ##plt.plot(plotting_x_coords, lamp_light, label = 'lamp data', color = 'blue')
+                    #plt.plot(plotting_x_coords, gaussian_curve(plotting_x_coords, lamp_params[0], lamp_params[1], lamp_params[2], lamp_params[3]), color = 'r', label = 'Gaussian Fit')
+                    #plt.title("guess: " + str(lamp_line_guess) + ' fit:' + str(lamp_params[1]))
+                    ##for x_spot in line_x_checks2:
+                        ##plt.axvline( x= x_spot, color = 'k',linestyle = '--')
+                    #plt.axvline(x = lamp_line_guess, color = 'r', linestyle= '--')
+                    
+                    
+                    
                     #plt.xlabel('Pixel')
                     #plt.ylabel('Counts')
                     #plt.legend()

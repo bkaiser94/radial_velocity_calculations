@@ -101,10 +101,10 @@ standard_name= 'LTT7987'
 
 #observed_file='ravg_wctb.EG274_400m1_fix.fits'
 #observed_file='ravg_wctb.LTT7987_400m1.fits'
-observed_file='ravg_wctb.LTT7987_400m1_normal.fits'
+#observed_file='ravg_wctb.LTT7987_400m1_normal.fits'
 
 #observed_file='ravg_wctb.LTT7987_400m2.fits'
-#observed_file='ravg_wctb.LTT7987_400m2_normal.fits'
+observed_file='ravg_wctb.LTT7987_400m2_normal.fits'
 #observed_file='ravg_wctb.EG274_400m2.fits'
 #observed_file='ravg_wctb.EG274_400m1.fits'
 
