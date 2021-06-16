@@ -72,11 +72,11 @@ standard_directory= cp.standard_dir
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-standard_name='EG274'
+#standard_name='EG274'
 #standard_name = 'GD153'
 #standard_name= 'LTT3218'
 #standard_name='Feige110'
-#standard_name= 'LTT7987'
+standard_name= 'LTT7987'
 #standard_name='GD71'
 #standard_name='EG131'
 
@@ -101,9 +101,12 @@ standard_name='EG274'
 
 #observed_file='ravg_wctb.EG274_400m1_fix.fits'
 #observed_file='ravg_wctb.LTT7987_400m1.fits'
+observed_file='ravg_wctb.LTT7987_400m1_normal.fits'
+
 #observed_file='ravg_wctb.LTT7987_400m2.fits'
+#observed_file='ravg_wctb.LTT7987_400m2_normal.fits'
 #observed_file='ravg_wctb.EG274_400m2.fits'
-observed_file='ravg_wctb.EG274_400m1.fits'
+#observed_file='ravg_wctb.EG274_400m1.fits'
 
 
 #observed_file='avg_wctb.Feige110_400m2.fits'

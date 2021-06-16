@@ -70,6 +70,10 @@ wd_dir=cp.model_spectra_dir+wd_dir
 
 model_file=wd_dir+model_file
 
+test_seeing=0.5 #seeing in arcseconds to use in testing
+test_seeing=0.8
+test_seeing= 1.2
+test_seeing=1.7
 
 
 snr_per_pixel=20.

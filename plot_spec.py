@@ -61,8 +61,8 @@ sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #sdss_path= sdss_path+'G0_K5/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 
-#tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
-tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
+tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
+#tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
 #print(filenames)
 plot_wavelength=True
 plot_400m2_tell= False
@@ -91,10 +91,10 @@ norm_range=[6630,6690]#wider double norm range
 #norm_range=[8640,8790]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
-#file_setting='all_fwctb'
+file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
@@ -109,11 +109,12 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    #filenames=glob('ravg_fwctb*fits')
+    filenames=glob('ravg_fwctb*fits')
+    #filenames=glob('ravg_fwctb*1824*fits')
     #filenames=glob('ravg_fwctb*other*fits')
     #filenames=glob('ravg_fwctb*WISE*fits')
     #filenames=glob('ravg_zfwctb*fits')
-    filenames=glob('*ravg*1501*fits')
+    #filenames=glob('*ravg*1501*fits')
     #filenames=glob('ravg_fwctb*1150*fits')
     #filenames=glob('ravg_fwctb*2126*fits')
     #filenames=glob('ravg_fwctb*SDSS*n*fits')
@@ -136,7 +137,8 @@ if file_setting=='all_avg':
 
 elif file_setting=='all_wctb':
     print(file_setting)
-    filenames=glob('wctb*')
+    #filenames=glob('wctb*')
+    filenames=glob('wctb*1824*')
     #filenames=glob('wctb*Feige110_*')
     #filenames=glob('wctb*aia*2320*')
     single_iterate=True
@@ -146,6 +148,7 @@ elif file_setting=='all_wctb':
 elif file_setting=='all_fwctb':
     print(file_setting)
     #filenames=glob('fwctb*')
+    filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
     #filenames=glob('fwctb*LTT*')
     #filenames=glob('fwctb*SDSS*n*')
@@ -413,6 +416,46 @@ def plot_pix_shifts(file_list):
     return
 
 
+def plot_rot_time(file_list):
+    for filename in file_list:
+        header= fits.getheader(filename)
+        #print(filename, header['ROTATOR'],header['airofavg'], header['BMJD_TDB'])
+        #print(filename, header['ROTATOR'],header['CAM_ANG'], header['CAM_TARG'])
+        #plt.errorbar(header['BMJD_TDB'], header['airofavg'], yerr=header['airofstd'], color='b')
+        #plt.errorbar(header['ROTATOR'], header['airofavg'], yerr=header['airofstd'], color='b', marker='o', markersize=4)
+        plt.scatter( header['BMJD_TDB'],header['ROTATOR'], color='b')
+        #plt.scatter( header['AIRMASS'],header['ROTATOR'], color='b')
+        #plt.errorbar(header['AIRMASS'], header['airofavg'], yerr=header['airofstd'], color='b')
+    plt.xlabel('BMDJ_TDB')
+    #plt.xlabel('ROTATOR')
+    plt.ylabel('ROTATOR')
+    #plt.ylabel('pixel offset of air lines')
+    plt.show()
+    return
+
+
+def plot_head_2_head(file_list, header1, header2):
+    """
+    Plot 2 arbitrary header values from a given set of files.
+    
+    """
+    for filename in file_list:
+        header= fits.getheader(filename)
+        #print(filename, header['ROTATOR'],header['airofavg'], header['BMJD_TDB'])
+        #print(filename, header['ROTATOR'],header['CAM_ANG'], header['CAM_TARG'])
+        #plt.errorbar(header['BMJD_TDB'], header['airofavg'], yerr=header['airofstd'], color='b')
+        #plt.errorbar(header['ROTATOR'], header['airofavg'], yerr=header['airofstd'], color='b', marker='o', markersize=4)
+        plt.scatter( header[header1],header[header2], color='b')
+        #plt.scatter( header['AIRMASS'],header['ROTATOR'], color='b')
+        #plt.errorbar(header['AIRMASS'], header['airofavg'], yerr=header['airofstd'], color='b')
+    plt.xlabel(header1)
+    #plt.xlabel('ROTATOR')
+    plt.ylabel(header2)
+    #plt.ylabel('pixel offset of air lines')
+    plt.show()
+    
+    
+    return 
 def plot_SNR(spec, noise, filename):
     center_pixel = np.argmin(np.abs(spec[0]-test_wavelength))
     measured_std = np.std(spec[1][center_pixel-test_side:center_pixel+test_side])
@@ -808,7 +851,10 @@ if __name__ == '__main__':
             #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
+            
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
+            #plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter)
+            
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
             #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
@@ -829,7 +875,7 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
-            #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
+            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             #plt.legend()
             #plt.show()
             #spt.show_plot(show_legend=True, line_id='ca', convert_to_air=True)
@@ -855,6 +901,10 @@ if __name__ == '__main__':
         #plt.legend()
         #plt.show()
         plot_pix_shifts(filenames)
+        plot_rot_time(filenames)
+        #plot_head_2_head(filenames,'ROTATOR','POSANGLE')
+        plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
+        plot_head_2_head(filenames,'BMJD_TDB','airofavg')
     else:
         pass
 

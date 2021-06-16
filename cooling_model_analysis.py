@@ -107,11 +107,11 @@ default_z=0.02 #approximately solar
 #target_teff_err=50.
 
 #J2317 Simon's new parameters
-#wd_name='WDJ2317+1830'
-#target_logg=8.74
-#target_logg_err=0.06
-#target_teff= 4430. #K
-#target_teff_err=120.
+wd_name='WDJ2317+1830'
+target_logg=8.74
+target_logg_err=0.06
+target_teff= 4430. #K
+target_teff_err=120.
 
 #J1824 Hollands et al 2021 parameters
 #wd_name='WDJ1824+1213'
@@ -121,11 +121,11 @@ default_z=0.02 #approximately solar
 #target_teff_err=50.
 
 #####J1824 Simon's new parameters
-wd_name='WDJ1824+1213'
-target_logg=7.53
-target_logg_err=0.09
-target_teff= 3540. #K
-target_teff_err=90.
+#wd_name='WDJ1824+1213'
+#target_logg=7.53
+#target_logg_err=0.09
+#target_teff= 3540. #K
+#target_teff_err=90.
 
 ##LHS2534 Hollands et al 2021 parameters
 #wd_name='LHS2534'
@@ -133,6 +133,14 @@ target_teff_err=90.
 #target_logg_err=0.04
 #target_teff= 4780. #K
 #target_teff_err=50.
+
+
+### WD J1922+0233 Tremblay et al. 2020 parameters
+#wd_name='WDJ1922+0233'
+#target_logg= 9.1
+#target_logg_err=0.02
+#target_teff=5800.
+#target_teff_err=390.
 
 
 
@@ -273,10 +281,12 @@ n=int(1e6)
 #n=1000
 #n=10
 
-bin_widths=0.01
-age_bin_widths=0.01
-#bin_widths=0.1 #default width of age bin widths for histogram.
-#age_bin_widths=0.1
+#bin_widths=0.01
+#age_bin_widths=0.01
+#bin_widths=1.0 
+#age_bin_widths=1.0
+bin_widths=0.1 #default width of age bin widths for histogram.
+age_bin_widths=0.1
 simon_mass= 0.45
 simon_mass_err= 0.12
 
@@ -328,7 +338,7 @@ test_mass=0.5
 #those same values but with the uncertainties on each one also included. I'm not going to rescale the 
 #boundaries to make it continuous for the randomized values as well because that would then require 
 #randomizing each one and there's no guarantee that randomly selected values would even be continuous. 
-#2021-05-28 This was the version (below this comment) that was in place for Kaiser et al. 2020/2021 (the Science paper on the discovery of lithium)
+######2021-05-28 This was the version (below this comment) that was in place for Kaiser et al. 2020/2021 (the Science paper on the discovery of lithium)
 cummings_m_ranges= [
     [[-np.inf,0.532],[np.nan,np.nan],[np.nan,np.nan]],
     [[0.532,0.717],[0.080,0.489],[0.016,0.030]],
@@ -338,7 +348,7 @@ cummings_m_ranges= [
     ]
 
 
-#2021-05-28 I'm going to get experimental here. Technically other checks outside the IFMR lower boundary should remove unphysical solutions, so I'm going to lower the IFMR lower boundary to a mass that would normally be mass-gaining for MS to WD, but remember the IFMR has randomized boundaries, so I'm going to try letting just the testing mass loss requirement perform the lower truncation in coordination with confinement to whatever total age.
+####2021-05-28 I'm going to get experimental here. Technically other checks outside the IFMR lower boundary should remove unphysical solutions, so I'm going to lower the IFMR lower boundary to a mass that would normally be mass-gaining for MS to WD, but remember the IFMR has randomized boundaries, so I'm going to try letting just the testing mass loss requirement perform the lower truncation in coordination with confinement to whatever total age.
 
 
 #cummings_m_ranges= [
@@ -949,9 +959,9 @@ print("MS lifetime:", ms_lifetime, "Gyr")
 print("Total age from logg and teff:", ms_lifetime+(target_age2*1e-9))
 #print("Total age from given mass:", get_ms_lifetime(given_target_mass)+(target_age_gmass*1e-9), 'Gyr')
 
-approx_inds= np.where((cooling_table['Teff']< 4000) & (cooling_table['Teff']> 3500))
-approx_masses= cooling_table['Mass'][approx_inds]
-approx_ages=cooling_table['Age'][approx_inds]*1e-9
+#approx_inds= np.where((cooling_table['Teff']< 4000) & (cooling_table['Teff']> 3500))
+#approx_masses= cooling_table['Mass'][approx_inds]
+#approx_ages=cooling_table['Age'][approx_inds]*1e-9
 
 #wd_mass_vals= np.linspace(0.2, 1.3, 100)
 #wd_mass_vals= np.linspace(0.2, 1.3, 1000)
@@ -959,6 +969,7 @@ wd_mass_vals=10.**np.linspace(np.log10(0.2),np.log10(1.3), 1000)
 cooling_ages=teffm_to_age(target_teff, wd_mass_vals)*1e-9
 print('cooling_ages.shape', cooling_ages.shape)
 ms_ages= get_ms_lifetime(wd_mass_vals)
+
 #lowz_ms_ages=get_ms_lifetime(wd_mass_vals, z=0.0001)
 print(ms_ages.shape)
 
@@ -978,6 +989,7 @@ plt.plot(wd_mass_vals, total_ages, label='Total Age')
 plt.plot(wd_mass_vals, cooling_ages, label='WD Cooling Age')
 #plt.plot(wd_mass_vals, ms_ages, label='Z='+str(default_z)+'MS lifetime from' +default_ms_method)
 plt.plot(wd_mass_vals, ms_ages, label=r'Progenitor $t_{BGB} + t_{He}$')
+
 #plt.plot(wd_mass_vals, lowz_ms_ages, label='Z='+str(0.0001)+' MS lifetime from' +default_ms_method)
 #plt.plot(wd_mass_vals, get_ms_lifetime(wd_mass_vals, method='Fontaine'), label='Fontaine')
 #plt.scatter(approx_masses, approx_ages, color='r', label='Grid vals with Teff ~3800K')
