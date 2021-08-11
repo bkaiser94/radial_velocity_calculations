@@ -46,8 +46,8 @@ sub_dir = cwd.split('/')[-1]
 #sens_fit_method='empirical' #400M1 method generally, gets sens curve by dividing the obs flux directly by the model flux and then fitting a polynomial
 division_extra_deg = 2
 
-#norm_range=[6630,6690]
-norm_range=[4500,4700]
+norm_range=[6630,6690]
+#norm_range=[4500,4700]
 
 
 header_char=':'
@@ -83,6 +83,7 @@ standard_name= 'LTT7987'
 #observed_file='ravg_wctb.EG131_gemini_600B.fits'
 
 #observed_file='ravg_wctb.LTT3218_400m2.fits'
+#observed_file='ravg_wctb.LTT3218short_400m2.fits'
 #observed_file='ravg_wctb.LTT3218_400m1.fits'
 
 
@@ -102,9 +103,13 @@ standard_name= 'LTT7987'
 #observed_file='ravg_wctb.EG274_400m1_fix.fits'
 #observed_file='ravg_wctb.LTT7987_400m1.fits'
 #observed_file='ravg_wctb.LTT7987_400m1_normal.fits'
+#observed_file='ravg_wctb.LTT7987wide_400m1_normal.fits'
+#observed_file='ravg_wctb.LTT7987wide_400m2_normal.fits'
 
 #observed_file='ravg_wctb.LTT7987_400m2.fits'
-observed_file='ravg_wctb.LTT7987_400m2_normal.fits'
+observed_file='ravg_wctb.LTT7987second_400m2.fits'
+
+#observed_file='ravg_wctb.LTT7987_400m2_normal.fits'
 #observed_file='ravg_wctb.EG274_400m2.fits'
 #observed_file='ravg_wctb.EG274_400m1.fits'
 
@@ -133,6 +138,7 @@ observed_file='ravg_wctb.LTT7987_400m2_normal.fits'
 #observed_file='avg_wctb.Feige110_400m1.fits'
 
 #observed_file='ravg_wctb.Feige110_400m2.fits'
+#observed_file='ravg_wctb.Feige110_400m2_alt.fits'
 
 #observed_file='ravg_wctb.LTT3218_400m2.fits'
 

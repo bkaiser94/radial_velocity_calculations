@@ -1087,3 +1087,17 @@ def make_spec_hump(cent_wave,wave_sigma,amp):
     
     return
 
+def clean_color_string(input_table, color_header='plot_color'):
+    """
+    Take in the hexadecimal color stored in an astropy table and fix it to not have extra 
+    quotation marks in it that Excel loves to add because screw anyone trying to use 
+    something not in Excel... apparently.
+    
+    """
+    index_range=range(0,len(input_table))
+    for index in index_range:
+        color_string= input_table[color_header][index]
+        stripped_string=color_string.replace('"', '')
+        input_table[color_header][index]=stripped_string
+    return input_table
+

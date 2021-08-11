@@ -74,7 +74,7 @@ plot_400m2_tell= False
 #norm_range=[7042,7046]
 #norm_range=[7490,7510] #outside telluric
 #norm_range=[7470, 7530]
-norm_range=[7440, 7550]
+#norm_range=[7440, 7550]
 #norm_range=[7517,7556] #20190528
 #norm_range=[7860.,8050.]
 #norm_range=[8074,8140]
@@ -85,7 +85,7 @@ norm_range=[7440, 7550]
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-#norm_range=[6630,6690]#wider double norm range
+norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 #norm_range=[3900, 4000]
@@ -111,11 +111,14 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     filenames=glob('ravg_fwctb*fits')
-    #filenames=glob('ravg_fwctb*1824*fits')
+    #filenames=glob('ravg_wctb*7987*fits')
+    #filenames=glob('ravg_fwctb*1824*1213_*fits')
+    #filenames=glob('ravg_fwctb*1824*other2_*fits')
+    #filenames=glob('ravg_fwctb*2317*fits')
     #filenames=glob('ravg_fwctb*other*fits')
     #filenames=glob('ravg_fwctb*WISE*fits')
     #filenames=glob('ravg_zfwctb*fits')
-    #filenames=glob('*ravg*1501*fits')
+    #filenames=glob('*ravg_fwctb*J0400*fits')
     #filenames=glob('ravg_fwctb*1150*fits')
     #filenames=glob('ravg_fwctb*2126*fits')
     #filenames=glob('ravg_fwctb*SDSS*n*fits')
@@ -139,9 +142,13 @@ if file_setting=='all_avg':
 elif file_setting=='all_wctb':
     print(file_setting)
     #filenames=glob('wctb*')
-    filenames=glob('wctb*1824*1213_*')
+    #filenames=glob('wctb*4414_*')
+    filenames=glob('wctb*4414other_*')
+    #filenames=glob('wctb*1824*1213_*')
     #filenames=glob('wctb*Feige110_*')
     #filenames=glob('wctb*aia*2320*')
+    
+    filenames= sorted(filenames)
     single_iterate=True
     double_iterate=False
     
@@ -149,7 +156,9 @@ elif file_setting=='all_wctb':
 elif file_setting=='all_fwctb':
     print(file_setting)
     #filenames=glob('fwctb*')
-    filenames=glob('fwctb*1824*1213_*')
+    #filenames=glob('fwctb*1824*1213_*')
+    #filenames=glob('fwctb*2041_*')
+    filenames=glob('fwctb*2317*')
     #filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
     #filenames=glob('fwctb*LTT*')
@@ -854,8 +863,9 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
-            #plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter)
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
+            #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
+            #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5, kernel_type='box')
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
@@ -874,10 +884,11 @@ if __name__ == '__main__':
             #plot_SNR(target_spec, target_noise, filename)
             #plot_SNR_from_file(filename)
             #plot_dwavelength(target_spec, filename)
-            plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+            #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
             spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            #spt.show_plot(show_legend=True)
             #plt.legend()
             #plt.show()
             #spt.show_plot(show_legend=True, line_id='ca', convert_to_air=True)
@@ -890,10 +901,11 @@ if __name__ == '__main__':
         #plt.ylabel(r'$f_{\nu}$ (arbitrary units)')
         #plt.legend(loc='best')
         #plt.show()
-        plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+        #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
         #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
         #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
         #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
+        plt.axhline(y=0, linestyle=':', color='k')
         spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
         #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
         #plt.xlabel('BMJD_TDB')
@@ -903,11 +915,13 @@ if __name__ == '__main__':
         #plt.legend()
         #plt.show()
         plot_pix_shifts(filenames)
-        plot_rot_time(filenames)
-        plot_head_2_head(filenames,'rotator','airmass')
+        #plot_rot_time(filenames)
+        #plot_head_2_head(filenames,'rotator','airmass')
         #plot_head_2_head(filenames,'ROTATOR','POSANGLE')
-        plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
-        plot_head_2_head(filenames,'BMJD_TDB','airofavg')
+        #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
+        #plot_head_2_head(filenames,'BMJD_TDB','rotator')
+        #plot_head_2_head(filenames,'BMJD_TDB','airmass')
+        #plot_head_2_head(filenames,'BMJD_TDB','airofavg')
     else:
         pass
 

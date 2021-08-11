@@ -31,8 +31,8 @@ python_version_number=float('.'.join([python_digits[0],python_digits[1]]))
 #wd_file='temp_wd_abundances.csv'
 wd_file='20210527_all_wd_abundances_new_Blouin.csv'
 
-#atm_type='thinH'
-atm_type='thickH'
+atm_type='thinH'
+#atm_type='thickH'
 
 #cooling_modeler='fontaine2001'
 cooling_modeler='bedard2020'
@@ -70,11 +70,12 @@ default_z=0.02 #approximately solar
 
 ##
 ##1644
-#wd_name='WD J1644-0449'
-#target_logg=7.77
-#target_logg_err= 0.23
-#target_teff= 3830.
-#target_teff_err= 230.
+wd_name='WD J1644-0449'
+target_logg=7.77
+target_logg_err= 0.23
+target_teff= 3830.
+target_teff_err= 230.
+
 
 ##1330
 #wd_name='SDSSJ1330+6435'
@@ -107,11 +108,11 @@ default_z=0.02 #approximately solar
 #target_teff_err=50.
 
 #J2317 Simon's new parameters
-wd_name='WDJ2317+1830'
-target_logg=8.74
-target_logg_err=0.06
-target_teff= 4430. #K
-target_teff_err=120.
+#wd_name='WDJ2317+1830'
+#target_logg=8.74
+#target_logg_err=0.06
+#target_teff= 4430. #K
+#target_teff_err=120.
 
 #J1824 Hollands et al 2021 parameters
 #wd_name='WDJ1824+1213'
