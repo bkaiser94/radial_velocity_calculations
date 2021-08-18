@@ -74,12 +74,12 @@ def get_ALi():
 
 
 
-def plot_el1el2_FeH(el1,el2,error_bars=True):
+def plot_el1el2_FeH(el1,el2,error_bars=True, markersize=4,alpha=1):
     el1el2, el1el2_err= get_rel_abund(el1,el2)
     if error_bars:
-        plt.errorbar(bensby_table['Fe/H'], el1el2, xerr=bensby_table['e_Fe/H'], yerr=el1el2_err, linestyle='None', capsize=0, marker='o')
+        plt.errorbar(bensby_table['Fe/H'], el1el2, xerr=bensby_table['e_Fe/H'], yerr=el1el2_err, linestyle='None', capsize=0, marker='o',markersize=markersize,alpha=alpha)
     else:
-        plt.plot(bensby_table['Fe/H'], el1el2,  linestyle='None',  marker='o')
+        plt.plot(bensby_table['Fe/H'], el1el2,  linestyle='None',  marker='o',alpha=alpha,markersize=markersize)
     plt.ylabel('['+el1+'/'+el2+']')
     plt.xlabel('[Fe/H]')
     return

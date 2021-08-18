@@ -70,11 +70,11 @@ default_z=0.02 #approximately solar
 
 ##
 ##1644
-wd_name='WD J1644-0449'
-target_logg=7.77
-target_logg_err= 0.23
-target_teff= 3830.
-target_teff_err= 230.
+#wd_name='WD J1644-0449'
+#target_logg=7.77
+#target_logg_err= 0.23
+#target_teff= 3830.
+#target_teff_err= 230.
 
 
 ##1330
@@ -134,6 +134,14 @@ target_teff_err= 230.
 #target_logg_err=0.04
 #target_teff= 4780. #K
 #target_teff_err=50.
+
+##LHS2534 Simon's new parameters
+wd_name='LHS2534'
+target_logg=8.101
+target_logg_err=0.075
+target_teff= 5020. #K
+target_teff_err=100.
+
 
 
 ### WD J1922+0233 Tremblay et al. 2020 parameters
