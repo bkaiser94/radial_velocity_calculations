@@ -83,6 +83,20 @@ def plot_el1el2_FeH(el1,el2,error_bars=True, markersize=4,alpha=1):
     plt.ylabel('['+el1+'/'+el2+']')
     plt.xlabel('[Fe/H]')
     return
+
+
+def plot_el1el2_el3el4(el1el2,el3el4,error_bars=True, markersize=4,alpha=1):
+    el1,el2=el1el2.split('/')
+    el3,el4=el3el4.split('/')
+    el1el2, el1el2_err= get_rel_abund(el1,el2)
+    el3el4,el3el4_err=get_rel_abund(el3,el4)
+    if error_bars:
+        plt.errorbar(el3el4, el1el2, xerr=el3el4_err, yerr=el1el2_err, linestyle='None', capsize=0, marker='o',markersize=markersize,alpha=alpha)
+    else:
+        plt.plot(el3el4, el1el2,  linestyle='None',  marker='o',alpha=alpha,markersize=markersize)
+    plt.ylabel('['+el1+'/'+el2+']')
+    plt.xlabel('['+el3+'/'+el4+']')
+    return
     
     
 def plot_el1el2_age(el1, el2, error_bars=True, mask_err_free=True):

@@ -319,7 +319,8 @@ line_color_dict={
     'Ca': '#001a4b',
     'MgH':'#6e76c1',
     '?': '#f39117',
-    'cyclotron': '#001a4b'
+    'cyclotron': '#001a4b',
+    'Ba': 'orange'
         }
 
 #dictionary of guesses for the box1d model used to generate the shape for background skylines
