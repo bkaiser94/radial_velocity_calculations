@@ -92,11 +92,11 @@ norm_range=[6630,6690]#wider double norm range
 #norm_range=[8640,8790]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-file_setting= 'compare_SDSS'
+#file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -141,9 +141,9 @@ if file_setting=='all_avg':
 
 elif file_setting=='all_wctb':
     print(file_setting)
-    #filenames=glob('wctb*')
+    filenames=glob('wctb*')
     #filenames=glob('wctb*4414_*')
-    filenames=glob('wctb*4414other_*')
+    #filenames=glob('wctb*4414other_*')
     #filenames=glob('wctb*1824*1213_*')
     #filenames=glob('wctb*Feige110_*')
     #filenames=glob('wctb*aia*2320*')
@@ -155,10 +155,10 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    #filenames=glob('fwctb*')
+    filenames=glob('fwctb*')
     #filenames=glob('fwctb*1824*1213_*')
     #filenames=glob('fwctb*2041_*')
-    filenames=glob('fwctb*2317*')
+    #filenames=glob('fwctb*2317*')
     #filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
     #filenames=glob('fwctb*LTT*')
@@ -863,7 +863,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5, kernel_type='box')
             
