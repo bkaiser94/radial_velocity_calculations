@@ -92,10 +92,10 @@ norm_range=[6630,6690]#wider double norm range
 #norm_range=[8640,8790]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
-#file_setting='all_fwctb'
+file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
@@ -456,17 +456,160 @@ def plot_head_2_head(file_list, header1, header2):
         #print(filename, header['ROTATOR'],header['CAM_ANG'], header['CAM_TARG'])
         #plt.errorbar(header['BMJD_TDB'], header['airofavg'], yerr=header['airofstd'], color='b')
         #plt.errorbar(header['ROTATOR'], header['airofavg'], yerr=header['airofstd'], color='b', marker='o', markersize=4)
-        plt.scatter( header[header1],header[header2], color='b')
+        if header2.lower()=='cam_ang':
+            plt.scatter(header[header1], header['cam_targ']-header['cam_ang'],color='b')
+            plt.ylabel('cam_targ - cam_ang')
+            plt.xlabel(header1)
+        elif header1.lower()=='cam_ang':
+            plt.scatter( header['cam_targ']-header['cam_ang'], header[header2], color='b')
+            plt.xlabel('cam_targ - cam_ang')
+        else:
+            plt.scatter( header[header1],header[header2], color='b')
+            plt.ylabel(header2)
+            plt.xlabel(header1)
         #plt.scatter( header['AIRMASS'],header['ROTATOR'], color='b')
         #plt.errorbar(header['AIRMASS'], header['airofavg'], yerr=header['airofstd'], color='b')
-    plt.xlabel(header1)
     #plt.xlabel('ROTATOR')
-    plt.ylabel(header2)
     #plt.ylabel('pixel offset of air lines')
     plt.show()
     
     
     return 
+
+
+def plot_dheaddhead_2_dheaddhead(file_list,header1, dheader1, header2, dheader2):
+    """
+    Plot 2 discrete derivative type things for 2 arbitrary header values versus 2 other headers from a given set of files.
+    
+    """
+    for number, filename in enumerate(file_list[:-1]):
+        header= fits.getheader(filename)
+        next_header=fits.getheader(file_list[number+1])
+        show_delta_vals=False
+        if header1.lower()=='rotator':
+            if (next_header[header1]-header[header1])<-100:
+                print('crossed 0 for rotator so slipping to underside')
+                header1_numerator=((next_header[header1])-(header[header1]-360))
+                show_delta_vals=True
+            else:
+                header1_numerator=(next_header[header1]-header[header1])
+        else:
+            pass
+        delta_header1=header1_numerator/(next_header[dheader1]-header[dheader1])
+        delta_header2=(next_header[header2]-header[header2])/(next_header[dheader2]-header[dheader2])
+        if show_delta_vals:
+            print(filename,'d '+header1+' /'+'d '+dheader1, delta_header1)
+            print(filename,'d '+header2+' /'+'d '+dheader2, delta_header2)
+        else:
+            pass
+        #print(filename, header['ROTATOR'],header['airofavg'], header['BMJD_TDB'])
+        #print(filename, header['ROTATOR'],header['CAM_ANG'], header['CAM_TARG'])
+        #plt.errorbar(header['BMJD_TDB'], header['airofavg'], yerr=header['airofstd'], color='b')
+        #plt.errorbar(header['ROTATOR'], header['airofavg'], yerr=header['airofstd'], color='b', marker='o', markersize=4)
+        #plt.scatter( header[header1],header[header2], color='b')
+        plt.scatter(delta_header1,delta_header2, color='b')
+        #plt.scatter( header['AIRMASS'],header['ROTATOR'], color='b')
+        #plt.errorbar(header['AIRMASS'], header['airofavg'], yerr=header['airofstd'], color='b')
+    plt.xlabel('d '+ header1+'/'+ 'd '+dheader1)
+    #plt.xlabel('ROTATOR')
+    plt.ylabel('d '+ header2+'/'+ 'd '+dheader2)
+    #plt.ylabel(header2)
+    #plt.ylabel('pixel offset of air lines')
+    plt.show()
+    
+    
+    
+    return
+
+
+def plot_dheaddhead_2_head(file_list,header1, header2,dheader2='null'):
+    """
+    Plot 2 discrete derivative type things for 2 arbitrary header values versus 2 other headers from a given set of files.
+    
+    """
+    if dheader2=='null':
+        dheader2=header1
+    else:
+        pass
+    for number, filename in enumerate(file_list[:-1]):
+        header= fits.getheader(filename)
+        next_header=fits.getheader(file_list[number+1])
+        show_delta_vals=False
+        if header2.lower()=='rotator':
+            if (next_header[header2]-header[header2])<-100:
+                print('crossed 0 for rotator so slipping to underside')
+                header2_numerator=((next_header[header2])-(header[header2]-360))
+                show_delta_vals=True
+            else:
+                header2_numerator=(next_header[header2]-header[header2])
+        else:
+            header2_numerator=(next_header[header2]-header[header2])
+        delta_header2=header2_numerator/(next_header[dheader2]-header[dheader2])
+        if dheader2.lower()=='bmjd_tdb':
+            delta_header2=delta_header2/u.day
+            delta_header2=delta_header2.to(1/u.second).value
+        else:
+            pass
+        if show_delta_vals:
+            print(filename,'d '+header2+' /'+'d '+header1, delta_header2)
+        else:
+            pass
+        #print(filename, header['ROTATOR'],header['airofavg'], header['BMJD_TDB'])
+        #print(filename, header['ROTATOR'],header['CAM_ANG'], header['CAM_TARG'])
+        #plt.errorbar(header['BMJD_TDB'], header['airofavg'], yerr=header['airofstd'], color='b')
+        #plt.errorbar(header['ROTATOR'], header['airofavg'], yerr=header['airofstd'], color='b', marker='o', markersize=4)
+        #plt.scatter( header[header1],header[header2], color='b')
+        if ((header1.lower()=='rotator') and (header[header1])>180):
+            plt.scatter(header[header1]-360,delta_header2, color='b')
+        else:
+            plt.scatter(header[header1],delta_header2, color='b')
+        #plt.scatter( header['AIRMASS'],header['ROTATOR'], color='b')
+        #plt.errorbar(header['AIRMASS'], header['airofavg'], yerr=header['airofstd'], color='b')
+    plt.xlabel(header1)
+    #plt.xlabel('ROTATOR')
+    plt.ylabel('d '+ header2+'/'+ 'd '+dheader2)
+    #plt.ylabel(header2)
+    #plt.ylabel('pixel offset of air lines')
+    plt.show()
+    
+    
+    
+    return
+
+
+def plot_coordinates(file_list):
+    ra_vals=[]
+    dec_vals=[]
+    time_vals=[]
+    rotator_vals=[]
+    for filename in file_list:
+        header=fits.getheader(filename)
+        coordinates=coords.SkyCoord(ra=header['ra'], dec=header['dec'], unit=(u.hourangle, u.degree))
+        print(header['ra'],header['dec'])
+        print(coordinates.ra.arcsecond, coordinates.dec.arcsecond)
+        ra_vals.append(coordinates.ra.arcsecond)
+        dec_vals.append(coordinates.dec.arcsecond)
+        time_vals.append(header['BMJD_TDB'])
+        if header['rotator']> 180:
+            rotator_val=header['rotator']-360
+        else:
+            rotator_val=header['rotator']
+        rotator_vals.append(rotator_val)
+    ra_array=np.array(ra_vals)
+    dec_array=np.array(dec_vals)
+    delta_ra=ra_array-ra_array[0]
+    delta_dec=dec_array-dec_array[0]
+    for number, thing in enumerate(delta_ra):
+        print(number, thing)
+        plt.text(delta_ra[number], delta_dec[number], str(number))
+    plt.plot(delta_ra, delta_dec, marker='o', color='b')
+    plt.xlabel(r'$\Delta$ RA (arcseconds)')
+    plt.ylabel(r'$\Delta$ Dec (arcseconds)')
+    plt.show()
+    return
+
+
+
 def plot_SNR(spec, noise, filename):
     center_pixel = np.argmin(np.abs(spec[0]-test_wavelength))
     measured_std = np.std(spec[1][center_pixel-test_side:center_pixel+test_side])
@@ -605,6 +748,41 @@ def plot_diff_spec(spec1, spec2, filename1, filename2, header, smooth=False, ker
     plt.ylim(top=np.nanmax([spec1[1],spec2[1]])+0.5)
     plt.ylim(bottom=np.nanmin(diff_flux)-0.5)
     return
+
+
+def plot_white_lightcurve(filenames,header_name='BMJD_TDB'):
+    """
+    Produce a white-light curve from spectra by integrating flux and plotting versus time.
+    
+    
+    """
+    times=[]
+    white_fluxes=[]
+    for filename in filenames:
+        hdu=fits.open(filename)
+        header=fits.getheader(filename)
+        fluxes=hdu[1].data
+        dlambda=hdu[4].data
+        white_light=np.sum(fluxes*dlambda)
+        white_fluxes.append(white_light)
+        print('white_light', white_light)
+        if ((header_name.lower()=='rotator') and (header[header_name])>180):
+            times.append(header[header_name]-360)
+        elif header_name.lower()=='cam_ang':
+            #plt.scatter( header['cam_targ']-header['cam_ang'], header[header2], color='b')
+            #plt.xlabel('cam_targ - cam_ang')
+            times.append(header['cam_targ']-header['cam_ang'])
+        else:
+            times.append(header[header_name])
+    
+    plt.plot(times, white_fluxes, marker='o')
+    plt.xlabel(header_name)
+    plt.ylabel('White Light Fluxes (erg/cm/cm/s)')
+    plt.show()
+    return
+
+
+
 
 if __name__ == '__main__':
 
@@ -887,7 +1065,7 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
-            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             #spt.show_plot(show_legend=True)
             #plt.legend()
             #plt.show()
@@ -906,7 +1084,7 @@ if __name__ == '__main__':
         #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
         #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
         plt.axhline(y=0, linestyle=':', color='k')
-        spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+        spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
         #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
         #plt.xlabel('BMJD_TDB')
         #plt.show()
@@ -920,8 +1098,21 @@ if __name__ == '__main__':
         #plot_head_2_head(filenames,'ROTATOR','POSANGLE')
         #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
         #plot_head_2_head(filenames,'BMJD_TDB','rotator')
+        plot_head_2_head(filenames,'BMJD_TDB','cam_ang')
         #plot_head_2_head(filenames,'BMJD_TDB','airmass')
         #plot_head_2_head(filenames,'BMJD_TDB','airofavg')
+        #plot_head_2_head(filenames,'BMJD_TDB','seeing')
+        #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
+        #plot_white_lightcurve(filenames)
+        #plot_white_lightcurve(filenames,header_name='AIRMASS')
+        #plot_coordinates(filenames)
+        #plot_white_lightcurve(filenames,header_name='rotator')
+        plot_white_lightcurve(filenames,header_name='cam_ang')
+        plot_dheaddhead_2_head(filenames,'BMJD_TDB','rotator')
+        plot_dheaddhead_2_head(filenames,'BMJD_TDB','airofavg')
+        plot_dheaddhead_2_head(filenames,'airofavg','rotator')
+        plot_dheaddhead_2_head(filenames,'rotator','airofavg',dheader2='BMJD_TDB')
+        plot_dheaddhead_2_dheaddhead(filenames, 'rotator', 'BMJD_TDB', 'airofavg', 'BMJD_TDB')
     else:
         pass
 
