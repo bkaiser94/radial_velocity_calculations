@@ -445,7 +445,8 @@ def plot_rot_time(file_list):
     return
 
 
-def plot_head_2_head(file_list, header1, header2):
+
+def plot_head_2_head(file_list, header1, header2,offset=10.):
     """
     Plot 2 arbitrary header values from a given set of files.
     
@@ -463,6 +464,27 @@ def plot_head_2_head(file_list, header1, header2):
         elif header1.lower()=='cam_ang':
             plt.scatter( header['cam_targ']-header['cam_ang'], header[header2], color='b')
             plt.xlabel('cam_targ - cam_ang')
+        elif ((header1.lower()=='rotator') and (header[header1] > 180)):
+            plt.scatter( header[header1]-360,header[header2], color='b')
+            plt.ylabel(header2)
+            plt.xlabel(header1)
+        elif ((header2.lower()=='rotator') and (header[header2] > 180)):
+            plt.scatter(header[header1], header[header2]-360, color='b')
+            plt.ylabel(header2)
+            plt.xlabel(header1)
+        #if header1.lower()=='mount_el':
+            #plt.scatter(1./np.tan(header[header1]/180.*np.pi), header[header2],color='b')
+        #if header2.lower()=='atm_refraction':
+            #refraction_val=spt.calculate_atmospheric_refraction(header)
+            #plt.scatter(header[header1], refraction_val, color='b')
+            #plt.xlabel(header1)
+            #plt.ylabel(header2+ ' (arcseconds)')
+        #if header2.lower()=='delta_atm_refraction':
+            #refraction_val=spt.calculate_atmospheric_refraction(header)
+            #other_refraction_val=spt.calculate_atmospheric_refraction(header, offset=offset)
+            #plt.scatter(header[header1], refraction_val-other_refraction_val, color='b')
+            #plt.xlabel(header1)
+            #plt.ylabel(header2+ ' (arcseconds) for '+ str(offset)+ ' arcminute offset')
         else:
             plt.scatter( header[header1],header[header2], color='b')
             plt.ylabel(header2)
@@ -768,15 +790,21 @@ def plot_white_lightcurve(filenames,header_name='BMJD_TDB'):
         print('white_light', white_light)
         if ((header_name.lower()=='rotator') and (header[header_name])>180):
             times.append(header[header_name]-360)
+            xlabel=header_name
+        elif header_name.lower()=='mount_el':
+           times.append(1./np.tan(header[header_name]/180.*np.pi))
+           xlabel='cot('+header_name+')'
         elif header_name.lower()=='cam_ang':
             #plt.scatter( header['cam_targ']-header['cam_ang'], header[header2], color='b')
             #plt.xlabel('cam_targ - cam_ang')
             times.append(header['cam_targ']-header['cam_ang'])
+            xlabel=header_name
         else:
+            xlabel=header_name
             times.append(header[header_name])
     
     plt.plot(times, white_fluxes, marker='o')
-    plt.xlabel(header_name)
+    plt.xlabel(xlabel)
     plt.ylabel('White Light Fluxes (erg/cm/cm/s)')
     plt.show()
     return
@@ -1097,8 +1125,9 @@ if __name__ == '__main__':
         #plot_head_2_head(filenames,'rotator','airmass')
         #plot_head_2_head(filenames,'ROTATOR','POSANGLE')
         #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
-        #plot_head_2_head(filenames,'BMJD_TDB','rotator')
-        plot_head_2_head(filenames,'BMJD_TDB','cam_ang')
+        plot_head_2_head(filenames,'BMJD_TDB','rotator')
+        #plot_head_2_head(filenames,'BMJD_TDB','cam_ang')
+        #plot_head_2_head(filenames,'rotator','airofavg')
         #plot_head_2_head(filenames,'BMJD_TDB','airmass')
         #plot_head_2_head(filenames,'BMJD_TDB','airofavg')
         #plot_head_2_head(filenames,'BMJD_TDB','seeing')
@@ -1106,13 +1135,16 @@ if __name__ == '__main__':
         #plot_white_lightcurve(filenames)
         #plot_white_lightcurve(filenames,header_name='AIRMASS')
         #plot_coordinates(filenames)
+        #plot_white_lightcurve(filenames,header_name='mount_el')
+        #plot_head_2_head(filenames, 'mount_el', 'delta_atm_refraction', offset=5.)
+        #plot_head_2_head(filenames, 'mount_el', 'delta_atm_refraction', offset=-5.)
         #plot_white_lightcurve(filenames,header_name='rotator')
-        plot_white_lightcurve(filenames,header_name='cam_ang')
-        plot_dheaddhead_2_head(filenames,'BMJD_TDB','rotator')
-        plot_dheaddhead_2_head(filenames,'BMJD_TDB','airofavg')
-        plot_dheaddhead_2_head(filenames,'airofavg','rotator')
-        plot_dheaddhead_2_head(filenames,'rotator','airofavg',dheader2='BMJD_TDB')
-        plot_dheaddhead_2_dheaddhead(filenames, 'rotator', 'BMJD_TDB', 'airofavg', 'BMJD_TDB')
+        #plot_white_lightcurve(filenames,header_name='cam_ang')
+        #plot_dheaddhead_2_head(filenames,'BMJD_TDB','rotator')
+        #plot_dheaddhead_2_head(filenames,'BMJD_TDB','airofavg')
+        #plot_dheaddhead_2_head(filenames,'airofavg','rotator')
+        #plot_dheaddhead_2_head(filenames,'rotator','airofavg',dheader2='BMJD_TDB')
+        #plot_dheaddhead_2_dheaddhead(filenames, 'rotator', 'BMJD_TDB', 'airofavg', 'BMJD_TDB')
     else:
         pass
 

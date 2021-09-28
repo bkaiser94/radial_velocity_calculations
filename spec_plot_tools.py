@@ -1101,3 +1101,32 @@ def clean_color_string(input_table, color_header='plot_color'):
         input_table[color_header][index]=stripped_string
     return input_table
 
+def calculate_atmospheric_refraction(header, offset=0.):
+    """
+    use Wikipedia-provided simplified refraction calculation from like 1890 or whatever.
+    There's an astropy method that I can dig into later if it seems worth it.
+    
+    This assumes a Goodman header and that all of the necessary fields are populated.
+    
+    offset in arcminutes up or down.
+    """
+    from astropy.units import cds
+    cds.enable()
+    pressure=(header['ENVPRE']*100.*u.pascal).to(cds.mmHg).value
+    temperature=header['ENVTEM']
+    cotangent=1./np.tan((header['MOUNT_EL']+(offset/60.))/180.*np.pi)
+    
+    
+    return (21.5*pressure)/(273+temperature) * cotangent
+
+
+
+
+
+
+
+
+
+
+
+

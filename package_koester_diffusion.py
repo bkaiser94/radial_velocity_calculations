@@ -27,6 +27,7 @@ import csv
 #import astropy.coordinates as coord
 from astropy.table import Table, QTable
 from astropy.table import vstack as tablevstack
+import periodictable as pt
 #import matplotlib.pyplot as plt
 #import scipy.stats as scistats
 #import seaborn as sns
@@ -40,8 +41,8 @@ from glob import glob
 
 #input_file_string='DA_diff_ov0.0.txt'
 #input_file_string='DB_diff_ov0.0.txt'
-#input_file_string='DA_diff_ov1.0.txt'
-input_file_string='DB_diff_ov1.0.txt'
+input_file_string='DA_diff_ov1.0.txt'
+#input_file_string='DB_diff_ov1.0.txt'
 
 #input_file_string='*thin*'
 original_dir= os.getcwd()
@@ -62,8 +63,19 @@ elif input_file_string[1]=='B':
 else:
     pass
 print('el_num_list:',el_num_list)
+
+el_name_list=[]
+for num in el_num_list:
+    el_name_list.append(pt.elements[num].symbol)
+    
+print('el_name_list:', el_name_list)
+
+
+
+
 col_names=['logg', 'teff','qcvz']
-col_names.extend(el_num_list)
+#col_names.extend(el_num_list)
+col_names.extend(el_name_list)
 print('col_names:',col_names)
 
 front_end_chaff= 30
