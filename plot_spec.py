@@ -457,13 +457,15 @@ def plot_head_2_head(file_list, header1, header2,offset=10.):
         #print(filename, header['ROTATOR'],header['CAM_ANG'], header['CAM_TARG'])
         #plt.errorbar(header['BMJD_TDB'], header['airofavg'], yerr=header['airofstd'], color='b')
         #plt.errorbar(header['ROTATOR'], header['airofavg'], yerr=header['airofstd'], color='b', marker='o', markersize=4)
-        if header2.lower()=='cam_ang':
-            plt.scatter(header[header1], header['cam_targ']-header['cam_ang'],color='b')
-            plt.ylabel('cam_targ - cam_ang')
-            plt.xlabel(header1)
-        elif header1.lower()=='cam_ang':
-            plt.scatter( header['cam_targ']-header['cam_ang'], header[header2], color='b')
-            plt.xlabel('cam_targ - cam_ang')
+        #if header2.lower()=='cam_ang':
+            #plt.scatter(header[header1], header['cam_targ']-header['cam_ang'],color='b')
+            #plt.ylabel('cam_targ - cam_ang')
+            #plt.xlabel(header1)
+        #elif header1.lower()=='cam_ang':
+            #plt.scatter( header['cam_targ']-header['cam_ang'], header[header2], color='b')
+            #plt.xlabel('cam_targ - cam_ang')
+        if 'a'=='b':
+            pass
         elif ((header1.lower()=='rotator') and (header[header1] > 180)):
             plt.scatter( header[header1]-360,header[header2], color='b')
             plt.ylabel(header2)
@@ -1125,8 +1127,9 @@ if __name__ == '__main__':
         #plot_head_2_head(filenames,'rotator','airmass')
         #plot_head_2_head(filenames,'ROTATOR','POSANGLE')
         #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
-        plot_head_2_head(filenames,'BMJD_TDB','rotator')
+        #plot_head_2_head(filenames,'BMJD_TDB','rotator')
         #plot_head_2_head(filenames,'BMJD_TDB','cam_ang')
+        plot_head_2_head(filenames,'rotator','cam_ang')
         #plot_head_2_head(filenames,'rotator','airofavg')
         #plot_head_2_head(filenames,'BMJD_TDB','airmass')
         #plot_head_2_head(filenames,'BMJD_TDB','airofavg')

@@ -4,6 +4,12 @@ Created by Ben Kaiser (UNC-Chapel Hill) 2019-12-12
 
 Import the diffusion timescales and other arrays we need from evolution_pulled.py
 
+This script only works in pulling in the values related to DB white dwarfs (helium-dominated) 
+and they're from the MWDD-stored version of the Fontaine et al. 2015 values for diffusion 
+timescales.
+
+I'm going to create a new, separate script for using diffusion timescales from newer sources.
+
 
 """
 from __future__ import print_function
