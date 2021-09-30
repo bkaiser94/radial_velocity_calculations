@@ -22,6 +22,7 @@ import time
 from evolution_pulled import ttDB, ggDB, tauDB, elemnameDB
 import cal_params as cp
 
+plt.rc('lines', markersize=2)
 
 start= time.time()
 
@@ -230,7 +231,7 @@ def extrapolate_tau_single_logg(element,  input_logg= 8.0, teff_max=teff_max, pl
     log_valid_teffs= np.log10(valid_teffs)
     poly_coeffs= np.polyfit(log_valid_teffs, valid_taus, 1) #it's going to only be a linear fit to the log-log space, tau is already logged
     if plot_all:
-            plt.scatter(log_valid_teffs, valid_taus, label=element+ ' DB grid, logg='+str(input_logg))
+            plt.scatter(log_valid_teffs, valid_taus, label=element+ ' '+ modeler+', ' + atm_type+'-atm, '+ str(overshoot)+' overshoot,'+' grid, logg='+str(input_logg))
     return poly_coeffs
 
 def make_extrap_cross_logg(element, teff_max=teff_max,modeler='Fontaine2015', atm_type='He', overshoot=0.0):
@@ -319,9 +320,14 @@ if __name__ == '__main__':
     target_teff= 3830.
     target_teff_err= 230.
     
-    default_modeler='Fontaine2015'
+    #default_modeler='Fontaine2015'
+    #default_atm_type='He'
+    #default_overshoot=0.0
+    
+    default_modeler='Koester2020'
     default_atm_type='He'
-    default_overshoot=0.0
+    default_overshoot=1.0
+    default_alpha=0.2
     
     default_ggDB_array=make_ggDB_array(modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
 
@@ -348,45 +354,43 @@ if __name__ == '__main__':
     #target_teff= 4410. #K #Hollands values
     #target_teff_err=150.
     
-    test_db_table=make_DB_tau_table(8.0, modeler='Koester2020', atm_type='He', overshoot=0.0)
-    test_db_table.pprint()
+    #test_db_table=make_DB_tau_table(8.0, modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
+    #test_db_table.pprint()
     
-    test_db_table=make_DB_tau_table(8.0, modeler='Koester2020', atm_type='H', overshoot=0.0)
-    test_db_table.pprint()
+    #test_db_table=make_DB_tau_table(8.0,  modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
+    #test_db_table.pprint()
     
     
-    test_db_table=make_DB_tau_table(8.0, modeler='Koester2020', atm_type='He', overshoot=1.0)
-    test_db_table.pprint()
+    #test_db_table=make_DB_tau_table(8.0, modeler='Koester2020', atm_type='He', overshoot=1.0)
+    #test_db_table.pprint()
     
-    test_db_table=make_DB_tau_table(8.0, modeler='Koester2020', atm_type='H', overshoot=1.0)
-    test_db_table.pprint()
-    
-    plt.plot([0,101,39\
+    #test_db_table=make_DB_tau_table(8.0, modeler='Koester2020', atm_type='H', overshoot=1.0)
+    #test_db_table.pprint()
     
     n_points=int(1e5)
     logg_dist=np.random.normal(loc=target_logg, scale=target_logg_err, size=n_points)
     teff_dist= np.random.normal(loc=target_teff, scale=target_teff_err, size=n_points)
-    tau_li_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Li', modeler='Koester2020', atm_type='H', overshoot=1.0)
-    tau_ca_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Ca',modeler='Koester2020', atm_type='H', overshoot=1.0)
-    tau_na_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Na',modeler='Koester2020', atm_type='H', overshoot=1.0)
-    tau_fe_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Fe', modeler='Koester2020', atm_type='H', overshoot=1.0)
-    tau_k_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'K',modeler='Koester2020', atm_type='H', overshoot=1.0)
+    tau_li_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Li', modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
+    tau_ca_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Ca', modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
+    tau_na_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Na', modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
+    tau_fe_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'Fe',  modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
+    tau_k_dist=extrapolate_tau_x_logg(teff_dist, logg_dist, 'K', modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
     stop= time.time()
     print(stop-start)
     print((stop-start)/60.)
-    print('Na', extrapolate_tau_x_logg(target_teff, target_logg, 'Na'))
-    print('Na', extrapolate_single_el_tau(target_teff, 'Na', plot_all=True))
-    print('Ca', extrapolate_tau_x_logg(target_teff, target_logg, 'Ca'))
-    print('K', extrapolate_tau_x_logg(target_teff, target_logg, 'K'))
-    print('K', extrapolate_single_el_tau(target_teff, 'K', plot_all=True))
-    print('Ca', extrapolate_single_el_tau(target_teff, 'Ca', plot_all=True))
-    print('Li', extrapolate_tau_x_logg(target_teff, target_logg, 'Li'))
-    print('Li', extrapolate_single_el_tau(target_teff, 'Li', plot_all=True))
-    print('Fe', extrapolate_tau_x_logg(target_teff, target_logg, 'Fe'))
+    print('Na', extrapolate_tau_x_logg(target_teff, target_logg, 'Na',  modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot))
+    print('Na', extrapolate_single_el_tau(target_teff, 'Na', plot_all=True, modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot))
+    print('Ca', extrapolate_tau_x_logg(target_teff, target_logg, 'Ca',  modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot))
+    print('K', extrapolate_tau_x_logg(target_teff, target_logg, 'K',  modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot))
+    print('K', extrapolate_single_el_tau(target_teff, 'K', plot_all=True,  modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot))
+    print('Ca', extrapolate_single_el_tau(target_teff, 'Ca', plot_all=True,  modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot))
+    print('Li', extrapolate_tau_x_logg(target_teff, target_logg, 'Li',  modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot))
+    print('Li', extrapolate_single_el_tau(target_teff, 'Li', plot_all=True,  modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot))
+    print('Fe', extrapolate_tau_x_logg(target_teff, target_logg, 'Fe',  modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot))
     plt.show()
     #bins=np.arange(4.5,7., 0.05)
     #bins=np.arange(4.0,9.0, 0.05)
-    bins=np.arange(3.,9.0, 0.05)
+    bins=np.arange(3.,11.0, 0.05)
     #plt.hist(tau_li_dist, label='Li', alpha=0.2, bins=bins)
     plt.hist(tau_ca_dist, label='Ca', alpha=0.2, bins=bins)
     #plt.hist(tau_na_dist, label='Na', alpha=0.2, bins=bins)
@@ -400,20 +404,20 @@ if __name__ == '__main__':
     plt.axvline(x=7.5, linestyle='--')
     plt.axvline(x=9.0, linestyle='--')
     plt.show()
-    plt.scatter(teff_dist, tau_li_dist)
-    plt.scatter(teff_dist, tau_ca_dist)
+    plt.scatter(teff_dist, tau_li_dist,alpha=default_alpha)
+    plt.scatter(teff_dist, tau_ca_dist,alpha=default_alpha)
     plt.show()
-    plt.scatter(logg_dist, tau_li_dist)
+    plt.scatter(logg_dist, tau_li_dist,alpha=default_alpha)
     plt.scatter(logg_dist, tau_ca_dist)
     plt.show()
-    plt.scatter(logg_dist, np.array(tau_li_dist)-np.array(tau_ca_dist))
-    plt.title('tau_Li - tau_ca '+wd_name)
+    plt.scatter(logg_dist, np.array(tau_li_dist)-np.array(tau_ca_dist), alpha=default_alpha)
+    plt.title('tau_Li - tau_Ca '+wd_name)
     plt.show()
-    plt.scatter(logg_dist, np.array(tau_na_dist)-np.array(tau_ca_dist))
+    plt.scatter(logg_dist, np.array(tau_na_dist)-np.array(tau_ca_dist),alpha=default_alpha)
     plt.title('tau_na - tau_ca '+wd_name)
     plt.xlabel('log g')
     plt.show()
-    plt.scatter(logg_dist, np.array(tau_k_dist)-np.array(tau_ca_dist))
+    plt.scatter(logg_dist, np.array(tau_k_dist)-np.array(tau_ca_dist),alpha=default_alpha)
     plt.title('tau_k - tau_ca '+wd_name)
     plt.xlabel('log g')
     plt.show()
