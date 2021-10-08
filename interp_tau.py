@@ -187,6 +187,7 @@ def get_logg_index(input_logg):
 def make_DB_tau_table(input_logg, modeler='Fontaine2015', atm_type='He', overshoot=0.0):
     #print('logg:', input_logg)
     if modeler=='Fontaine2015':
+        print('using Fontaine2015 models')
         #print(modeler, "selected, so atm_type and overshoot don't matter. It's always DB.")
         subtau=tauDB_array[get_logg_index(input_logg)][0]
         #print('subtau.shape', subtau.shape)
@@ -200,7 +201,7 @@ def make_DB_tau_table(input_logg, modeler='Fontaine2015', atm_type='He', oversho
         #print('full_array.shape', full_array.shape)
         db_table=Table(full_array, names=('teff', 'Li', 'Ca', 'Na', 'Fe', 'Mg', 'K'))
     elif modeler=='Koester2020':
-        print('using Koester2020 models')
+        print('using Koester2020 models', atm_type, 'overshoot='+str(overshoot))
         full_table=choose_Koester_table(modeler=modeler, atm_type=atm_type, overshoot=overshoot)
         logg_indices=np.where(full_table['logg']==input_logg)
         db_table=full_table[logg_indices]

@@ -23,20 +23,32 @@ n_points=1e5
 n_points=int(1e4)
 limit_indicator=99. #value above which if the absolute value of the error on a measurement is above it indicates it should be a limit
 
+#default values to populate definitions of kwargs
 
+#default_modeler='Fontaine2015'
+#default_atm_type='He'
+#default_overshoot=0.0
 
-def declining_phase(target_teff, log_el1_over_el2, time,el1, el2, logg=8.0, steady_state_start=False, cross_extrap=True):
+#default_modeler='Koester2020'
+#default_atm_type='H'
+#default_overshoot=1.0
+
+default_modeler='Koester2020'
+default_atm_type='Nonsense' #This should make it crash if I am not correctly passing around kwargs
+default_overshoot=1.0
+
+def declining_phase(target_teff, log_el1_over_el2, time,el1, el2, logg=8.0, steady_state_start=False, cross_extrap=True, modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot):
     """
     provide log_el1_over_el2 as an absolute number ratio not the one normalized to solar abundances.
     
     the output value will be in log10 of absolute number abundances... hopefully
     """
     if cross_extrap:
-        el1_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el1)
-        el2_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el2)
+        el1_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el1, modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+        el2_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el2, modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     else:
-        el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg)
-        el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg)
+        el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg, modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+        el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg, modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     
     el1_tau=10.**el1_logtau
     el2_tau=10.**el2_logtau
@@ -49,7 +61,7 @@ def declining_phase(target_teff, log_el1_over_el2, time,el1, el2, logg=8.0, stea
     return np.log10(dp_el1el2)
 
 
-def get_time_since_accretion(target_teff, log_atm_ratio, log_desired_ratio, el1, el2,logg=8.0, steady_state_start=False,cross_extrap=True):
+def get_time_since_accretion(target_teff, log_atm_ratio, log_desired_ratio, el1, el2,logg=8.0, steady_state_start=False,cross_extrap=True, modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot):
     """
     track back some abundance ratio from the present atmospheric abundance ratio to some expected abundance 
     ratio based on a solar system object (most likely). This gives the amount of time that must have passed since 
@@ -58,11 +70,11 @@ def get_time_since_accretion(target_teff, log_atm_ratio, log_desired_ratio, el1,
     """
     if cross_extrap:
         print('cross_extrap')
-        el1_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el1)
+        el1_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el1, modeler=modeler, atm_type=atm_type, overshoot=overshoot)
         el2_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el2)
     else:
-        el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg)
-        el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg)
+        el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg, modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+        el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg, modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     el1_tau=10.**el1_logtau
     el2_tau=10.**el2_logtau
     t_coeffs= (el1_tau*el2_tau)/(el2_tau-el1_tau)
@@ -77,30 +89,30 @@ def get_time_since_accretion(target_teff, log_atm_ratio, log_desired_ratio, el1,
     #print("t_coeffs", t_coeffs)
     return t_coeffs*pollutant_term
 
-def get_t_relHe_fwd(el, target_teff, log_elHe_atm, log_elHe_des, logg=8.0, cross_extrap=True):
+def get_t_relHe_fwd(el, target_teff, log_elHe_atm, log_elHe_des, logg=8.0, cross_extrap=True,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot):
     """
     Take the present-day value for log10(el/He) and figure out how long would have to pass for diffusion to lower
     the overall photospheric abundance to log_elHe_des
     
     """
     if cross_extrap:
-        el_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el)
+        el_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     else:
-        el_logtau= itau.extrapolate_single_el_tau(target_teff, el, input_logg=logg)
+        el_logtau= itau.extrapolate_single_el_tau(target_teff, el, input_logg=logg,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     return (log_elHe_atm- log_elHe_des)*np.log(10.)*10.**(el_logtau)
 
-def get_relHe_fwd(el, time,  target_teff, log_elHe_atm, logg=8.0, cross_extrap=True):
+def get_relHe_fwd(el, time,  target_teff, log_elHe_atm, logg=8.0, cross_extrap=True,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot):
     """
     time input in Myr, it will be converted to years inside this function
     """
     if cross_extrap:
-        el_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el)
+        el_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     else:
-        el_logtau= itau.extrapolate_single_el_tau(target_teff, el, input_logg=logg)
+        el_logtau= itau.extrapolate_single_el_tau(target_teff, el, input_logg=logg,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     time=time*1e6
     return log_elHe_atm+np.log10(np.e)*(-time/(10.**el_logtau))
 
-def LiCa_DP_NaCa(target_teff, log_LiCa, log_NaCa, desired_log_NaCa, logg=8.0, steady_state_start=False, cross_extrap=True):
+def LiCa_DP_NaCa(target_teff, log_LiCa, log_NaCa, desired_log_NaCa, logg=8.0, steady_state_start=False, cross_extrap=True,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot):
     """
     Take the log(Na/Ca ) in the atmosphere and an expected log(Na/Ca) for some sort of solar system object (most 
     likely) (desired_log_NaCa), and then using the time for since accretion from the function 
@@ -108,12 +120,12 @@ def LiCa_DP_NaCa(target_teff, log_LiCa, log_NaCa, desired_log_NaCa, logg=8.0, st
     log(Li/Ca ) would have been for the body that was accreted.
     
     """
-    t_NaCa= get_time_since_accretion(target_teff, log_NaCa, desired_log_NaCa, "Na", "Ca",  logg=logg, steady_state_start=steady_state_start, cross_extrap=cross_extrap)
-    dp_LiCa= declining_phase(target_teff, log_LiCa,t_NaCa,  'Li', "Ca", logg=logg, steady_state_start=steady_state_start, cross_extrap=cross_extrap)
+    t_NaCa= get_time_since_accretion(target_teff, log_NaCa, desired_log_NaCa, "Na", "Ca",  logg=logg, steady_state_start=steady_state_start, cross_extrap=cross_extrap,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+    dp_LiCa= declining_phase(target_teff, log_LiCa,t_NaCa,  'Li', "Ca", logg=logg, steady_state_start=steady_state_start, cross_extrap=cross_extrap,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     
     return t_NaCa, dp_LiCa
 
-def el1el2_DP_el3el2(target_teff, log_el1el2, log_el3el2, desired_log_el3el2, el1, el2, el3,  logg=8.0, steady_state_start=False, cross_extrap=True):
+def el1el2_DP_el3el2(target_teff, log_el1el2, log_el3el2, desired_log_el3el2, el1, el2, el3,  logg=8.0, steady_state_start=False, cross_extrap=True,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot):
     """
     Take the log(el3/el2) in the atmosphere and an expected log(el3/el2) for some sort of solar system object (most likely) (desired_log_el3el2), and then using the time for since accretion from the function 
     get_time_since_accretion(), which is called internally, then un-decline the el1/el2 abundance to what the 
@@ -122,8 +134,8 @@ def el1el2_DP_el3el2(target_teff, log_el1el2, log_el3el2, desired_log_el3el2, el
     This is the more generalized form of LiCa_DP_NaCa(), hopefully.
     
     """
-    t_el3el2= get_time_since_accretion(target_teff, log_el3el2, desired_log_el3el2, el3, el2,  logg=logg, steady_state_start=steady_state_start, cross_extrap=cross_extrap)
-    dp_el1el2= declining_phase(target_teff, log_el1el2, t_el3el2,  el1,  el2, logg=logg, steady_state_start=steady_state_start, cross_extrap=cross_extrap)
+    t_el3el2= get_time_since_accretion(target_teff, log_el3el2, desired_log_el3el2, el3, el2,  logg=logg, steady_state_start=steady_state_start, cross_extrap=cross_extrap,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+    dp_el1el2= declining_phase(target_teff, log_el1el2, t_el3el2,  el1,  el2, logg=logg, steady_state_start=steady_state_start, cross_extrap=cross_extrap,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     
     return t_el3el2, dp_el1el2
 
@@ -135,15 +147,15 @@ def get_el1el2_wrt_time(log_el1el2, time, el1_tau, el2_tau):
     """
     return log_el1el2 + time*1e6*np.log10(np.e)*((10.**el2_tau-10.**el1_tau)/(10.**el1_tau * 10.**el2_tau))
 
-def el1el2_DP_el3el2_ftimes(target_teff, log_el1el2, log_el3el2, time,  el1, el2, el3,  logg=8.0, steady_state_start=False, cross_extrap=True):
+def el1el2_DP_el3el2_ftimes(target_teff, log_el1el2, log_el3el2, time,  el1, el2, el3,  logg=8.0, steady_state_start=False, cross_extrap=True,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot):
     if cross_extrap:
-        el1_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el1)
-        el2_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el2)
-        el3_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el3)
+        el1_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el1,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+        el2_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el2,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+        el3_logtau=itau.extrapolate_tau_x_logg(target_teff, logg, el3,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     else:
-        el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg)
-        el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg)
-        el3_logtau= itau.extrapolate_single_el_tau(target_teff, el3, input_logg=logg)
+        el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+        el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+        el3_logtau= itau.extrapolate_single_el_tau(target_teff, el3, input_logg=logg,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     print(el1, 'log tau', el1_logtau)
     print(el2, 'log tau', el2_logtau)
     print(el3, 'log tau', el3_logtau)
@@ -160,7 +172,7 @@ def recover_lost_element_number(t_passed, log_elHe_atm, log_m_cvz, el, el_tau):
     """
     return
 
-def get_accreted_mass( el, log_elHe,t_passed, teff=5000., logg=8.0,log_q=-5.0, m_wd=0.56, cross_extrap=True):
+def get_accreted_mass( el, log_elHe,t_passed, teff=5000., logg=8.0,log_q=-5.0, m_wd=0.56, cross_extrap=True,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot):
     """
     Assumes all of the convective mass can be treated as being helium and also that the helium isotope abundances are the same as that found on Earth(?, whatever the default periodic table mean molecular weight is). 
     
@@ -171,9 +183,9 @@ def get_accreted_mass( el, log_elHe,t_passed, teff=5000., logg=8.0,log_q=-5.0, m
     """
     el_num=cp.el_nums[el]
     if cross_extrap:
-        log_el_tau=itau.extrapolate_tau_x_logg(teff, logg, el)
+        log_el_tau=itau.extrapolate_tau_x_logg(teff, logg, el,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     else:
-        log_el_tau=itau.extrapolate_single_el_tau(teff, el, input_logg=logg)
+        log_el_tau=itau.extrapolate_single_el_tau(teff, el, input_logg=logg,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     #print('log_el_tau', log_el_tau)
     #print("t_passed", t_passed)
     #print('(t_passed/(10.**log_el_tau))',(t_passed/(10.**log_el_tau)))
@@ -189,7 +201,7 @@ def get_accreted_mass( el, log_elHe,t_passed, teff=5000., logg=8.0,log_q=-5.0, m
     return log_m_acc
 
 
-def easy_dist_decline(wd_row, el1, el2, el3, desired_log_el3el2, n_points=n_points, plot_all=False, start_he=False):
+def easy_dist_decline(wd_row, el1, el2, el3, desired_log_el3el2, n_points=n_points, plot_all=False, start_he=False,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot):
     teff_dist=np.random.normal(loc=wd_row['teff'], scale=wd_row['teff_err'], size=n_points)
     logg_dist= np.random.normal(loc=wd_row['logg'], scale=wd_row['logg_err'], size=n_points)
     def get_el(el, el2=el2):
@@ -214,7 +226,7 @@ def easy_dist_decline(wd_row, el1, el2, el3, desired_log_el3el2, n_points=n_poin
         print('doing simultaneous decline')
         log_el1el2= make_el_dist(el1, el2=el2)
         log_el3el2=make_el_dist(el3,el2=el2)
-    t_decline, dp_el1el2= el1el2_DP_el3el2(teff_dist, log_el1el2, log_el3el2, desired_log_el3el2, el1, el2, el3, logg=logg_dist, cross_extrap=True)
+    t_decline, dp_el1el2= el1el2_DP_el3el2(teff_dist, log_el1el2, log_el3el2, desired_log_el3el2, el1, el2, el3, logg=logg_dist, cross_extrap=True,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     
     dp_el1el2=dp_el1el2[~np.isinf(dp_el1el2)]
     dp_el1el2=dp_el1el2[~np.isnan(dp_el1el2)]
@@ -226,10 +238,10 @@ def easy_dist_decline(wd_row, el1, el2, el3, desired_log_el3el2, n_points=n_poin
     print(wd_row['name'], 'median log('+el1+'/'+el2+')' , np.median(dp_el1el2), 'up/down',np.percentile(dp_el1el2, 84),np.percentile(dp_el1el2, 16))
     print('mean t_decline', np.mean(t_decline*1e-6),'Myr')
     if plot_all:
-        plt.hist(dp_el1el2, bins=101, normed=True)
+        plt.hist(dp_el1el2, bins=101, density=True)
         plt.title(wd_row['name'])
         plt.show()
-        plt.hist(t_decline*1e-6, bins=101, normed=True)
+        plt.hist(t_decline*1e-6, bins=101, density=True)
         plt.xlabel('t_decline (Myr)')
         plt.title(wd_row['name'])
         plt.show()
@@ -237,7 +249,8 @@ def easy_dist_decline(wd_row, el1, el2, el3, desired_log_el3el2, n_points=n_poin
         pass
     return
 
-def easy_dist_ssp(wd_row,elements,n_points=n_points, plot_all=False, tau_rand=False, tau_add=0.2):
+def easy_dist_ssp(wd_row,elements,n_points=n_points, plot_all=False, tau_rand=False, tau_add=0.2,modeler=default_modeler, overshoot=default_overshoot):
+    atm_type=wd_row['diff_atm_type']
     string1= elements[0].lower()+'/'+elements[1].lower()
     string2=elements[2].lower()+'/'+elements[1].lower()
     #times= np.arange(0, t_max+t_step, t_step)
@@ -260,10 +273,10 @@ def easy_dist_ssp(wd_row,elements,n_points=n_points, plot_all=False, tau_rand=Fa
         reset_el3el2_err=True
     else:
         el3el2_dist=np.random.normal(loc=target_el3el2,scale=wd_row[string2+'_err'],size=n_points)
-    def get_ssp(teff, logg, el1el2, el3el2, elements, plot_all=plot_all,tau_rand=False, tau_add=tau_add):
-        tau_el1=itau.extrapolate_tau_x_logg(teff, logg, elements[0])
-        tau_el2=itau.extrapolate_tau_x_logg(teff, logg, elements[1])
-        tau_el3=itau.extrapolate_tau_x_logg(teff, logg, elements[2])
+    def get_ssp(teff, logg, el1el2, el3el2, elements, plot_all=plot_all,tau_rand=False, tau_add=tau_add,modeler=modeler, atm_type=atm_type, overshoot=overshoot):
+        tau_el1=itau.extrapolate_tau_x_logg(teff, logg, elements[0],modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+        tau_el2=itau.extrapolate_tau_x_logg(teff, logg, elements[1],modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+        tau_el3=itau.extrapolate_tau_x_logg(teff, logg, elements[2],modeler=modeler, atm_type=atm_type, overshoot=overshoot)
         
         tau2_tau1= tau_el2-tau_el1
         tau2_tau3=tau_el2-tau_el3
@@ -282,21 +295,21 @@ def easy_dist_ssp(wd_row,elements,n_points=n_points, plot_all=False, tau_rand=Fa
         el1el2=el1el2+tau2_tau1
         el3el2=el3el2+tau2_tau3
         if plot_all:
-            plt.hist(tau_el1-tau_el2, alpha=0.5,label='no addition',normed=True)
-            plt.hist(-1*tau2_tau1, alpha=0.5, label='addition',normed=True)
+            plt.hist(tau_el1-tau_el2, alpha=0.5,label='no addition',density=True)
+            plt.hist(-1*tau2_tau1, alpha=0.5, label='addition',density=True)
             plt.title(r'$\tau$' + elements[0]+'-'+ elements[1])
             plt.legend()
             plt.show()
             
-            plt.hist(tau_el3-tau_el2, label='no addition',normed=True)
-            plt.hist(-1*tau2_tau3, alpha=0.5, label='addition',normed=True)
+            plt.hist(tau_el3-tau_el2, label='no addition',density=True)
+            plt.hist(-1*tau2_tau3, alpha=0.5, label='addition',density=True)
             plt.title(r'$\tau$' + elements[2]+'-'+ elements[1])
             plt.legend()
             plt.show()
             
         return el1el2, el3el2
-    target_ssp_el1el2,target_ssp_el3el2=get_ssp(teff,logg, target_el1el2, target_el3el2,elements)
-    el1el2_ssp_dist, el3el2_ssp_dist=get_ssp(teff_dist,logg_dist, el1el2_dist, el3el2_dist,elements,tau_rand=tau_rand)
+    target_ssp_el1el2,target_ssp_el3el2=get_ssp(teff,logg, target_el1el2, target_el3el2,elements,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+    el1el2_ssp_dist, el3el2_ssp_dist=get_ssp(teff_dist,logg_dist, el1el2_dist, el3el2_dist,elements,tau_rand=tau_rand,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     print('target_ssp', elements[0],elements[1],target_ssp_el1el2)
     print('target_ssp', elements[2], elements[1], target_ssp_el3el2)
     print('dist ssp',elements[0], elements[1], np.median(el1el2_ssp_dist), np.mean(el1el2_ssp_dist), np.std(el1el2_ssp_dist))
@@ -307,7 +320,7 @@ def easy_dist_ssp(wd_row,elements,n_points=n_points, plot_all=False, tau_rand=Fa
         plt.axvline(target_ssp_el1el2)
         plt.title(elements[0]+'/'+elements[1])
         plt.show()
-        get_ssp(teff_dist,logg_dist, el1el2_dist, el3el2_dist,elements)
+        get_ssp(teff_dist,logg_dist, el1el2_dist, el3el2_dist,elements,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
         plt.hist(el3el2_ssp_dist)
         plt.axvline(target_ssp_el3el2)
         plt.title(elements[2]+'/'+elements[1])
@@ -349,14 +362,14 @@ if __name__ == '__main__':
     #plt.xlim(-2.0, 1.25)
     #plt.ylim(0.0, 2.0)
     #plt.show()
-    tFeCa, dp_FeCa= el1el2_DP_el3el2(teff_dist,feca_dist, naca_dist, -0.01, 'Li', 'Ca', 'Na', logg=logg_dist, cross_extrap=True)
+    tFeCa, dp_FeCa= el1el2_DP_el3el2(teff_dist,feca_dist, naca_dist, -0.01, 'Li', 'Ca', 'Na', logg=logg_dist, cross_extrap=True,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
     #plt.scatter(teff_dist, dp_FeCa)
     #plt.show()
-    print("mean", np.mean(dp_FeCa), np.std(dp_FeCa))
-    plt.hist(dp_FeCa, bins=101, normed=True, label='log(Na/Ca)=-0.01', alpha=0.2)
-    tFeCa, dp_FeCa= el1el2_DP_el3el2(teff_dist,feca_dist, naca_dist, -1.1, 'Li', 'Ca', 'Na', logg=logg_dist, cross_extrap=True)
-    plt.hist(dp_FeCa, bins=101, normed=True, label='log(Na/Ca)=-1.1', alpha=0.2)
-    print("mean", np.mean(dp_FeCa), np.std(dp_FeCa))
+    print("mean", np.mean(dp_FeCa), np.std(dp_FeCa),np.min(dp_FeCa), np.max(dp_FeCa))
+    plt.hist(dp_FeCa, bins=101, density=True, label='log(Na/Ca)=-0.01', alpha=0.2)
+    tFeCa, dp_FeCa= el1el2_DP_el3el2(teff_dist,feca_dist, naca_dist, -1.1, 'Li', 'Ca', 'Na', logg=logg_dist, cross_extrap=True,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
+    plt.hist(dp_FeCa, bins=101, density=True, label='log(Na/Ca)=-1.1', alpha=0.2)
+    print("mean", np.mean(dp_FeCa), np.std(dp_FeCa),np.min(dp_FeCa),np.max(dp_FeCa))
     plt.legend()
     plt.show()
     
@@ -364,7 +377,7 @@ if __name__ == '__main__':
     time_range=np.linspace(0, 40, 20)
     time_range=time_range*1e6
 
-    dp_lica= declining_phase(3830., 1.7,time_range, 'Li', 'Ca')
+    dp_lica= declining_phase(3830., 1.7,time_range, 'Li', 'Ca',modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
     print('DP log(Li/Ca)', dp_lica)
 
     #plt.plot(np.log10(time_range), dp_lica)
@@ -373,20 +386,20 @@ if __name__ == '__main__':
     #plt.legend()
     #plt.show()
 
-    t_NaCa= get_time_since_accretion(3830., 0.0, -1.1, 'Na', 'Ca', steady_state_start=False, cross_extrap=True, logg=7.77)
+    t_NaCa= get_time_since_accretion(3830., 0.0, -1.1, 'Na', 'Ca', steady_state_start=False, cross_extrap=True, logg=7.77,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
     print("t_NaCa", t_NaCa, np.log10(t_NaCa))
-    print(declining_phase(3830., 1.7,t_NaCa, 'Li', 'Ca', steady_state_start=False))
+    print(declining_phase(3830., 1.7,t_NaCa, 'Li', 'Ca', steady_state_start=False,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot))
 
     #t_NaCa= get_time_since_accretion(3830., 0.0, -1.0, 'Na', 'Ca', logg=7.5)
     print("t_NaCa", t_NaCa, np.log10(t_NaCa))
-    print(declining_phase(3830., 1.7,t_NaCa, 'Li', 'Ca', steady_state_start=False, logg=7.5))
-    log_mCa= get_accreted_mass('Ca', -9.5, t_NaCa,  teff=3830., logg=8.0, log_q=-4.88, m_wd=0.56)
+    print(declining_phase(3830., 1.7,t_NaCa, 'Li', 'Ca', steady_state_start=False, logg=7.5,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot))
+    log_mCa= get_accreted_mass('Ca', -9.5, t_NaCa,  teff=3830., logg=8.0, log_q=-4.88, m_wd=0.56,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
     print(log_mCa)
     mCa=10.**log_mCa
     print(mCa)
     m_total=mCa/0.073
     print('total accreted mass', m_total, 'kg')
-    log_mNa= get_accreted_mass('Na', -9.5, t_NaCa,  teff=3830., logg=8.0, log_q=-4.88, m_wd=0.56)
+    log_mNa= get_accreted_mass('Na', -9.5, t_NaCa,  teff=3830., logg=8.0, log_q=-4.88, m_wd=0.56,modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
     print(log_mNa)
     mNa=10.**log_mNa
     m_total_Na=mNa/0.0033
