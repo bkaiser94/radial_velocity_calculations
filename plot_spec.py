@@ -39,8 +39,8 @@ test_side = test_width/2
 
 pix_width=3
 sdss_pix_width = 10
-sdss_scale_factor=20.6 #BOSS scaling
-#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+#sdss_scale_factor=20.6 #BOSS scaling
+sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 sdss_seeing=0.7 #arcsec seeing
 sdss_see_sig=sdss_seeing/2.355/ pixel_scale
 
@@ -85,23 +85,24 @@ plot_400m2_tell= False
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-norm_range=[6630,6690]#wider double norm range
+#norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 #norm_range=[3900, 4000]
 #norm_range=[8640,8790]
+norm_range=[4750,4800]
 ####norm_range=np.array(norm_range)+wavelength_offset
 
 #file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
-file_setting='all_fwctb'
+#file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
-#file_setting= 'two_arm_compare_SDSS'
+file_setting= 'two_arm_compare_SDSS'
 #file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
 
 single_iterate= False
@@ -233,9 +234,10 @@ elif file_setting =='two_arm_compare_SDSS':
     filename2=sys.argv[2]
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'*sdss*.fits')
+    sdss_names = glob(sdss_path+'*SDSS*0744*.fits')
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
-    sdss_names = glob(sdss_path+'G0_K5/*G*.fits')
+    #sdss_names = glob(sdss_path+'G0_K5/*G*.fits')
     
     sdss_names= sorted(sdss_names)
     single_iterate=False
@@ -1041,8 +1043,8 @@ if __name__ == '__main__':
             
             #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header2, norm=True, smooth=True, kernel_type='gaussian', pix_width=pix_width, color='r')
             plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
-            plot_spectrum(target_spec1, filename1, header1, norm=True, smooth=True, kernel_type='gaussian',  color='g')
-            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, kernel_type='gaussian',  color='b')
+            plot_spectrum(target_spec1, filename1, header1, pix_width=header1['see_sig'],norm=True, smooth=True, kernel_type='gaussian',  color='g')
+            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, pix_width=header2['see_sig'], kernel_type='gaussian',  color='b')
             #plot_dwavelength(target_spec1, filename1, read_in=False)
             #plot_dwavelength(target_spec2, filename2, read_in=False)
             #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
@@ -1071,7 +1073,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5, kernel_type='box')
             
@@ -1114,7 +1116,7 @@ if __name__ == '__main__':
         #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
         #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
         plt.axhline(y=0, linestyle=':', color='k')
-        spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
+        spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
         #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
         #plt.xlabel('BMJD_TDB')
         #plt.show()

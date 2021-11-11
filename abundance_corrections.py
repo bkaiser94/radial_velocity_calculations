@@ -156,9 +156,9 @@ def el1el2_DP_el3el2_ftimes(target_teff, log_el1el2, log_el3el2, time,  el1, el2
         el1_logtau= itau.extrapolate_single_el_tau(target_teff, el1, input_logg=logg,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
         el2_logtau= itau.extrapolate_single_el_tau(target_teff, el2, input_logg=logg,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
         el3_logtau= itau.extrapolate_single_el_tau(target_teff, el3, input_logg=logg,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
-    print(el1, 'log tau', el1_logtau)
-    print(el2, 'log tau', el2_logtau)
-    print(el3, 'log tau', el3_logtau)
+    print(el1, 'log tau', el1_logtau,"{:e}".format(10.**el1_logtau))
+    print(el2, 'log tau', el2_logtau,"{:e}".format(10.**el2_logtau))
+    print(el3, 'log tau', el3_logtau,"{:e}".format(10.**el3_logtau))
     
     log_el1el2_dp= get_el1el2_wrt_time(log_el1el2, time, el1_logtau, el2_logtau)
     log_el3el2_dp= get_el1el2_wrt_time(log_el3el2, time, el3_logtau, el2_logtau)

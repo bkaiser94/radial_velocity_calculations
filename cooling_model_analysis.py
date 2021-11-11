@@ -77,6 +77,14 @@ default_z=0.02 #approximately solar
 #target_teff_err= 230.
 
 
+##1644 w/ eDR3 approximation applied
+#wd_name='WD J1644-0449'
+#target_logg=7.85
+#target_logg_err= 0.23
+#target_teff= 3830.
+#target_teff_err= 230.
+
+
 ##1330
 #wd_name='SDSSJ1330+6435'
 #target_logg= 8.26
@@ -122,11 +130,11 @@ default_z=0.02 #approximately solar
 #target_teff_err=50.
 
 #####J1824 Simon's new parameters
-wd_name='WDJ1824+1213'
-target_logg=7.53
-target_logg_err=0.09
-target_teff= 3540. #K
-target_teff_err=90.
+#wd_name='WDJ1824+1213'
+#target_logg=7.53
+#target_logg_err=0.09
+#target_teff= 3540. #K
+#target_teff_err=90.
 
 ##LHS2534 Hollands et al 2021 parameters
 #wd_name='LHS2534'
@@ -210,6 +218,19 @@ target_teff_err=90.
 #target_teff= 8730.
 #target_teff_err= 220.
 
+##Ross 640 (Koester and Wolff 2000)
+#wd_name="Ross 640"
+#target_logg= 8.0
+#target_logg_err=0.1 #guessed
+#target_teff=8500.
+#target_teff_err=300. #guessed
+
+##NLTT 43806 (Zuckerman et al. 2011)
+wd_name="NLTT 43806"
+target_logg= 8.0
+target_logg_err=0.1 #guessed
+target_teff=5900.
+target_teff_err=300. #guessed
 
 ##GaiaJ0600-4414 CPM companion He-atmosphere
 #wd_name="GaiaJ0600-4414 CPM companion He-atmosphere"
@@ -808,6 +829,13 @@ print(np.min(ml_mass_vals), np.max(ml_mass_vals))
 print("Mean M/L cooling vals", np.mean(ml_cooling_vals))
 print(np.min(ml_cooling_vals), np.max(ml_cooling_vals))
 print("\n***********\n")
+
+print("\n\n")
+print("Median Total Age:", np.median(trimmed_total_age_dist))
+print("16th percentile:", np.nanpercentile(trimmed_total_age_dist,16), "difference w/ median:", np.median(trimmed_total_age_dist)-np.nanpercentile(trimmed_total_age_dist,16))
+print("84th percentile:", np.nanpercentile(trimmed_total_age_dist,84),"difference w/ median:", np.nanpercentile(trimmed_total_age_dist,84)- np.median(trimmed_total_age_dist))
+
+print("\n\n")
 plt.show()
 
 these_bins= np.arange(0,1.4, 0.025)
