@@ -148,6 +148,8 @@ def avg_spectra(target_list):
     flux_list=[]
     noise2_list=[]
     sky_list=[]
+    exp_time_list=[]
+    bmjd_tdb_list=[]
     if do_dlambda_ext:
         dlambda_list=[]
     else:
@@ -159,6 +161,8 @@ def avg_spectra(target_list):
         wave_list.append(target_spec[0])
         flux_list.append(target_spec[1])
         noise2_list.append(target_noise[1]**2)
+        exp_time_list.append(header['EXPTIME'])
+        bmjd_tdb_list.append(header['bmjd_tdb'])
         hdu=fits.open(target_file)
         sky=np.copy(hdu[2].data)
         sky_list.append(sky)
@@ -182,6 +186,19 @@ def avg_spectra(target_list):
     print(flux_array.shape)
     noise2_array= np.array(noise2_list)
     sky_array=np.array(sky_list)
+    exp_time_array=np.array(exp_time_list)
+    bmjd_tdb_array=np.array(bmjd_tdb_list)
+    
+    summed_exp_time=np.sum(exp_time_array)
+    avg_bmjd_tdb=np.mean(bmjd_tdb_array)
+    print('exposure times:', exp_time_array)
+    print('summed exposure time:', summed_exp_time)
+    print('bmjd_tdb_array:',bmjd_tdb_array)
+    print('average bmjd_tdb:',avg_bmjd_tdb)
+    print('header["EXPTIME"]:',header['EXPTIME'])
+    header['EXPTIME']=(summed_exp_time,'summed integration time')
+    header['bmjd_tdb']=(avg_bmjd_tdb, 'average BMJD_TDB midpoint of co-added spectra')
+    print('header["EXPTIME"]:',header['EXPTIME'])
     std_wave=np.std(wave_array,axis=0)
     avg_std_wave=np.nanmean(std_wave)
     max_std_wave=np.nanmax(std_wave)
@@ -322,18 +339,31 @@ def make_rebin_avg_spec(target_list):
     rebin_fluxes=[]
     rebin_skies= []
     rebin_noise2s=[]
+    exp_time_list=[]
+    bmjd_tdb_list=[]
     for target_file in target_list:
         print('target_file', target_file)
         rebin_list= spt.rebin_spec(target_file, ref_spec[0], ref_dlambda)
+        target_spec, header, target_noise = spt.retrieve_spec(target_file)
         rebin_fluxes.append(rebin_list[1])
         rebin_skies.append(rebin_list[2])
         rebin_noise2s.append(rebin_list[3])
+        exp_time_list.append(header['EXPTIME'])
+        bmjd_tdb_list.append(header['bmjd_tdb'])
     
     avg_rebin_flux= np.nanmean(rebin_fluxes, axis=0)
     avg_rebin_sky= np.nanmean(rebin_skies, axis=0)
     avg_rebin_noise2= np.nanmean(rebin_noise2s, axis=0)**2/np.nansum(rebin_noise2s, axis=0)
     avg_rebin_noise= np.sqrt(avg_rebin_noise2)
     avg_rebin_noise=avg_rebin_noise/avg_rebin_flux
+    
+    exp_time_array=np.array(exp_time_list)
+    bmjd_tdb_array=np.array(bmjd_tdb_list)
+    summed_exp_time=np.sum(exp_time_array)
+    avg_bmjd_tdb=np.mean(bmjd_tdb_array)
+    ref_header['EXPTIME']=(summed_exp_time,'summed integration time')
+    ref_header['bmjd_tdb']=(avg_bmjd_tdb, 'average BMJD_TDB midpoint of co-added spectra')
+    
     hdu=fits.PrimaryHDU(ref_spec[0], header= ref_header)
     hdu1= fits.ImageHDU(avg_rebin_flux)
     #hdu2= fits.ImageHDU(np.ones(avg_flux.shape))
