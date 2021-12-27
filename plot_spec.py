@@ -90,10 +90,11 @@ plot_400m2_tell= False
 #norm_range=[5270,5560]
 #norm_range=[3900, 4000]
 #norm_range=[8640,8790]
-norm_range=[4750,4800]
+#norm_range=[4750,4800]
+norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
@@ -102,7 +103,7 @@ norm_range=[4750,4800]
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
-file_setting= 'two_arm_compare_SDSS'
+#file_setting= 'two_arm_compare_SDSS'
 #file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
 
 single_iterate= False
@@ -211,8 +212,10 @@ elif file_setting=='all_SDSS':
 elif file_setting== 'two_arm':
     #m1_names =glob('avg_fwctb*400m1*fits')
     #m2_names= glob('avg_fwctb*400m2*fits')
-    m1_names =glob('ravg_fwctb*WISE*400m1*fits')
-    m2_names= glob('ravg_fwctb*WISE*400m2*fits')
+    #m1_names =glob('ravg_fwctb*WISE*400m1*fits')
+    #m2_names= glob('ravg_fwctb*WISE*400m2*fits')
+    m1_names =glob('ravg_fwctb*GaiaJ05*fits')
+    m2_names= glob('ravg_fwctb*LEHPM*fits')
     #m1_names =glob('ravg_fwctb*1644*400m1*fits')
     #m2_names= glob('ravg_fwctb*1644*400m2*fits')
     #m1_names =glob('super_fwctb*400m1*fits')
@@ -234,7 +237,7 @@ elif file_setting =='two_arm_compare_SDSS':
     filename2=sys.argv[2]
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'*sdss*.fits')
-    sdss_names = glob(sdss_path+'*SDSS*0744*.fits')
+    sdss_names = glob(sdss_path+'*sdss*1129*.fits')
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'G0_K5/*G*.fits')
@@ -311,7 +314,7 @@ def convolve_spectrum(target_spec, header, kernel_type='gaussian', pix_width=pix
     return spec_out
 
 
-def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', norm=False, forced_title='', pix_width=pix_width, offset=0, color='None', kernel_width=slit_width, norm_range=norm_range):
+def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', norm=False, forced_title='', pix_width=pix_width, offset=0, color='None', kernel_width=slit_width, norm_range=norm_range,alpha=1):
     title_string=filename
     label_string= filename
     try:
@@ -362,9 +365,9 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
             #pass
         #plt.plot(spec[0], spec[1]+offset, label=filename, color=color)
         if color != 'None':
-            plt.plot(spec[0], spec[1]+offset, label=label_string, color=color)
+            plt.plot(spec[0], spec[1]+offset, label=label_string, color=color,alpha=alpha)
         else:
-            plt.plot(spec[0], spec[1]+offset, label=label_string)
+            plt.plot(spec[0], spec[1]+offset, label=label_string,alpha=alpha)
     else:
         plt.xlabel('Pixel')
         plt.plot(spec[1]+offset, label=label_string)
@@ -946,12 +949,12 @@ if __name__ == '__main__':
             
             ##sdss_spec= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
             #target_spec1[0]=target_spec1[0]+wavelength_offset
-            #plot_sky(m1_name, offset=0)
-            #plot_sky(m2_name, offset=0)
+            plot_sky(m1_name, offset=0,line_labels=False)
+            plot_sky(m2_name, offset=0,line_labels=False)
             
             #plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=False, kernel_type='box')
-            plot_spectrum(target_spec2, m2_name, header2, norm=False, smooth=False, kernel_type='box')
-            plot_spectrum(target_spec1, m1_name, header1, norm=False, smooth=False, kernel_type='box')
+            plot_spectrum(target_spec2, m2_name, header2, norm=True, smooth=True, kernel_type='gaussian',pix_width=header1['see_sig'])
+            plot_spectrum(target_spec1, m1_name, header1, norm=True, smooth=True, kernel_type='gaussian', pix_width=header2['see_sig'])
             #plt.scatter(target_spec1[0],target_spec1[1], color='b')
             #plt.scatter(target_spec2[0], target_spec2[1], color='r')
             #plt.show()
@@ -1073,7 +1076,11 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=0.5)
+            
+            #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=4./header['see_sig'], kernel_type='gaussian',alpha=0.5)
+
+            
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5, kernel_type='box')
             
@@ -1097,7 +1104,7 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
-            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            #spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
             #spt.show_plot(show_legend=True)
             #plt.legend()
             #plt.show()

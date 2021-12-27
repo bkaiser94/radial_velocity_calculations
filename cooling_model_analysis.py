@@ -31,8 +31,8 @@ python_version_number=float('.'.join([python_digits[0],python_digits[1]]))
 #wd_file='temp_wd_abundances.csv'
 wd_file='20210527_all_wd_abundances_new_Blouin.csv'
 
-#atm_type='thinH'
-atm_type='thickH'
+atm_type='thinH'
+#atm_type='thickH'
 
 #cooling_modeler='fontaine2001'
 cooling_modeler='bedard2020'
@@ -170,11 +170,11 @@ default_z=0.02 #approximately solar
 #target_teff_err= 126.986438
 
 #J2339-0424 from Klein et al. 2021
-#wd_name='GALEX J2339-0424'
-#target_logg=7.93
-#target_logg_err=0.09
-#target_teff= 13735
-#target_teff_err= 500
+wd_name='GALEX J2339-0424'
+target_logg=7.93
+target_logg_err=0.09
+target_teff= 13735
+target_teff_err= 500
 
 #GD378 from Klein et al. 2021
 #wd_name='GD 378'
@@ -226,11 +226,11 @@ default_z=0.02 #approximately solar
 #target_teff_err=300. #guessed
 
 ##NLTT 43806 (Zuckerman et al. 2011)
-wd_name="NLTT 43806"
-target_logg= 8.0
-target_logg_err=0.1 #guessed
-target_teff=5900.
-target_teff_err=300. #guessed
+#wd_name="NLTT 43806"
+#target_logg= 8.0
+#target_logg_err=0.1 #guessed
+#target_teff=5900.
+#target_teff_err=300. #guessed
 
 ##GaiaJ0600-4414 CPM companion He-atmosphere
 #wd_name="GaiaJ0600-4414 CPM companion He-atmosphere"
@@ -246,6 +246,13 @@ target_teff_err=300. #guessed
 #target_logg_err=0.27
 #target_teff=5455.
 #target_teff_err=367.
+
+#Made up white dwarf for total age estimates
+wd_name='Imaginary'
+target_logg=8.74
+target_logg_err=0.06
+target_teff= 7800. #K
+target_teff_err=300.
 
 desired_NaCa= -1.1 #Sioux county meteorite, achondrite
 
