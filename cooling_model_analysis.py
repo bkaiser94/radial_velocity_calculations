@@ -16,6 +16,8 @@ from astropy.io import fits
 from astropy.table import Table, Column
 import scipy.interpolate as scinterp
 
+import time
+
 
 import spec_plot_tools as spt
 import cal_params as cp
@@ -31,8 +33,8 @@ python_version_number=float('.'.join([python_digits[0],python_digits[1]]))
 #wd_file='temp_wd_abundances.csv'
 wd_file='20210527_all_wd_abundances_new_Blouin.csv'
 
-atm_type='thinH'
-#atm_type='thickH'
+#atm_type='thinH'
+atm_type='thickH'
 
 #cooling_modeler='fontaine2001'
 cooling_modeler='bedard2020'
@@ -46,7 +48,7 @@ default_ms_method='Hurley_He'
 
 output_dir= '/Users/BenKaiser/Desktop/'
 
-export_total_ages=False
+export_total_ages=True
 
 universe_age= 13.8 #Gyr
 percent_range=0.68 #error bar coverage for total age estimate.
@@ -93,11 +95,11 @@ default_z=0.02 #approximately solar
 #target_teff_err=190.
 
 ####2356
-#wd_name='WDJ2356-209'
-#target_logg=7.98
-#target_logg_err=0.07
-#target_teff= 4040. #K
-#target_teff_err=110.
+wd_name='WDJ2356-209'
+target_logg=7.98
+target_logg_err=0.07
+target_teff= 4040. #K
+target_teff_err=110.
 
 ###J1636
 #wd_name='SDSSJ1636+1619'
@@ -170,11 +172,11 @@ default_z=0.02 #approximately solar
 #target_teff_err= 126.986438
 
 #J2339-0424 from Klein et al. 2021
-wd_name='GALEX J2339-0424'
-target_logg=7.93
-target_logg_err=0.09
-target_teff= 13735
-target_teff_err= 500
+#wd_name='GALEX J2339-0424'
+#target_logg=7.93
+#target_logg_err=0.09
+#target_teff= 13735
+#target_teff_err= 500
 
 #GD378 from Klein et al. 2021
 #wd_name='GD 378'
@@ -248,11 +250,25 @@ target_teff_err= 500
 #target_teff_err=367.
 
 #Made up white dwarf for total age estimates
-wd_name='Imaginary'
-target_logg=8.74
-target_logg_err=0.06
-target_teff= 7800. #K
-target_teff_err=300.
+#wd_name='Imaginary'
+#target_logg=8.74
+#target_logg_err=0.06
+#target_teff= 7800. #K
+#target_teff_err=300.
+
+### WD 1856+534 Xu et al. 2021 (modeled by Blouin; white dwarf with eclipsing gas giant candidate)
+#wd_name='WD 1856+534'
+#target_logg=7.995
+#target_logg_err=0.065
+#target_teff=4860.
+#target_teff_err=80.
+
+##WD 1425+540 Bonsor et al. 2021 (polluted white dwarf with wide binary companion),
+#wd_name='WD1425+540'
+#target_logg=8.04
+#target_logg_err=0.05 #arbitrarily guessed
+#target_teff= 14213. #K
+#target_teff_err=300. #arbitarily guessed
 
 desired_NaCa= -1.1 #Sioux county meteorite, achondrite
 
@@ -308,13 +324,16 @@ def get_output_name(wd_name=wd_name):
     name_string=wd_name
     for prob, rep in zip(prob_char, rep_char):
         name_string=name_string.replace(prob,rep)
-    return output_dir+name_string+'_tot_age_MC.csv'
+    time_string= str(time.time()).split('.')[0]
+    #return output_dir+name_string+'_tot_age_MC.csv'
+    return output_dir+time_string+'_'+name_string+'_tot_age_MC.csv'
 
 
 
 
 #n=100000
-n=int(1e6)
+#n=int(1e6)
+n=int(4e6)
 #n=1000
 #n=10
 

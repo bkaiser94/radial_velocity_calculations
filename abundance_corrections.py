@@ -37,6 +37,29 @@ default_modeler='Koester2020'
 default_atm_type='Nonsense' #This should make it crash if I am not correctly passing around kwargs
 default_overshoot=1.0
 
+def get_el1el2_full_err(abund_table,el1, el2):
+    """
+    Basically equation A2 of Klein et al. 2021 (the Beryllium paper), which combines the errors on each element abundance without double-counting the T_eff uncertainties.
+    
+    I'm going to have it receive two rows from an astropy table as the input so I don't have to specify a ton of specific variables
+    
+    """
+    first_term=(abund_table[el1+'/he_spread_err']/abund_table[el1+'/he'])**2.
+    second_term=(abund_table[el2+'/he_spread_err']/abund_table[el2+'/he'])**2.
+    #third term=((abund_table[el1+'/he_teff_err']/abund_table[el1+'/he'])-(abund_table[el2+'/he_teff_err']/abund_table[el2+'/he_teff_err']))**2.
+    third_term_first_half=abund_table[el1+'/he_teff_err']/abund_table[el1+'/he']
+    third_term_second_half=abund_table[el2+'/he_teff_err']/abund_table[el2+'/he']
+    third_term=(third_term_first_half-third_term_second_half)**2.
+    el1el2=abund_table[el1+'/he']/abund_table[el2+'/he']
+    full_error=np.sqrt(first_term+second_term+third_term)*el1el2
+    print(el1+'/'+el2, el1el2, '+/-',full_error)
+    upper_bound=el1el2+full_error
+    lower_bound=el1el2-full_error
+    log_hi_bound=np.log10(upper_bound)
+    log_lo_bound=np.log10(lower_bound)
+    print('log10('+ el1+'/'+el2+'):', np.log10(el1el2),',upper bound:',log_hi_bound, ',lower bound:', log_lo_bound)
+    return np.log10(el1el2), log_lo_bound, log_hi_bound
+
 def declining_phase(target_teff, log_el1_over_el2, time,el1, el2, logg=8.0, steady_state_start=False, cross_extrap=True, modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot):
     """
     provide log_el1_over_el2 as an absolute number ratio not the one normalized to solar abundances.

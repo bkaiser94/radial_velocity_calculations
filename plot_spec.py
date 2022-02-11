@@ -85,13 +85,13 @@ plot_400m2_tell= False
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-#norm_range=[6630,6690]#wider double norm range
+norm_range=[6630,6690]#wider double norm range
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 #norm_range=[3900, 4000]
 #norm_range=[8640,8790]
 #norm_range=[4750,4800]
-norm_range=[6745, 6815] #DQpec normalization range
+#norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
 file_setting='all_avg'
@@ -112,11 +112,12 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
+    #filenames=glob('avg_fwctb*fits')
     filenames=glob('ravg_fwctb*fits')
-    #filenames=glob('ravg_wctb*7987*fits')
+    #filenames=glob('ravg_fwctb*J1301*fits')
     #filenames=glob('ravg_fwctb*1824*1213_*fits')
     #filenames=glob('ravg_fwctb*1824*other2_*fits')
-    #filenames=glob('ravg_fwctb*2317*fits')
+    #filenames=glob('ravg_fwctb*J0850*fits')
     #filenames=glob('ravg_fwctb*other*fits')
     #filenames=glob('ravg_fwctb*WISE*fits')
     #filenames=glob('ravg_zfwctb*fits')
@@ -157,8 +158,8 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*')
-    #filenames=glob('fwctb*1824*1213_*')
+    #filenames=glob('fwctb*')
+    filenames=glob('fwctb*0850p1956_*')
     #filenames=glob('fwctb*2041_*')
     #filenames=glob('fwctb*2317*')
     #filenames=glob('fwctb*1430*')
@@ -1076,7 +1077,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=0.5)
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=0.5)
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=4./header['see_sig'], kernel_type='gaussian',alpha=0.5)
 
@@ -1104,7 +1105,7 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
-            #spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
+            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             #spt.show_plot(show_legend=True)
             #plt.legend()
             #plt.show()
@@ -1136,24 +1137,24 @@ if __name__ == '__main__':
         #plot_head_2_head(filenames,'rotator','airmass')
         #plot_head_2_head(filenames,'ROTATOR','POSANGLE')
         #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
-        #plot_head_2_head(filenames,'BMJD_TDB','rotator')
+        plot_head_2_head(filenames,'BMJD_TDB','rotator')
         #plot_head_2_head(filenames,'BMJD_TDB','cam_ang')
         plot_head_2_head(filenames,'rotator','cam_ang')
-        #plot_head_2_head(filenames,'rotator','airofavg')
+        plot_head_2_head(filenames,'rotator','airofavg')
         #plot_head_2_head(filenames,'BMJD_TDB','airmass')
         #plot_head_2_head(filenames,'BMJD_TDB','airofavg')
         #plot_head_2_head(filenames,'BMJD_TDB','seeing')
         #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
-        #plot_white_lightcurve(filenames)
-        #plot_white_lightcurve(filenames,header_name='AIRMASS')
+        plot_white_lightcurve(filenames)
+        plot_white_lightcurve(filenames,header_name='AIRMASS')
         #plot_coordinates(filenames)
         #plot_white_lightcurve(filenames,header_name='mount_el')
         #plot_head_2_head(filenames, 'mount_el', 'delta_atm_refraction', offset=5.)
         #plot_head_2_head(filenames, 'mount_el', 'delta_atm_refraction', offset=-5.)
         #plot_white_lightcurve(filenames,header_name='rotator')
         #plot_white_lightcurve(filenames,header_name='cam_ang')
-        #plot_dheaddhead_2_head(filenames,'BMJD_TDB','rotator')
-        #plot_dheaddhead_2_head(filenames,'BMJD_TDB','airofavg')
+        plot_dheaddhead_2_head(filenames,'BMJD_TDB','rotator')
+        plot_dheaddhead_2_head(filenames,'BMJD_TDB','airofavg')
         #plot_dheaddhead_2_head(filenames,'airofavg','rotator')
         #plot_dheaddhead_2_head(filenames,'rotator','airofavg',dheader2='BMJD_TDB')
         #plot_dheaddhead_2_dheaddhead(filenames, 'rotator', 'BMJD_TDB', 'airofavg', 'BMJD_TDB')
