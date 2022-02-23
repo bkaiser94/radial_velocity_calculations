@@ -40,6 +40,10 @@ resid_names= glob('resid*.txt')
 tell_names= glob('tell*')
 do_fnu=False
 
+sens_names=sorted(sens_names)
+resid_names=sorted(resid_names)
+tell_names=sorted(tell_names)
+
 #wavelengths = np.linspace(4940,8980, 8080) #400M2 approximately
 #wavelengths = np.linspace(3800,7200, 8080) #400M1 approximately
 wavelengths= np.linspace(3800, 8980, 10000)

@@ -35,12 +35,24 @@ import spec_plot_tools as spt
 #input_string=''
 input_filename=sys.argv[1]
 print('input_filename:',input_filename)
+filetype=sys.argv[2]
 
-hdu=fits.open(input_filename)
-wavelengths=hdu[0].data
-flux=hdu[1].data
-dlambda=hdu[4].data
+if filetype=='goodman':
+    hdu=fits.open(input_filename)
+    wavelengths=hdu[0].data
+    flux=hdu[1].data
+    dlambda=hdu[4].data
 
+elif filetype=='sdss':
+    spec, header, noise_spec= spt.retrieve_sdss_spec(input_filename)
+    wavelengths=spec[0]
+    flux=spec[1]
+    dlams= np.copy(spec[0][1:]-spec[0][:-1])
+    dlams=np.append(dlams, dlams[-1])
+    dlambda=dlams
+    
+else:
+    print('filetype not recognized')
 output_array=np.vstack([wavelengths,flux,dlambda]).T
 
 output_name_base=input_filename[:-4]

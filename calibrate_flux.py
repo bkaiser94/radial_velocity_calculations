@@ -39,8 +39,11 @@ speclist = speclist.T
 target_list = speclist[0]
 sens_curve_list = speclist[1]
 
-norm_range=[7470, 7530]
-tell_range= [7430, 7800]
+#norm_range=[7470, 7530] #stronger O_2 feature only visible in 400m2
+#tell_range= [7430, 7800]
+
+tell_range=[6750,7100]
+norm_range=[6785,6845]
 bad_noise_sub = 100
 do_tell_corr= False #perform telluric corrections (True or False)
 do_rv_barycorr=False

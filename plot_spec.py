@@ -94,11 +94,11 @@ norm_range=[6630,6690]#wider double norm range
 #norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-#file_setting= 'compare_SDSS'
+file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -158,8 +158,8 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    #filenames=glob('fwctb*')
-    filenames=glob('fwctb*0850p1956_*')
+    filenames=glob('fwctb*')
+    #filenames=glob('fwctb*0850p195*')
     #filenames=glob('fwctb*2041_*')
     #filenames=glob('fwctb*2317*')
     #filenames=glob('fwctb*1430*')
@@ -188,7 +188,8 @@ elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
-    sdss_names = glob(sdss_path+'*Dwarf*.fits')
+    #sdss_names = glob(sdss_path+'*Dwarf*.fits')
+    sdss_names = glob(sdss_path+'*1651*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
     #sdss_names = glob(sdss_path+'SDSS*.fits')
@@ -780,7 +781,7 @@ def plot_diff_spec(spec1, spec2, filename1, filename2, header, smooth=False, ker
     return
 
 
-def plot_white_lightcurve(filenames,header_name='BMJD_TDB'):
+def plot_white_lightcurve(filenames,header_name='BMJD_TDB',wave_range=[0.,30000.]):
     """
     Produce a white-light curve from spectra by integrating flux and plotting versus time.
     
@@ -791,8 +792,14 @@ def plot_white_lightcurve(filenames,header_name='BMJD_TDB'):
     for filename in filenames:
         hdu=fits.open(filename)
         header=fits.getheader(filename)
-        fluxes=hdu[1].data
-        dlambda=hdu[4].data
+        fluxes=np.copy(hdu[1].data)
+        dlambda=np.copy(hdu[4].data)
+        ###
+        inbounds=np.where((hdu[0].data>wave_range[0]) & (hdu[0].data < wave_range[1]))
+        fluxes=fluxes[inbounds]
+        dlambda=dlambda[inbounds]
+        
+        ####
         white_light=np.sum(fluxes*dlambda)
         white_fluxes.append(white_light)
         print('white_light', white_light)
@@ -811,7 +818,7 @@ def plot_white_lightcurve(filenames,header_name='BMJD_TDB'):
             xlabel=header_name
             times.append(header[header_name])
     
-    plt.plot(times, white_fluxes, marker='o')
+    plt.plot(times, white_fluxes, marker='o',linestyle='None')
     plt.xlabel(xlabel)
     plt.ylabel('White Light Fluxes (erg/cm/cm/s)')
     plt.show()
@@ -838,11 +845,12 @@ if __name__ == '__main__':
             #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='gaussian')
             #plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box')
             #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
-            plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='k')
+            
+            #plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='k')
             
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
             
-            #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='k')
+            plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='k')
             plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='gaussian', pix_width=0.5*header1['see_sig'])
             #plot_sky(filename, offset=0, line_labels=False, convolve=False)
             #plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
@@ -854,7 +862,7 @@ if __name__ == '__main__':
             #plt.legend()
             plt.title(filename+ ' & '+ filename2.split('/')[-1])
             #plt.show()
-            spt.show_plot(line_id='alkali')
+            spt.show_plot(line_id='cool_wd')
             
     if file_setting=='all_SDSS':
         for filename1 in filenames:
@@ -1060,12 +1068,34 @@ if __name__ == '__main__':
             
     if single_iterate:
         counter=0
+        ew_list=[]
+        ew_noise_list=[]
+        bmjd_list=[]
         for filename in filenames:
             target_spec, header, target_noise= spt.retrieve_spec(filename)
             hdu= fits.open(filename)
             
-            #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
+            ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=40.,noise_method='rms', plot_all=True )
             
+            #ew,ew_noise=spt.get_ew(filename,[4150.,4302.], cont_method='poly1',cont_width=60.,noise_method='rms', plot_all=False )
+            
+            #ew,ew_noise=spt.get_ew(filename,[4190.,4262.], cont_method='poly1',cont_width=60.,noise_method='rms', plot_all=False )
+            
+            ew_list.append(ew)
+            ew_noise_list.append(ew_noise)
+            bmjd_list.append(header['bmjd_tdb'])
+            
+            print(header['senscurv'], header['seeing'])
+            #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
+            print('seeing from trace:',header['see_FWHM'])
+            print('\n',header['OPENDATE'])
+            print('see_FWHM*0.3"', header['see_FWHM']*0.3)
+            print('see_sig',header['see_sig'])
+            print('extraction_width',header['width'])
+            print('width in units of see_sig', header['width']/header['see_sig'])
+            print('bkgshift',header['bkgshift'], 'bkgwidth',header['bkgwidth'])
+            print('see_FWHM*0.3/DIMM_seeing"', header['see_FWHM']*0.3/header['seeing'])
+            print('DIMM seeing', header['seeing'],'\n')
             #dlambda= hdu[4].data
             #target_spec[0]=target_spec[0]+wavelength_offset
             #print(filename, 'mean: ', np.nanmean(target_spec[1]))
@@ -1077,7 +1107,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=0.5)
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=1.0*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=4./header['see_sig'], kernel_type='gaussian',alpha=0.5)
 
@@ -1123,8 +1153,23 @@ if __name__ == '__main__':
         #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
         #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
         #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
+        
+        print('ew_list:',ew_list)
         plt.axhline(y=0, linestyle=':', color='k')
         spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+        
+        
+        plt.plot(bmjd_list,ew_list, marker='o')
+        plt.ylabel(r'ew_values ($\AA$)')
+        plt.show()
+        
+        plt.errorbar(bmjd_list,ew_list, yerr=ew_noise_list, marker='o')
+        plt.ylabel(r'ew_values ($\AA$)')
+        plt.show()
+        
+        plt.plot(np.array(ew_list)/np.array(ew_noise_list),marker='o')
+        plt.ylabel(r'ew/ew_noise')
+        plt.show()
         #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
         #plt.xlabel('BMJD_TDB')
         #plt.show()
@@ -1137,16 +1182,22 @@ if __name__ == '__main__':
         #plot_head_2_head(filenames,'rotator','airmass')
         #plot_head_2_head(filenames,'ROTATOR','POSANGLE')
         #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
+        plot_head_2_head(filenames,'BMJD_TDB','airmass')
         plot_head_2_head(filenames,'BMJD_TDB','rotator')
-        #plot_head_2_head(filenames,'BMJD_TDB','cam_ang')
+        plot_head_2_head(filenames,'BMJD_TDB','cam_ang')
         plot_head_2_head(filenames,'rotator','cam_ang')
         plot_head_2_head(filenames,'rotator','airofavg')
         #plot_head_2_head(filenames,'BMJD_TDB','airmass')
         #plot_head_2_head(filenames,'BMJD_TDB','airofavg')
         #plot_head_2_head(filenames,'BMJD_TDB','seeing')
         #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
+        print('r-band approximation')
+        plt.title('r-band approximation')
+        plot_white_lightcurve(filenames, wave_range=[5500., 6700.])
+        
         plot_white_lightcurve(filenames)
         plot_white_lightcurve(filenames,header_name='AIRMASS')
+        plot_white_lightcurve(filenames,header_name='rotator')
         #plot_coordinates(filenames)
         #plot_white_lightcurve(filenames,header_name='mount_el')
         #plot_head_2_head(filenames, 'mount_el', 'delta_atm_refraction', offset=5.)

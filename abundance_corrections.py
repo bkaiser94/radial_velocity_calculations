@@ -37,7 +37,7 @@ default_modeler='Koester2020'
 default_atm_type='Nonsense' #This should make it crash if I am not correctly passing around kwargs
 default_overshoot=1.0
 
-def get_el1el2_full_err(abund_table,el1, el2):
+def get_el1el2_full_err(abund_table,el1, el2,n_sigma=1.):
     """
     Basically equation A2 of Klein et al. 2021 (the Beryllium paper), which combines the errors on each element abundance without double-counting the T_eff uncertainties.
     
@@ -53,8 +53,10 @@ def get_el1el2_full_err(abund_table,el1, el2):
     el1el2=abund_table[el1+'/he']/abund_table[el2+'/he']
     full_error=np.sqrt(first_term+second_term+third_term)*el1el2
     print(el1+'/'+el2, el1el2, '+/-',full_error)
-    upper_bound=el1el2+full_error
-    lower_bound=el1el2-full_error
+    #upper_bound=el1el2+full_error
+    #lower_bound=el1el2-full_error
+    upper_bound=el1el2+(full_error*n_sigma)
+    lower_bound=el1el2-(full_error*n_sigma)
     log_hi_bound=np.log10(upper_bound)
     log_lo_bound=np.log10(lower_bound)
     print('log10('+ el1+'/'+el2+'):', np.log10(el1el2),',upper bound:',log_hi_bound, ',lower bound:', log_lo_bound)

@@ -955,8 +955,8 @@ def get_generic_ew(input_spec, wave_range, noise=1e-10, dlams=[], cont_method= '
     if plot_all:
         plt.plot(abs_spec[0], cont_val_abs*np.ones(abs_spec[0].shape), label='continuum used')
         plt.plot(cont_spec[0], cont_spec[1], label='continuum source')
-        #plt.plot(abs_spec[0], abs_spec[1], label='absorption')
-        plt.errorbar(abs_spec[0],abs_spec[1],yerr=abs_noise[1], label='absorption')
+        plt.plot(abs_spec[0], abs_spec[1], label='absorption')
+        #plt.errorbar(abs_spec[0],abs_spec[1],yerr=abs_noise[1], label='absorption')
         plt.axvspan(np.mean(wave_range)-0.5*ew, np.mean(wave_range)+0.5*ew, alpha=0.1, color='r',label='EW')
         plt.legend(loc='best')
         plt.show()

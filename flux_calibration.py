@@ -111,8 +111,9 @@ standard_name='EG274'
 
 #observed_file='ravg_wctb.LTT7987_400m2_normal.fits'
 #observed_file='ravg_wctb.EG274_400m2.fits'
-observed_file='ravg_wctb.EG274_400m1.fits'
-observed_file='ravg_wctb.EG274_400m1_quickspectra.fits'
+#observed_file='ravg_wctb.EG274_400m1.fits'
+observed_file='ravg_wctb.EG274_400m1_spectra.fits'
+#observed_file='ravg_wctb.EG274_400m1_quickspectra.fits'
 
 
 #observed_file='avg_wctb.Feige110_400m2.fits'

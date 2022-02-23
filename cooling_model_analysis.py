@@ -33,8 +33,8 @@ python_version_number=float('.'.join([python_digits[0],python_digits[1]]))
 #wd_file='temp_wd_abundances.csv'
 wd_file='20210527_all_wd_abundances_new_Blouin.csv'
 
-#atm_type='thinH'
-atm_type='thickH'
+atm_type='thinH'
+#atm_type='thickH'
 
 #cooling_modeler='fontaine2001'
 cooling_modeler='bedard2020'
@@ -95,11 +95,11 @@ default_z=0.02 #approximately solar
 #target_teff_err=190.
 
 ####2356
-wd_name='WDJ2356-209'
-target_logg=7.98
-target_logg_err=0.07
-target_teff= 4040. #K
-target_teff_err=110.
+#wd_name='WDJ2356-209'
+#target_logg=7.98
+#target_logg_err=0.07
+#target_teff= 4040. #K
+#target_teff_err=110.
 
 ###J1636
 #wd_name='SDSSJ1636+1619'
@@ -179,11 +179,11 @@ target_teff_err=110.
 #target_teff_err= 500
 
 #GD378 from Klein et al. 2021
-#wd_name='GD 378'
-#target_logg=7.93
-#target_logg_err=0.06
-#target_teff= 15620
-#target_teff_err= 500
+wd_name='GD 378'
+target_logg=7.93
+target_logg_err=0.06
+target_teff= 15620
+target_teff_err= 500
 
 ##PG 1225-079
 #wd_name='PG 1225-079'
@@ -332,8 +332,8 @@ def get_output_name(wd_name=wd_name):
 
 
 #n=100000
-#n=int(1e6)
-n=int(4e6)
+n=int(1e6)
+#n=int(4e6)
 #n=1000
 #n=10
 
