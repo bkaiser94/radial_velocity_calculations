@@ -85,7 +85,8 @@ plot_400m2_tell= False
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-norm_range=[6630,6690]#wider double norm range
+#norm_range=[6630,6690]#wider double norm range
+norm_range=[6630,6670]
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 #norm_range=[3900, 4000]
@@ -94,11 +95,11 @@ norm_range=[6630,6690]#wider double norm range
 #norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-file_setting= 'compare_SDSS'
+#file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -113,11 +114,11 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('avg_fwctb*fits')
-    filenames=glob('ravg_fwctb*fits')
+    #filenames=glob('ravg_fwctb*fits')
     #filenames=glob('ravg_fwctb*J1301*fits')
     #filenames=glob('ravg_fwctb*1824*1213_*fits')
     #filenames=glob('ravg_fwctb*1824*other2_*fits')
-    #filenames=glob('ravg_fwctb*J0850*fits')
+    filenames=glob('ravg_fwctb*J0850*fits')
     #filenames=glob('ravg_fwctb*other*fits')
     #filenames=glob('ravg_fwctb*WISE*fits')
     #filenames=glob('ravg_zfwctb*fits')
@@ -1075,17 +1076,17 @@ if __name__ == '__main__':
             target_spec, header, target_noise= spt.retrieve_spec(filename)
             hdu= fits.open(filename)
             
-            ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=40.,noise_method='rms', plot_all=True )
+            #ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=40.,noise_method='rms', plot_all=True )
             
             #ew,ew_noise=spt.get_ew(filename,[4150.,4302.], cont_method='poly1',cont_width=60.,noise_method='rms', plot_all=False )
             
             #ew,ew_noise=spt.get_ew(filename,[4190.,4262.], cont_method='poly1',cont_width=60.,noise_method='rms', plot_all=False )
             
-            ew_list.append(ew)
-            ew_noise_list.append(ew_noise)
-            bmjd_list.append(header['bmjd_tdb'])
+            #ew_list.append(ew)
+            #ew_noise_list.append(ew_noise)
+            #bmjd_list.append(header['bmjd_tdb'])
             
-            print(header['senscurv'], header['seeing'])
+            #print(header['senscurv'], header['seeing'])
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
             print('seeing from trace:',header['see_FWHM'])
             print('\n',header['OPENDATE'])
@@ -1107,7 +1108,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=1.0*header['see_sig'], kernel_type='gaussian',alpha=1.0)
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=0.3)
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=4./header['see_sig'], kernel_type='gaussian',alpha=0.5)
 
@@ -1154,7 +1155,7 @@ if __name__ == '__main__':
         #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
         #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
         
-        print('ew_list:',ew_list)
+        #print('ew_list:',ew_list)
         plt.axhline(y=0, linestyle=':', color='k')
         spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
         
@@ -1167,9 +1168,9 @@ if __name__ == '__main__':
         plt.ylabel(r'ew_values ($\AA$)')
         plt.show()
         
-        plt.plot(np.array(ew_list)/np.array(ew_noise_list),marker='o')
-        plt.ylabel(r'ew/ew_noise')
-        plt.show()
+        #plt.plot(np.array(ew_list)/np.array(ew_noise_list),marker='o')
+        #plt.ylabel(r'ew/ew_noise')
+        #plt.show()
         #plt.ylabel('Integrated Flux (10^-16 erg/cm^2/s)')
         #plt.xlabel('BMJD_TDB')
         #plt.show()

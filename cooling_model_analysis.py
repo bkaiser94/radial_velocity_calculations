@@ -48,7 +48,7 @@ default_ms_method='Hurley_He'
 
 output_dir= '/Users/BenKaiser/Desktop/'
 
-export_total_ages=True
+export_total_ages=False
 
 universe_age= 13.8 #Gyr
 percent_range=0.68 #error bar coverage for total age estimate.
@@ -58,8 +58,8 @@ null_age_val=50. #I'm experimenting though for the moment
 default_limit_universe=True
 default_randomize=True
 massloss_default=True
-#default_z=0.0001 #allegedly thick disk value
-default_z=0.02 #approximately solar
+default_z=0.0001 #allegedly thick disk value
+#default_z=0.02 #approximately solar
 #default_z=2.0 #super enriched
 
 

@@ -272,6 +272,7 @@ def extrapolate_tau_x_logg(target_teff, target_logg, element, modeler='Fontaine2
     input_vals_array=True
     poly_coeffs= make_extrap_cross_logg(element, modeler=modeler, atm_type=atm_type, overshoot=overshoot)
     ggDB_array=make_ggDB_array(modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+    #print('itau.extrapolate_tau_x_logg','atm_type',atm_type,'modeler',modeler,'overshoot',overshoot)
     try:
         print(target_teff[0], target_logg[0])
     except TypeError:
