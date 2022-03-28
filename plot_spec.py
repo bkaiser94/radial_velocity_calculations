@@ -81,12 +81,12 @@ plot_400m2_tell= False
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
 #norm_range=[4551,4590]
-#norm_range=[6090,6240]
+norm_range=[6090,6240]
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
-norm_range=[6630,6670]
+#norm_range=[6630,6670]
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 #norm_range=[3900, 4000]
@@ -113,14 +113,15 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    #filenames=glob('avg_fwctb*fits')
-    #filenames=glob('ravg_fwctb*fits')
-    #filenames=glob('ravg_fwctb*J1301*fits')
+    #filenames=glob('*avg_fwctb*400m1.fits')
+    filenames=glob('ravg_fwctb*fits')
+    #filenames=glob('ravg_fwctb*400m1*fits')
+    #filenames=glob('ravg_fwctb*GD71*fits')
     #filenames=glob('ravg_fwctb*1824*1213_*fits')
     #filenames=glob('ravg_fwctb*1824*other2_*fits')
-    filenames=glob('ravg_fwctb*J0850*fits')
+    #filenames=glob('ravg_fwctb*J0850*fits')
     #filenames=glob('ravg_fwctb*other*fits')
-    #filenames=glob('ravg_fwctb*WISE*fits')
+    #filenames=glob('ravg_fwctb*20220325*fits')
     #filenames=glob('ravg_zfwctb*fits')
     #filenames=glob('*ravg_fwctb*J0400*fits')
     #filenames=glob('ravg_fwctb*1150*fits')
@@ -145,8 +146,8 @@ if file_setting=='all_avg':
 
 elif file_setting=='all_wctb':
     print(file_setting)
-    filenames=glob('wctb*')
-    #filenames=glob('wctb*4414_*')
+    #filenames=glob('wctb*')
+    filenames=glob('wctb*J0850*')
     #filenames=glob('wctb*4414other_*')
     #filenames=glob('wctb*1824*1213_*')
     #filenames=glob('wctb*Feige110_*')
@@ -161,7 +162,7 @@ elif file_setting=='all_fwctb':
     print(file_setting)
     filenames=glob('fwctb*')
     #filenames=glob('fwctb*0850p195*')
-    #filenames=glob('fwctb*2041_*')
+    #filenames=glob('fwctb*0902*')
     #filenames=glob('fwctb*2317*')
     #filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
@@ -322,6 +323,7 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
     label_string= filename
     try:
         #label_string= label_string+str(header['airofavg'])[:4]
+        #label_string= label_string+','+str(header['BMJD_TDB'])[:7]+','+str(header['see_FWHM'])[:3]
         pass
     except KeyError:
         pass
@@ -1076,15 +1078,22 @@ if __name__ == '__main__':
             target_spec, header, target_noise= spt.retrieve_spec(filename)
             hdu= fits.open(filename)
             
-            #ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=40.,noise_method='rms', plot_all=True )
+            #Na-D line for J0850
+            ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
+            
+            #H-beta for GD71
+            #ew,ew_noise=spt.get_ew(filename,[4718.,5008.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
+
+            #H-alpha for GD71
+            #ew,ew_noise=spt.get_ew(filename,[6448.,6678.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
             
             #ew,ew_noise=spt.get_ew(filename,[4150.,4302.], cont_method='poly1',cont_width=60.,noise_method='rms', plot_all=False )
             
             #ew,ew_noise=spt.get_ew(filename,[4190.,4262.], cont_method='poly1',cont_width=60.,noise_method='rms', plot_all=False )
             
-            #ew_list.append(ew)
-            #ew_noise_list.append(ew_noise)
-            #bmjd_list.append(header['bmjd_tdb'])
+            ew_list.append(ew)
+            ew_noise_list.append(ew_noise)
+            bmjd_list.append(header['bmjd_tdb'])
             
             #print(header['senscurv'], header['seeing'])
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
@@ -1108,9 +1117,12 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=0.3)
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
-            #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=4./header['see_sig'], kernel_type='gaussian',alpha=0.5)
+            #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=1., kernel_type='gaussian',alpha=1.0)
+            
+            #Arbitrary Resolution matching smoothing method below, but you have to specify what resolution is the target in pix_width as the number whose square has the file's see_sig's square subtracted from it.
+            #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=np.sqrt(11.**2-header['see_sig']**2), kernel_type='gaussian',alpha=0.5)
 
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
@@ -1136,7 +1148,9 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
+            
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            
             #spt.show_plot(show_legend=True)
             #plt.legend()
             #plt.show()

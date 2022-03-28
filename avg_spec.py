@@ -49,7 +49,7 @@ def get_core_name(filename):
 for i,filename in enumerate(filenames[:-1]):
     #core_name= filename[low_index:high_index]
     core_name= get_core_name(filename)
-    #print('filename:', filename, 'core_name:', core_name)
+    print('filename:', filename, 'core_name:', core_name)
     filename_set.append(filename)
     if core_name != filenames[i+1][low_index:high_index]:
         #filename_set.append(filename)
@@ -150,6 +150,8 @@ def avg_spectra(target_list):
     sky_list=[]
     exp_time_list=[]
     bmjd_tdb_list=[]
+    see_sig_list=[]
+    see_fwhm_list=[]
     if do_dlambda_ext:
         dlambda_list=[]
     else:
@@ -163,6 +165,8 @@ def avg_spectra(target_list):
         noise2_list.append(target_noise[1]**2)
         exp_time_list.append(header['EXPTIME'])
         bmjd_tdb_list.append(header['bmjd_tdb'])
+        see_sig_list.append(header['see_sig'])
+        see_fwhm_list.append(header['see_fwhm'])
         hdu=fits.open(target_file)
         sky=np.copy(hdu[2].data)
         sky_list.append(sky)
@@ -191,6 +195,9 @@ def avg_spectra(target_list):
     
     summed_exp_time=np.sum(exp_time_array)
     avg_bmjd_tdb=np.mean(bmjd_tdb_array)
+    avg_see_sig=np.mean(np.array(see_sig_list))
+    avg_see_fwhm=np.mean(np.array(see_fwhm_list))
+    
     print('exposure times:', exp_time_array)
     print('summed exposure time:', summed_exp_time)
     print('bmjd_tdb_array:',bmjd_tdb_array)
@@ -198,17 +205,31 @@ def avg_spectra(target_list):
     print('header["EXPTIME"]:',header['EXPTIME'])
     header['EXPTIME']=(summed_exp_time,'summed integration time')
     header['bmjd_tdb']=(avg_bmjd_tdb, 'average BMJD_TDB midpoint of co-added spectra')
+    header['see_sig']=(avg_see_sig,'avg Sigma of Gauss seeing fit (pixels)')
+    header['see_fwhm']=(avg_see_fwhm,'avg Seeing (pixels)')
     print('header["EXPTIME"]:',header['EXPTIME'])
     std_wave=np.std(wave_array,axis=0)
     avg_std_wave=np.nanmean(std_wave)
     max_std_wave=np.nanmax(std_wave)
     print('average standard deviation of wavelength values', avg_std_wave)
     print('max standard deviation of wavelength values', max_std_wave)
+    
+    
+    
     avg_wave= np.nanmean(wave_array,axis=0)
     avg_flux= np.nanmean(flux_array, axis=0)
     avg_noise2= np.sum(noise2_array, axis=0)/noise2_array.shape[0]**2
     avg_noise= np.sqrt(avg_noise2)
     avg_sky= np.nanmean(sky_array,axis=0)
+    
+    
+    #avg_wave=np.nanmedian(wave_array,axis=0)
+    #avg_flux=np.nanmedian(flux_array,axis=0)
+    #avg_noise2= np.sum(noise2_array, axis=0)/noise2_array.shape[0]**2
+    #avg_noise= np.sqrt(avg_noise2)
+    #avg_sky= np.nanmedian(sky_array,axis=0)
+    
+    
     if do_dlambda_ext:
         dlambda_array= np.array(dlambda_list)
         avg_dlambda= np.nanmean(dlambda_array, axis=0)
@@ -341,6 +362,8 @@ def make_rebin_avg_spec(target_list):
     rebin_noise2s=[]
     exp_time_list=[]
     bmjd_tdb_list=[]
+    see_sig_list=[]
+    see_fwhm_list=[]
     for target_file in target_list:
         print('target_file', target_file)
         rebin_list= spt.rebin_spec(target_file, ref_spec[0], ref_dlambda)
@@ -350,12 +373,16 @@ def make_rebin_avg_spec(target_list):
         rebin_noise2s.append(rebin_list[3])
         exp_time_list.append(header['EXPTIME'])
         bmjd_tdb_list.append(header['bmjd_tdb'])
+        see_sig_list.append(header['see_sig'])
+        see_fwhm_list.append(header['see_fwhm'])
     
     avg_rebin_flux= np.nanmean(rebin_fluxes, axis=0)
     avg_rebin_sky= np.nanmean(rebin_skies, axis=0)
     avg_rebin_noise2= np.nanmean(rebin_noise2s, axis=0)**2/np.nansum(rebin_noise2s, axis=0)
     avg_rebin_noise= np.sqrt(avg_rebin_noise2)
     avg_rebin_noise=avg_rebin_noise/avg_rebin_flux
+    avg_see_sig=np.mean(np.array(see_sig_list))
+    avg_see_fwhm=np.mean(np.array(see_fwhm_list))
     
     exp_time_array=np.array(exp_time_list)
     bmjd_tdb_array=np.array(bmjd_tdb_list)
@@ -363,6 +390,8 @@ def make_rebin_avg_spec(target_list):
     avg_bmjd_tdb=np.mean(bmjd_tdb_array)
     ref_header['EXPTIME']=(summed_exp_time,'summed integration time')
     ref_header['bmjd_tdb']=(avg_bmjd_tdb, 'average BMJD_TDB midpoint of co-added spectra')
+    ref_header['see_sig']=(avg_see_sig,'avg Sigma of Gauss seeing fit (pixels)')
+    ref_header['see_fwhm']=(avg_see_fwhm,'avg Seeing (pixels)')
     
     hdu=fits.PrimaryHDU(ref_spec[0], header= ref_header)
     hdu1= fits.ImageHDU(avg_rebin_flux)

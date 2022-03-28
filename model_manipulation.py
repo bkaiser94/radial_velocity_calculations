@@ -183,7 +183,7 @@ def convolve_model_new(model_spec, header, slit_width=slit_width):
         see_kernel = conv.Gaussian1DKernel(see_sig, x_size = int(pix_slit_width), mode = 'oversample')
         see_kernel.normalize()
         model_conv = conv.convolve(fluxes, see_kernel,boundary='extend')
-    except ValueError as error:
+    except (ValueError,conv.utils.KernelSizeError) as error:
         #print error
         #print "so making it odd"
         pix_slit_width= pix_slit_width+1
