@@ -113,7 +113,7 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    #filenames=glob('*avg_fwctb*400m1.fits')
+    #filenames=glob('*avg_fwctb*m0449_*.fits')
     filenames=glob('ravg_fwctb*fits')
     #filenames=glob('ravg_fwctb*400m1*fits')
     #filenames=glob('ravg_fwctb*GD71*fits')
@@ -1117,7 +1117,9 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
+            
+            #plot_spectrum(spt.flambda_to_fnu(target_spec), filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=1., kernel_type='gaussian',alpha=1.0)
             

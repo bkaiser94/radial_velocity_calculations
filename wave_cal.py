@@ -117,12 +117,12 @@ flat_poly= 7
 #bkg_shift = 50 #20190412 previously in place
 #bkg_shift= 30 #standard shift used
 #bkg_shift=28
-bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
+#bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
 #bkg_shift=32
 #bkg_shift= 55
 #bkg_shift=18
 #bkg_shift=20
-#bkg_shift=15
+bkg_shift=15
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 #bkg_side_multi= 1. #
 #bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
@@ -159,6 +159,9 @@ box_dict= {
 
 expedited_wavecals=False
 do_airglow_corr=True
+
+#default_skyline_search_width=40 #True default. This was what was used prior to 2022-05-10
+default_skyline_search_width=60 #Going big. While at home. 2022-05-10
 
 
 #air_off_type='lambda' #if you want the airglow offset to be applied in wavelength space, i.e. subtract a lambda value from all wavelength values
@@ -359,10 +362,14 @@ def fit_slitskyline_function(x_pixels, light_values,  header, p0_dict= cp.slit_a
     #fitter= asfitting.SLSQPLSQFitter()
     #fitted_model = fitter(slit_model, x_pixels, light_values)
     #fitted_model = fitter(sky_model, x_pixels, light_values)
+    
     p0_list_sky= [p0_dict['amplitude'], p0_dict['x_0'], p0_dict['width']/2., 1.]
     #print('p0_list:' , lamp_p0)
     print('p0_list_sky:',p0_list_sky)
-    popt, pcov = sciop.curve_fit(gaussian_curve, x_pixels, light_values,  p0=p0_list_sky)
+    #popt, pcov = sciop.curve_fit(gaussian_curve, x_pixels, light_values,  p0=p0_list_sky) #prior to 2022-05-10
+    
+    temp_bounds = ([1., -1*np.inf, -1*np.inf,-1*np.inf],[np.inf, np.inf, np.inf, np.inf])#created 2022-05-10 to restrict the skyline gaussian function to being positive (concave down).
+    popt, pcov = sciop.curve_fit(gaussian_curve, x_pixels, light_values,  p0=p0_list_sky, bounds=temp_bounds)
 
     #print('slit_model x_0:', slit_model.x_0)
     #print('fitted_model x_0:', fitted_model.x_0)
@@ -416,7 +423,7 @@ def wavelength_to_pixel(lambda_val, in_wave_coeffs):
     return pixel
 
 
-def find_skyline_offset(x_pixels, light_values, airline_lambda, wave_coeffs, header, search_width=40, initial_offset=0, plot_all=False):
+def find_skyline_offset(x_pixels, light_values, airline_lambda, wave_coeffs, header, search_width=default_skyline_search_width, initial_offset=0, plot_all=False):
     
     airline_guess= wavelength_to_pixel(airline_lambda, wave_coeffs)
     if plot_all:
@@ -1096,7 +1103,7 @@ for counter, img in enumerate(speclist):
             for air_wave, name, name2 in zip(air_waves, good_airlines['Name'], good_airlines['Name2']):
                 #print(name+name2, type(name))
                 air_name=name+name2
-                offset, offset_lambda= find_skyline_offset(x_positions, bkg_light, air_wave, polynomials[1], header)
+                offset, offset_lambda= find_skyline_offset(x_positions, bkg_light, air_wave, polynomials[1], header, plot_all=True)
                 coll_air_offsets.append(offset)
                 coll_air_lam_offsets.append(offset_lambda)
             print('coll_air_offsets:', coll_air_offsets)
