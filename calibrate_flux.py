@@ -49,7 +49,7 @@ do_tell_corr= False #perform telluric corrections (True or False)
 do_rv_barycorr=False
 #do_ext_corr= True
 default_ext_corr=True
-plot_across_night=False
+plot_across_night=True
 do_tell_waves=False
 
 if do_tell_waves:

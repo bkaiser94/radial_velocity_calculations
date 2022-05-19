@@ -505,6 +505,7 @@ def plot_head_2_head(file_list, header1, header2,offset=10.):
         #plt.errorbar(header['AIRMASS'], header['airofavg'], yerr=header['airofstd'], color='b')
     #plt.xlabel('ROTATOR')
     #plt.ylabel('pixel offset of air lines')
+    #plt.grid()
     plt.show()
     
     
@@ -1077,6 +1078,7 @@ if __name__ == '__main__':
         for filename in filenames:
             target_spec, header, target_noise= spt.retrieve_spec(filename)
             hdu= fits.open(filename)
+            #print(filename)
             
             #Na-D line for J0850
             ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
@@ -1117,7 +1119,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
             #plot_spectrum(spt.flambda_to_fnu(target_spec), filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
@@ -1139,7 +1141,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
             #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
             #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            #plot_sky(filename, offset=0, line_labels=False, convolve=False)
+            plot_sky(filename, offset=0, line_labels=True, convolve=False)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:

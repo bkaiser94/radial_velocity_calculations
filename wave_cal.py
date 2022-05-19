@@ -160,8 +160,8 @@ box_dict= {
 expedited_wavecals=False
 do_airglow_corr=True
 
-#default_skyline_search_width=40 #True default. This was what was used prior to 2022-05-10
-default_skyline_search_width=60 #Going big. While at home. 2022-05-10
+default_skyline_search_width=40 #True default. This was what was used prior to 2022-05-10. I have returned to it because it served me well previously.
+#default_skyline_search_width=60 #Going big. While at home. 2022-05-10
 
 
 #air_off_type='lambda' #if you want the airglow offset to be applied in wavelength space, i.e. subtract a lambda value from all wavelength values
@@ -1103,7 +1103,7 @@ for counter, img in enumerate(speclist):
             for air_wave, name, name2 in zip(air_waves, good_airlines['Name'], good_airlines['Name2']):
                 #print(name+name2, type(name))
                 air_name=name+name2
-                offset, offset_lambda= find_skyline_offset(x_positions, bkg_light, air_wave, polynomials[1], header, plot_all=True)
+                offset, offset_lambda= find_skyline_offset(x_positions, bkg_light, air_wave, polynomials[1], header, plot_all=False)
                 coll_air_offsets.append(offset)
                 coll_air_lam_offsets.append(offset_lambda)
             print('coll_air_offsets:', coll_air_offsets)
