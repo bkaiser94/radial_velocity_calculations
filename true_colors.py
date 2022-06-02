@@ -62,7 +62,7 @@ import skimage.color
 import skimage.data
 
 #import spec_plot_tools as spt
-#import cal_params as cp
+import cal_params as cp
 
 
 #input_file='stitched_J1644_spectrum.fits'
@@ -96,7 +96,7 @@ visible_range=[375.,725.]
 
 
 CIE1931_XYZ_file='RIT_CIE_XYZ_1931_colorfunctions.csv'
-#CIE1931_XYZ_file=cp.true_color_dir+CIE1931_XYZ_file
+CIE1931_XYZ_file=cp.true_color_dir+CIE1931_XYZ_file
 
 CIE1931_XYZ_table=Table.read(CIE1931_XYZ_file)
 #CIE1931_XYZ_table.pprint()
@@ -369,7 +369,8 @@ def get_true_colors(input_file='', bb_teff=default_bb_teff):
     plt.plot(plot_waves,y1931(plot_waves,method='interp'), label='y1931 interp',color='g', linestyle=':')
     plt.plot(plot_waves,z1931(plot_waves, method='interp'), label='z1931 interp', color='b', linestyle=':')
 
-    plt.plot(vis_input_spec[0],vis_input_spec[1]/np.max(vis_input_spec[1]),label=wd_name)
+    #plt.plot(vis_input_spec[0],vis_input_spec[1]/np.max(vis_input_spec[1]),label=wd_name)
+    plt.plot(vis_input_spec[0],vis_input_spec[1]/np.nanpercentile(vis_input_spec[1],98),label=wd_name)
     #plt.plot(vis_input_spec[0],vis_input_spec[1]/np.max(vis_input_spec[1]),label=wd_name+  'with a -650 angstrom shift')
 
     plt.plot(vis_input_spec[0], norm_blackbody_3800K, label=str(bb_teff)+' K Blackbody')

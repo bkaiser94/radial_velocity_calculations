@@ -81,11 +81,13 @@ plot_400m2_tell= False
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
 #norm_range=[4551,4590]
-norm_range=[6090,6240]
+#norm_range=[4800.,5000.]
+#norm_range=[6090,6240]
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
+norm_range=[6773, 6817]#red side of Li I line short of telluric
 #norm_range=[6630,6670]
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
@@ -95,9 +97,9 @@ norm_range=[6090,6240]
 #norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
-#file_setting='all_wctb'
+file_setting='all_wctb'
 #file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
@@ -146,8 +148,8 @@ if file_setting=='all_avg':
 
 elif file_setting=='all_wctb':
     print(file_setting)
-    #filenames=glob('wctb*')
-    filenames=glob('wctb*J0850*')
+    filenames=glob('wctb*')
+    #filenames=glob('wctb*J0850*')
     #filenames=glob('wctb*4414other_*')
     #filenames=glob('wctb*1824*1213_*')
     #filenames=glob('wctb*Feige110_*')
@@ -160,7 +162,7 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*')
+    filenames=glob('fwctb*2356*')
     #filenames=glob('fwctb*0850p195*')
     #filenames=glob('fwctb*0902*')
     #filenames=glob('fwctb*2317*')
@@ -241,7 +243,7 @@ elif file_setting =='two_arm_compare_SDSS':
     filename2=sys.argv[2]
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'*sdss*.fits')
-    sdss_names = glob(sdss_path+'*sdss*1129*.fits')
+    sdss_names = glob(sdss_path+'*SDSS*1330*.fits')
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'G0_K5/*G*.fits')
@@ -1093,6 +1095,9 @@ if __name__ == '__main__':
             
             #ew,ew_noise=spt.get_ew(filename,[4190.,4262.], cont_method='poly1',cont_width=60.,noise_method='rms', plot_all=False )
             
+            #Li I line for J0850
+            #ew,ew_noise=spt.get_ew(filename,[6678,6738], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
+            
             ew_list.append(ew)
             ew_noise_list.append(ew_noise)
             bmjd_list.append(header['bmjd_tdb'])
@@ -1119,7 +1124,9 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
+            #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=1.0*header['see_sig'], kernel_type='gaussian',alpha=0.5)
+            
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5., kernel_type='box',alpha=1.0)
             
             #plot_spectrum(spt.flambda_to_fnu(target_spec), filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
@@ -1141,7 +1148,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
             #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
             #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            plot_sky(filename, offset=0, line_labels=True, convolve=False)
+            #plot_sky(filename, offset=0, line_labels=True, convolve=False)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:
@@ -1184,6 +1191,8 @@ if __name__ == '__main__':
         
         plt.errorbar(bmjd_list,ew_list, yerr=ew_noise_list, marker='o')
         plt.ylabel(r'ew_values ($\AA$)')
+        #plt.yscale('log')
+        #plt.xscale('log')
         plt.show()
         
         #plt.plot(np.array(ew_list)/np.array(ew_noise_list),marker='o')
