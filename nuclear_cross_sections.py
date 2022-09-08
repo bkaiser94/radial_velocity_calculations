@@ -110,6 +110,18 @@ if __name__ =='__main__':
     for projectile in projectile_list:
         for target in target_list:
             cross_table=make_cross_table(projectile=projectile, target=target)
+            if ((projectile=='p') and (target=='O16')):
+                plt.axvline(x=33.707, linestyle=':', color='g') #Be-9 threshold energy to be spalled from O-16 per Read and Viola 1984.
+                
+                plt.axvline(x=23.572, linestyle=':', color='b') #Li-6 threshold energy to be spalled from O-16 per Read and Viola 1984
+                
+                plt.axvline(x=26.849, linestyle=':', color='orange') #Li-7 threshold energy to be spalled from O-16 per Read and Viola 1984.
+                
+                plt.axvline(x=1., linestyle=':', color='g') #approximate proton energy used as a reference for proton flux
+                
+                plt.axvline(x=65., linestyle=':', color='g') #approximate proton energy of Doyle's used cross-section, based on Doyle's reported cross-section and using Read and Viola's tables.
+                plt.ylim(10.**-2, 10.**3)
+                plt.xlim(0.7, 10.**3)
             for product in product_list:
                 #plt.plot(cross_table['E_MeV'], cross_table[product],label=r''+projectile+'+'+target+r'$\rightarrow$'+product)
                 if projectile=='p':

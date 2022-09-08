@@ -52,8 +52,15 @@ def get_rel_abund(el1, el2):
         el1el2_err= np.sqrt(bensby_table['e_'+el1+'/Fe']**2+bensby_table['e_'+el2+'/Fe']**2)
     except KeyError as error:
         print('\n\n****************\nKeyError:',error,'\n****************\n\n')
-        el1el2= bensby_table[el1+'/Fe']
-        el1el2_err= bensby_table['e_'+el1+'/Fe']
+        if el1=='Fe':
+            el1el2=-1*bensby_table[el2+'/Fe']
+            el1el2_err=bensby_table['e_'+el2+'/Fe']
+        elif ((el1=='Li') and (el2=='Ca')):
+            el1el2=get_lica()
+            el1el2_err=1.
+        else:
+            el1el2= bensby_table[el1+'/Fe']
+            el1el2_err= bensby_table['e_'+el1+'/Fe']
     return el1el2, el1el2_err
 
 def get_ages():
@@ -74,12 +81,16 @@ def get_ALi():
 
 
 
-def plot_el1el2_FeH(el1,el2,error_bars=True, markersize=4,alpha=1):
-    el1el2, el1el2_err= get_rel_abund(el1,el2)
-    if error_bars:
-        plt.errorbar(bensby_table['Fe/H'], el1el2, xerr=bensby_table['e_Fe/H'], yerr=el1el2_err, linestyle='None', capsize=0, marker='o',markersize=markersize,alpha=alpha)
-    else:
-        plt.plot(bensby_table['Fe/H'], el1el2,  linestyle='None',  marker='o',alpha=alpha,markersize=markersize)
+def plot_el1el2_FeH(el1,el2,error_bars=True, markersize=4,alpha=1,color='k'):
+    try:
+        el1el2, el1el2_err= get_rel_abund(el1,el2)
+        if error_bars:
+            plt.errorbar(bensby_table['Fe/H'], el1el2, xerr=bensby_table['e_Fe/H'], yerr=el1el2_err, linestyle='None', capsize=0, marker='o',markersize=markersize,alpha=alpha,color=color,markeredgewidth=0)
+        else:
+            plt.plot(bensby_table['Fe/H'], el1el2,  linestyle='None',  marker='o',alpha=alpha,markersize=markersize,color=color,markeredgewidth=0)
+    except KeyError as error:
+        print('\n\n****************\nKeyError:',error,'\n****************\n\n')
+        print('skipping', el1+'/' +el2, "plotting because Bensby doesn't have it.")
     plt.ylabel('['+el1+'/'+el2+']')
     plt.xlabel('[Fe/H]')
     return
@@ -350,8 +361,23 @@ def plot_ALi_FeH(colors=['b','b','b','b'],marker='o',markersize=8,long_labels=Fa
 if __name__ == '__main__':
     #bensby_table.pprint()
     
+    test_alpha=0.2
+    plot_el1el2_FeH('Fe','Ca', error_bars=False,alpha=test_alpha)
+    plt.show()
     
-    plot_el1el2_FeH('Ca','Fe', error_bars=True)
+    plot_el1el2_FeH('Na','Ca', error_bars=False,alpha=test_alpha)
+    plt.show()
+    
+    plot_el1el2_FeH('Mg','Ca', error_bars=False,alpha=test_alpha)
+    plt.show()
+    
+    plot_el1el2_FeH('K','Ca', error_bars=False,alpha=test_alpha)
+    plt.show()
+    
+    plot_el1el2_FeH('Cr','Ca', error_bars=False,alpha=test_alpha)
+    plt.show()
+    
+    plot_el1el2_FeH('Ca','Fe', error_bars=False)
     plt.show()
     
     lica, lica_error= get_lica(with_errors=True)
