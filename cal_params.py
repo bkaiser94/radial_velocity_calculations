@@ -40,7 +40,8 @@ name_all_lower_case:{
 ref_dir= '/Users/BenKaiser/Desktop/Goodman_ref_files/'
 
 wave_sol_dir= 'wavelength_solns/'
-tell_dir='telluric_libs/'
+#tell_dir='telluric_libs/'
+tell_dir='telluric_libs/pwv_R60k/'
 abundance_dir='abundances/'
 model_spectra_dir='spectroscopic_models/'
 diffusion_dir='diffusion_timescales/'

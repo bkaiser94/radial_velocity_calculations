@@ -29,6 +29,7 @@ start = time.time()
 import spec_plot_tools as spt
 import cal_params as cp
 import get_cal_params as gcp
+import plot_spec as ps
 
 #sens_names = glob('E*sensitivity_curve.txt')+glob('G*sensitivity_curve.txt')+glob('e*sens*curve.txt')
 sens_names=glob('sens_curv*')
@@ -168,6 +169,16 @@ for thing in header_dict:
 print('header_names',type(header_names), header_names)
 
 
+#ps.plot_telluric_spectrum([3700,9000], smooth=False, pix_width=30, tell_filename='LBL_A30_s0_w015_R0060000_T.fits')
+#ps.plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w015_R0060000_T.fits')
+pix_width_tell=30
+water='050'
+ps.plot_telluric_spectrum([3700,9000], smooth=True, pix_width=pix_width_tell, tell_filename='LBL_A10_s0_w'+water+'_R0060000_T.fits',show_filename=True)
+ps.plot_telluric_spectrum([3700,9000], smooth=True, pix_width=pix_width_tell, tell_filename='LBL_A15_s0_w'+water+'_R0060000_T.fits',show_filename=True)
+ps.plot_telluric_spectrum([3700,9000], smooth=True, pix_width=pix_width_tell, tell_filename='LBL_A20_s0_w'+water+'_R0060000_T.fits',show_filename=True)
+#ps.plot_telluric_spectrum([3700,9000], smooth=True, pix_width=pix_width_tell, tell_filename='LBL_A25_s0_w'+water+'_R0060000_T.fits',show_filename=True)
+#ps.plot_telluric_spectrum([3700,9000], smooth=True, pix_width=pix_width_tell, tell_filename='LBL_A30_s0_w'+water+'_R0060000_T.fits', show_filename=True)
+
 
 for tell_name in tell_names:
     #airmass, mjd= extract_AM_MJD(tell_name)
@@ -187,7 +198,7 @@ for tell_name in tell_names:
     subname='_'.join(subname)
     label= ','.join([subname, str(airmass), str(mjd)])
     plt.plot(tell_array[0], tell_array[1], label=label)
-    
+    #plt.plot(tell_array[0]+2.7, tell_array[1], label=label)
     #plt.axhline(y=1, color='k', linestyle='--')
     #plt.xlabel(r'Wavelength ($\AA$)')
     #plt.ylabel('Transmission')

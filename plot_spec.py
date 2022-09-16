@@ -61,8 +61,8 @@ sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/'
 #sdss_path= sdss_path+'G0_K5/'
 #sdss_path = '/Users/BenKaiser/Desktop/SDSS_speclib/G0_K5/'
 
-#tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
-tell_filename='LBL_A15_s0_w015_R0060000_T.fits'
+tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
+#tell_filename='LBL_A15_s0_w015_R0060000_T.fits'
 #tell_filename='LBL_A30_s0_w200_R0060000_T.fits'
 #print(filenames)
 plot_wavelength=True
@@ -97,9 +97,9 @@ norm_range=[6773, 6817]#red side of Li I line short of telluric
 #norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
-file_setting='all_wctb'
+#file_setting='all_wctb'
 #file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
@@ -116,9 +116,9 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('*avg_fwctb*m0449_*.fits')
-    filenames=glob('ravg_fwctb*fits')
+    #filenames=glob('ravg_fwctb*fits')
     #filenames=glob('ravg_fwctb*400m1*fits')
-    #filenames=glob('ravg_fwctb*GD71*fits')
+    filenames=glob('ravg_fwctb*GD*fits')
     #filenames=glob('ravg_fwctb*1824*1213_*fits')
     #filenames=glob('ravg_fwctb*1824*other2_*fits')
     #filenames=glob('ravg_fwctb*J0850*fits')
@@ -389,13 +389,18 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
     return
 
 
-def plot_telluric_spectrum(wave_range, pix_width=pix_width, smooth=False, kernel_type='gaussian', kernel_width= 300., tell_filename=tell_filename, color= 'None'):
+def plot_telluric_spectrum(wave_range, pix_width=pix_width, smooth=False, kernel_type='gaussian', kernel_width= 300., tell_filename=tell_filename, color= 'None',show_filename=False):
+    label= 'Telluric Absorption'
+    if show_filename:
+        label=label+', '+tell_filename
+    else:
+        pass
     tell_spec= spt.retrieve_telluric_model(tell_filename, wave_range)
     #plt.plot(tell_spec[0], tell_spec[1], label='Telluric absorption')
     if color == 'None':
-        plot_spectrum(tell_spec, 'Telluric Absorption', '', smooth=smooth, kernel_type=kernel_type, pix_width=pix_width, kernel_width=kernel_width)
+        plot_spectrum(tell_spec,label, '', smooth=smooth, kernel_type=kernel_type, pix_width=pix_width, kernel_width=kernel_width)
     else:
-        plot_spectrum(tell_spec, 'Telluric Absorption', '', smooth=smooth, kernel_type=kernel_type, pix_width=pix_width, kernel_width=kernel_width, color=color)
+        plot_spectrum(tell_spec,label, '', smooth=smooth, kernel_type=kernel_type, pix_width=pix_width, kernel_width=kernel_width, color=color)
     return
 
 
@@ -1124,9 +1129,9 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=1.0*header['see_sig'], kernel_type='gaussian',alpha=0.5)
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5., kernel_type='box',alpha=1.0)
+            #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5., kernel_type='box',alpha=1.0)
             
             #plot_spectrum(spt.flambda_to_fnu(target_spec), filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
@@ -1175,9 +1180,9 @@ if __name__ == '__main__':
         #plt.ylabel(r'$f_{\nu}$ (arbitrary units)')
         #plt.legend(loc='best')
         #plt.show()
-        #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
-        #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
-        #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
+        plot_telluric_spectrum([3700, 9000], smooth=False, pix_width=30)
+        plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+        #plot_telluric_spectrum([3700,9000], smooth=False, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
         #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
         
         #print('ew_list:',ew_list)

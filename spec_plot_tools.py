@@ -450,7 +450,7 @@ def retrieve_nist_list(nist_file):
     #nist_table.pprint()
     return nist_table
 
-def plot_line_markers(nist_file, wavelength_key='obs_wl_vac(A)', convert_to_air=False, label_pos=1.5):
+def plot_line_markers(nist_file, wavelength_key='obs_wl_vac(A)', convert_to_air=False, label_pos=1.5,show_label=True):
     nist_table= retrieve_nist_list(nist_file)
     for row in nist_table:
         #print(name+name2, type(name))
@@ -474,12 +474,15 @@ def plot_line_markers(nist_file, wavelength_key='obs_wl_vac(A)', convert_to_air=
             #plt.text(row['obs_wl_air(A)'], np.nanmax(counts), air_name, color='g', rotation=90)
             #plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90, transform=ax.transAxes)
             #plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90)
-            plt.text(row[wavelength_key], label_pos, air_name, color=cp.line_color_dict[row['element']], rotation=270)
+            if show_label:
+                plt.text(row[wavelength_key], label_pos, air_name, color=cp.line_color_dict[row['element']], rotation=270)
+            else:
+                pass
         else:
             pass
     return
 
-def show_plot(show_telluric=True, show_legend=True, line_id='', convert_to_air=False, label_pos=1.5,actually_show=True):
+def show_plot(show_telluric=True, show_legend=True, line_id='', convert_to_air=False, label_pos=1.5,actually_show=True,show_label=True):
     if show_legend:
         plt.legend(loc='best')
     else:
@@ -491,7 +494,7 @@ def show_plot(show_telluric=True, show_legend=True, line_id='', convert_to_air=F
     if line_id !='':
         line_list_file= cp.line_list_dir+cp.line_id_dict[line_id]
         print(line_list_file)
-        plot_line_markers(line_list_file, convert_to_air=convert_to_air, label_pos=label_pos)
+        plot_line_markers(line_list_file, convert_to_air=convert_to_air, label_pos=label_pos,show_label=show_label)
     else:
         pass
     if actually_show:
@@ -1078,9 +1081,9 @@ def start_ApJ_fig(width_cols=1, constrained_layout=True, width_height=[1.,1.]):
         print('No valid width_cols value specified:', width_cols)
     height_over_width=width_height[1]/width_height[0]
     new_height=new_width*height_over_width
-    plt.figure(figsize=(new_width, new_height), constrained_layout=constrained_layout)
+    fig= plt.figure(figsize=(new_width, new_height), constrained_layout=constrained_layout)
     
-    return
+    return fig
 
 
 def make_spec_hump(cent_wave,wave_sigma,amp):

@@ -117,12 +117,12 @@ default_z=0.0001 #allegedly thick disk value
 #target_teff= 4210. #K
 #target_teff_err=50.
 
-#J2317 Simon's new parameters
-#wd_name='WDJ2317+1830'
-#target_logg=8.74
-#target_logg_err=0.06
-#target_teff= 4430. #K
-#target_teff_err=120.
+#####J2317 Simon's new parameters
+wd_name='WDJ2317+1830'
+target_logg=8.74
+target_logg_err=0.06
+target_teff= 4430. #K
+target_teff_err=120.
 
 #J1824 Hollands et al 2021 parameters
 #wd_name='WDJ1824+1213'
@@ -178,12 +178,12 @@ default_z=0.0001 #allegedly thick disk value
 #target_teff= 13735
 #target_teff_err= 500
 
-#GD378 from Klein et al. 2021
-wd_name='GD 378'
-target_logg=7.93
-target_logg_err=0.06
-target_teff= 15620
-target_teff_err= 500
+##GD378 from Klein et al. 2021
+#wd_name='GD 378'
+#target_logg=7.93
+#target_logg_err=0.06
+#target_teff= 15620
+#target_teff_err= 500
 
 ##PG 1225-079
 #wd_name='PG 1225-079'
