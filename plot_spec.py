@@ -86,8 +86,8 @@ plot_400m2_tell= False
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-#norm_range=[6630,6690]#wider double norm range
-norm_range=[6773, 6817]#red side of Li I line short of telluric
+norm_range=[6630,6690]#wider double norm range
+#norm_range=[6773, 6817]#red side of Li I line short of telluric
 #norm_range=[6630,6670]
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
@@ -97,10 +97,10 @@ norm_range=[6773, 6817]#red side of Li I line short of telluric
 #norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
-#file_setting='all_fwctb'
+file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
@@ -116,9 +116,9 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('*avg_fwctb*m0449_*.fits')
-    #filenames=glob('ravg_fwctb*fits')
+    filenames=glob('ravg_fwctb*2320*fits')
     #filenames=glob('ravg_fwctb*400m1*fits')
-    filenames=glob('ravg_fwctb*GD*fits')
+    #filenames=glob('ravg_fwctb*2147*fits')
     #filenames=glob('ravg_fwctb*1824*1213_*fits')
     #filenames=glob('ravg_fwctb*1824*other2_*fits')
     #filenames=glob('ravg_fwctb*J0850*fits')
@@ -162,7 +162,7 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*2356*')
+    filenames=glob('fwctb*2320*')
     #filenames=glob('fwctb*0850p195*')
     #filenames=glob('fwctb*0902*')
     #filenames=glob('fwctb*2317*')
@@ -193,12 +193,12 @@ elif file_setting=='compare_SDSS':
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
-    sdss_names = glob(sdss_path+'*1651*.fits')
+    #sdss_names = glob(sdss_path+'*1651*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
     #sdss_names = glob(sdss_path+'SDSS*.fits')
     #sdss_names = glob(sdss_path+'LHS*.fits')
-    #sdss_names = glob(sdss_path+'*DQpec*.fits')
+    sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     
     sdss_names= sorted(sdss_names)
@@ -1087,8 +1087,8 @@ if __name__ == '__main__':
             hdu= fits.open(filename)
             #print(filename)
             
-            #Na-D line for J0850
-            ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
+            ####Na-D line for J0850
+            #ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
             
             #H-beta for GD71
             #ew,ew_noise=spt.get_ew(filename,[4718.,5008.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
@@ -1102,6 +1102,15 @@ if __name__ == '__main__':
             
             #Li I line for J0850
             #ew,ew_noise=spt.get_ew(filename,[6678,6738], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
+            
+              ##Ca I line
+            #ew,ew_noise=spt.get_ew(filename,[4200,4258], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
+            
+            ####H-alpha
+            #ew,ew_noise=spt.get_ew(filename,[6513.,6613.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
+            
+            #mystery emission
+            ew,ew_noise=spt.get_ew(filename,[6255.,6295.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
             
             ew_list.append(ew)
             ew_noise_list.append(ew_noise)
@@ -1118,7 +1127,7 @@ if __name__ == '__main__':
             print('bkgshift',header['bkgshift'], 'bkgwidth',header['bkgwidth'])
             print('see_FWHM*0.3/DIMM_seeing"', header['see_FWHM']*0.3/header['seeing'])
             print('DIMM seeing', header['seeing'],'\n')
-            #dlambda= hdu[4].data
+            dlambda= hdu[4].data
             #target_spec[0]=target_spec[0]+wavelength_offset
             #print(filename, 'mean: ', np.nanmean(target_spec[1]))
             #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
@@ -1126,12 +1135,12 @@ if __name__ == '__main__':
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
             #plt.scatter(header['BMJD_TDB'], np.sum(target_spec[1]*dlambda))
             #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
-            #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=False, kernel_type='box')
+            #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=True, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
-            #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5., kernel_type='box',alpha=1.0)
+            #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=20., kernel_type='box',alpha=1.0)
             
             #plot_spectrum(spt.flambda_to_fnu(target_spec), filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
@@ -1166,7 +1175,7 @@ if __name__ == '__main__':
             #spt.show_plot(show_telluric=False, show_legend=False)
             
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
-            
+            #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
             #spt.show_plot(show_legend=True)
             #plt.legend()
             #plt.show()
@@ -1180,15 +1189,16 @@ if __name__ == '__main__':
         #plt.ylabel(r'$f_{\nu}$ (arbitrary units)')
         #plt.legend(loc='best')
         #plt.show()
-        plot_telluric_spectrum([3700, 9000], smooth=False, pix_width=30)
-        plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+        #plot_telluric_spectrum([3700, 9000], smooth=False, pix_width=30)
+        #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
         #plot_telluric_spectrum([3700,9000], smooth=False, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
         #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
         
         #print('ew_list:',ew_list)
         plt.axhline(y=0, linestyle=':', color='k')
         spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
-        
+        #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
+
         
         plt.plot(bmjd_list,ew_list, marker='o')
         plt.ylabel(r'ew_values ($\AA$)')

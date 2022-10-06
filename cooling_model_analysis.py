@@ -47,10 +47,12 @@ cooling_modeler='bedard2020'
 default_ms_method='Hurley_He'
 
 output_dir= '/Users/BenKaiser/Desktop/'
+output_dir=output_dir+'wd_70_30_total_age_partial_contributions_each_atm_type/'
 
-export_total_ages=False
+export_total_ages=True
 
-universe_age= 13.8 #Gyr
+#universe_age= 13.8 #Gyr
+universe_age=20. #Gyr, artifical age of the universe to use as upper limit to get around Malmquist bias
 percent_range=0.68 #error bar coverage for total age estimate.
 #percent_range=0.95
 #null_age_val=20. #usually 20
@@ -58,8 +60,8 @@ null_age_val=50. #I'm experimenting though for the moment
 default_limit_universe=True
 default_randomize=True
 massloss_default=True
-default_z=0.0001 #allegedly thick disk value
-#default_z=0.02 #approximately solar
+#default_z=0.0001 #allegedly thick disk value
+default_z=0.02 #approximately solar
 #default_z=2.0 #super enriched
 
 
@@ -102,11 +104,11 @@ default_z=0.0001 #allegedly thick disk value
 #target_teff_err=110.
 
 ###J1636
-#wd_name='SDSSJ1636+1619'
-#target_logg= 8.10
-#target_logg_err=0.06
-#target_teff= 4410. #K
-#target_teff_err=200.
+wd_name='SDSSJ1636+1619'
+target_logg= 8.10
+target_logg_err=0.06
+target_teff= 4410. #K
+target_teff_err=200.
 
 
 
@@ -118,11 +120,11 @@ default_z=0.0001 #allegedly thick disk value
 #target_teff_err=50.
 
 #####J2317 Simon's new parameters
-wd_name='WDJ2317+1830'
-target_logg=8.74
-target_logg_err=0.06
-target_teff= 4430. #K
-target_teff_err=120.
+#wd_name='WDJ2317+1830'
+#target_logg=8.74
+#target_logg_err=0.06
+#target_teff= 4430. #K
+#target_teff_err=120.
 
 #J1824 Hollands et al 2021 parameters
 #wd_name='WDJ1824+1213'
@@ -185,69 +187,7 @@ target_teff_err=120.
 #target_teff= 15620
 #target_teff_err= 500
 
-##PG 1225-079
-#wd_name='PG 1225-079'
-#target_logg=7.97
-#target_logg_err=0.06 #assume same error bars as other white dwarfs from Klein et al. 2021 paper
-#target_teff= 9940
-#target_teff_err= 500
 
-#SDSS J1242+5226
-#wd_name='SDSS J1242+5226'
-#target_logg=7.93
-#target_logg_err=0.06 #assume same error bars as other white dwarfs from Klein et al. 2021 paper
-#target_teff= 10710
-#target_teff_err= 500
-
-##SDSS J0314-0827 parameters from Coutu et al. 2019; picked because kind of high mass DZ
-#wd_name='SDSS J0314-0827'
-#target_logg=8.21
-#target_logg_err=0.5 #assume same error bars as other white dwarfs from Klein et al. 2021 paper
-#target_teff= 11810
-#target_teff_err= 625
-
-#SDSS J1626+6319 parameters from Coutu et al. 2019; picked because kind of high mass DZ
-#wd_name='SDSS J1622+6319'
-#target_logg=8.39
-#target_logg_err=0.2 #assume same error bars as other white dwarfs from Klein et al. 2021 paper
-#target_teff= 11586
-#target_teff_err= 785
-
-#WASP 98-B
-#wd_name='WASP 98-B'
-#target_logg=8.03
-#target_logg_err=0.07
-#target_teff= 8730.
-#target_teff_err= 220.
-
-##Ross 640 (Koester and Wolff 2000)
-#wd_name="Ross 640"
-#target_logg= 8.0
-#target_logg_err=0.1 #guessed
-#target_teff=8500.
-#target_teff_err=300. #guessed
-
-##NLTT 43806 (Zuckerman et al. 2011)
-#wd_name="NLTT 43806"
-#target_logg= 8.0
-#target_logg_err=0.1 #guessed
-#target_teff=5900.
-#target_teff_err=300. #guessed
-
-##GaiaJ0600-4414 CPM companion He-atmosphere
-#wd_name="GaiaJ0600-4414 CPM companion He-atmosphere"
-#target_logg= 7.99
-#target_logg_err=0.25
-#target_teff=5333.
-#target_teff_err=340.
-
-#GaiaJ0600-4414 CPM companion H-atmosphere
-#I have determined that as of 2020-11-18 my code actually can't handle the thick-H models well at all. The interpolation scheme goes insane. Probably am going to need to do something about that
-#wd_name="GaiaJ0600-4414 CPM companion H-atmosphere"
-#target_logg= 8.07
-#target_logg_err=0.27
-#target_teff=5455.
-#target_teff_err=367.
 
 #Made up white dwarf for total age estimates
 #wd_name='Imaginary'
@@ -326,16 +266,21 @@ def get_output_name(wd_name=wd_name):
         name_string=name_string.replace(prob,rep)
     time_string= str(time.time()).split('.')[0]
     #return output_dir+name_string+'_tot_age_MC.csv'
-    return output_dir+time_string+'_'+name_string+'_tot_age_MC.csv'
+    #return output_dir+time_string+'_'+name_string+'_tot_age_MC.csv'
+    return output_dir+time_string+'_'+name_string+'_'+cooling_modeler+'_'+atm_type+'_tot_age_MC.csv'
+
 
 
 
 
 #n=100000
-n=int(1e6)
+#n=int(1e6)
 #n=int(4e6)
 #n=1000
 #n=10
+#n=int(6e6)#6 million for the 60% M_H>10^-10 from Cunningham et al. (2020)
+n=int(2.5e6)#2.5 million for the 25% 10^-14< M_H<10^-10 from Cunningham et al. (2020)
+
 
 #bin_widths=0.01
 #age_bin_widths=0.01
