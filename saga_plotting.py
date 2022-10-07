@@ -67,18 +67,37 @@ saga_table=Table.read(saga_file, delimiter='\t',format='csv',converters=converte
 def get_el_vals(el_ratio, saga_subtable_main=saga_table):
         #need to handle Li though too...
         saga_subtable=saga_subtable_main.copy()
-        def check_all_ions(el, saga_subtable):
-            el_H=saga_subtable[el+'/H]']
-            el_err=saga_subtable['d('+el.replace('[','')+')']
-            missing_vals=np.where(el_H.mask==True)
-            el_i_H=saga_subtable[missing_vals][el+' I/H]']
-            saga_subtable[missing_vals][el+'/H]']=el_i_H
+        def check_all_ions(el_ratio, saga_subtable=saga_subtable):
+            """
+            Input el_ratio that is in the form [el/H] cannot be [el/Ca] or something like that.
+            
+            """
+            el_H=saga_subtable[el_ratio]
+            plain_el=el_ratio.replace('/H]','')
+            el_err=saga_subtable['d('+plain_el.replace('[','')+')']
+            ion_list=['I', 'II', "III"]
+            for ion in ion_list:
+                try:
+                    missing_vals=np.where((el_H.mask==True)& (saga_subtable[plain_el+' '+ion+'/H]'].mask==False))
+                    #print('missing vals:', el_H[missing_vals])
+                    el_i_H=saga_subtable[missing_vals][plain_el+' '+ion+'/H]']
+                    saga_subtable[plain_el+'/H]'][missing_vals]=el_i_H #For whatever reason, you have to put the column name before the indices for an in-place replacement in the table. If you put the indices before the column name it doesn't affect the actual table for some weird reason.  
+                    #print(el_ratio+' mask:',saga_subtable[el_ratio][missing_vals].mask)
+                    #saga_subtable[el_ratio][missing_vals].mask=False
+                    #print('el_i_H:', el_i_H)
+                    #print('replaced vals:', saga_subtable[missing_vals][el_ratio])
+                    #print(el_ratio+' mask:',saga_subtable[missing_vals][el_ratio].mask)
+                    saga_subtable['d('+plain_el.replace('[','')+')'][missing_vals]=saga_subtable['d('+plain_el.replace('[','')+' '+ion+')'][missing_vals]
+                except KeyError as error:
+                    print("KeyError:",error)
+            #Don't need to return anything because this function is editing the table itself, so you don't have to pull it back out. This might be a dangerous move though, but it is where we're at.
             return
         
         
         try:
             print(saga_subtable[el_ratio][0])
             el_vals=saga_subtable[el_ratio]
+            check_all_ions(el_ratio)
             err_el_string=el_ratio.split('/')[0].replace('[','')
             el_err=saga_subtable['d('+err_el_string+')']
         except KeyError as error:
@@ -87,6 +106,7 @@ def get_el_vals(el_ratio, saga_subtable_main=saga_table):
             el2=el2.replace(']','')
             el2='['+el2
             try:
+                check_all_ions(el1+'/H]')
                 el1_H=saga_subtable[el1+'/H]']
                 el1_err=saga_subtable['d('+el1.replace('[','')+')']
             except KeyError as error:
@@ -94,6 +114,7 @@ def get_el_vals(el_ratio, saga_subtable_main=saga_table):
                 el1_H=saga_subtable['A('+el1.replace('[','')+')']-3.26#the solar A(Li)=3.26 from Asplund et al. (2009) cited by SAGA as its reference value to get [Li/H]
                 el1_err=saga_subtable['d('+el1.replace('[','')+')']
             try:
+                check_all_ions(el2+'/H]')
                 el2_H=saga_subtable[el2+'/H]']
                 el2_err=saga_subtable['d('+el2.replace('[','')+')']
             except KeyError as error:
@@ -125,17 +146,18 @@ def get_subtable(MS_only=True,classifier='EMP',saga_table=saga_table):
     else:
         saga_subtable=saga_table.copy()
     CFe,throwaway=get_el_vals('[C/Fe]',saga_subtable_main=saga_subtable)
+    FeH,throwaway=get_el_vals('[Fe/H]',saga_subtable_main=saga_subtable)
     if classifier=='MP':
-        saga_MP_inds=np.where((saga_subtable['[Fe/H]']>EMP_cut)& (CFe < Crich_cut))
+        saga_MP_inds=np.where((FeH>EMP_cut)& (CFe < Crich_cut))
         saga_output_table=saga_subtable[saga_MP_inds]
     elif classifier=='EMP':
-        saga_EMP_inds=np.where((saga_subtable['[Fe/H]']<=EMP_cut) & (CFe < Crich_cut))
+        saga_EMP_inds=np.where((FeH<=EMP_cut) & (CFe < Crich_cut))
         saga_output_table=saga_subtable[saga_EMP_inds]
     elif classifier=='C-rich':
-        saga_Crich_inds=np.where((saga_subtable['[Fe/H]']>EMP_cut) & (CFe >= Crich_cut))
+        saga_Crich_inds=np.where((FeH>EMP_cut) & (CFe >= Crich_cut))
         saga_output_table=saga_subtable[saga_Crich_inds]
     elif classifier[:4]=='CEMP':
-        saga_CEMP_inds=np.where((saga_subtable['[Fe/H]']<=EMP_cut) & (CFe >= Crich_cut))
+        saga_CEMP_inds=np.where((FeH<=EMP_cut) & (CFe >= Crich_cut))
         saga_CEMP_table=saga_subtable[saga_CEMP_inds]
         BaFe,throway=get_el_vals('[Ba/Fe]',saga_subtable_main=saga_CEMP_table)
         if classifier=='CEMP-s':
@@ -291,8 +313,13 @@ def plot_el_vs_param(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_on
     return
 
 if __name__=='__main__':
-    plot_class_el_abunds('[Ca/H]','[Na/Ca]',markersize=8, alpha=1,errorbars=False, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
+    plot_class_el_abunds('[Ca/H]','[Na/H]',markersize=8, alpha=1,errorbars=False, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
+    plt.plot(np.linspace(-4,0.5,100),np.linspace(-4,0.5,100),color='k',linestyle='--')
     #plot_el_abunds('[Ca/H]', '[Na/Ca', MS_only=True,errorbars=False,require_uncertainties=False, alpha=1,color='b')
+    plt.show()
+    
+    plot_class_el_abunds('[Ca/H]','[Na/Ca]',markersize=8, alpha=1,errorbars=False, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
+    plt.axhline(y=0,color='k',linestyle='--')
     plt.show()
     
     plot_class_el_abunds('[Ca/H]','[Ca/Fe]',markersize=8, alpha=1,errorbars=False, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
