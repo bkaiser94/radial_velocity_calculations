@@ -89,7 +89,8 @@ def get_el_vals(el_ratio, saga_subtable_main=saga_table):
                     #print(el_ratio+' mask:',saga_subtable[missing_vals][el_ratio].mask)
                     saga_subtable['d('+plain_el.replace('[','')+')'][missing_vals]=saga_subtable['d('+plain_el.replace('[','')+' '+ion+')'][missing_vals]
                 except KeyError as error:
-                    print("KeyError:",error)
+                    pass
+                    #print("KeyError:",error)
             #Don't need to return anything because this function is editing the table itself, so you don't have to pull it back out. This might be a dangerous move though, but it is where we're at.
             return
         
@@ -179,7 +180,7 @@ def get_subtable(MS_only=True,classifier='EMP',saga_table=saga_table):
     return saga_output_table
 
 
-def plot_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_only=True,require_uncertainties=True,saga_table=saga_table,marker='o'):
+def plot_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_only=True,require_uncertainties=True,saga_table=saga_table,marker='o',label=''):
     """
     Should be solar-normalized abundances that you want plotted. I'm going to default to using 
     the abundances that are not for specific ionization states. Not sure if this is the right call or 
@@ -235,9 +236,9 @@ def plot_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_only
     if errorbars:
         
         #plot errorbars now
-        plt.errorbar(x_vals,y_vals,xerr=x_errs, yerr=y_errs, linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0)
+        plt.errorbar(x_vals,y_vals,xerr=x_errs, yerr=y_errs, linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0,label=label)
     else:
-        plt.errorbar(x_vals,y_vals,linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0)
+        plt.errorbar(x_vals,y_vals,linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0,label=label)
     plt.xlabel(x)
     plt.ylabel(y)
     #plt.show()
@@ -258,7 +259,7 @@ def plot_class_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, M
             pass
         print('classifier:', classifier, 'color:', color)
         saga_subtable=get_subtable(MS_only=MS_only,classifier=classifier,saga_table=saga_table)
-        plot_el_abunds(x,y,markersize=markersize, marker=marker,alpha=alpha, color=color, errorbars=errorbars, MS_only=MS_only,require_uncertainties=require_uncertainties,saga_table=saga_subtable)
+        plot_el_abunds(x,y,markersize=markersize, marker=marker,alpha=alpha, color=color, errorbars=errorbars, MS_only=MS_only,require_uncertainties=require_uncertainties,saga_table=saga_subtable,label=classifier)
         #plt.show()
     return 
 
@@ -312,13 +313,93 @@ def plot_el_vs_param(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_on
     
     return
 
+
+def el_hist(target_el, bounding_el='[Fe/H]', bounding_el_bounds=[-5.,1.], saga_subtable=saga_table, alpha=1,require_uncertainties=True,MS_only=True):
+    print("MS_only:", MS_only)
+    if MS_only:
+        saga_subinds=np.where((saga_subtable['Teff']>RGB_max_teff) | (saga_subtable["log g"] > RGB_max_logg))
+        saga_subtable=saga_subtable[saga_subinds]
+    else:
+        saga_subtable=saga_subtable
+    bounding_el_vals, bounding_el_err=get_el_vals(bounding_el, saga_subtable_main=saga_subtable)
+    if require_uncertainties:
+        bounding_el_vals.mask=bounding_el_err.mask
+    else:
+        pass
+    unmasked_bound=np.where(bounding_el_vals.mask==False)
+    saga_subtable1=saga_subtable[unmasked_bound].copy()
+    bounding_el_vals, bounding_el_err=get_el_vals(bounding_el, saga_subtable_main=saga_subtable1)
+    in_above= np.where(bounding_el_vals>=bounding_el_bounds[0])
+    above_bounding_el_vals=bounding_el_vals[in_above]
+    inbounds=np.where(above_bounding_el_vals <= bounding_el_bounds[1])
+    above_table=saga_subtable1[in_above]
+    inbounds_table=above_table[inbounds]
+    target_el_vals, target_el_err=get_el_vals(target_el, saga_subtable_main=inbounds_table)
+    if require_uncertainties:
+        target_el_vals.mask=target_el_err.mask
+    else:
+        pass
+    unmasked_inbounds=np.where(target_el_vals.mask==False)
+    #inbounds_table1=inbounds_table[unmasked_inbounds]
+    #target_el_vals, target_el_err=get_el_vals(target_el, saga_subtable_main=inbounds_table1)
+    target_el_vals=target_el_vals[unmasked_inbounds]
+    plt.hist(target_el_vals,alpha=alpha,label=target_el+','+bounding_el+' in '+str(bounding_el_bounds),density=False,bins=np.arange(-5,5.,0.1))
+    plt.title(target_el+' for stars with ' +str(bounding_el_bounds[0])+'<= ' + bounding_el + ' <=' + str(bounding_el_bounds[1]))
+    plt.xlabel(target_el)
+    
+    el_med=np.nanmedian(target_el_vals)
+    el_16_perc=np.nanpercentile(target_el_vals,16)
+    el_84_perc=np.nanpercentile(target_el_vals,84)
+    el_mean=np.nanmean(target_el_vals)
+    el_std=np.std(target_el_err)
+    print('\n\n------------')
+    print(target_el+' for ' + str(bounding_el_bounds[0])+ '<=' + bounding_el+'<=' + str(bounding_el_bounds[1]))
+    print(target_el+' median and 68\% interquartile range:',el_med, str(el_16_perc)+' - '+str(el_84_perc))
+    print(target_el+ ' mean and standard deviation:', el_mean,'+/-',el_std)
+    
+    return
+
 if __name__=='__main__':
-    plot_class_el_abunds('[Ca/H]','[Na/H]',markersize=8, alpha=1,errorbars=False, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
-    plt.plot(np.linspace(-4,0.5,100),np.linspace(-4,0.5,100),color='k',linestyle='--')
+
+    plot_class_el_abunds('[Fe/H]','[Na/Fe]',markersize=8, alpha=1,errorbars=True, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
+    #plot_el_abunds('[Ca/H]', '[Na/Ca', MS_only=True,errorbars=False,require_uncertainties=False, alpha=1,color='b')
+    plt.legend()
+    plt.show()
+    
+    plot_class_el_abunds('[Fe/H]','[C/Fe]',markersize=8, alpha=1,errorbars=False, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
     #plot_el_abunds('[Ca/H]', '[Na/Ca', MS_only=True,errorbars=False,require_uncertainties=False, alpha=1,color='b')
     plt.show()
     
-    plot_class_el_abunds('[Ca/H]','[Na/Ca]',markersize=8, alpha=1,errorbars=False, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
+    plot_class_el_abunds('[Fe/H]','[Ba/Fe]',markersize=8, alpha=1,errorbars=False, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
+    #plot_el_abunds('[Ca/H]', '[Na/Ca', MS_only=True,errorbars=False,require_uncertainties=False, alpha=1,color='b')
+    plt.show()
+    
+    plot_class_el_abunds('[Ca/H]','[Na/H]',markersize=8, alpha=1,errorbars=False, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
+    plt.plot(np.linspace(-4,0.5,100),np.linspace(-4,0.5,100),color='k',linestyle='--')
+    ##plot_el_abunds('[Ca/H]', '[Na/Ca', MS_only=True,errorbars=False,require_uncertainties=False, alpha=1,color='b')
+    plt.legend()
+    plt.show()
+    
+    plot_class_el_abunds('[Fe/H]','[Na/Ca]',markersize=8, alpha=1,errorbars=False, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
+    #plot_el_abunds('[Fe/H]', '[Na/Ca', MS_only=True,errorbars=False,require_uncertainties=True, alpha=1,color='b')
+    plt.axhline(y=0,color='k',linestyle='--')
+    plt.legend()
+    plt.show()
+    
+    
+    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-5,1.], alpha=0.3)
+    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-1.,1.],alpha=0.3)
+    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-2.5,-1.],alpha=0.3)
+    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-5.,-2.5],alpha=0.3)
+    plt.legend()
+    plt.show()
+    
+    el_hist('[Fe/H]', bounding_el='[Fe/H]', bounding_el_bounds=[-5,1.], alpha=0.3)
+    el_hist('[Fe/H]', bounding_el='[Fe/H]', bounding_el_bounds=[-5,-2.], alpha=0.3)
+    plt.legend()
+    plt.show()
+    
+    plot_class_el_abunds('[Fe/H]','[Na/Ca]',markersize=8, alpha=1,errorbars=False, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
     plt.axhline(y=0,color='k',linestyle='--')
     plt.show()
     
