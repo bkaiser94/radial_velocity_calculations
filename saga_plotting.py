@@ -180,7 +180,7 @@ def get_subtable(MS_only=True,classifier='EMP',saga_table=saga_table):
     return saga_output_table
 
 
-def plot_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_only=True,require_uncertainties=True,saga_table=saga_table,marker='o',label=''):
+def plot_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_only=True,require_uncertainties=True,saga_table=saga_table,marker='o',label='',base_layer=True):
     """
     Should be solar-normalized abundances that you want plotted. I'm going to default to using 
     the abundances that are not for specific ionization states. Not sure if this is the right call or 
@@ -190,12 +190,14 @@ def plot_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_only
     x: abundance for the x-axis. Does not have to be an existing abundance in the data table, but 
     must have its components in the data table
     
-    y:abundance for the y-axis. Does not have to be an existing abundance in the data table, but 
-    must have its components in the data table
+    y:abundance for the y-axis. Does not have to be an existing abundance in the data table, 
+    but must have its components in the data table
     
     MS_only: boolean of whether to implement the cuts specified by the SAGA database on what 
     counts as RGB vs. Main sequence.
     
+    base_layer: sets zorder=0, which should make these points appear behind EVERYTHING ELSE 
+    that is plotted. But that's just a hopel
     
     
     """
@@ -236,9 +238,18 @@ def plot_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_only
     if errorbars:
         
         #plot errorbars now
-        plt.errorbar(x_vals,y_vals,xerr=x_errs, yerr=y_errs, linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0,label=label)
+        #plt.errorbar(x_vals,y_vals,xerr=x_errs, yerr=y_errs, linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0,label=label)
+        if base_layer:
+            plt.errorbar(x_vals,y_vals,xerr=x_errs, yerr=y_errs, linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0,label=label,zorder=0)
+        else:
+            plt.errorbar(x_vals,y_vals,xerr=x_errs, yerr=y_errs, linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0,label=label)
+
     else:
-        plt.errorbar(x_vals,y_vals,linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0,label=label)
+        #plt.errorbar(x_vals,y_vals,linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0,label=label)
+        if base_layer:
+            plt.errorbar(x_vals,y_vals,linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0,label=label,zorder=0)
+        else:
+            plt.errorbar(x_vals,y_vals,linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0,label=label)
     plt.xlabel(x)
     plt.ylabel(y)
     #plt.show()

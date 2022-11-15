@@ -49,7 +49,7 @@ default_ms_method='Hurley_He'
 output_dir= '/Users/BenKaiser/Desktop/'
 output_dir=output_dir+'wd_70_30_total_age_partial_contributions_each_atm_type/'
 
-export_total_ages=True
+export_total_ages=False
 
 #universe_age= 13.8 #Gyr
 universe_age=20. #Gyr, artifical age of the universe to use as upper limit to get around Malmquist bias
@@ -107,6 +107,13 @@ default_z=0.02 #approximately solar
 wd_name='SDSSJ1636+1619'
 target_logg= 8.10
 target_logg_err=0.06
+target_teff= 4410. #K
+target_teff_err=200.
+
+#J1636 from Table2 extended Blouin Magnesium 2020
+wd_name='SDSSJ1636+1619'
+target_logg= 8.096
+target_logg_err=0.059
 target_teff= 4410. #K
 target_teff_err=200.
 
