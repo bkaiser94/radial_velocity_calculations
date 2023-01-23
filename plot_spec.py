@@ -115,8 +115,8 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    #filenames=glob('*avg_fwctb*m0449_*.fits')
-    filenames=glob('*ravg_fwctb*fits')
+    filenames=glob('*ravg_fwctb*.fits')
+    #filenames=glob('*ravg_wctb*fits')
     #filenames=glob('ravg_fwctb*400m1*fits')
     #filenames=glob('ravg_fwctb*2147*fits')
     #filenames=glob('ravg_fwctb*1824*1213_*fits')
@@ -162,7 +162,7 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*2320*')
+    filenames=glob('fwctb*')
     #filenames=glob('fwctb*0850p195*')
     #filenames=glob('fwctb*0902*')
     #filenames=glob('fwctb*2317*')
@@ -192,11 +192,11 @@ elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
-    #sdss_names = glob(sdss_path+'*Dwarf*.fits')
+    sdss_names = glob(sdss_path+'*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'*1651*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
-    sdss_names = glob(sdss_path+'SDSS*1636*.fits')
+    #sdss_names = glob(sdss_path+'SDSS*1636*.fits')
     #sdss_names = glob(sdss_path+'LHS*.fits')
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
@@ -862,8 +862,9 @@ if __name__ == '__main__':
             
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
             
-            plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=False, kernel_type='sdss_match', pix_width=pix_width,color='k')
             plot_spectrum(target_spec1, filename, header1, norm=True, smooth=False, kernel_type='gaussian', pix_width=0.5*header1['see_sig'])
+            plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=False, kernel_type='sdss_match', pix_width=pix_width,color='k')
+            
             #plot_sky(filename, offset=0, line_labels=False, convolve=False)
             #plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
@@ -873,6 +874,7 @@ if __name__ == '__main__':
             plt.axhline(y=0, linestyle='--', color='k')
             #plt.legend()
             plt.title(filename+ ' & '+ filename2.split('/')[-1])
+            plt.xlim(np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]))
             #plt.show()
             spt.show_plot(line_id='cool_wd')
             
@@ -1103,7 +1105,7 @@ if __name__ == '__main__':
             #ew,ew_noise=spt.get_ew(filename,[4190.,4262.], cont_method='poly1',cont_width=60.,noise_method='rms', plot_all=False )
             
             #Li I line for J0850
-            #ew,ew_noise=spt.get_ew(filename,[6678,6738], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
+            ew,ew_noise=spt.get_ew(filename,[6678,6738], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
             
               ##Ca I line
             #ew,ew_noise=spt.get_ew(filename,[4200,4258], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
@@ -1112,7 +1114,7 @@ if __name__ == '__main__':
             #ew,ew_noise=spt.get_ew(filename,[6513.,6613.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
             
             #mystery emission
-            ew,ew_noise=spt.get_ew(filename,[6255.,6295.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
+            #ew,ew_noise=spt.get_ew(filename,[6255.,6295.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
             
             ew_list.append(ew)
             ew_noise_list.append(ew_noise)
@@ -1140,9 +1142,9 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=True, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
+            #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
-            #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=20., kernel_type='box',alpha=1.0)
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=8., kernel_type='box',alpha=1.0)
             
             #plot_spectrum(spt.flambda_to_fnu(target_spec), filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
@@ -1176,7 +1178,7 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
             
-            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
             #spt.show_plot(show_legend=True)
             #plt.legend()

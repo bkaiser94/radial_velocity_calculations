@@ -354,6 +354,7 @@ def el_hist(target_el, bounding_el='[Fe/H]', bounding_el_bounds=[-5.,1.], saga_s
     #inbounds_table1=inbounds_table[unmasked_inbounds]
     #target_el_vals, target_el_err=get_el_vals(target_el, saga_subtable_main=inbounds_table1)
     target_el_vals=target_el_vals[unmasked_inbounds]
+    print('num targets in bounds:',len(target_el_vals))
     plt.hist(target_el_vals,alpha=alpha,label=target_el+','+bounding_el+' in '+str(bounding_el_bounds),density=False,bins=np.arange(-5,5.,0.1))
     plt.title(target_el+' for stars with ' +str(bounding_el_bounds[0])+'<= ' + bounding_el + ' <=' + str(bounding_el_bounds[1]))
     plt.xlabel(target_el)
@@ -371,6 +372,26 @@ def el_hist(target_el, bounding_el='[Fe/H]', bounding_el_bounds=[-5.,1.], saga_s
     return
 
 if __name__=='__main__':
+    target_el_list=['Li','Na','Mg','K','Cr','Fe'] #ordered by atomic number
+    FeH_centers=[-3.,-2.,-1.,0.0]
+    FeH_width=0.5
+    for central_val in FeH_centers:
+        for single_el in target_el_list:
+            print('\n\n[Fe/H]=',central_val,'+\-',FeH_width)
+            try:
+                el_hist('['+single_el+'/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[central_val-FeH_width, central_val+FeH_width], alpha=0.3)
+            except ValueError as error:
+                print('ValueError:',error)
+                print("Continuing to the next element, but I don't understand why this one didn't work... it is", single_el,' by the way...')
+    print('all elements done')
+    plt.show()
+        
+    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-5,1.], alpha=0.3)
+    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-1.,1.],alpha=0.3)
+    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-2.5,-1.],alpha=0.3)
+    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-5.,-2.5],alpha=0.3)
+    plt.legend()
+    plt.show()
 
     plot_class_el_abunds('[Fe/H]','[Na/Fe]',markersize=8, alpha=1,errorbars=True, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
     #plot_el_abunds('[Ca/H]', '[Na/Ca', MS_only=True,errorbars=False,require_uncertainties=False, alpha=1,color='b')
@@ -397,13 +418,7 @@ if __name__=='__main__':
     plt.legend()
     plt.show()
     
-    
-    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-5,1.], alpha=0.3)
-    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-1.,1.],alpha=0.3)
-    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-2.5,-1.],alpha=0.3)
-    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-5.,-2.5],alpha=0.3)
-    plt.legend()
-    plt.show()
+
     
     el_hist('[Fe/H]', bounding_el='[Fe/H]', bounding_el_bounds=[-5,1.], alpha=0.3)
     el_hist('[Fe/H]', bounding_el='[Fe/H]', bounding_el_bounds=[-5,-2.], alpha=0.3)

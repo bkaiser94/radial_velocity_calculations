@@ -16,10 +16,13 @@ import cal_params as cp
 
 
 def get_cal_params(header):
-    if (('goodman' in header['INSTRUME'].lower()) or (header['INSTRUME'] =='')):
+    #if (('goodman' in header['INSTRUME'].lower()) or (header['INSTRUME'] =='')):
+    if (('goodman' in header['INSTRUME'].lower()) or (header['INSTRUME'] =='') or (header['INSTRUME']=='ghts_red')):
         setup_dict= cp.cal_params[header['GRATING']][header['CAM_TARG']][header['GRT_TARG']][header['INSTCONF']]
         if header['INSTRUME']=='':
             print('\n\n**********************\n"INSTRUME" header is blank "" so we are assuming it is a Goodman observation. If this is not the case, you better stop the script now because it is about to make a bunch of assumptions on that basis.\n\n**********************\n')
+        elif header['INSTRUME']=='ghts_red':
+            print('\n\n***********\n"INSTRUME" header is "ghts_red"... which I guess we shall proceed with. Hope this does not break something later.... yikes.\n**************\n\n')
         else:
             pass
     elif 'gmos-n' in header['INSTRUME'].lower():
