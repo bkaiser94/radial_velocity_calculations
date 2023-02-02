@@ -118,11 +118,11 @@ flat_poly= 7
 bkg_shift= 30 #standard shift used
 #bkg_shift=28
 #bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
-#bkg_shift=35-8
+#bkg_shift=35
 #bkg_shift= 55
 #bkg_shift=18
 #bkg_shift=20
-#bkg_shift=15
+#bkg_shift=11
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 #bkg_side_multi= 1. #
 #bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
@@ -169,8 +169,8 @@ air_off_type='pixel' #if you want the offset to be applied in pixel space
 #air_off_type='none' #setting for not applying the airglow correction. Realistically you should just set do_airglow_corr=False for this option
 
 
-bkg_method= 'avg' #background subtraction method; 'avg'
-#bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
+#bkg_method= 'avg' #background subtraction method; 'avg'
+bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
 #bkg_method= 'opp_get_bright' #background subtraction method; gets the bright part of the frame, meaning trace_offset==0 should be true, and then the bkg_shift corresponds to ...
 #bkg_method= 'opp_get_dim' #background subtraction method; gets the dim part of the frame, meaning trace_offset should be set to however far off the extraction should be , and then the bkg_shift corresponds to ...
 

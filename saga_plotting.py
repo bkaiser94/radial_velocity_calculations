@@ -383,6 +383,7 @@ if __name__=='__main__':
             except ValueError as error:
                 print('ValueError:',error)
                 print("Continuing to the next element, but I don't understand why this one didn't work... it is", single_el,' by the way...')
+        el_hist('[Ca/H]', bounding_el='[Fe/H]', bounding_el_bounds=[central_val-FeH_width, central_val+FeH_width], alpha=0.3)
     print('all elements done')
     plt.show()
         

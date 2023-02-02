@@ -14,6 +14,7 @@ from astropy.time import Time
 from astropy.table import Table
 import scipy.interpolate as scinterp
 from astropy import coordinates as coords
+import time
 
 import ref_index
 
@@ -1124,9 +1125,11 @@ def calculate_atmospheric_refraction(header, offset=0.):
 
 
 
-
-
-
+def time_string():
+    start = time.time()
+    print(start)
+    time_out=str(start).split('.')[0]
+    return time_out
 
 
 

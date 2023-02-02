@@ -5,6 +5,10 @@ Created by Ben Kaiser 2019-03-27 (UNC-Chapel Hill)
 
 Should average together the counts and uncertainties of matching extracted spectra.
 
+Must be run in Python2! (As of 2023-01-30 because it involves a forward reference with a 
+global declaration, which Python3 does not allow, but I wrote it that way and haven't been 
+bothered to figure out how to do it another way...
+
 """
 from __future__ import print_function
 import numpy as np

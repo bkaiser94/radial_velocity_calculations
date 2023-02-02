@@ -67,6 +67,7 @@ tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
 #print(filenames)
 plot_wavelength=True
 plot_400m2_tell= False
+default_norm_show=False
 #norm_range=[1240,1280]
 #norm_range=[1560,1590]
 #norm_range=[40,80]
@@ -162,7 +163,7 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*')
+    filenames=glob('fwctb*0615*')
     #filenames=glob('fwctb*0850p195*')
     #filenames=glob('fwctb*0902*')
     #filenames=glob('fwctb*2317*')
@@ -244,9 +245,9 @@ elif file_setting =='two_arm_compare_SDSS':
     filename2=sys.argv[2]
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'*sdss*.fits')
-    sdss_names = glob(sdss_path+'*SDSS*1330*.fits')
+    #sdss_names = glob(sdss_path+'*SDSS*1330*.fits')
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
-    #sdss_names = glob(sdss_path+'*M*.fits')
+    sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'G0_K5/*G*.fits')
     
     sdss_names= sorted(sdss_names)
@@ -258,7 +259,7 @@ else:
     
 
 
-def norm_spectrum(input_spec, norm_range, wave_range=True, show_norm_range=True):
+def norm_spectrum(input_spec, norm_range, wave_range=True, show_norm_range=default_norm_show):
     if wave_range:
         print('\n\nwavelength-based norm range selected',norm_range)
         print('\n\n')
@@ -1070,8 +1071,12 @@ if __name__ == '__main__':
             
             #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header2, norm=True, smooth=True, kernel_type='gaussian', pix_width=pix_width, color='r')
             plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
-            plot_spectrum(target_spec1, filename1, header1, pix_width=header1['see_sig'],norm=True, smooth=True, kernel_type='gaussian',  color='g')
-            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, pix_width=header2['see_sig'], kernel_type='gaussian',  color='b')
+            #plot_spectrum(target_spec1, filename1, header1, pix_width=header1['see_sig'],norm=True, smooth=True, kernel_type='gaussian',  color='g')
+            #plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, pix_width=header2['see_sig'], kernel_type='gaussian',  color='b')
+            
+            plot_spectrum(target_spec1, filename1, header1, pix_width=5,norm=True, smooth=True, kernel_type='box',  color='g')
+            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, pix_width=5, kernel_type='box',  color='b')
+            
             #plot_dwavelength(target_spec1, filename1, read_in=False)
             #plot_dwavelength(target_spec2, filename2, read_in=False)
             #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
@@ -1092,7 +1097,7 @@ if __name__ == '__main__':
             #print(filename)
             
             ####Na-D line for J0850
-            #ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
+            ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
             
             #H-beta for GD71
             #ew,ew_noise=spt.get_ew(filename,[4718.,5008.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
@@ -1105,7 +1110,7 @@ if __name__ == '__main__':
             #ew,ew_noise=spt.get_ew(filename,[4190.,4262.], cont_method='poly1',cont_width=60.,noise_method='rms', plot_all=False )
             
             #Li I line for J0850
-            ew,ew_noise=spt.get_ew(filename,[6678,6738], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
+            #ew,ew_noise=spt.get_ew(filename,[6678,6738], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
             
               ##Ca I line
             #ew,ew_noise=spt.get_ew(filename,[4200,4258], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
@@ -1128,9 +1133,9 @@ if __name__ == '__main__':
             print('see_sig',header['see_sig'])
             print('extraction_width',header['width'])
             print('width in units of see_sig', header['width']/header['see_sig'])
-            print('bkgshift',header['bkgshift'], 'bkgwidth',header['bkgwidth'])
-            print('see_FWHM*0.3/DIMM_seeing"', header['see_FWHM']*0.3/header['seeing'])
-            print('DIMM seeing', header['seeing'],'\n')
+            #print('bkgshift',header['bkgshift'], 'bkgwidth',header['bkgwidth'])
+            #print('see_FWHM*0.3/DIMM_seeing"', header['see_FWHM']*0.3/header['seeing'])
+            #print('DIMM seeing', header['seeing'],'\n')
             dlambda= hdu[4].data
             #target_spec[0]=target_spec[0]+wavelength_offset
             #print(filename, 'mean: ', np.nanmean(target_spec[1]))
@@ -1144,7 +1149,7 @@ if __name__ == '__main__':
             
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=8., kernel_type='box',alpha=1.0)
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5., kernel_type='box',alpha=1.0,offset=(counter%6.)*1.)
             
             #plot_spectrum(spt.flambda_to_fnu(target_spec), filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
@@ -1166,7 +1171,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
             #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
             #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            #plot_sky(filename, offset=0, line_labels=True, convolve=False)
+            #plot_sky(filename, offset=0, line_labels=False, convolve=False)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:
@@ -1178,7 +1183,10 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
             
-            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            if counter % 6 ==5:
+                        spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
+
             #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
             #spt.show_plot(show_legend=True)
             #plt.legend()
