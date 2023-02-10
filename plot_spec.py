@@ -193,13 +193,13 @@ elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
-    sdss_names = glob(sdss_path+'*Dwarf*.fits')
+    #sdss_names = glob(sdss_path+'*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'*1651*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
     #sdss_names = glob(sdss_path+'SDSS*1636*.fits')
     #sdss_names = glob(sdss_path+'LHS*.fits')
-    #sdss_names = glob(sdss_path+'*DQpec*.fits')
+    sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     
     sdss_names= sorted(sdss_names)
@@ -1147,9 +1147,9 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=True, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=3., kernel_type='box',alpha=1.0)
             
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5., kernel_type='box',alpha=1.0,offset=(counter%6.)*1.)
+            #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5., kernel_type='box',alpha=1.0,offset=(counter%6.)*1.)
             
             #plot_spectrum(spt.flambda_to_fnu(target_spec), filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
             
@@ -1171,7 +1171,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
             #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
             #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            #plot_sky(filename, offset=0, line_labels=False, convolve=False)
+            plot_sky(filename, offset=0, line_labels=False, convolve=False)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:
@@ -1183,9 +1183,8 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
             
-            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
-            if counter % 6 ==5:
-                        spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
+            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            #spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
 
             #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
             #spt.show_plot(show_legend=True)

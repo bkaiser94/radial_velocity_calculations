@@ -135,6 +135,30 @@ def make_name(this_table):
             print("Gaia detected", row['name'])
             row['name']=row['name'].replace('GaiaJ',object_name_base)
             row['name']=row['name'].replace('-','–')
+        elif 'SDSSJ' in row['name']:
+            print("SDSS detected", row['name'])
+            row['name']=row['name'].replace('SDSSJ','SDSS J')
+            row['name']=row['name'].replace('-','–')
+        elif 'WISEA0' in row['name']:
+            print("WISEA detected", row['name'])
+            row['name']=row['name'].replace('WISEA','WISEA J')
+            row['name']=row['name'].replace('-','–')
+        elif 'WISEAJ' in row['name']:
+            print("WISEAJ detected", row['name'])
+            row['name']=row['name'].replace('WISEAJ','WISEA J')
+            row['name']=row['name'].replace('-','–')
+        elif 'PSRJ' in row['name']:
+            print("PSRJ detected", row['name'])
+            row['name']=row['name'].replace('PSRJ','PSR J')
+            row['name']=row['name'].replace('-','–')
+        elif 'LPSMJ' in row['name']:
+            print("LPSMJ detected", row['name'])
+            row['name']=row['name'].replace('LPSMJ','LSPM J')
+            row['name']=row['name'].replace('-','–')
+        elif 'ULASJ' in row['name']:
+            print("ULASJ detected", row['name'])
+            row['name']=row['name'].replace('ULASJ','ULAS J')
+            row['name']=row['name'].replace('-','–')
         #if name=='.':
             #name=object_name_base+small_ra+small_dec
             #print('new name:', name)
