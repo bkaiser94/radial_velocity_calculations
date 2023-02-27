@@ -50,51 +50,53 @@ import plot_spec as ps
 
 #input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_DQpecs_1675365552.csv'
 #input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_DZs_1675367585.csv'
-input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_WDdM_binaries_1675621755.csv'
+#input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_WDdM_binaries_1675621755.csv'
 #input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_DCs_1675625828.csv'
+#input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_DCs_1676221722.csv'
+input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_polluted_WD_1677081843.csv' #WDdM binaries with polluted white dwarfs
 input_table=Table.read(input_file)
 current_directory=os.getcwd()
 output_name_base=current_directory.split('/')[-1]
 
 
-#DQpec 400M2
-smooth_size=5. #pixels
-offset_scale=1.
-max_spec_per_frame=6.
-text_y_offset=offset_scale/5.
-#text_x_position=5400.
-text_x_position=8000.
-norm_range=[6630,6690]#wider double norm range
+##DQpec 400M2
+#smooth_size=5. #pixels
+#offset_scale=1.
+#max_spec_per_frame=6.
+#text_y_offset=offset_scale/5.
+##text_x_position=5400.
+#text_x_position=8000.
+#norm_range=[6630,6690]#wider double norm range
+##norm_range=[7440, 7550]
+#default_height=7.
+#default_width=6.
+
+##DZ 400M2 adjusted settings
+#smooth_size=3. #pixels
+#offset_scale=1.
+#max_spec_per_frame=6.
+#text_y_offset=-1*offset_scale/7.
+##text_y_offset=0.
+#text_x_position=5210.
+##norm_range=[6630,6690]#wider double norm range
 #norm_range=[7440, 7550]
-default_height=7.
-default_width=6.
+#default_height=7.
+#default_width=6.
 
-#DZ 400M2 adjusted settings
-smooth_size=3. #pixels
-offset_scale=1.
-max_spec_per_frame=6.
-text_y_offset=-1*offset_scale/7.
-#text_y_offset=0.
-text_x_position=5210.
-#norm_range=[6630,6690]#wider double norm range
-norm_range=[7440, 7550]
-default_height=7.
-default_width=6.
+##WD+dM 400M2 adjusted settings
+#smooth_size=3. #pixels
+#offset_scale=1.
+#max_spec_per_frame=6.
+#text_y_offset=1*offset_scale/7.
+##text_y_offset=0.
+#text_x_position=6700.
+##norm_range=[6630,6690]#wider double norm range
+#norm_range=[7440, 7550]
+#default_height=7.
+#default_width=6.
+#setup='400m2'
 
-#WD+dM 400M2 adjusted settings
-smooth_size=3. #pixels
-offset_scale=1.
-max_spec_per_frame=6.
-text_y_offset=1*offset_scale/7.
-#text_y_offset=0.
-text_x_position=6700.
-#norm_range=[6630,6690]#wider double norm range
-norm_range=[7440, 7550]
-default_height=7.
-default_width=6.
-setup='400m2'
-
-#WD+dM 400M1 adjusted settings
+##WD+dM 400M1 adjusted settings
 smooth_size=3. #pixels
 offset_scale=1.
 max_spec_per_frame=6.
@@ -120,7 +122,7 @@ setup='400m1'
 #default_width=6.
 #setup='400m2'
 
-##DC 400M1 adjusted settings
+###DC 400M1 adjusted settings
 #smooth_size=5. #pixels
 #offset_scale=1.
 #max_spec_per_frame=6.
@@ -235,8 +237,10 @@ for row in input_table:
             final_name=output_name_base+'_'+ setup+'_'+'frame'+str(current_frame)+'_'+spt.time_string()+'.pdf'
             #spt.show_plot(show_legend=False, actually_show=False)
             spt.show_plot(show_legend=False, line_id='cool_wd',show_label=False,actually_show=False,convert_to_air=True)
-            #if tally==0:
-                #plt.ylim(-2,3)
+            if tally==0:
+                #plt.ylim(-2,3) #DC 400M1 last plot. 
+                #plt.ylim(-1,4) #DC 400M1 last plot. with J2320 correctly included.
+                pass
             plt.savefig(final_name)
             plt.show()
             

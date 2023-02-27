@@ -358,8 +358,78 @@ def plot_ALi_FeH(colors=['b','b','b','b'],marker='o',markersize=8,long_labels=Fa
     plt.ylabel('A(Li)')
     return
 
+
+def plot_FeH_hist():
+    
+    bins=np.arange(-5,1,0.2)
+    def make_hist(pop_where,label=''):
+        plt.hist(bensby_table['Fe/H'][pop_where],bins=bins,label=label,alpha=0.2,density=True)
+        FeH_mean=np.nanmean(bensby_table['Fe/H'][pop_where])
+        FeH_std=np.std(bensby_table['Fe/H'][pop_where])
+        print('mean [Fe/H] for ' + label,np.nanmean(bensby_table['Fe/H'][pop_where]),'+/-',np.std(bensby_table['Fe/H'][pop_where]))
+        print('median [Fe/H] for ' + label,np.nanmedian(bensby_table['Fe/H'][pop_where]),'+/-',np.nanpercentile(bensby_table['Fe/H'][pop_where],84),np.nanpercentile(bensby_table['Fe/H'][pop_where],16))
+        print('median [Fe/H] for ' + label,np.nanmedian(bensby_table['Fe/H'][pop_where]),'+/-',np.nanpercentile(bensby_table['Fe/H'][pop_where],95),np.nanpercentile(bensby_table['Fe/H'][pop_where],5))
+        print('max [Fe/H] for '+label, np.nanmax(bensby_table['Fe/H'][pop_where]))
+        print('min [Fe/H] for '+label, np.nanmin(bensby_table['Fe/H'][pop_where]))
+        print('90th percentile [Fe/H] for ' + label, np.nanpercentile(bensby_table['Fe/H'][pop_where],90))
+        plt.errorbar(FeH_mean, 1.0+np.random.rand(), xerr=FeH_std, label=label+' mean',marker='o')
+        
+        return
+    
+    
+    pop_id_array=np.int_(np.zeros(bensby_table['td/d'].shape) )#array to be comprised of numbers that represent the population to which each star should belong; going to be added to as we go here.
+    
+    thin_disk_stars=np.where(bensby_table['td/d']<=thin_disk_bound_tdd)
+    print("thin_disk_stars", thin_disk_stars[0].shape[0])
+    pop_id_array[thin_disk_stars]=0
+    
+    make_hist(thin_disk_stars,label='Thin Disk')
+
+    #plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Thin Disk', linestyle='None', marker=marker, color=colors[0],markersize=markersize) #with labels
+    
+
+    thick_disk_stars=np.where((bensby_table['td/d']>=thick_disk_bound_tdd) & (bensby_table['td/h']>= halo_bound_tdh))
+    
+    pop_id_array[thick_disk_stars]=1
+    print("thick_disk_stars", thick_disk_stars[0].shape[0])
+    
+    make_hist(thick_disk_stars,label='Thick Disk')
+
+
+    #plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Thick Disk', linestyle='None', marker=marker, color=colors[1],markersize=markersize) #with lables
+
+    halo_stars=np.where(bensby_table['td/h']<halo_bound_tdh)
+    print("halo_stars", halo_stars[0].shape[0])
+    pop_id_array[halo_stars]=2
+    
+    make_hist(halo_stars,label='Halo')
+
+
+    #plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='Halo', linestyle='None', marker=marker, color=colors[2],markersize=markersize) #with labels
+    
+
+    inbetween_stars=np.where((bensby_table['td/d']<thick_disk_bound_tdd)&(bensby_table['td/d']> thin_disk_bound_tdd))
+    
+    print("inbetween_stars", inbetween_stars[0].shape[0])
+    
+    pop_id_array[inbetween_stars]=3
+    
+    make_hist(inbetween_stars,label='In Between')
+
+    #plt.plot(bensby_table['Age'][thick_disk_stars], lica[thick_disk_stars], label='In Between', linestyle='None', marker=marker, color=colors[3],markersize=markersize) #with labels
+    
+    
+    return
+
 if __name__ == '__main__':
     #bensby_table.pprint()
+    plot_FeH_hist()
+    plt.legend()
+    plt.show()
+    
+    
+    plot_el1el2_FeH('Na','Ca', error_bars=False)
+    plt.show()
     
     test_alpha=0.2
     plot_el1el2_FeH('Fe','Ca', error_bars=False,alpha=test_alpha)

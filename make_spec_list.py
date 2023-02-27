@@ -40,11 +40,13 @@ import spec_plot_tools as spt
 import cal_params as cp
 
 
-input_file= '../20190516B_retargeted_purple_search_gaia_scbd_20230131_update.csv'
+#input_file= '../20190516B_retargeted_purple_search_gaia_scbd_20230131_update.csv'
+input_file= '../../20190516B_retargeted_purple_search_gaia_scbd_20230131_update.csv'
+
 input_table = Table.read(input_file)
 
 current_directory=os.getcwd()
-output_name_base=input_file.split('/')[1].split('.')[0]+'_'+current_directory.split('/')[-1]
+output_name_base=input_file.split('/')[-1].split('.')[0]+'_'+current_directory.split('/')[-1]
 
 search_radius = 5*60.#in arcseconds
 

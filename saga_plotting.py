@@ -50,8 +50,11 @@ classifier_dict={
 saga_file='SAGA_MetalPoor_txt_table_recommended.tsv'
 #saga_file='SAGA_MetalPoor_txt_table_all.tsv'
 
+lodders_file='Lodders2020_solarsystem_abundances.csv'
+
 
 saga_file=cp.abundance_dir+saga_file
+lodders_file=cp.abundance_dir+lodders_file
 
 converters={'*/H*': np.float64, 'd(*':np.float64}
 saga_table=Table.read(saga_file, delimiter='\t',format='csv',converters=converters,encoding='latin')
@@ -63,10 +66,16 @@ saga_table=Table.read(saga_file, delimiter='\t',format='csv',converters=converte
 #saga_first_inds=np.where((saga_table['[Na/H]']-saga_table['[Fe/H]'])>0)
 #saga_table=saga_table[saga_first_inds]
 
+lodders_table=Table.read(lodders_file)
+lodders_table.add_index('element')
 
-def get_el_vals(el_ratio, saga_subtable_main=saga_table):
+
+
+
+def get_el_vals(el_ratio, saga_subtable_main=saga_table,sol_norm=True):
         #need to handle Li though too...
         saga_subtable=saga_subtable_main.copy()
+        print('sol_norm',sol_norm)
         def check_all_ions(el_ratio, saga_subtable=saga_subtable):
             """
             Input el_ratio that is in the form [el/H] cannot be [el/Ca] or something like that.
@@ -78,7 +87,8 @@ def get_el_vals(el_ratio, saga_subtable_main=saga_table):
             ion_list=['I', 'II', "III"]
             for ion in ion_list:
                 try:
-                    missing_vals=np.where((el_H.mask==True)& (saga_subtable[plain_el+' '+ion+'/H]'].mask==False))
+                    #missing_vals=np.where((el_H.mask==True)& (saga_subtable[plain_el+' '+ion+'/H]'].mask==False))
+                    missing_vals=np.where((el_err.mask==True)& (saga_subtable['d('+plain_el.replace('[','')+' '+ion+')'].mask==False))
                     #print('missing vals:', el_H[missing_vals])
                     el_i_H=saga_subtable[missing_vals][plain_el+' '+ion+'/H]']
                     saga_subtable[plain_el+'/H]'][missing_vals]=el_i_H #For whatever reason, you have to put the column name before the indices for an in-place replacement in the table. If you put the indices before the column name it doesn't affect the actual table for some weird reason.  
@@ -94,6 +104,30 @@ def get_el_vals(el_ratio, saga_subtable_main=saga_table):
             #Don't need to return anything because this function is editing the table itself, so you don't have to pull it back out. This might be a dangerous move though, but it is where we're at.
             return
         
+        def check_all_ALi_ions(saga_subtable=saga_subtable):
+            """
+            There's only the neutral Li I ion to consider, but given the A(Li) format in the SAGA table I opted to make this a separate function.
+            
+            """
+            el_H=saga_subtable['A(Li)']
+            el_err=saga_subtable['d(Li)']
+            try:
+                #missing_vals=np.where((el_H.mask==True)& (saga_subtable['A(Li I)'].mask==False))
+                missing_vals=np.where((el_err.mask==True)& (saga_subtable['d(Li I)'].mask==False))
+                #print('missing vals:', el_H[missing_vals])
+                #print('sum of currently masked objects that should be unmasked in a second:', np.sum(saga_subtable[missing_vals]['A(Li)'].mask))
+                el_i_H=saga_subtable[missing_vals]['A(Li I)']
+                saga_subtable['A(Li)'][missing_vals]=el_i_H #For whatever reason, you have to put the column name before the indices for an in-place replacement in the table. If you put the indices before the column name it doesn't affect the actual table for some weird reason.  
+                #print(el_ratio+' mask:',saga_subtable[el_ratio][missing_vals].mask)
+                #saga_subtable[el_ratio][missing_vals].mask=False
+                #print('el_i_H:', el_i_H)
+                #print('replaced vals:', saga_subtable[missing_vals][el_ratio])
+                #print(el_ratio+' mask:',saga_subtable[missing_vals][el_ratio].mask)
+                saga_subtable['d(Li)'][missing_vals]=saga_subtable['d(Li I)'][missing_vals]
+                #print('sum of masks of newly unmasked objects:', np.sum(saga_subtable[missing_vals]['A(Li)'].mask))
+            except KeyError as error:
+                pass
+            return
         
         try:
             print(saga_subtable[el_ratio][0])
@@ -112,6 +146,7 @@ def get_el_vals(el_ratio, saga_subtable_main=saga_table):
                 el1_err=saga_subtable['d('+el1.replace('[','')+')']
             except KeyError as error:
                 print('el1',el1,'hopefully is Li')
+                check_all_ALi_ions()
                 el1_H=saga_subtable['A('+el1.replace('[','')+')']-3.26#the solar A(Li)=3.26 from Asplund et al. (2009) cited by SAGA as its reference value to get [Li/H]
                 el1_err=saga_subtable['d('+el1.replace('[','')+')']
             try:
@@ -120,6 +155,7 @@ def get_el_vals(el_ratio, saga_subtable_main=saga_table):
                 el2_err=saga_subtable['d('+el2.replace('[','')+')']
             except KeyError as error:
                 print('el2',el2,'hopefully is Li')
+                check_all_ALi_ions()
                 el2_H=saga_subtable['A('+el2.replace('[','')+')']-3.26#subtract the solar A(Li)=3.26 from Asplund et al. (2009) cited by SAGA as its reference value to get [Li/H]
                 el2_err=saga_subtable['d('+el2.replace('[','')+')']
             #nans_el1=np.sum(np.isnan(el1))
@@ -137,6 +173,23 @@ def get_el_vals(el_ratio, saga_subtable_main=saga_table):
             #plt.legend()
             #plt.show()
             el_err=np.sqrt(el1_err**2.+el2_err**2.)
+            
+            if sol_norm:
+                #you don't need to do anything if you want everything solar-normalized because the values are already set up to do that.
+                pass
+            else:
+                #This means you want number abundances that are not normalized to solar.
+                #print('el_vals while still solar normalized', el_vals)
+                el1_CI=lodders_table.loc[el1.replace('[','')]['A_el']
+                el2_CI=lodders_table.loc[el2.replace('[','')]['A_el']
+                el1_CI_err=lodders_table.loc[el1.replace('[','')]['A_el_err']
+                el2_CI_err=lodders_table.loc[el2.replace('[','')]['A_el_err']
+                el1el2_CI=el1_CI-el2_CI
+                el1el2_CI_err=np.sqrt(el1_CI_err**2+el2_CI_err**2)
+                
+                el_vals=el_vals+el1el2_CI
+                el_err=np.sqrt(el_err**2.+el1el2_CI_err**2.)
+                #print('el_vals after not being solar-normalized any more',el_vals)
             #print('el_err', el_err)
         return el_vals,el_err
 
@@ -180,7 +233,7 @@ def get_subtable(MS_only=True,classifier='EMP',saga_table=saga_table):
     return saga_output_table
 
 
-def plot_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_only=True,require_uncertainties=True,saga_table=saga_table,marker='o',label='',base_layer=True):
+def plot_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_only=True,require_uncertainties=True,saga_table=saga_table,marker='o',label='',base_layer=True,sol_norm_x=True, sol_norm_y=True):
     """
     Should be solar-normalized abundances that you want plotted. I'm going to default to using 
     the abundances that are not for specific ionization states. Not sure if this is the right call or 
@@ -210,6 +263,7 @@ def plot_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_only
         saga_subtable=saga_table
     
     
+    
     #try:
         #print(saga_subtable[x][0])
         #x_vals=saga_subtable[x]
@@ -219,9 +273,9 @@ def plot_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_only
         #x_el1_H=saga_subtable[x_el1+'/H]']
         #x_el2_H=saga_subtable[x_el2+'/H]']
         #x_vals=x_el1_H-x_el2_H
-        
-    x_vals,x_errs=get_el_vals(x,saga_subtable_main=saga_subtable)
-    y_vals,y_errs=get_el_vals(y, saga_subtable_main=saga_subtable)
+    
+    x_vals,x_errs=get_el_vals(x,saga_subtable_main=saga_subtable,sol_norm=sol_norm_x)
+    y_vals,y_errs=get_el_vals(y, saga_subtable_main=saga_subtable,sol_norm=sol_norm_y)
     
    
     if (require_uncertainties or errorbars):
@@ -250,8 +304,14 @@ def plot_el_abunds(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_only
             plt.errorbar(x_vals,y_vals,linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0,label=label,zorder=0)
         else:
             plt.errorbar(x_vals,y_vals,linestyle='none',marker=marker,markersize=markersize,color=color,alpha=alpha,markeredgewidth=0,label=label)
-    plt.xlabel(x)
-    plt.ylabel(y)
+    if sol_norm_x:
+        plt.xlabel(x)
+    else:
+        plt.xlabel(x.replace('[','log(').replace(']',')'))
+    if sol_norm_y:
+        plt.ylabel(y)
+    else:
+        plt.ylabel(y.replace('[','log(').replace(']',')'))
     #plt.show()
     
     return
@@ -325,13 +385,14 @@ def plot_el_vs_param(x,y,markersize=4, alpha=1, color='k', errorbars=True, MS_on
     return
 
 
-def el_hist(target_el, bounding_el='[Fe/H]', bounding_el_bounds=[-5.,1.], saga_subtable=saga_table, alpha=1,require_uncertainties=True,MS_only=True):
+def el_hist(target_el, bounding_el='[Fe/H]', bounding_el_bounds=[-5.,1.], saga_subtable=saga_table, alpha=1,require_uncertainties=True,MS_only=True, sol_norm=True):
     print("MS_only:", MS_only)
     if MS_only:
         saga_subinds=np.where((saga_subtable['Teff']>RGB_max_teff) | (saga_subtable["log g"] > RGB_max_logg))
         saga_subtable=saga_subtable[saga_subinds]
     else:
         saga_subtable=saga_subtable
+
     bounding_el_vals, bounding_el_err=get_el_vals(bounding_el, saga_subtable_main=saga_subtable)
     if require_uncertainties:
         bounding_el_vals.mask=bounding_el_err.mask
@@ -345,7 +406,7 @@ def el_hist(target_el, bounding_el='[Fe/H]', bounding_el_bounds=[-5.,1.], saga_s
     inbounds=np.where(above_bounding_el_vals <= bounding_el_bounds[1])
     above_table=saga_subtable1[in_above]
     inbounds_table=above_table[inbounds]
-    target_el_vals, target_el_err=get_el_vals(target_el, saga_subtable_main=inbounds_table)
+    target_el_vals, target_el_err=get_el_vals(target_el, saga_subtable_main=inbounds_table, sol_norm=sol_norm)
     if require_uncertainties:
         target_el_vals.mask=target_el_err.mask
     else:
@@ -367,20 +428,28 @@ def el_hist(target_el, bounding_el='[Fe/H]', bounding_el_bounds=[-5.,1.], saga_s
     el_std=np.nanstd(target_el_vals)
     print('\n\n------------')
     print(target_el+' for ' + str(bounding_el_bounds[0])+ '<=' + bounding_el+'<=' + str(bounding_el_bounds[1]))
-    print(target_el+' median and 68\% interquartile range:',el_med, str(el_16_perc)+' - '+str(el_84_perc))
-    print(target_el+ ' mean and standard deviation:', el_mean,'+/-',el_std)
+    if sol_norm:
+        print(target_el+' median and 68\% interquartile range:',el_med, str(el_16_perc)+' - '+str(el_84_perc))
+        print(target_el+ ' mean and standard deviation:', el_mean,'+/-',el_std)
+    else:
+        print(target_el.replace('[','log(').replace(']',')')+' median and 68\% interquartile range:',el_med, str(el_16_perc)+' - '+str(el_84_perc))
+        print(target_el.replace('[','log(').replace(']',')')+ ' mean and standard deviation:', el_mean,'+/-',el_std)
     
     return
 
 if __name__=='__main__':
+    #el_hist('[Na/Mg]', bounding_el='[Fe/H]', bounding_el_bounds=[-5,1.], alpha=0.3)
+    
     target_el_list=['Li','Na','Mg','K','Cr','Fe'] #ordered by atomic number
+    #target_el_list=['Na'] #ordered by atomic number
     FeH_centers=[-3.,-2.,-1.,0.0]
     FeH_width=0.5
     for central_val in FeH_centers:
         for single_el in target_el_list:
             print('\n\n[Fe/H]=',central_val,'+\-',FeH_width)
             try:
-                el_hist('['+single_el+'/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[central_val-FeH_width, central_val+FeH_width], alpha=0.3)
+                el_hist('['+single_el+'/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[central_val-FeH_width, central_val+FeH_width], alpha=0.3,sol_norm=False)
+                #el_hist('['+single_el+'/Mg]', bounding_el='[Fe/H]', bounding_el_bounds=[central_val-FeH_width, central_val+FeH_width], alpha=0.3)
             except ValueError as error:
                 print('ValueError:',error)
                 print("Continuing to the next element, but I don't understand why this one didn't work... it is", single_el,' by the way...')
@@ -388,15 +457,16 @@ if __name__=='__main__':
     print('all elements done')
     plt.show()
         
-    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-5,1.], alpha=0.3)
-    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-1.,1.],alpha=0.3)
-    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-2.5,-1.],alpha=0.3)
-    el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-5.,-2.5],alpha=0.3)
-    plt.legend()
-    plt.show()
+    #el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-5,1.], alpha=0.3)
+    #el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-1.,1.],alpha=0.3)
+    #el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-2.5,-1.],alpha=0.3)
+    #el_hist('[Na/Ca]', bounding_el='[Fe/H]', bounding_el_bounds=[-5.,-2.5],alpha=0.3)
+    #plt.legend()
+    #plt.show()
 
-    plot_class_el_abunds('[Fe/H]','[Na/Fe]',markersize=8, alpha=1,errorbars=True, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
-    #plot_el_abunds('[Ca/H]', '[Na/Ca', MS_only=True,errorbars=False,require_uncertainties=False, alpha=1,color='b')
+    #plot_class_el_abunds('[Fe/H]','[Na/Fe]',markersize=8, alpha=1,errorbars=True, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
+    plot_el_abunds('[Fe/H]', '[Li/Ca]', MS_only=True,errorbars=False,require_uncertainties=True, alpha=1,color='b')
+    plot_el_abunds('[Fe/H]', '[Li/Ca]', MS_only=True,errorbars=False,require_uncertainties=True, alpha=0.5,color='r',sol_norm_y=False)
     plt.legend()
     plt.show()
     

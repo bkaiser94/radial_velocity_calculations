@@ -74,7 +74,7 @@ default_norm_show=False
 
 #norm_range=[7042,7046]
 #norm_range=[7490,7510] #outside telluric
-#norm_range=[7470, 7530]
+norm_range=[7470, 7530]
 #norm_range=[7440, 7550]
 #norm_range=[7517,7556] #20190528
 #norm_range=[7860.,8050.]
@@ -87,7 +87,7 @@ default_norm_show=False
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-norm_range=[6630,6690]#wider double norm range
+#norm_range=[6630,6690]#wider double norm range
 #norm_range=[6773, 6817]#red side of Li I line short of telluric
 #norm_range=[6630,6670]
 #norm_range=[5740,5850]
@@ -195,11 +195,11 @@ elif file_setting=='compare_SDSS':
     print('filename:', filename)
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'*1651*.fits')
-    #sdss_names = glob(sdss_path+'*M*.fits')
+    sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
     #sdss_names = glob(sdss_path+'SDSS*1636*.fits')
     #sdss_names = glob(sdss_path+'LHS*.fits')
-    sdss_names = glob(sdss_path+'*DQpec*.fits')
+    #sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     
     sdss_names= sorted(sdss_names)
@@ -866,6 +866,11 @@ if __name__ == '__main__':
             plot_spectrum(target_spec1, filename, header1, norm=True, smooth=False, kernel_type='gaussian', pix_width=0.5*header1['see_sig'])
             plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=False, kernel_type='sdss_match', pix_width=pix_width,color='k')
             
+            target_spec2= norm_spectrum(target_spec2, norm_range)
+            target_spec2[1]=target_spec2[1]+0.5
+            plt.axhline(y=0.5, color='b',linestyle=':')
+            plot_spectrum(target_spec2, filename2.split('/')[-1]+' +0.5 flat flux', header1, norm=True, smooth=False, kernel_type='sdss_match', pix_width=pix_width,color='r')
+            
             #plot_sky(filename, offset=0, line_labels=False, convolve=False)
             #plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
             #plot_diff_spec(target_spec1, target_spec2, filename1, filename2, header1, smooth=False, norm=False)
@@ -1147,7 +1152,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=True, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=3., kernel_type='box',alpha=1.0)
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=3., kernel_type='box',alpha=1.0)
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5., kernel_type='box',alpha=1.0,offset=(counter%6.)*1.)
             
