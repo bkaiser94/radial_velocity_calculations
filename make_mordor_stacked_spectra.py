@@ -49,11 +49,14 @@ import plot_spec as ps
 
 
 #input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_DQpecs_1675365552.csv'
-#input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_DZs_1675367585.csv'
+#input_file='20190516B_retargeted_purple_search_gaia_scbd_20230301_update_DQpecs_1677714150.csv'
+input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_DZs_1675367585.csv'
 #input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_WDdM_binaries_1675621755.csv'
 #input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_DCs_1675625828.csv'
 #input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_DCs_1676221722.csv'
-input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_polluted_WD_1677081843.csv' #WDdM binaries with polluted white dwarfs
+#input_file='20190516B_retargeted_purple_search_gaia_scbd_20230301_update_DCs_1677713100.csv'
+#input_file='20190516B_retargeted_purple_search_gaia_scbd_20230301_update_SDSS_objects_1677771324.csv'
+#input_file='20190516B_retargeted_purple_search_gaia_scbd_20230131_update_polluted_WD_1677081843.csv' #WDdM binaries with polluted white dwarfs
 input_table=Table.read(input_file)
 current_directory=os.getcwd()
 output_name_base=current_directory.split('/')[-1]
@@ -70,18 +73,23 @@ output_name_base=current_directory.split('/')[-1]
 ##norm_range=[7440, 7550]
 #default_height=7.
 #default_width=6.
+#setup='400m2'
+#line_id=''
 
-##DZ 400M2 adjusted settings
-#smooth_size=3. #pixels
-#offset_scale=1.
-#max_spec_per_frame=6.
-#text_y_offset=-1*offset_scale/7.
-##text_y_offset=0.
-#text_x_position=5210.
-##norm_range=[6630,6690]#wider double norm range
-#norm_range=[7440, 7550]
-#default_height=7.
-#default_width=6.
+#DZ 400M2 adjusted settings
+smooth_size=3. #pixels
+offset_scale=1.
+max_spec_per_frame=6.
+text_y_offset=-1*offset_scale/7.
+#text_y_offset=0.
+text_x_position=5210.
+#norm_range=[6630,6690]#wider double norm range
+norm_range=[7440, 7550]
+default_height=7.
+default_width=6.
+setup='400m2'
+line_id='cool_wd'
+
 
 ##WD+dM 400M2 adjusted settings
 #smooth_size=3. #pixels
@@ -95,21 +103,23 @@ output_name_base=current_directory.split('/')[-1]
 #default_height=7.
 #default_width=6.
 #setup='400m2'
+#line_id=''
 
 ##WD+dM 400M1 adjusted settings
-smooth_size=3. #pixels
-offset_scale=1.
-max_spec_per_frame=6.
-text_y_offset=3*offset_scale/7.
-#text_y_offset=0.
-text_x_position=6000.
-norm_range=[6630,6690]#wider double norm range
-#norm_range=[7440, 7550]
-default_height=7.
-default_width=6.*3350./4030.
-setup='400m1'
+#smooth_size=3. #pixels
+#offset_scale=1.
+#max_spec_per_frame=6.
+#text_y_offset=3*offset_scale/7.
+##text_y_offset=0.
+#text_x_position=6000.
+#norm_range=[6630,6690]#wider double norm range
+##norm_range=[7440, 7550]
+#default_height=7.
+#default_width=6.*3350./4030.
+#setup='400m1'
+#line_id=''
 
-##DC 400M2 adjusted settings
+###DC 400M2 adjusted settings
 #smooth_size=5. #pixels
 #offset_scale=1.
 #max_spec_per_frame=6.
@@ -121,8 +131,9 @@ setup='400m1'
 #default_height=7.
 #default_width=6.
 #setup='400m2'
+#line_id=''
 
-###DC 400M1 adjusted settings
+####DC 400M1 adjusted settings
 #smooth_size=5. #pixels
 #offset_scale=1.
 #max_spec_per_frame=6.
@@ -134,6 +145,7 @@ setup='400m1'
 #default_height=7.
 #default_width=6.*3350./4030.
 #setup='400m1'
+#line_id=''
 
 
 #DZ 400M1
@@ -163,28 +175,28 @@ for row in input_table:
 num_spec=[tally,max_spec_per_frame][np.greater(tally, max_spec_per_frame)]
 print('num_spec',num_spec)
 
-plt.figure(figsize=(default_width_400m1,default_height*num_spec/max_spec_per_frame),constrained_layout=True)
+#plt.figure(figsize=(default_width_400m1,default_height*num_spec/max_spec_per_frame),constrained_layout=True)
 
 
-for row in input_table:
-    if row['400m1'] != '':
-    #row=input_table[index]
-        filename=row['400m1']
-        target_spec, header, target_noise= spt.retrieve_spec(filename)
-        hdu= fits.open(filename)
-        print('angstrom range',np.nanmax(target_spec[0])-np.nanmin(target_spec[0]))
-        ps.plot_spectrum(target_spec,'',header, smooth=True,norm=True,kernel_type='box', pix_width=smooth_size_400m1, offset=num_spec-1-(counter%num_spec)*offset_scale_400m1, norm_range=norm_range_400m1,color='k')
-        plt.text(text_x_position_400m1, num_spec-(counter%num_spec)*offset_scale_400m1+text_y_offset_400m1, row['name'])
-        counter+=1
+#for row in input_table:
+    #if row['400m1'] != '':
+    ##row=input_table[index]
+        #filename=row['400m1']
+        #target_spec, header, target_noise= spt.retrieve_spec(filename)
+        #hdu= fits.open(filename)
+        #print('angstrom range',np.nanmax(target_spec[0])-np.nanmin(target_spec[0]))
+        #ps.plot_spectrum(target_spec,'',header, smooth=True,norm=True,kernel_type='box', pix_width=smooth_size_400m1, offset=num_spec-1-(counter%num_spec)*offset_scale_400m1, norm_range=norm_range_400m1,color='k')
+        #plt.text(text_x_position_400m1, num_spec-(counter%num_spec)*offset_scale_400m1+text_y_offset_400m1, row['name'])
+        #counter+=1
 
-plt.title('')
-plt.ylabel(r'$\mathrm{F}_{\lambda}$ (Arbitrary Units)')
-plt.xlabel(r'Wavelength $(\mathrm{\AA})$')
-final_name=output_name_base+'_400m1_'+spt.time_string()+'.pdf'
-#spt.show_plot(show_legend=False, actually_show=False)
-spt.show_plot(show_legend=False, line_id='cool_wd',show_label=False,actually_show=False,convert_to_air=True)
-#plt.savefig(final_name)
-spt.show_plot(show_legend=False)
+#plt.title('')
+#plt.ylabel(r'$\mathrm{F}_{\lambda}$ (Arbitrary Units)')
+#plt.xlabel(r'Wavelength $(\mathrm{\AA})$')
+#final_name=output_name_base+'_400m1_'+spt.time_string()+'.pdf'
+##spt.show_plot(show_legend=False, actually_show=False)
+#spt.show_plot(show_legend=False, line_id='cool_wd',show_label=False,actually_show=False,convert_to_air=True)
+##plt.savefig(final_name)
+#spt.show_plot(show_legend=False)
 
 
 
@@ -236,10 +248,15 @@ for row in input_table:
             plt.xlabel(r'Wavelength $(\mathrm{\AA})$')
             final_name=output_name_base+'_'+ setup+'_'+'frame'+str(current_frame)+'_'+spt.time_string()+'.pdf'
             #spt.show_plot(show_legend=False, actually_show=False)
-            spt.show_plot(show_legend=False, line_id='cool_wd',show_label=False,actually_show=False,convert_to_air=True)
+            print('show plot right after this')
+            #spt.show_plot(show_legend=False, line_id='cool_wd',show_label=False,actually_show=False,convert_to_air=True)
+            #print('show plot just happened successfully')
+            spt.show_plot(show_legend=False, line_id=line_id,show_label=False,actually_show=False,convert_to_air=True)
+            print('show plot just happened successfully')
             if tally==0:
                 #plt.ylim(-2,3) #DC 400M1 last plot. 
                 #plt.ylim(-1,4) #DC 400M1 last plot. with J2320 correctly included.
+                #plt.ylim(0,4.5) #DC 400M2 last plot. now that the 2 unknowns have been removed
                 pass
             plt.savefig(final_name)
             plt.show()

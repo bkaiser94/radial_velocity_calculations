@@ -41,7 +41,8 @@ import cal_params as cp
 
 
 #input_file= '../20190516B_retargeted_purple_search_gaia_scbd_20230131_update.csv'
-input_file= '../../20190516B_retargeted_purple_search_gaia_scbd_20230131_update.csv'
+#input_file= '../../20190516B_retargeted_purple_search_gaia_scbd_20230131_update.csv'
+input_file='../../20190516B_retargeted_purple_search_gaia_scbd_20230301_update.csv'
 
 input_table = Table.read(input_file)
 
@@ -161,6 +162,9 @@ def make_name(this_table):
             print("ULASJ detected", row['name'])
             row['name']=row['name'].replace('ULASJ','ULAS J')
             row['name']=row['name'].replace('-','–')
+        elif 'LEHPM' in row['name']:
+            print("LEHPM detected", row['name'])
+            row['name']=row['name'].replace('LEHPM','LEHPM ')
         #if name=='.':
             #name=object_name_base+small_ra+small_dec
             #print('new name:', name)

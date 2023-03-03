@@ -393,7 +393,8 @@ flux_cal_dict={
 line_id_dict={
     'alkali':'alkali_lines_vac.csv',
     'ca':'Ca_1_2_lines_vac.csv',
-    'cool_wd':'all_lines_cool_WD.csv',
+   # 'cool_wd':'all_lines_cool_WD.csv',
+    'cool_wd':'all_lines_cool_WD_noCaTrip.csv',
     'mystery':'mystery_lines.csv',
     'cyclotron3900':'cyclotron_B91MG_3900A_n3.csv',
     'cyclotron3800':'cyclotron_B94MG_3800A_n3.csv'
