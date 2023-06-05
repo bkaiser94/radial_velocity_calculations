@@ -169,8 +169,8 @@ air_off_type='pixel' #if you want the offset to be applied in pixel space
 #air_off_type='none' #setting for not applying the airglow correction. Realistically you should just set do_airglow_corr=False for this option
 
 
-#bkg_method= 'avg' #background subtraction method; 'avg'
-bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
+bkg_method= 'avg' #background subtraction method; 'avg'
+#bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
 #bkg_method= 'opp_get_bright' #background subtraction method; gets the bright part of the frame, meaning trace_offset==0 should be true, and then the bkg_shift corresponds to ...
 #bkg_method= 'opp_get_dim' #background subtraction method; gets the dim part of the frame, meaning trace_offset should be set to however far off the extraction should be , and then the bkg_shift corresponds to ...
 

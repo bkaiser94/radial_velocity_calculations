@@ -2,12 +2,13 @@
 Created by Ben Kaiser (UNC-Chapel Hill) (date not known of original creation.)
 This should produce the sensitivity curve that is needed for calibrate_flux.py.
 
-Uses the outputs of actual_reduction.py.
 
 Have to manually change targets that are being used... probably could automate that to actually load all of the
 necessary options after at least changing targets... doesn't seem really worth it at this point.
 
-Step 5 of Reduction
+Step 4 of Reduction (sort of... technically you should run avg_spec on the wctb files first to 
+produce an averaged standard spectrum to use in this file generally speaking... but I didn't 
+really count that as a step in the reduction process because...)
 """
 from __future__ import print_function
 
@@ -72,12 +73,12 @@ standard_directory= cp.standard_dir
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-#standard_name='EG274'
+standard_name='EG274'
 #standard_name = 'GD153'
 #standard_name= 'LTT3218'
 #standard_name='Feige110'
 #standard_name= 'LTT7987'
-standard_name='GD71'
+#standard_name='GD71'
 #standard_name='EG131'
 
 #observed_file='ravg_wctb.EG131_gemini_600B.fits'
@@ -98,7 +99,7 @@ standard_name='GD71'
 #observed_file='ravg_wctb.LTT6248_930_blue.fits'
 
 #observed_file='ravg_wctb.GD71_400m2.fits'
-observed_file='ravg_wctb.GD71_400m1.fits'
+#observed_file='ravg_wctb.GD71_400m1.fits'
 
 #observed_file='ravg_wctb.Feige110_400m1.fits'
 
@@ -114,7 +115,7 @@ observed_file='ravg_wctb.GD71_400m1.fits'
 
 #observed_file='ravg_wctb.LTT7987_400m2_normal.fits'
 #observed_file='ravg_wctb.EG274_400m2.fits'
-#observed_file='ravg_wctb.EG274_400m1.fits'
+observed_file='ravg_wctb.EG274_400M1_quick.fits'
 #observed_file='avg_wctb.EG274_400m1.fits'
 #observed_file='ravg_wctb.EG274_400m1_spectra.fits'
 #observed_file='ravg_wctb.EG274_400m1_quickspectra.fits'

@@ -7,10 +7,9 @@ flux-calibration step as the measured wavelengths are the ones that correspond t
 the atmosphere and instrument.
 
 You have to manually (-ish) generate the 'listWCTB' file that includes the target spectra in the first column 
-(whose prefixes are wctb.*) and then in the column beside each one, you should insert the flux standard 
-spectrum that was produced by actual_reduction.py for that target.
+(whose prefixes are wctb.*) and then in the column beside each one, you should insert the flux standard sensitivity curve
 
-Step 6  in Reduction
+Step 5  in Reduction
 
 PART OF STEP-BY-STEP REDUCTION.
 """

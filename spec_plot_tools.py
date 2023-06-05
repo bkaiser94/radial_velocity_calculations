@@ -15,6 +15,7 @@ from astropy.table import Table
 import scipy.interpolate as scinterp
 from astropy import coordinates as coords
 import time
+from glob import glob
 
 import ref_index
 
@@ -401,6 +402,24 @@ def retrieve_sdss_spec(filename,scale_noise=True, wave_medium= 'air'):
 def retrieve_model_spec(filename):
     all_array=np.genfromtxt(filename).T
     return all_array
+
+def retrieve_gaia_xp_spec(filename):
+    """
+    retrieve a Gaia DR3 XP spectrum generated using GaiaXPy before and now it's just a previously stored set of values. 
+    
+    """
+    filename=cp.gaia_spec_dir+'*'+filename+'*'
+    print(filename)
+    filename_list=glob(filename)
+    print(filename_list)
+    full_array=np.genfromtxt(filename_list[0])
+    waves=full_array[0]
+    flux=full_array[1]
+    noise=full_array[2]
+    file_spec=np.vstack([waves,flux])
+    file_noise=np.vstack([waves,noise])
+    return file_spec, file_noise
+
 
 def retrieve_telluric_model(filename, wave_range):
     filename=cp.tell_dir+filename

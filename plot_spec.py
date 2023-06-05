@@ -38,8 +38,8 @@ test_width = 40
 test_side = test_width/2
 
 pix_width=3
-sdss_pix_width = 10
-#sdss_scale_factor=20.6 #BOSS scaling
+#sdss_pix_width = 10
+sdss_scale_factor=20.6 #BOSS scaling
 sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 sdss_seeing=0.7 #arcsec seeing
 sdss_see_sig=sdss_seeing/2.355/ pixel_scale
@@ -74,7 +74,7 @@ default_norm_show=False
 
 #norm_range=[7042,7046]
 #norm_range=[7490,7510] #outside telluric
-norm_range=[7470, 7530]
+#norm_range=[7470, 7530]
 #norm_range=[7440, 7550]
 #norm_range=[7517,7556] #20190528
 #norm_range=[7860.,8050.]
@@ -87,7 +87,7 @@ norm_range=[7470, 7530]
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-#norm_range=[6630,6690]#wider double norm range
+norm_range=[6630,6690]#wider double norm range
 #norm_range=[6773, 6817]#red side of Li I line short of telluric
 #norm_range=[6630,6670]
 #norm_range=[5740,5850]
@@ -98,13 +98,13 @@ norm_range=[7470, 7530]
 #norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
-file_setting= 'all_SDSS'
+#file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
 #file_setting= 'two_arm_compare_SDSS'
@@ -163,7 +163,7 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*0615*')
+    filenames=glob('fwctb*')
     #filenames=glob('fwctb*0850p195*')
     #filenames=glob('fwctb*0902*')
     #filenames=glob('fwctb*2317*')
@@ -208,9 +208,9 @@ elif file_setting=='compare_SDSS':
     double_iterate=False
     
 elif file_setting=='all_SDSS':
-    sdss_names= glob(sdss_path+'*sdss*')
+    #sdss_names= glob(sdss_path+'*sdss*')
     #sdss_names = glob(sdss_path+'*.fits')
-    #sdss_names = glob(sdss_path+'*DQpec*.fits')
+    sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'SDSSJ1636*.fits')
     #sdss_names = glob(sdss_path+'SDSSJ1330*.fits')
     filenames=sdss_names
@@ -247,7 +247,8 @@ elif file_setting =='two_arm_compare_SDSS':
     #sdss_names = glob(sdss_path+'*sdss*.fits')
     #sdss_names = glob(sdss_path+'*SDSS*1330*.fits')
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
-    sdss_names = glob(sdss_path+'*M*.fits')
+    #sdss_names = glob(sdss_path+'*M*.fits')
+    sdss_names = glob(sdss_path+'*LHS2534*.fits')
     #sdss_names = glob(sdss_path+'G0_K5/*G*.fits')
     
     sdss_names= sorted(sdss_names)
@@ -944,7 +945,8 @@ if __name__ == '__main__':
                 #spt.show_plot(line_id='alkali', convert_to_air=False)
                 #spt.show_plot(line_id='mystery', convert_to_air=False)
                 #spt.show_plot(line_id='cyclotron3900', convert_to_air=False)
-                spt.show_plot(line_id='cool_wd', convert_to_air=False)
+                #spt.show_plot(line_id='cool_wd', convert_to_air=False)
+                spt.show_plot(line_id='C2_bands',convert_to_air=False)
                 
         #plt.legend()
         #plt.show()
@@ -1047,6 +1049,8 @@ if __name__ == '__main__':
         target_spec1[0]=spt.air_to_vac(target_spec1[0])
         target_spec2[0]=spt.air_to_vac(target_spec2[0])
         
+        gaia_spec, gaia_noise=spt.retrieve_gaia_xp_spec('LHS2534')
+        
         #target_spec1= spt.flambda_to_fnu(target_spec1)
         #target_spec2=spt.flambda_to_fnu(target_spec2)
         
@@ -1081,17 +1085,18 @@ if __name__ == '__main__':
             #plot_spectrum(target_spec1, filename1, header1, pix_width=header1['see_sig'],norm=True, smooth=True, kernel_type='gaussian',  color='g')
             #plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, pix_width=header2['see_sig'], kernel_type='gaussian',  color='b')
             
-            plot_spectrum(target_spec1, filename1, header1, pix_width=5,norm=True, smooth=True, kernel_type='box',  color='g')
-            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, pix_width=5, kernel_type='box',  color='b')
+            plot_spectrum(target_spec1, filename1, header1, pix_width=5,norm=False, smooth=True, kernel_type='box',  color='g')
+            plot_spectrum(target_spec2, filename2, header2, norm=False, smooth=True, pix_width=5, kernel_type='box',  color='b')
+            plot_spectrum(gaia_spec,'LHS2534 GaiaDR3 XP',header1, smooth=False, norm=False)
             
             #plot_dwavelength(target_spec1, filename1, read_in=False)
             #plot_dwavelength(target_spec2, filename2, read_in=False)
             #plot_dwavelength(sdss_spec, sdss_filename.split('/')[-1], read_in=False)
-            plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+            #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             plt.xlim(3700,9000)
             #plt.ylabel(r'$F_{\nu}$ (normalized)')
-            #spt.show_plot(line_id='alkali', convert_to_air=True)
-            spt.show_plot(line_id='mystery', convert_to_air=False)
+            spt.show_plot(line_id='cool_wd', convert_to_air=False)
+            #spt.show_plot(line_id='mystery', convert_to_air=False)
             
     if single_iterate:
         counter=0
@@ -1102,7 +1107,7 @@ if __name__ == '__main__':
             target_spec, header, target_noise= spt.retrieve_spec(filename)
             hdu= fits.open(filename)
             #print(filename)
-            
+            #gaia_spec, gaia_noise=spt.retrieve_gaia_xp_spec('LTT3218')
             ####Na-D line for J0850
             ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
             
@@ -1156,6 +1161,8 @@ if __name__ == '__main__':
             
             plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=3., kernel_type='box',alpha=1.0)
             
+            #plot_spectrum(gaia_spec,'LTT3218 GaiaDR3 XP',header, smooth=False, norm=False)
+            
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5., kernel_type='box',alpha=1.0,offset=(counter%6.)*1.)
             
             #plot_spectrum(spt.flambda_to_fnu(target_spec), filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
@@ -1178,7 +1185,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
             #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
             #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            plot_sky(filename, offset=0, line_labels=False, convolve=False)
+            #plot_sky(filename, offset=0, line_labels=False, convolve=False)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:
@@ -1190,7 +1197,7 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
             
-            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             #spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
 
             #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
@@ -1215,6 +1222,7 @@ if __name__ == '__main__':
         #print('ew_list:',ew_list)
         plt.axhline(y=0, linestyle=':', color='k')
         spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+        #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
 
         

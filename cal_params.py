@@ -56,6 +56,8 @@ model_spectra_dir=ref_dir+model_spectra_dir
 diffusion_dir=ref_dir+diffusion_dir
 nuke_cross_dir=ref_dir+nuke_cross_dir
 
+gaia_spec_dir= '/Users/BenKaiser/Desktop/gaia/GaiaDR3_XP_spectra/'
+
 
 
 airline_name='OstMart1992_airglow.txt'
@@ -326,7 +328,8 @@ line_color_dict={
     'MgH':'#6e76c1',
     '?': '#f39117',
     'cyclotron': '#001a4b',
-    'Ba': 'orange'
+    'Ba': 'orange',
+    'C_2':'pink'
         }
 
 #dictionary of guesses for the box1d model used to generate the shape for background skylines
@@ -397,7 +400,8 @@ line_id_dict={
     'cool_wd':'all_lines_cool_WD_noCaTrip.csv',
     'mystery':'mystery_lines.csv',
     'cyclotron3900':'cyclotron_B91MG_3900A_n3.csv',
-    'cyclotron3800':'cyclotron_B94MG_3800A_n3.csv'
+    'cyclotron3800':'cyclotron_B94MG_3800A_n3.csv',
+    'C2_bands':'King1948_C2Swan_Bands.csv'
     }
 
 

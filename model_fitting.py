@@ -88,7 +88,7 @@ logg = 3.75
 #teff = 6000
 #logg = 3.75
 plot_fit = False
-output_grid= True
+output_grid= False
 poly_degree = 5
 #poly_degree = 7
 

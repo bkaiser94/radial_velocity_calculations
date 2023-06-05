@@ -1,7 +1,9 @@
 """
 This script should create a master Zero frame, which is used for bias subtraction of all science frames, and then it should also trim all science frames and remove cosmic rays from all of them. Outputs a 2-d spectrum that is in electron counts.
 
-STEP 2 of Reduction
+Must be run in python2 because cosmics has python2 syntax (yes so does this file, but that's because I didn't bother updating it since I was stuck with cosmics).
+
+STEP 1 of Reduction
 This is the first script in the real reduction of the step-by-step process.
 
 Requires 'listZero' file  of all the desired Zero frames and 'listSpec' file of all the science frames to be used, meaning on-target or the lamp frames that bracket.
