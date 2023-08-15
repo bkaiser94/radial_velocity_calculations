@@ -73,9 +73,9 @@ standard_directory= cp.standard_dir
 ##standard_name = "GD108"
 #standard_name = 'Feige67'
 #standard_name = 'LTT6248'
-standard_name='EG274'
+#standard_name='EG274'
 #standard_name = 'GD153'
-#standard_name= 'LTT3218'
+standard_name= 'LTT3218'
 #standard_name='Feige110'
 #standard_name= 'LTT7987'
 #standard_name='GD71'
@@ -86,6 +86,7 @@ standard_name='EG274'
 #observed_file='ravg_wctb.LTT3218_400m2.fits'
 #observed_file='ravg_wctb.LTT3218short_400m2.fits'
 #observed_file='ravg_wctb.LTT3218_400m1.fits'
+observed_file='ravg_wctb.LTT3218_400m1_quick.fits'
 
 
 ##observed_file = "wcmtb.GD108930blue.fits"
@@ -115,7 +116,7 @@ standard_name='EG274'
 
 #observed_file='ravg_wctb.LTT7987_400m2_normal.fits'
 #observed_file='ravg_wctb.EG274_400m2.fits'
-observed_file='ravg_wctb.EG274_400M1_quick.fits'
+#observed_file='ravg_wctb.EG274_400m1_quick.fits'
 #observed_file='avg_wctb.EG274_400m1.fits'
 #observed_file='ravg_wctb.EG274_400m1_spectra.fits'
 #observed_file='ravg_wctb.EG274_400m1_quickspectra.fits'
@@ -174,6 +175,25 @@ def get_star_info(starname):
     standard_dict['filename']=standard_directory+standard_dict['filename']
     return standard_dict
 
+def check_chosen_standard(header, star_dict):
+    target_coords=coords.SkyCoord(header['RA'], header['DEC'], frame='icrs',unit=(u.hourangle, u.deg))
+    standard_coords=coords.SkyCoord(star_dict['ra'],star_dict['dec'],frame='icrs', unit=(u.hourangle, u.deg))
+    sep = target_coords.separation(standard_coords)
+    print('\n\nSeparation between observation file '+ observed_file+ ' and standard ' + standard_name + ':', str(sep.arcminute) + ' arcminutes','\n\n')
+    
+    if sep.arcminute > cp.distance_threshold:
+        print('\n\n============\n')
+        print('WARNING!')
+        print('Distance between obtained spectrum and stored coordinates for Spectrophotometric standard is greater than ' + str(cp.distance_threshold) + ' arcminutes!')
+        print('This means the standard_name you chose, which is ' + standard_name + ', is probably not correct for your target!')
+        print('Double-check your choice of standard_name and your observation.')
+        print('\n=================\n\n')
+    else:
+        pass
+    
+    
+    return
+
 def get_output_header(header):
     airmass= header['AIRMASS']
     obs_time = header['OPENTIME']
@@ -185,6 +205,7 @@ def get_output_header(header):
         value= header[in_header]
         new_entry= out_header+header_char+str(value)
         output_header_list.append(new_entry)
+    output_header_list.append('Standard'+header_char+standard_name)
     output_header= header_delim.join(output_header_list)
     return output_header
 
@@ -243,6 +264,14 @@ obs_time = obs_date+'T'+obs_time
 obs_time = Time(obs_time, format = 'isot', scale = 'utc').mjd
 exptime = header['EXPTIME']
 
+standard_info = get_star_info(standard_name)
+
+#Check that our observation is actually of the correct standard
+print('Checking standard choice.')
+check_chosen_standard(header, standard_info)
+
+
+
 obs_spec= np.vstack([obs_waves1, obs_flux1])
 try:
     dlambda= obs_fits[4].data
@@ -289,7 +318,7 @@ poly_degree=cp.flux_cal_dict['obs_poly_degree'][setup_name]
 model_poly_degree=cp.flux_cal_dict['model_poly_degree'][setup_name]
 
 #standard_file = standard_directory+standard_file
-standard_info = get_star_info(standard_name)
+#standard_info = get_star_info(standard_name)
 print(type(standard_info['balmer_masks']))
 print(type(standard_info['other_masks']))
 wavelength_masks=standard_info['balmer_masks']+standard_info['other_masks']

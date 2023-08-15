@@ -333,7 +333,11 @@ if __name__ == '__main__':
     
     default_ggDB_array=make_ggDB_array(modeler=default_modeler, atm_type=default_atm_type, overshoot=default_overshoot)
 
-    
+    plt.scatter(default_ggDB_array['teff'], default_ggDB_array['Na'],label='Na')
+    plt.scatter(default_ggDB_array['teff'], default_ggDB_array['Ca'], label='Ca')
+    plt.xlabel('Teff')
+    plt.ylabel('Tau_diff')
+    plt.show()
     
     #wd_name='WDJ2356-209'
     #target_logg=7.98

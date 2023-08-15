@@ -38,9 +38,9 @@ test_width = 40
 test_side = test_width/2
 
 pix_width=3
-#sdss_pix_width = 10
+sdss_pix_width = 10
 sdss_scale_factor=20.6 #BOSS scaling
-sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 sdss_seeing=0.7 #arcsec seeing
 sdss_see_sig=sdss_seeing/2.355/ pixel_scale
 
@@ -116,7 +116,7 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('*ravg_fwctb*.fits')
+    filenames=glob('ravg_fwctb*.fits')
     #filenames=glob('*ravg_wctb*fits')
     #filenames=glob('ravg_fwctb*400m1*fits')
     #filenames=glob('ravg_fwctb*2147*fits')
@@ -194,13 +194,14 @@ elif file_setting=='compare_SDSS':
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
+    sdss_names = glob(sdss_path+'G0_K5/*K*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'*1651*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
     #sdss_names = glob(sdss_path+'SDSS*1636*.fits')
     #sdss_names = glob(sdss_path+'LHS*.fits')
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
-    sdss_names = glob(sdss_path+'sdss*.fits')
+    #sdss_names = glob(sdss_path+'sdss*.fits')
     
     sdss_names= sorted(sdss_names)
     print('sdss_names:',sdss_names)
@@ -863,8 +864,9 @@ if __name__ == '__main__':
             #plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='k')
             
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
-            
-            plot_spectrum(target_spec1, filename, header1, norm=True, smooth=False, kernel_type='gaussian', pix_width=0.5*header1['see_sig'])
+            plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=5)
+
+            #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=False, kernel_type='gaussian', pix_width=0.5*header1['see_sig'])
             plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=sdss_pix_width,color='k')
             
 
@@ -1159,7 +1161,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=True, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=3., kernel_type='box',alpha=1.0)
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=5., kernel_type='box',alpha=1.0)
             
             #plot_spectrum(gaia_spec,'LTT3218 GaiaDR3 XP',header, smooth=False, norm=False)
             
@@ -1197,8 +1199,10 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
             
-            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             #spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
+            
+            #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
 
             #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
             #spt.show_plot(show_legend=True)
@@ -1221,8 +1225,8 @@ if __name__ == '__main__':
         
         #print('ew_list:',ew_list)
         plt.axhline(y=0, linestyle=':', color='k')
-        spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
-        #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
+        #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+        spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
 
         

@@ -241,7 +241,7 @@ distance_threshold= 1. #distance in arcminutes that an observation can be away f
 standard_dict={
     'eg274':{
         'ra':'16:23:33.96',
-        'dec':' -39:13:46.4',
+        'dec':'-39:13:46.4',
         'sys_vel':13.0,
         'filename':'xshooter_standards/fEg274.dat',
         'sens_filename':'EG274_sensitivity_curve.txt',
@@ -257,7 +257,7 @@ standard_dict={
         'other_masks': telluric_lines},
     'feige110':{
         'ra':'23:19:58.39',
-        'dec':' -05:09:56.1',
+        'dec':'-05:09:56.1',
         'sys_vel': 0.0,
         'filename':'xshooter_standards/fFeige110.dat',
         'sens_filename':'Feige110_sensitivity_curve.txt',
@@ -265,7 +265,7 @@ standard_dict={
         'other_masks': telluric_lines},
     'ltt7987':{
         'ra':'20:10:56.35',
-        'dec':' -30:13:11.4',
+        'dec':'-30:13:11.4',
         'sys_vel':75.40,
         'filename':'xshooter_standards/fLTT7987.dat',
         'sens_filename':'LTT7987_sensitivity_curve.txt',
@@ -280,8 +280,8 @@ standard_dict={
         'balmer_masks':balmer_lines_wide,
         'other_masks': telluric_lines},
      'gd71':{
-        'ra':'08:41:32.43',
-        'dec':'-32:56:32.92',
+        'ra':'05:52:27.51 ',
+        'dec':'+15:53:16.6',
         'sys_vel':12.0,
         'filename':'xshooter_standards/fGD71.dat',
         'sens_filename':'GD71_sensitivity_curve.txt',
