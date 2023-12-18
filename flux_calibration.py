@@ -75,10 +75,10 @@ standard_directory= cp.standard_dir
 #standard_name = 'LTT6248'
 #standard_name='EG274'
 #standard_name = 'GD153'
-standard_name= 'LTT3218'
+#standard_name= 'LTT3218'
 #standard_name='Feige110'
 #standard_name= 'LTT7987'
-#standard_name='GD71'
+standard_name='GD71'
 #standard_name='EG131'
 
 #observed_file='ravg_wctb.EG131_gemini_600B.fits'
@@ -86,7 +86,7 @@ standard_name= 'LTT3218'
 #observed_file='ravg_wctb.LTT3218_400m2.fits'
 #observed_file='ravg_wctb.LTT3218short_400m2.fits'
 #observed_file='ravg_wctb.LTT3218_400m1.fits'
-observed_file='ravg_wctb.LTT3218_400m1_quick.fits'
+#observed_file='ravg_wctb.LTT3218_400m1_quick.fits'
 
 
 ##observed_file = "wcmtb.GD108930blue.fits"
@@ -101,11 +101,13 @@ observed_file='ravg_wctb.LTT3218_400m1_quick.fits'
 
 #observed_file='ravg_wctb.GD71_400m2.fits'
 #observed_file='ravg_wctb.GD71_400m1.fits'
+observed_file='ravg_wctb.GD71_400M1.fits'
+
 
 #observed_file='ravg_wctb.Feige110_400m1.fits'
 
 #observed_file='ravg_wctb.EG274_400m1_fix.fits'
-#observed_file='ravg_wctb.LTT7987_400m1.fits'
+#observed_file='ravg_wctb.LTT7987_400M1.fits'
 #observed_file='ravg_wctb.LTT7987_400m1_quick.fits'
 #observed_file='ravg_wctb.LTT7987_400m1_normal.fits'
 #observed_file='ravg_wctb.LTT7987wide_400m1_normal.fits'
@@ -117,7 +119,7 @@ observed_file='ravg_wctb.LTT3218_400m1_quick.fits'
 #observed_file='ravg_wctb.LTT7987_400m2_normal.fits'
 #observed_file='ravg_wctb.EG274_400m2.fits'
 #observed_file='ravg_wctb.EG274_400m1_quick.fits'
-#observed_file='avg_wctb.EG274_400m1.fits'
+#observed_file='ravg_wctb.EG274_400m1.fits'
 #observed_file='ravg_wctb.EG274_400m1_spectra.fits'
 #observed_file='ravg_wctb.EG274_400m1_quickspectra.fits'
 #observed_file='ravg_wctb.eg274am126_400m2.fits'

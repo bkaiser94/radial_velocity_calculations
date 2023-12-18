@@ -110,10 +110,17 @@ for img in speclist:
     img_data= i[0].data
     img_data= img_data-bias_med #bias subtraction
     img_data = img_data[trim_regions['y'][0]:trim_regions['y'][1],trim_regions['x'][0]:trim_regions['x'][1]] #trimming the edges
-    target_cosmic= cosmics.cosmicsimage(img_data, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
-    target_cosmic.run(maxiter= 4)
-    img_data= target_cosmic.cleanarray
-    new_filename= 'ctb.' + filename
+    #target_cosmic= cosmics.cosmicsimage(img_data, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
+    #target_cosmic.run(maxiter= 4)
+    #img_data= target_cosmic.cleanarray
+    try:
+        #Don't do cosmic ray removal in median-combined images, which is a new header added by imcombine.py as of 2023-12-18. This should mainly exclude the beginning of night lamps.
+        print('Median Combined Image:', header['med_im'],'so skipping cosmic ray removal on this frame.')
+    except KeyError as error:
+        target_cosmic= cosmics.cosmicsimage(img_data, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
+        target_cosmic.run(maxiter= 4)
+        img_data= target_cosmic.cleanarray
+    new_filename= 'ctb.' + filename #I'm still leaving the "ctb" appended to the front of the frames that aren't cosmic ray subtracted because the code depends on it, but yeah, that's not really a "good" thing to do.
     img_data = img_data * gain
     header.append(card =( 'Counts', 'True', 'if spectrum in counts'))
     new_file_list.append(new_filename)

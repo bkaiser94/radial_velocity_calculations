@@ -82,22 +82,22 @@ def to_barycenter(header):
 ####
 trace_offset =0#amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
 
-#trace_band_mid= 70   #y-pixel that's about the center of the trace #old one as of 2018-10-31
+#trace_band_mid= 110   #y-pixel that's about the center of the trace #old one as of 2018-10-31
 #trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
-#trace_band_mid=110
-trace_band_mid=105 #usual extraction search center point
+trace_band_mid=100
+#trace_band_mid=105 #usual extraction search center point
 ##trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=56
 #trace_band_mid=75 #
-#trace_band_width=30
+#trace_band_width=20
 #trace_band_width = 100 #pixel width to determine the center of the trace 2019-03-25 commented out
-trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
-#trace_band_width=190#usual extraction search window
+#trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
+trace_band_width=190#usual extraction search window
 #trace_band_width= 14 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
-#trace_band_width = 50 #pixel width to determine the center of the trace
+#trace_band_width = 30 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 #sigma_multi_side=2
@@ -116,13 +116,13 @@ flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
 #bkg_shift= 30 #standard shift used
-#bkg_shift=28
+#bkg_shift=20
 #bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
 #bkg_shift=35
-#bkg_shift= 55
+bkg_shift= 47
 #bkg_shift=15
-#bkg_shift=20
-bkg_shift=10
+#bkg_shift=17
+#bkg_shift=10
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 #bkg_side_multi= 1. #
 #bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
@@ -169,8 +169,8 @@ air_off_type='pixel' #if you want the offset to be applied in pixel space
 #air_off_type='none' #setting for not applying the airglow correction. Realistically you should just set do_airglow_corr=False for this option
 
 
-#bkg_method= 'avg' #background subtraction method; 'avg'
-bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
+bkg_method= 'avg' #background subtraction method; 'avg'
+#bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
 #bkg_method= 'opp_get_bright' #background subtraction method; gets the bright part of the frame, meaning trace_offset==0 should be true, and then the bkg_shift corresponds to ...
 #bkg_method= 'opp_get_dim' #background subtraction method; gets the dim part of the frame, meaning trace_offset should be set to however far off the extraction should be , and then the bkg_shift corresponds to ...
 

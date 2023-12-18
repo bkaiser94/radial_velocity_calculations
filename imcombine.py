@@ -62,10 +62,14 @@ full_new_name= '.'.join(['med_'+mid_new_name, tail_end])
 
 print('full_new_name:', full_new_name)
 
+
 plt.imshow(med_im)
 plt.show()
 
+
 print('saving image')
+
+header.append(card=('med_im',True,'median-combined image'))
 hdu= fits.PrimaryHDU(med_im, header=header)
 hdu.writeto(full_new_name, overwrite=True)
 print('image saved.')

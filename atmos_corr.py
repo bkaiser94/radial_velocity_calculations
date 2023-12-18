@@ -81,7 +81,11 @@ def extract_AM_MJD(sens_curve_file):
                     parts = entry.split(':')
                     parts[0]=parts[0].replace(' ', '')
                     #print('parts', parts)
-                    header_dict[parts[0]]=float(parts[1])
+                    try:
+                        header_dict[parts[0]]=float(parts[1])
+                    except ValueError as error:
+                        print("ValueError:", error)
+                        print("That was presumably the newly added name of the standard that was used as the reference spectrum, which BETTER match the name of the sens_curv file! I'll just ignore this for now since by default things were trying to cast to floats for the header.")
             else:
                 pass
             index+=1
@@ -123,6 +127,7 @@ for sens_name in sens_names:
     coll_max_thrus.append([mjd, airmass, wavelengths[max_index], sens_curve[max_index]])
     plt.plot(wavelengths, sens_curve, label=label)
     plt.scatter(wavelengths[max_index], sens_curve[max_index], marker='*')
+    plt.text(wavelengths[max_index],sens_curve[max_index],sens_name)
     print("\n=============")
     print(sens_name)
     print('airmass:', airmass, 'mjd:', mjd)
@@ -130,7 +135,7 @@ for sens_name in sens_names:
 plt.xlabel(r'wavelength ($\AA$)')
 plt.xlim(np.nanmin(wavelengths), np.nanmax(wavelengths))
 plt.ylim(0,1)
-spt.show_plot()
+spt.show_plot(show_legend=False)
 
 coll_max_thrus=np.array(coll_max_thrus).T
 plt.plot(coll_max_thrus[1], coll_max_thrus[3], linestyle='none', marker='o')
