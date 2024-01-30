@@ -22,7 +22,7 @@ import scipy.interpolate as scinterp
 import time
 start = time.time()
 
-
+#plt.rc('lines',linewidth=0.5)
 #plt.rc('font', size =18)
 
 #print start
@@ -39,8 +39,8 @@ test_side = test_width/2
 
 pix_width=3
 sdss_pix_width = 10
-#sdss_scale_factor=20.6 #BOSS scaling
-sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+sdss_scale_factor=20.6 #BOSS scaling
+#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 sdss_seeing=0.7 #arcsec seeing
 sdss_see_sig=sdss_seeing/2.355/ pixel_scale
 
@@ -119,7 +119,7 @@ if file_setting=='all_avg':
     filenames=glob('ravg_fwctb*.fits')
     #filenames=glob('*ravg_wctb*fits')
     #filenames=glob('ravg_fwctb*400m1*fits')
-    #filenames=glob('ravg_fwctb*2147*fits')
+    #filenames=glob('ravg_fwctb*0212*fits')
     #filenames=glob('ravg_fwctb*1824*1213_*fits')
     #filenames=glob('ravg_fwctb*1824*other2_*fits')
     #filenames=glob('ravg_fwctb*J0850*fits')
@@ -193,8 +193,8 @@ elif file_setting=='compare_SDSS':
     filename=sys.argv[1]
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
-    sdss_names = glob(sdss_path+'*Dwarf*.fits')
-    #sdss_names = glob(sdss_path+'G0_K5/*K*Dwarf*.fits')
+    #sdss_names = glob(sdss_path+'*Dwarf*.fits')
+    sdss_names = glob(sdss_path+'G0_K5/*K5*.fits')
     #sdss_names = glob(sdss_path+'*1651*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
@@ -700,7 +700,7 @@ def get_median_dlambda(input_spec):
     return np.nanmedian(input_spec[0]-np.roll(input_spec[0],1))
 
     
-def plot_sky(filename, offset=0, line_labels=True, convolve=False, color='None'):
+def plot_sky(filename, offset=0, line_labels=True, convolve=False, color='None',norm=False, norm_range=norm_range):
     hdu=fits.open(filename)
     wavelengths=np.copy(hdu[0].data)
     sky=np.copy(hdu[2].data)
@@ -709,9 +709,20 @@ def plot_sky(filename, offset=0, line_labels=True, convolve=False, color='None')
         sky_spec= convolve_spectrum(sky_spec, 'dummy_header', kernel_type='box', pix_width=pix_width)
     else:
         pass
-    sky= sky_spec[1]
-    sky=sky/np.nanmax(sky)
-    sky=sky+offset
+    if norm:
+        #spec[1]= spec[1]/np.nanmean(spec[1])
+        #spec[1]=spec[1]/np.nanmean(spec[1][1240:1280])
+        #spec[1]=spec[1]/np.nanmean(spec[1][norm_range[0]:norm_range[1]])
+        sky_spec=norm_spectrum(sky_spec, norm_range)
+        sky= sky_spec[1]
+    else:
+        pass
+        #sky= sky_spec[1]
+        #sky=sky/np.nanmax(sky)
+        #sky=sky+offset
+    #sky= sky_spec[1]
+    #sky=sky/np.nanmax(sky)
+    #sky=sky+offset
     #color='b'
     #if 'eg274' in filename.lower():
         #color='r'
@@ -723,6 +734,7 @@ def plot_sky(filename, offset=0, line_labels=True, convolve=False, color='None')
         #color= 'k'
     #else:
         #pass
+
     airline_array= Table.read(cp.line_list_dir+cp.airline_name, format='ascii.tab')
     #print(airline_array)
     use_array=np.int_(airline_array['use'])
@@ -851,8 +863,11 @@ if __name__ == '__main__':
         #target_spec1, header1, target_noise1= spt.retrieve_sdss_spec(filename)
         target_spec1[0]=target_spec1[0]+wavelength_offset
         #target_spec1= norm_spectrum(target_spec1, norm_range)
-        for filename2 in sdss_names:
+        #for filename2 in sdss_names:
+        for  index, filename2 in enumerate(sdss_names):
             target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2, wave_medium='air')
+            
+            
             #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
             #target_spec2=norm_spectrum(target_spec2, norm_range)
             #target_spec2[1]=target_spec2[1]*sdss_flux_scale_factor
@@ -865,12 +880,26 @@ if __name__ == '__main__':
             #plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width, color='k')
             
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
-            plot_spectrum(target_spec1, filename, header1, norm=True, smooth=False, kernel_type='box', pix_width=5)
-
-            plot_spectrum(target_spec2, filename2, header1, norm=True, smooth=True, kernel_type='gaussian', pix_width=8.*header1['see_sig'],kernel_width=10.*slit_width)
-            #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='k')
+            
+            #plot_spectrum(target_spec2, filename2, header1, norm=True, smooth=True, kernel_type='gaussian', pix_width=8.*header1['see_sig'],kernel_width=10.*slit_width)
+            
+            #plot_spectrum(target_spec2, filename2, header1, norm=True, smooth=True, kernel_type='gaussian', pix_width=8.*header1['see_sig'],kernel_width=10.*slit_width)
+            
+            
+            
             #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width,color='k')
+            
+            
+            plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=5,alpha=1.0,color='k')
 
+            plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='r',alpha=0.8)
+            
+            #filename3=sdss_names[index+1]
+            filename3=filename2
+            target_spec3, header3, target_noise3=spt.retrieve_sdss_spec(filename3,wave_medium='air')
+            #plot_spectrum(target_spec3, filename3.split('/')[-1], header1, norm=True, smooth=False, kernel_type='sdss_match', pix_width=pix_width,color='b',alpha=0.4)
+            
+            
             
             #target_spec2= norm_spectrum(target_spec2, norm_range)
             #target_spec2[1]=target_spec2[1]+0.5
@@ -888,7 +917,8 @@ if __name__ == '__main__':
             plt.title(filename+ ' & '+ filename2.split('/')[-1])
             plt.xlim(np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]))
             #plt.show()
-            spt.show_plot(line_id='cool_wd')
+            spt.show_plot(line_id='cool_wd',convert_to_air=True)
+            #spt.show_plot(line_id='molecules',convert_to_air=False,label_pos=1.05)
             
     if file_setting=='all_SDSS':
         for filename1 in filenames:
@@ -1162,10 +1192,10 @@ if __name__ == '__main__':
             #plt.scatter(header['BMJD_TDB'], np.sum(target_spec[1]*dlambda))
             #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=True, kernel_type='box')
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=header['see_sig'], kernel_type='gaussian')
+            #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=True , norm=True, pix_width=5., kernel_type='box',alpha=0.4)
-            plot_spectrum(target_spec, filename, header, smooth=False , norm=True, pix_width=5., kernel_type='box',alpha=0.4)
+            #plot_spectrum(target_spec, filename, header, smooth=True , norm=True, pix_width=5., kernel_type='box',alpha=1.0)
+            #plot_spectrum(target_spec, filename+' smoothed', header, smooth=True , norm=False, pix_width=5., kernel_type='box',alpha=0.7)
             #plot_spectrum(gaia_spec,'LTT3218 GaiaDR3 XP',header, smooth=False, norm=False)
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5., kernel_type='box',alpha=1.0,offset=(counter%6.)*1.)
@@ -1179,7 +1209,7 @@ if __name__ == '__main__':
 
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
-            #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5, kernel_type='box')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5, kernel_type='box')
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
@@ -1190,7 +1220,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
             #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
             #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            plot_sky(filename, offset=0, line_labels=False, convolve=False)
+            #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=False)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:
@@ -1198,12 +1228,12 @@ if __name__ == '__main__':
             #plot_SNR(target_spec, target_noise, filename)
             #plot_SNR_from_file(filename)
             #plot_dwavelength(target_spec, filename)
-            plt.axvline(x=6563., linestyle=':',color='k')
-            plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
+            #plt.axvline(x=6563., linestyle=':',color='k')
+            #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
             
-            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             #spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
             
             #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
@@ -1230,7 +1260,7 @@ if __name__ == '__main__':
         #print('ew_list:',ew_list)
         plt.axhline(y=0, linestyle=':', color='k')
         print('\n\nstandard deviations',sig_list)
-        spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+        spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
 

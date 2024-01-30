@@ -170,7 +170,7 @@ cal_params={
                     'air_corr':True,
                     'setupname':'400m2'},
                 'Red':{
-                    'linelistname':'400m2_HgArNe_calc20231030.txt',
+                    'linelistname':'400m2_HgArNe_calc20240112.txt',
                     'offset':0,
                     'trimregions':red_default_trim,
                     'air_corr':True,
@@ -329,7 +329,9 @@ line_color_dict={
     '?': '#f39117',
     'cyclotron': '#001a4b',
     'Ba': 'orange',
-    'C_2':'pink'
+    'C_2':'pink',
+    'AlH':'#1ABC9C',
+    'SiH':'#8E44AD'
         }
 
 #dictionary of guesses for the box1d model used to generate the shape for background skylines
@@ -401,7 +403,8 @@ line_id_dict={
     'mystery':'mystery_lines.csv',
     'cyclotron3900':'cyclotron_B91MG_3900A_n3.csv',
     'cyclotron3800':'cyclotron_B94MG_3800A_n3.csv',
-    'C2_bands':'King1948_C2Swan_Bands.csv'
+    'C2_bands':'King1948_C2Swan_Bands.csv',
+    'molecules':'Fay1974_molecules.csv'
     }
 
 

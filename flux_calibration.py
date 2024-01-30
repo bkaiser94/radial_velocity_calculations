@@ -101,7 +101,9 @@ standard_name='GD71'
 
 #observed_file='ravg_wctb.GD71_400m2.fits'
 #observed_file='ravg_wctb.GD71_400m1.fits'
-observed_file='ravg_wctb.GD71_400M1.fits'
+#observed_file='ravg_wctb.GD71_400M1.fits'
+observed_file='ravg_wctb.GD71_400M1_quick_.fits'
+
 
 
 #observed_file='ravg_wctb.Feige110_400m1.fits'
