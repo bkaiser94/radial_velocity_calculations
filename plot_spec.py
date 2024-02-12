@@ -33,7 +33,7 @@ import cal_params as cp
 slit_width = 3.2 #arcseconds
 pixel_scale = 0.3 #arcseconds per pixel_scale
 slit_width = slit_width/pixel_scale #slit width in pixels
-test_wavelength = 4686
+test_wavelength = 4875
 test_width = 40
 test_side = test_width/2
 
@@ -120,7 +120,7 @@ if file_setting=='all_avg':
     #filenames=glob('*ravg_wctb*fits')
     #filenames=glob('ravg_fwctb*400m1*fits')
     #filenames=glob('ravg_fwctb*0212*fits')
-    #filenames=glob('ravg_fwctb*1824*1213_*fits')
+    #filenames=glob('ravg_fwctb*WDJ0714*fits')
     #filenames=glob('ravg_fwctb*1824*other2_*fits')
     #filenames=glob('ravg_fwctb*J0850*fits')
     #filenames=glob('ravg_fwctb*other*fits')
@@ -165,7 +165,7 @@ elif file_setting=='all_fwctb':
     print(file_setting)
     filenames=glob('fwctb*')
     #filenames=glob('fwctb*0850p195*')
-    #filenames=glob('fwctb*0902*')
+    filenames=glob('fwctb*WDJ0822*')
     #filenames=glob('fwctb*2317*')
     #filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
@@ -194,9 +194,9 @@ elif file_setting=='compare_SDSS':
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
-    sdss_names = glob(sdss_path+'G0_K5/*K5*.fits')
+    #sdss_names = glob(sdss_path+'G0_K5/*K5*.fits')
     #sdss_names = glob(sdss_path+'*1651*.fits')
-    #sdss_names = glob(sdss_path+'*M*.fits')
+    sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
     #sdss_names = glob(sdss_path+'SDSS*1636*.fits')
     #sdss_names = glob(sdss_path+'LHS*.fits')
@@ -642,7 +642,7 @@ def plot_coordinates(file_list):
         else:
             rotator_val=header['rotator']
         rotator_vals.append(rotator_val)
-    ra_array=np.array(ra_vals)
+    ra_array=np.array(ra_vals) 
     dec_array=np.array(dec_vals)
     delta_ra=ra_array-ra_array[0]
     delta_dec=dec_array-dec_array[0]
@@ -658,12 +658,14 @@ def plot_coordinates(file_list):
 
 
 def plot_SNR(spec, noise, filename):
+    header=fits.getheader(filename)
     center_pixel = np.argmin(np.abs(spec[0]-test_wavelength))
-    measured_std = np.std(spec[1][center_pixel-test_side:center_pixel+test_side])
+    measured_std = np.std(spec[1][int(center_pixel-test_side):int(center_pixel+test_side)])
     print("sigma in " + str(test_width) + " pixel range around " + str(test_wavelength)+ " angstroms", measured_std)
-    sigma_range = noise[1][center_pixel-test_side:center_pixel+test_side]
+    sigma_range = noise[1][int(center_pixel-test_side):int(center_pixel+test_side)]
     print("Predicted sigmas of " + str(test_width) +" pixel range around " + str(test_wavelength)+ " angstroms", "min:" + str(np.min(sigma_range)), "mean:" + str(np.mean(sigma_range)), "max:" + str(np.max(sigma_range)))
-    print("Mean S/N:", np.mean(spec[1]/noise[1]))
+    print("Mean S/N (per pixel) from Noise spec:", np.mean(spec[1]/noise[1]))
+    print('Mean S/N (per pixel) from measured standard dev in target '+ str(test_wavelength)+'A range:',np.mean(spec[1][int(center_pixel-test_side):int(center_pixel+test_side)])/measured_std)
     plt.xlabel('Noise')
     plt.title(filename)
     plt.hist(sigma_range)
@@ -1260,7 +1262,7 @@ if __name__ == '__main__':
         #print('ew_list:',ew_list)
         plt.axhline(y=0, linestyle=':', color='k')
         print('\n\nstandard deviations',sig_list)
-        spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
+        spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
 
@@ -1290,6 +1292,7 @@ if __name__ == '__main__':
         #plot_head_2_head(filenames,'rotator','airmass')
         #plot_head_2_head(filenames,'ROTATOR','POSANGLE')
         #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
+        plot_white_lightcurve(filenames,header_name='airofavg')
         plot_head_2_head(filenames,'BMJD_TDB','airmass')
         plot_head_2_head(filenames,'BMJD_TDB','rotator')
         plot_head_2_head(filenames,'BMJD_TDB','cam_ang')

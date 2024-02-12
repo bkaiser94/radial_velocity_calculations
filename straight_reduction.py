@@ -1,7 +1,9 @@
 """
 This script should create a master Zero frame, which is used for bias subtraction of all science frames, and then it should also trim all science frames and remove cosmic rays from all of them. Outputs a 2-d spectrum that is in electron counts.
 
-Must be run in python2 because cosmics has python2 syntax (yes so does this file, but that's because I didn't bother updating it since I was stuck with cosmics).
+###Must be run in python2 because cosmics has python2 syntax (yes so does this file, but that's because I didn't bother updating it since I was stuck with cosmics).
+
+As of 2024-02-12 actually must be run in python3 since I've migrated to astro-SCRAPPY wrapped in the ccdproc package.
 
 STEP 1 of Reduction
 This is the first script in the real reduction of the step-by-step process.
@@ -16,11 +18,12 @@ import sys
 from astropy.io import fits
 from glob import glob
 import scipy.optimize as sciop
-import cosmics
+#import cosmics
 from astropy.time import Time
 from astropy import coordinates as coords
 from astropy import units as u
 from astropy import constants as const
+import ccdproc as ccdp
 
 #import cal_params as cp
 import get_cal_params as gcp
@@ -39,6 +42,8 @@ slit_ystart = 1   #The beginning of the image that has light from outside
 slit_yend= 199     #The end of the image with same
 #im_xstart = 9
 #im_xend = 2055
+
+sigclip=15
 
 #red cam
 
@@ -89,7 +94,7 @@ bias_stack,gain, readnoise, bias_times = make_image_stack(zerolist, times= False
 bias_med = np.nanmedian(bias_stack, axis=0)
 
 filename= glob(speclist[1])[0]
-print filename
+print(filename)
 #i = fits.open(speclist[1])
 header= fits.getheader(speclist[1])
 #im_xstart=im_params[header['INSTCONF']]['im_xstart']
@@ -100,7 +105,7 @@ header= fits.getheader(speclist[1])
 new_file_list= []
 for img in speclist:
     filename= glob(img)[0]
-    print filename
+    print(filename)
     i = fits.open(img)
     header= fits.getheader(img)
     setup_dict=gcp.get_cal_params(header)
@@ -118,12 +123,21 @@ for img in speclist:
         print('Median Combined Image:', header['med_im'],'so skipping cosmic ray removal on this frame.')
         #pass
     except KeyError as error:
-        target_cosmic= cosmics.cosmicsimage(img_data, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
-        target_cosmic.run(maxiter= 4)
-        img_data= target_cosmic.cleanarray
+        #### Old method using LAcosmic mapped to cosmics.py removed 2024-02-12
+        #target_cosmic= cosmics.cosmicsimage(img_data, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
+        #target_cosmic.run(maxiter= 4)
+        #img_data= target_cosmic.cleanarray
+        
+        
+        #### New Method using astro-SCRAPPY contained in ccdproc inside astropy
+        img_data=ccdp.cosmicray_lacosmic(img_data,readnoise=readnoise,sigclip=sigclip,verbose=True)[0]
+        #pass
     new_filename= 'ctb.' + filename #I'm still leaving the "ctb" appended to the front of the frames that aren't cosmic ray subtracted because the code depends on it, but yeah, that's not really a "good" thing to do.
+    print(img_data[0])
     img_data = img_data * gain
     header.append(card =( 'Counts', 'True', 'if spectrum in counts'))
+    header.append(card =( 'cosmics', 'ccdproc', 'cosmic ray removal package'))
+    header.append(card =( 'cosmsig', sigclip, 'sig clip threshold for cosmic ray removal'))
     new_file_list.append(new_filename)
     new_hdu = fits.PrimaryHDU(img_data, header = header)
     #new_hdu.verify('fix')
@@ -131,7 +145,7 @@ for img in speclist:
     new_hdu.writeto(new_filename, output_verify= 'fix', overwrite = True)
     
 new_file_array = np.array(new_file_list)
-print new_file_array
+print(new_file_array)
 
 np.savetxt('listCTB', new_file_array, fmt = '%s')
 
@@ -140,7 +154,7 @@ np.savetxt('listCTB', new_file_array, fmt = '%s')
 new_file_list= []
 for img in flatlist:
     filename= glob(img)[0]
-    print filename
+    print(filename)
     i = fits.open(img)
     header= fits.getheader(img)
     setup_dict=gcp.get_cal_params(header)
@@ -151,12 +165,17 @@ for img in flatlist:
     img_data= img_data-bias_med #bias subtraction
     #img_data = img_data[slit_ystart:slit_yend,im_xstart:im_xend] #trimming the edges
     img_data = img_data[trim_regions['y'][0]:trim_regions['y'][1],trim_regions['x'][0]:trim_regions['x'][1]] #trimming the edges
-    target_cosmic= cosmics.cosmicsimage(img_data, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
-    target_cosmic.run(maxiter= 4)
-    img_data= target_cosmic.cleanarray
+    ##### Old version using cosmics.py before 2024-02-12
+    #target_cosmic= cosmics.cosmicsimage(img_data, gain=gain, readnoise=readnoise, sigclip = 5.0, sigfrac = 0.3, objlim = 5.0)
+    #target_cosmic.run(maxiter= 4)
+    #img_data= target_cosmic.cleanarray
+    #### New Method using astro-SCRAPPY contained in ccdproc inside astropy
+    img_data=ccdp.cosmicray_lacosmic(img_data,readnoise=readnoise,sigclip=sigclip,verbose=True)[0]
     new_filename= 'ctb.' + filename
     img_data = img_data * gain
     header.append(card =( 'Counts', 'True', 'if spectrum in counts'))
+    header.append(card =( 'cosmics', 'ccdproc', 'cosmic ray removal package'))
+    header.append(card =( 'cosmsig', sigclip, 'sig clip threshold for cosmic ray removal'))
     new_file_list.append(new_filename)
     new_hdu = fits.PrimaryHDU(img_data, header = header)
     #new_hdu.verify('fix')
@@ -164,7 +183,7 @@ for img in flatlist:
     new_hdu.writeto(new_filename, output_verify= 'fix', overwrite = True)
     
 new_file_array = np.array(new_file_list)
-print new_file_array
+print(new_file_array)
 
 np.savetxt('listCTBflat', new_file_array, fmt = '%s')
     
