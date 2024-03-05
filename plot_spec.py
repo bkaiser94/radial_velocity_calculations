@@ -22,7 +22,7 @@ import scipy.interpolate as scinterp
 import time
 start = time.time()
 
-#plt.rc('lines',linewidth=0.5)
+plt.rc('lines',linewidth=0.5)
 #plt.rc('font', size =18)
 
 #print start
@@ -39,8 +39,8 @@ test_side = test_width/2
 
 pix_width=3
 sdss_pix_width = 10
-sdss_scale_factor=20.6 #BOSS scaling
-#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+#sdss_scale_factor=20.6 #BOSS scaling
+sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 sdss_seeing=0.7 #arcsec seeing
 sdss_see_sig=sdss_seeing/2.355/ pixel_scale
 
@@ -98,11 +98,11 @@ norm_range=[6630,6690]#wider double norm range
 #norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-#file_setting= 'compare_SDSS'
+file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -116,11 +116,11 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('ravg_fwctb*.fits')
+    #filenames=glob('ravg_fwctb*.fits')
     #filenames=glob('*ravg_wctb*fits')
     #filenames=glob('ravg_fwctb*400m1*fits')
-    #filenames=glob('ravg_fwctb*0212*fits')
-    #filenames=glob('ravg_fwctb*WDJ0714*fits')
+    filenames=glob('ravg_fwctb*0212*fits')
+    #filenames=glob('*avg_fwctb*WDJ0714*fits')
     #filenames=glob('ravg_fwctb*1824*other2_*fits')
     #filenames=glob('ravg_fwctb*J0850*fits')
     #filenames=glob('ravg_fwctb*other*fits')
@@ -165,7 +165,7 @@ elif file_setting=='all_fwctb':
     print(file_setting)
     filenames=glob('fwctb*')
     #filenames=glob('fwctb*0850p195*')
-    filenames=glob('fwctb*WDJ0822*')
+    #filenames=glob('fwctb*WDJ0822*')
     #filenames=glob('fwctb*2317*')
     #filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
@@ -194,14 +194,16 @@ elif file_setting=='compare_SDSS':
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
-    #sdss_names = glob(sdss_path+'G0_K5/*K5*.fits')
+    #sdss_names = glob(sdss_path+'G0_K5/*K*.fits')
     #sdss_names = glob(sdss_path+'*1651*.fits')
-    sdss_names = glob(sdss_path+'*M*.fits')
+    #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
     #sdss_names = glob(sdss_path+'SDSS*1636*.fits')
     #sdss_names = glob(sdss_path+'LHS*.fits')
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
+    #sdss_names=glob(sdss_path+'*J0804*.fits')
+    sdss_names=glob(sdss_path+'*Dox*.fits')
     
     sdss_names= sorted(sdss_names)
     print('sdss_names:',sdss_names)
@@ -919,7 +921,8 @@ if __name__ == '__main__':
             plt.title(filename+ ' & '+ filename2.split('/')[-1])
             plt.xlim(np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]))
             #plt.show()
-            spt.show_plot(line_id='cool_wd',convert_to_air=True)
+            #spt.show_plot(line_id='cool_wd',convert_to_air=True)
+            spt.show_plot(line_id='h',convert_to_air=True)
             #spt.show_plot(line_id='molecules',convert_to_air=False,label_pos=1.05)
             
     if file_setting=='all_SDSS':
@@ -1211,7 +1214,7 @@ if __name__ == '__main__':
 
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5, kernel_type='box')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=5, kernel_type='box')
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
@@ -1293,6 +1296,7 @@ if __name__ == '__main__':
         #plot_head_2_head(filenames,'ROTATOR','POSANGLE')
         #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
         plot_white_lightcurve(filenames,header_name='airofavg')
+        plot_head_2_head(filenames,'BMJD_TDB','seeing')
         plot_head_2_head(filenames,'BMJD_TDB','airmass')
         plot_head_2_head(filenames,'BMJD_TDB','rotator')
         plot_head_2_head(filenames,'BMJD_TDB','cam_ang')

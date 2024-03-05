@@ -122,7 +122,7 @@ bkg_shift= 30 #standard shift used
 #bkg_shift= 47
 #bkg_shift=15
 #bkg_shift=18
-#bkg_shift=10
+#bkg_shift=12
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 #bkg_side_multi= 1. #
 #bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
@@ -506,7 +506,7 @@ def normalize_flat(masterflatfile=masterflatfile, plot_all = False):
     return normed_flat
 
 ######
-def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[0], trace_method=trace_method):
+def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[0], trace_method=trace_method,filename=''):
     try:
         target_band=target_med[trace_band_mid-trace_band_width/2:trace_band_mid+trace_band_width/2,:]
     except TypeError:
@@ -701,7 +701,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         global need_offset
         if need_offset:
             for x_spot in line_x_checks:
-                plt.axvline( x= x_spot, color = 'r')
+                plt.axvline( x= x_spot, color = 'r',linestyle='--')
             #for x_spot in np.array(WaveList_Fe_930_12_24[0])/2.:
                 #plt.axvline( x= x_spot, color = 'r')
             plt.plot(plotting_x_coords,lamp_light,'-')
@@ -798,13 +798,25 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
                     #plt.show()
             except RuntimeError as error:
                 print(error)
+        def get_core_name(filename=filename):
+            #leading_characters=5 #number of characters before the actual "name" of the object, this will be the 0123_ portion of the filename. I'm going to split out the stuff on either side of the decimals
+            interior_name=filename.split('.')[1]
+            #core_name=interior_name[leading_characters:] #nevermind on removing the numerical characters because if I break up a given target into more than one run it will only retain the extraction from a single run. So while it will be messier to have files output in such a way that it appears only one specific frame (e.g. 0123_objectname_setup) was measured for residuals etc, it will allow retention of more information if you know how to look.
+            core_name=interior_name
+            return core_name
+        core_name=get_core_name()
+        
         plt.xlabel('Pixel')
         plt.ylabel('Counts')
         plt.title('all fitting results')
         plt.show()
         peaks_found = np.array(peaks_found)
         wave_peaks_found = np.array(wave_peaks_found)
-        np.savetxt('measured_pixel_coords.txt', np.append([peaks_found],[wave_peaks_found],axis=0).T, delimiter='\t')
+        if not os.path.exists(cp.wave_sol_dir):
+            os.makedirs(cp.wave_sol_dir)
+        else:
+            pass
+        np.savetxt(cp.wave_sol_dir+core_name+'_measured_pixel_coords.txt', np.append([peaks_found],[wave_peaks_found],axis=0).T, delimiter='\t')
         #print "line_x_checks:"
         #print line_x_checks
         #print "peaks found"
@@ -852,6 +864,10 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         plt.ylabel(r'Wavelength Residual $\AA$')
         plt.legend(loc= 'best')
         plt.show()
+        
+        #So upon reflection, I think it makes more sense to record the residuals of wavelengths in the solution
+        residuals_array=np.append([wave_peaks_found],[wave_peaks_found-x_to_wavelength(peaks_found)], axis=0).T
+        np.savetxt(cp.wave_sol_dir+core_name+'_wavelength_residuals.txt', residuals_array, delimiter='\t')
     else:
         print("skipping wavelength fitting\npresumably because you already did it, so there's no need to do it again.")
         pass
@@ -868,7 +884,13 @@ if skip_flat:
     normed_flat= np.ones(example_im.shape)
     print ("skipping flat-fielding.\nYes, I know it just went to all the trouble of calculating the flat stuff.")
 else:
-    normed_flat= normalize_flat(plot_all = True)
+    #normed_flat= normalize_flat(plot_all = True)
+    i= fits.open(masterflatfile)
+    header = fits.getheader(masterflatfile)
+    master_flat= i[0].data
+    master_flat_err= i[1].data #normalized sigma values to the original counts values. 
+    readnoise = header['RDNOISE']
+    normed_flat=master_flat
 print ("\n==================\n")
 print ("skip_flat=", skip_flat)
 print ("\n\n")
@@ -924,6 +946,7 @@ for counter, img in enumerate(speclist):
         if '_fe.' in speclist[counter+1].lower():
             print("Next file is a lamp, so we're going to do the trace and wavelength calibration.")
             print("Using last lamp file as calibration lamp")
+            prev_filename=filename
             filename= speclist[counter+1]
             lamp_i = fits.open(filename)
             lamp_header = fits.getheader(filename)
@@ -931,11 +954,11 @@ for counter, img in enumerate(speclist):
             target_med = np.nanmedian(target_stack, axis = 0)
             #new_coeffs, seeing_sig= get_trace_waves(target_med, lamp_im)
             if expedited_wavecals:
-                new_coeffs, seeing_sig= get_trace_waves(target_med, lamp_im, do_wavelengths=do_wavelengths, poly_coeffs_lamp=poly_coeffs_lamp)
+                new_coeffs, seeing_sig= get_trace_waves(target_med, lamp_im, do_wavelengths=do_wavelengths, poly_coeffs_lamp=poly_coeffs_lamp,filename=prev_filename)
                 poly_coeffs_lamp=new_coeffs[1]
                 do_wavelengths=False
             else:
-                new_coeffs, seeing_sig= get_trace_waves(target_med, lamp_im)
+                new_coeffs, seeing_sig= get_trace_waves(target_med, lamp_im,filename=prev_filename)
             sigma_list.append(seeing_sig)
             seeing_list.append(2*np.sqrt(2*np.log(2))*seeing_sig) #assuming normal distribution for that
             polynomial_list.append(new_coeffs)
@@ -979,7 +1002,13 @@ for counter, img in enumerate(speclist):
         i= fits.open(filename)
         header = fits.getheader(filename)
         img_data= np.copy(i[0].data)
-        img_data= img_data/normed_flat #also have to divide it here... since the other place was for seeing
+        #As of 2024-03-05, the below line was running in the code.
+        #img_data= img_data/normed_flat #also have to divide it here... since the other place was for seeing
+        #2024-03-05 I'm changing it to be inside an if statement about skip_flat like it should have been the whole time
+        if skip_flat:
+            pass #don't do anything if you're skipping the flat
+        else:
+            img_data= img_data/normed_flat #also have to divide it here... since the other place was for seeing
         filename = 'w' + filename
         new_filelist.append(filename)
         polynomials = polynomial_list[association_index]

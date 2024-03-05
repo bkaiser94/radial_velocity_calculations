@@ -331,7 +331,8 @@ line_color_dict={
     'Ba': 'orange',
     'C_2':'pink',
     'AlH':'#1ABC9C',
-    'SiH':'#8E44AD'
+    'SiH':'#8E44AD',
+    'H':'black'
         }
 
 #dictionary of guesses for the box1d model used to generate the shape for background skylines
@@ -404,7 +405,8 @@ line_id_dict={
     'cyclotron3900':'cyclotron_B91MG_3900A_n3.csv',
     'cyclotron3800':'cyclotron_B94MG_3800A_n3.csv',
     'C2_bands':'King1948_C2Swan_Bands.csv',
-    'molecules':'Fay1974_molecules.csv'
+    'molecules':'Fay1974_molecules.csv',
+    'h':'H_lines_vac.csv'
     }
 
 

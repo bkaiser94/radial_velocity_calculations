@@ -30,6 +30,8 @@ soar_area= np.pi*(cp.soar_diameter/2.)**2 #area of SOAR light-gathering in meter
 parkes_location = coords.EarthLocation.from_geocentric(x = -4554231.533*u.m,y= 2816759.109*u.m, z =  -3454036.323*u.m) # from http://www.narrabri.atnf.csiro.au/observing/users_guide/html/chunked/apg.html 
 cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41), lon = (-70, 44, 01.11), height = 2748* u.m)
 
+default_label_pos=1.2
+
 
 def naninfmax(input_array):
     array=np.array(input_array)
@@ -502,7 +504,7 @@ def plot_line_markers(nist_file, wavelength_key='obs_wl_vac(A)', convert_to_air=
             pass
     return
 
-def show_plot(show_telluric=True, show_legend=True, line_id='', convert_to_air=False, label_pos=1.5,actually_show=True,show_label=True):
+def show_plot(show_telluric=True, show_legend=True, line_id='', convert_to_air=False, label_pos=default_label_pos,actually_show=True,show_label=True):
     if show_legend:
         plt.legend(loc='best')
     else:

@@ -32,7 +32,7 @@ def make_image_stack(imagelist):
     
     """
     images = []
-    print imagelist
+    print(imagelist)
     for img in imagelist:
         filename = glob(img)[0]
         i= fits.open(img)
@@ -47,14 +47,49 @@ def make_image_stack(imagelist):
 
 
 def normalize_flat(input_flat):
-    single_projection= np.nanmean(input_flat, axis=0)
+    #single_projection= np.nanmean(input_flat, axis=0)
+    single_projection= np.nanmedian(input_flat, axis=0)
+    vert_projection=np.nanmedian(input_flat,axis=1)
     print('single_projection.shape', single_projection.shape)
     x_positions=np.arange(0, single_projection.shape[0])
-    flat_poly_coeffs= np.polyfit( x_positions, single_projection, poly_degree)
+    print('x positions.shape', x_positions.shape)
+    flat_poly_coeffs= np.polyfit(x_positions, single_projection, poly_degree)
     flat_poly_vals= np.polyval(flat_poly_coeffs,x_positions)
     
     cs = scinterp.CubicSpline(x_positions, single_projection)
     
+    deviations=input_flat/single_projection
+    
+    plt.plot(single_projection, label='average across CCD')
+    plt.plot(input_flat[100,:],label='row 100')
+    plt.legend()
+    plt.show()
+    
+    for index in np.arange(0,input_flat.shape[0],20):
+        index=int(index)
+        print('input_flat[1,:].shape',input_flat[1,:].shape)
+        plt.plot(deviations[index,:],label='row '+str(index))
+    #plt.show()
+    #plt.plot(single_projection, label='mean')
+    plt.plot(deviations[75,:],label='row 75')
+    plt.xlabel('X pixel')
+    plt.ylabel('Counts (electrons)')
+    plt.legend()
+    plt.show()
+    
+    ydeviations=input_flat.T/vert_projection
+    ydeviations=ydeviations.T
+    print('ydeviations.shape', ydeviations.shape)
+    for index in np.arange(0,input_flat.shape[1],100):
+        print(input_flat.shape[1])
+        index=int(index)
+        print('input_flat[:,1].shape',input_flat[:,1].shape)
+        plt.plot(ydeviations[:,index],label='col '+str(index))
+    
+    plt.xlabel('Y pixel')
+    plt.ylabel('Counts (electrons)')
+    plt.legend()
+    plt.show()
     
     plt.plot(single_projection, label='single_projection')
     plt.plot(flat_poly_vals, label='flat_poly_vals')
@@ -68,7 +103,41 @@ def normalize_flat(input_flat):
     plt.title('Divided residuals of single_projection')
     plt.legend()
     plt.show()
-    return
+    
+    
+    xnormed=input_flat/single_projection
+    med_vert_projection=np.nanmedian(xnormed,axis=1)
+    yxnormed=xnormed.T/med_vert_projection
+    
+    #output_flat=yxnormed.T
+    output_flat=xnormed
+    
+    plt.imshow(output_flat)
+    plt.show()
+    
+    for index in np.arange(0,input_flat.shape[0],20):
+        index=int(index)
+        print('input_flat[1,:].shape',input_flat[1,:].shape)
+        plt.plot(output_flat[index,:],label='row '+str(index))
+    #plt.show()
+    #plt.plot(single_projection, label='mean')
+    plt.xlabel('X pixel')
+    plt.ylabel('Counts (electrons)')
+    plt.legend()
+    plt.show()
+    
+    for index in np.arange(0,input_flat.shape[1],100):
+        print(input_flat.shape[1])
+        index=int(index)
+        print('input_flat[:,1].shape',input_flat[:,1].shape)
+        plt.plot(output_flat[:,index],label='col '+str(index))
+    
+    plt.xlabel('Y pixel')
+    plt.ylabel('Counts (electrons)')
+    plt.legend()
+    plt.show()
+    
+    return output_flat
 
 
 
@@ -103,12 +172,15 @@ def make_masterflat(flatlistname):
     flatsum_err= flatsum_err/flatsum #normalized noise values.
     header.append(card = ('sum_ext', 0, 'extension of summed flat'))
     header.append(card= ('err_ext', 1, 'extension of scaled sigma values'))
-    hdu= fits.PrimaryHDU(flatsum, header= header)
+    normed_flat=normalize_flat(flatsum)
+    hdu= fits.PrimaryHDU(normed_flat, header= header)
     hdu1=fits.ImageHDU(flatsum_err)
     hdulist= fits.HDUList([hdu,hdu1])
     hdulist.writeto(master_flat_name, overwrite= True)
-    
-    normalize_flat(flatsum)
+    #hdu= fits.PrimaryHDU(flatsum, header= header)
+    #hdu1=fits.ImageHDU(flatsum_err)
+    #hdulist= fits.HDUList([hdu,hdu1])
+    #hdulist.writeto(master_flat_name, overwrite= True)
     return flatsum
 
 
