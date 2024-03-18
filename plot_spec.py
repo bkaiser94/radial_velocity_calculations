@@ -116,11 +116,11 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    #filenames=glob('ravg_fwctb*.fits')
+    filenames=glob('ravg_fwctb*.fits')
     #filenames=glob('*ravg_wctb*fits')
     #filenames=glob('ravg_fwctb*400m1*fits')
-    filenames=glob('ravg_fwctb*0212*fits')
-    #filenames=glob('*avg_fwctb*WDJ0714*fits')
+    #filenames=glob('ravg_fwctb*0212*fits')
+    #filenames=glob('ravg_fwctb*WDJ1426*fits')
     #filenames=glob('ravg_fwctb*1824*other2_*fits')
     #filenames=glob('ravg_fwctb*J0850*fits')
     #filenames=glob('ravg_fwctb*other*fits')
@@ -149,7 +149,7 @@ if file_setting=='all_avg':
 
 elif file_setting=='all_wctb':
     print(file_setting)
-    filenames=glob('wctb*2147*')
+    filenames=glob('wctb*')
     #filenames=glob('wctb*J0850*')
     #filenames=glob('wctb*4414other_*')
     #filenames=glob('wctb*1824*1213_*')
@@ -203,7 +203,8 @@ elif file_setting=='compare_SDSS':
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
     #sdss_names = glob(sdss_path+'sdss*.fits')
     #sdss_names=glob(sdss_path+'*J0804*.fits')
-    sdss_names=glob(sdss_path+'*Dox*.fits')
+    #sdss_names=glob(sdss_path+'*Dox*.fits')
+    sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*.fits')
     
     sdss_names= sorted(sdss_names)
     print('sdss_names:',sdss_names)
@@ -899,8 +900,8 @@ if __name__ == '__main__':
             plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='r',alpha=0.8)
             
             #filename3=sdss_names[index+1]
-            filename3=filename2
-            target_spec3, header3, target_noise3=spt.retrieve_sdss_spec(filename3,wave_medium='air')
+            #filename3=filename2
+            #target_spec3, header3, target_noise3=spt.retrieve_sdss_spec(filename3,wave_medium='air')
             #plot_spectrum(target_spec3, filename3.split('/')[-1], header1, norm=True, smooth=False, kernel_type='sdss_match', pix_width=pix_width,color='b',alpha=0.4)
             
             
@@ -921,7 +922,7 @@ if __name__ == '__main__':
             plt.title(filename+ ' & '+ filename2.split('/')[-1])
             plt.xlim(np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]))
             #plt.show()
-            #spt.show_plot(line_id='cool_wd',convert_to_air=True)
+            spt.show_plot(line_id='cool_wd',convert_to_air=True,actually_show=False)
             spt.show_plot(line_id='h',convert_to_air=True)
             #spt.show_plot(line_id='molecules',convert_to_air=False,label_pos=1.05)
             
@@ -1214,7 +1215,7 @@ if __name__ == '__main__':
 
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=5, kernel_type='box')
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
@@ -1225,7 +1226,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
             #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
             #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=False)
+            #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=True)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:
@@ -1238,7 +1239,8 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
             
-            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
+            spt.show_plot(show_legend=True, line_id='h', convert_to_air=True)
             #spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
             
             #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
@@ -1266,6 +1268,7 @@ if __name__ == '__main__':
         plt.axhline(y=0, linestyle=':', color='k')
         print('\n\nstandard deviations',sig_list)
         spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+        #spt.show_plot(show_legend=True, line_id='h', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
 

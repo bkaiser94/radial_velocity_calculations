@@ -37,6 +37,9 @@ default_modeler='Koester2020'
 default_atm_type='Nonsense' #This should make it crash if I am not correctly passing around kwargs
 default_overshoot=1.0
 
+
+default_cross_extrap=True
+
 def get_el1el2_full_err(abund_table,el1, el2,n_sigma=1.):
     """
     Basically equation A2 of Klein et al. 2021 (the Beryllium paper), which combines the errors on each element abundance without double-counting the T_eff uncertainties.
@@ -364,12 +367,45 @@ def easy_dist_ssp(wd_row,elements,n_points=n_points, plot_all=False, tau_rand=Fa
     return target_ssp_el1el2, target_ssp_el3el2,el1el2_err, el3el2_err
 
 
+def get_ssp_accretion_rate(teff, logg, log_elabund, atm_type=default_atm_type, overshoot=default_overshoot, modeler=default_modeler,el_ratio_str='Ca/H',log_q=-5.0, m_wd=0.56, cross_extrap=default_cross_extrap):
+    """
+    inputs: teff, logg, atm_type, abundance, modeler, el (string indicating what the metal is), overshoot
+    
+    outputs: accretion rate in g/s 
+    
+    
+    """
+    el_pol,el_main=el_ratio_str.split('/') #obtain the different relevant element strings
+    m_wd=(m_wd*const.M_sun).to(u.g).value #converting the white dwarf mass to grams from solar mass
+    if cross_extrap:
+        log_el_tau=itau.extrapolate_tau_x_logg(teff, logg, el_pol,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+    else:
+        log_el_tau=itau.extrapolate_single_el_tau(teff, el_pol, input_logg=logg,modeler=modeler, atm_type=atm_type, overshoot=overshoot)
+    el_tau_seconds=((10.**log_el_tau)*u.yr).to(u.s).value
+    log_accretion_rate=log_elabund+np.log10(pt.elements[cp.el_nums[el_pol]].mass/pt.elements[cp.el_nums[el_main]].mass)+log_q+np.log10(m_wd)-np.log10(el_tau_seconds)
+    print('log accretion rate (g/s):', log_accretion_rate)
+    accretion_rate=10.**log_accretion_rate
+    
+    return accretion_rate
+
 if __name__ == '__main__':
     #wd_name='WDJ2356-209'
     target_logg=7.98
     target_logg_err=0.07
     target_teff= 4040. #K
     target_teff_err=110.
+    
+    #WDJ0212-5522
+    target_teff=4590.
+    target_teff_err=70.
+    target_logg=7.97
+    target_logg_err=0.02
+    target_log_q=-5.5 #guessed value by Ben based on Koester2020 tables
+    target_log_cah=-8.1 #plus or minus 0.3
+    target_m_wd=0.56 #guessed by Ben based on logg, but should put through Bedard tables to check later
+    
+    macc= get_ssp_accretion_rate(target_teff, target_logg, target_log_cah, atm_type='H', el_ratio_str='Ca/H', log_q=target_log_q, m_wd=target_m_wd)
+    
     
     logg_dist=np.random.normal(loc=target_logg, scale=target_logg_err, size=n_points)
     teff_dist= np.random.normal(loc=target_teff, scale=target_teff_err, size=n_points)

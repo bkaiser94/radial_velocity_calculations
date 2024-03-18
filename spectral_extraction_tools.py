@@ -87,6 +87,7 @@ def extract_spectrum(img_data, header, polynomials= [0,0], core_sides=2., bkg_co
             if bkg_method=='poly':
                 #up_bkg_coords= np.arange(bkg_trace(x_pos, sign='plus')-bkg_core_sides,bkg_trace(x_pos, sign='plus')+bkg_core_sides+1, 1)
                 #down_bkg_coords= np.arange(bkg_trace(x_pos, sign='minus')-bkg_core_sides,bkg_trace(x_pos, sign='minus')+bkg_core_sides+1, 1)
+                #Are these redefinitions of the up_bkg, down_bkg, and bkg_comb actually necessary? And are they just doubling the number of points because the ones from the above level of the else statement should have carried through right? comment added 2024-03-05. Ah yes they are necessary. They are defined in terms of y_positions instead of img_data. I don't know why that matters though, but it is nominally different at minimum
                 up_bkg_coords=y_positions[bkg_trace(x_pos, sign='plus')-bkg_core_sides:bkg_trace(x_pos, sign='plus')+bkg_core_sides+1,x_pos]
                 down_bkg_coords= y_positions[bkg_trace(x_pos, sign='minus')-bkg_core_sides:bkg_trace(x_pos, sign='minus') +bkg_core_sides+1,x_pos]
                 bkg_coords= np.append(up_bkg_coords, down_bkg_coords)

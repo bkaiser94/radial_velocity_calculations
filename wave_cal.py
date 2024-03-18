@@ -88,9 +88,9 @@ trace_offset =0#amount by which the calculated trace needs to be offset to end u
 trace_band_mid=105 #usual extraction search center point
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
-#trace_band_mid=44
+#trace_band_mid=140
 #trace_band_mid=75 #
-#trace_band_width=20
+#trace_band_width=14
 #trace_band_width = 100 #pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
 trace_band_width=190#usual extraction search window
@@ -115,14 +115,14 @@ lamp_poly_degree=5
 flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
-bkg_shift= 30 #standard shift used
+#bkg_shift= 30 #standard shift used
 #bkg_shift=20
 #bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
 #bkg_shift=35
 #bkg_shift= 47
 #bkg_shift=15
 #bkg_shift=18
-#bkg_shift=12
+bkg_shift=12
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 #bkg_side_multi= 1. #
 #bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
@@ -169,8 +169,8 @@ air_off_type='pixel' #if you want the offset to be applied in pixel space
 #air_off_type='none' #setting for not applying the airglow correction. Realistically you should just set do_airglow_corr=False for this option
 
 
-bkg_method= 'avg' #background subtraction method; 'avg'
-#bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
+#bkg_method= 'avg' #background subtraction method; 'avg'
+bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
 #bkg_method= 'opp_get_bright' #background subtraction method; gets the bright part of the frame, meaning trace_offset==0 should be true, and then the bkg_shift corresponds to ...
 #bkg_method= 'opp_get_dim' #background subtraction method; gets the dim part of the frame, meaning trace_offset should be set to however far off the extraction should be , and then the bkg_shift corresponds to ...
 
@@ -301,6 +301,10 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
             pass
         else:
             core_sides, bkg_core_sides= seeing_window(popt[2])
+        #print('\n\n\n=======\n')
+        #print(filename)
+        #print('bkg_core_sides right before cross section plot', bkg_core_sides)
+        #print('\n=========\n\n\n')
         plt.axvline(x=popt[1]+core_sides, linestyle= '--', color='b')
         plt.axvline(x=popt[1]-core_sides,linestyle='--',  color='b')
         plt.axvline(x=popt[1]+bkg_shift,  color='cyan')
@@ -309,6 +313,7 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
         plt.axvline(x=popt[1]-bkg_shift,  color='cyan')
         plt.axvline(x=popt[1]-bkg_shift+bkg_core_sides, linestyle= '--', color='cyan')
         plt.axvline(x=popt[1]-bkg_shift-bkg_core_sides,linestyle='--',  color='cyan')
+        plt.title('Fit to seeing in x pixel range '+str(p0_list[1]-search_width)+'-'+str(p0_list[1]+search_width)+'\n'+'Constrained to '+str(trace_band_width)+' pixels centered on ' + str(trace_band_mid) +'\n'+'So it excludes ' + str(trace_band_mid-(trace_band_width/2)) + ' pixels on the low side\n' + 'and ' +str(200-trace_band_width/2-trace_band_mid) + ' pixels on the upper side')
         plt.legend()
         plt.show()
     else:
@@ -642,6 +647,11 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     plt.plot(plotting_x_coords, bkg_trace(plotting_x_coords, sign='plus'), color = 'cyan', label = 'background')
     plt.plot(plotting_x_coords,bkg_trace(plotting_x_coords, sign='plus')-bkg_core_sides, color = 'cyan', linestyle= '--')
     plt.plot(plotting_x_coords, bkg_trace(plotting_x_coords, sign='plus')+bkg_core_sides, color = 'cyan', linestyle = '--')
+    
+    #print('\n\n\n=======\n')
+    #print(filename)
+    #print('bkg_core_sides right after image plot', bkg_core_sides)
+    #print('\n=========\n\n\n')
     plt.legend()
     plt.show()
     
@@ -1022,6 +1032,10 @@ for counter, img in enumerate(speclist):
         
         #outsourced spectral extaction function
         #ctarget_light, cbkg_light, cnoise_spec= spext.extract_spectrum(img_data, header, polynomials=polynomials, core_sides= core_sides, bkg_core_sides=bkg_core_sides, bkg_shift=bkg_shift, bkg_method=bkg_method, bkg_poly_deg= bkg_poly, n_biases= n_biases)
+        #print('\n\n\n=======\n')
+        #print(filename)
+        #print('bkg_core_sides that are input into the actual extraction', bkg_core_sides)
+        #print('\n=========\n\n\n')
         target_light, bkg_light, noise_spectrum= spext.extract_spectrum(img_data, header, polynomials=polynomials, core_sides= core_sides, bkg_core_sides=bkg_core_sides, bkg_shift=bkg_shift, bkg_method=bkg_method, bkg_poly_deg= bkg_poly, n_biases= n_biases)
         
         
