@@ -401,6 +401,64 @@ def retrieve_sdss_spec(filename,scale_noise=True, wave_medium= 'air'):
     header= spec_hdu[1].header
     return file_spec, header, file_noise_spec
 
+
+def retrieve_allframes_sdss_spec(filename,scale_noise=True, wave_medium= 'air'):
+    """
+    Input: filename for a spectrum from SDSS (so it has the SDSS headers and fits format)
+    
+    Output: Spectrum made of a 2xN numpy array, header of the fits file you loaded it from, and noise spectrum. With wavelengths converted to AIR
+    
+    This is going to be a way to retrieve all of the individual spectra that SDSS coadds to get the  final spectrum that retrieve_sdss_spec() plots. This one will output all 12 of the spectra, headers, and noise 
+    
+    
+    
+    """
+    try:
+        spec_hdu= fits.open(filename)
+        extension_list=range(4,18)
+        spec_list=[]
+        header_list=[]
+        noise_list=[]
+        for index in extension_list:
+            spec_array=spec_hdu[index].data
+            waves= 10.**np.copy(spec_array['loglam'])
+            flux= np.copy(spec_array['flux'])
+            flux= flux/10. #convert from 10**-17 to 10**-16
+            
+            if wave_medium=='air':
+                waves= vac_to_air(waves) #conversion to air wavelengths
+            elif wave_medium=='vac':
+                pass
+            
+            try:
+                noise= np.copy(spec_array['PropErr'])
+            except KeyError as error:
+                print(error)
+                try:
+                    print('trying "ivar"')
+                    noise=np.copy(spec_array['ivar'])
+                    noise=np.sqrt(1./noise) #square root of the 1/variance value provided by SDSS
+                except KeyError as error:
+                    print(error)
+                    print('setting noise=1')
+                    noise=np.ones(waves.shape[0])
+                #print('setting noise=1')
+                #noise=np.ones(waves.shape[0])
+            file_spec=np.vstack([waves, flux])
+            if scale_noise:
+                file_noise_spec= np.vstack([waves, noise])
+            else:
+                file_noise_spec=np.vstack([waves, noise/flux])
+            header= spec_hdu[index].header
+            
+            spec_list.append(file_spec)
+            header_list.append(header)
+            noise_list.append(file_noise_spec)
+    except IndexError as error:
+        print("IndexError:", error)
+
+    return spec_list,  header_list, noise_list
+
 def retrieve_model_spec(filename):
     all_array=np.genfromtxt(filename).T
     return all_array
