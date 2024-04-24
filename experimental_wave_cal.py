@@ -20,6 +20,7 @@ import os
 from astropy.io import fits
 from glob import glob
 import scipy.optimize as sciop
+import scipy.signal as scisig
 #import cosmics
 from astropy.time import Time
 from astropy import coordinates as coords
@@ -52,6 +53,9 @@ need_offset=True
 do_save_wavesoln=True
 #trace_method='maxes'
 trace_method='binned_gauss'
+#trace_method='binned_gauss_wline'
+#trace_method='double_gauss'
+
 
 
 def to_barycenter(header):
@@ -83,21 +87,21 @@ def to_barycenter(header):
 trace_offset =0#amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
 
 #trace_band_mid= 110   #y-pixel that's about the center of the trace #old one as of 2018-10-31
-trace_band_mid= 96   #y-pixel that's about the center of the trace J1431
+#trace_band_mid= 95   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=100
 #trace_band_mid=105 #usual extraction search center point
-#trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
+trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=140
 #trace_band_mid=75 #
-trace_band_width=10
+#trace_band_width=11
 #trace_band_width = 100 #pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width=190#usual extraction search window
 #trace_band_width= 14 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
-#trace_band_width = 20 #pixel width to determine the center of the trace
+trace_band_width = 20 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 #sigma_multi_side=2
@@ -117,17 +121,17 @@ flat_poly= 7
 #bkg_shift = 50 #20190412 previously in place
 #bkg_shift= 30 #standard shift used
 #bkg_shift=20
-bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
+#bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
 #bkg_shift=35
 #bkg_shift= 47
-#bkg_shift=15
-#bkg_shift=48
+bkg_shift=15
+#bkg_shift=18
 #bkg_shift=11
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 #bkg_side_multi= 1. #
 #bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
-bkg_side_multi=2. #mutliple of core_sides that that  bkg_core_sides should be later
-#bkg_side_multi=3. #mutliple of core_sides that that  bkg_core_sides should be later
+#bkg_side_multi=2. #mutliple of core_sides that that  bkg_core_sides should be later
+bkg_side_multi=3. #mutliple of core_sides that that  bkg_core_sides should be later
 #bkg_side_multi=4. #mutliple of core_sides that that  bkg_core_sides should be later
 
 bkg_max_side= bkg_shift/2.-5
@@ -144,10 +148,15 @@ seeing_range = [1200, 1220]
 #seeing_p0= [2000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
 #see_fit_bounds = ([50, 0, 0.7, 0],[18000, 1000, trace_band_width, 2000]) #(lower, upper) bounds on the fit for the seeing.
 seeing_p0= [2000, 20, lamp_sigma_guess, 0] #p0 list for the gaussian fit to the vertical
+seeing_double_p0=seeing_p0+seeing_p0[0:-1]
+print('seeing_double_p0',seeing_double_p0)
+seeing_p0_wline= [2000, 20, lamp_sigma_guess, 0,0] #p0 list for the gaussian fit to the vertical with the linear slope allowed too
 #see_fit_bounds = ([50, 0, 0.7, 0],[1e8, trace_band_width, trace_band_width, 1e8]) #(lower, upper) bounds on the fit for the seeing.
 #see_fit_bounds = ([5, 0, 0.7, 0],[1e8, trace_band_width, 7.1, 1e8]) #(lower, upper) bounds on the fit for the seeing. #way before 2021-01-25
 see_fit_bounds = ([5, 0, 0.5, 0],[1e8, trace_band_width, 7.1, 1e8]) #(lower, upper) bounds on the fit for the seeing. #way after 2021-01-25
+see_fit_bounds_wline = ([5, 0, 0.5, 0,-1*np.inf],[1e8, trace_band_width, 7.1, 1e8,np.inf]) #(lower, upper) bounds on the fit for the seeing.
 #minimum sigma value corresponds to seeing of 0.5" for 2x2 binned pixels and max is 5" seeing
+see_double_fit_bounds = ([5, 0, 0.5, 0,5, 0, 0.5],[1e8, trace_band_width, 7.1, 1e8,1e8, trace_band_width, 7.1]) #(lower, upper) bounds on the fit for the seeing. #way after 2021-01-25
 
 box_dict= {
     'amplitude':10,
@@ -264,6 +273,17 @@ def save_wavesoln(fits_filename, wave_polynomial):
 def gaussian_curve(x, a, x0, sigma,b):
     return a*np.exp(-(x-x0)**2/(2*sigma**2))+b
 
+def gaussian_curve_wline(x, a, x0, sigma,b,m):
+    """
+    A Gaussian added to a linear function. Hopefully the linear function will cover the background for me.
+    
+    
+    """
+    return a*np.exp(-(x-x0)**2/(2*sigma**2))+b+m*x
+
+def double_gaussian(x, a1, x01, sigma1, b,  a2, x02,sigma2):
+    return a1*np.exp(-(x-x01)**2/(2*sigma1**2))+b+a2*np.exp(-(x-x02)**2/(2*sigma2**2))
+
 def seeing_window(seeing_sigma):
     ext_sides= int(seeing_sigma*sigma_multi_side)+1 #setting the extraction window based on the seeing and rounding up, by adding 1
     #bkg_core_sides= np.min([int(ext_sides*bkg_side_multi), int(bkg_max_side), int(bkg_shift-ext_sides)])
@@ -273,9 +293,79 @@ def seeing_window(seeing_sigma):
 def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all = False, bounds = (-np.inf, np.inf), fixed_width=True):
     """
     Those bounds are the default for scipy.optimize.curve_fit(), so now changing them changes the bounds
+    
+    Turns out those cuts in the top part of this function are critical to making the peak fitting of the lines work in the lamps, so I guess I'll leave them. It's kind of irritating though because since I made this function do double duty it kind of has superfluous elements to it in the different cases (namely that it will plot all of the background stuff in the case of the emission lines
+    
+    oddly though I don't use this actual fitting function to fit the skylines I just use plut in the gaussian curve function to the optimize function directly. Why do I use this same function for the lamp lines then?
     """
     cut_region = np.where(x_pixels> (p0_list[1]-search_width ))
+    print(search_width)
+    print("p0_list inside fit_gaussian_curve",p0_list)
+    print("seeing_p0",seeing_p0)
+    #print '========'
+    #print p0_list
+    #print  "lower bound:", p0_list[1]-search_width
+    #print "upper bound: ", p0_list[1]+search_width
+    high_x_pixels= np.copy(x_pixels[cut_region])
+    high_light_values= np.copy(light_values[cut_region])
+    upper_cut = np.where(high_x_pixels < (p0_list[1]+search_width))
+    cut_x_pixels = high_x_pixels[upper_cut]
+    #print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
+    cut_light_values= high_light_values[upper_cut]
+
     
+    #cut_x_pixels=np.copy(x_pixels)
+    #cut_light_values=np.copy(light_values) #I'm pretty sure I actually feed this function with already truncated parts of the image in all cases, which kind of makes the re-establishing of boundaries superfluous.
+    print('cut bounds',p0_list[1]-search_width,p0_list[1]+search_width)
+    print('cut_light_values:',cut_light_values)
+    #print('p0_list it lets you use:', p0_list)
+    popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= p0_list, bounds = bounds)
+    #print "[amplitude, x0, sigma, b]"
+    #print popt
+
+        
+    if plot_all:
+        peaks=scisig.find_peaks(np.log10(cut_light_values))[0]
+        print('peaks:',peaks)
+        for xval in peaks:
+            plt.axvline(x=xval,linestyle='-',color='purple')
+        
+        print("popt", popt)
+        print("bounds", bounds)
+        plt.plot(cut_x_pixels, cut_light_values, label = "data")
+        plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels,popt[0],popt[1],popt[2],popt[3]),label ='fit')
+        #popt[1]=popt[1]+trace_offset
+        plt.axvline(x=popt[1],  color='b')
+        if fixed_width:
+            pass
+        else:
+            core_sides, bkg_core_sides= seeing_window(popt[2])
+        #print('\n\n\n=======\n')
+        #print(filename)
+        #print('bkg_core_sides right before cross section plot', bkg_core_sides)
+        #print('\n=========\n\n\n')
+        plt.axvline(x=popt[1]+core_sides, linestyle= '--', color='b')
+        plt.axvline(x=popt[1]-core_sides,linestyle='--',  color='b')
+        plt.axvline(x=popt[1]+bkg_shift,  color='cyan')
+        plt.axvline(x=popt[1]+bkg_shift+bkg_core_sides, linestyle= '--', color='cyan')
+        plt.axvline(x=popt[1]+bkg_shift-bkg_core_sides,linestyle='--',  color='cyan')
+        plt.axvline(x=popt[1]-bkg_shift,  color='cyan')
+        plt.axvline(x=popt[1]-bkg_shift+bkg_core_sides, linestyle= '--', color='cyan')
+        plt.axvline(x=popt[1]-bkg_shift-bkg_core_sides,linestyle='--',  color='cyan')
+        plt.title('Fit to seeing in x pixel range '+str(p0_list[1]-search_width)+'-'+str(p0_list[1]+search_width)+'\n'+'Constrained to '+str(trace_band_width)+' pixels centered on ' + str(trace_band_mid) +'\n'+'So it excludes ' + str(trace_band_mid-(trace_band_width/2)) + ' pixels on the low side\n' + 'and ' +str(200-trace_band_width/2-trace_band_mid) + ' pixels on the upper side')
+        plt.legend()
+
+        plt.show()
+    else:
+        pass
+    return popt, pcov
+
+def fit_gaussian_curve_wline(x_pixels, light_values, p0_list, search_width, plot_all = False, bounds = (-np.inf, np.inf), fixed_width=True):
+    """
+    Those bounds are the default for scipy.optimize.curve_fit(), so now changing them changes the bounds
+    """
+    cut_region = np.where(x_pixels> (p0_list[1]-search_width ))
+    print(search_width)
     #print '========'
     #print p0_list
     #print  "lower bound:", p0_list[1]-search_width
@@ -287,14 +377,72 @@ def fit_gaussian_curve(x_pixels, light_values, p0_list, search_width, plot_all =
     #print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
     cut_light_values= high_light_values[upper_cut]
     #print('p0_list it lets you use:', p0_list)
-    popt, pcov = sciop.curve_fit(gaussian_curve, cut_x_pixels, cut_light_values, p0= p0_list, bounds = bounds)
+    print("p0_list inside fit_gaussian_curve_wline",p0_list)
+    print("seeing_p0_wline",seeing_p0_wline)
+    print('cut bounds',p0_list[1]-search_width,p0_list[1]+search_width)
+    print('cut_light_values:',cut_light_values)
+    popt, pcov = sciop.curve_fit(gaussian_curve_wline, cut_x_pixels, cut_light_values, p0= p0_list, bounds = bounds)
     #print "[amplitude, x0, sigma, b]"
     #print popt
     if plot_all:
         print("popt", popt)
         print("bounds", bounds)
         plt.plot(cut_x_pixels, cut_light_values, label = "data")
-        plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels,popt[0],popt[1],popt[2],popt[3]),label ='fit')
+        #plt.plot(cut_x_pixels, gaussian_curve(cut_x_pixels,popt[0],popt[1],popt[2],popt[3]),label ='fit')
+        plt.plot(cut_x_pixels, gaussian_curve_wline(cut_x_pixels,popt[0],popt[1],popt[2],popt[3],popt[4]),label ='fit')
+        #popt[1]=popt[1]+trace_offset
+        plt.axvline(x=popt[1],  color='b')
+        if fixed_width:
+            pass
+        else:
+            core_sides, bkg_core_sides= seeing_window(popt[2])
+        #print('\n\n\n=======\n')
+        #print(filename)
+        #print('bkg_core_sides right before cross section plot', bkg_core_sides)
+        #print('\n=========\n\n\n')
+        plt.axvline(x=popt[1]+core_sides, linestyle= '--', color='b')
+        plt.axvline(x=popt[1]-core_sides,linestyle='--',  color='b')
+        plt.axvline(x=popt[1]+bkg_shift,  color='cyan')
+        plt.axvline(x=popt[1]+bkg_shift+bkg_core_sides, linestyle= '--', color='cyan')
+        plt.axvline(x=popt[1]+bkg_shift-bkg_core_sides,linestyle='--',  color='cyan')
+        plt.axvline(x=popt[1]-bkg_shift,  color='cyan')
+        plt.axvline(x=popt[1]-bkg_shift+bkg_core_sides, linestyle= '--', color='cyan')
+        plt.axvline(x=popt[1]-bkg_shift-bkg_core_sides,linestyle='--',  color='cyan')
+        plt.title('Fit to seeing in x pixel range '+str(p0_list[1]-search_width)+'-'+str(p0_list[1]+search_width)+'\n'+'Constrained to '+str(trace_band_width)+' pixels centered on ' + str(trace_band_mid) +'\n'+'So it excludes ' + str(trace_band_mid-(trace_band_width/2)) + ' pixels on the low side\n' + 'and ' +str(200-trace_band_width/2-trace_band_mid) + ' pixels on the upper side')
+        plt.legend()
+        plt.show()
+    else:
+        pass
+    return popt, pcov
+
+def fit_double_gaussian(x_pixels, light_values, p0_list, search_width, plot_all = False, bounds = (-np.inf, np.inf), fixed_width=True):
+    """
+    Those bounds are the default for scipy.optimize.curve_fit(), so now changing them changes the bounds
+    """
+    cut_region = np.where(x_pixels> (p0_list[1]-search_width ))
+    print(search_width)
+    print("p0_list inside fit_double_gaussian",p0_list)
+    #print '========'
+    #print p0_list
+    #print  "lower bound:", p0_list[1]-search_width
+    #print "upper bound: ", p0_list[1]+search_width
+    high_x_pixels= np.copy(x_pixels[cut_region])
+    high_light_values= np.copy(light_values[cut_region])
+    upper_cut = np.where(high_x_pixels < (p0_list[1]+search_width))
+    cut_x_pixels = high_x_pixels[upper_cut]
+    #print np.min(cut_x_pixels), np.max(cut_x_pixels), p0_list[1]
+    cut_light_values= high_light_values[upper_cut]
+    print('cut bounds',p0_list[1]-search_width,p0_list[1]+search_width)
+    print('cut_light_values:',cut_light_values)
+    #print('p0_list it lets you use:', p0_list)
+    popt, pcov = sciop.curve_fit(double_gaussian, cut_x_pixels, cut_light_values, p0= p0_list, bounds = bounds)
+    #print "[amplitude, x0, sigma, b]"
+    #print popt
+    if plot_all:
+        print("popt", popt)
+        print("bounds", bounds)
+        plt.plot(cut_x_pixels, cut_light_values, label = "data")
+        plt.plot(cut_x_pixels, double_gaussian(cut_x_pixels,popt[0],popt[1],popt[2],popt[3],popt[4],popt[5],popt[6]),label ='fit')
         #popt[1]=popt[1]+trace_offset
         plt.axvline(x=popt[1],  color='b')
         if fixed_width:
@@ -512,6 +660,12 @@ def normalize_flat(masterflatfile=masterflatfile, plot_all = False):
 
 ######
 def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[0], trace_method=trace_method,filename=''):
+    if trace_method=='binned_gauss_wline':
+        used_p0_list=seeing_p0_wline
+    elif trace_method=='double_gauss':
+        used_p0_list=seeing_double_p0
+    else:
+        used_p0_list=seeing_p0
     try:
         target_band=target_med[trace_band_mid-trace_band_width/2:trace_band_mid+trace_band_width/2,:]
     except TypeError:
@@ -519,14 +673,28 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
     band_inds= np.indices(target_band.shape)
     x_positions= band_inds[1,1]
     y_pos = band_inds[0].T[0]
-    
     #20190624 moved this section up here
-    plt.imshow(target_band[:,seeing_range[0]:seeing_range[1]], cmap='hot')
+    plt.imshow(np.log10(target_band[:,seeing_range[0]:seeing_range[1]]), cmap='hot')
     plt.show()
-    seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
-    seeing_p0[1]=np.argmax(seeing_band)
+    #seeing_band = np.sum(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)
+    seeing_band = np.nanmean(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1) #I think if I do a mean instead it could slightly improve the ability of the least squares minimization to find a solution because the ...
+    #seeing_band = np.log10(np.nanmean(np.copy(target_band[:,seeing_range[0]:seeing_range[1]]),axis=1)) #I'm gonna take the log of this too, but that will screw up the FWHM most likely admittedly...
+    #seeing_p0[1]=np.argmax(seeing_band)
+    print('used_p0_list',used_p0_list)
+    print('seeing_band',seeing_band)
+    used_p0_list[1]=np.argmax(seeing_band)
+    print('used_p0_list',used_p0_list)
+    print('seeing_p0',seeing_p0)
+    print('seeing_p0_wline',seeing_p0_wline)
+    print('seeing_band',seeing_band)
     try:
-        seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds, fixed_width=False)
+        if trace_method=='binned_gauss_wline':
+            seeing_popt, seeing_pcov = fit_gaussian_curve_wline(y_pos, seeing_band, seeing_p0_wline, trace_band_width, plot_all=True, bounds = see_fit_bounds_wline, fixed_width=False)
+        elif trace_method=='double_gauss':
+            seeing_popt, seeing_pcov = fit_double_gaussian(y_pos, seeing_band, seeing_double_p0, trace_band_width, plot_all=True, bounds = see_double_fit_bounds, fixed_width=False)
+        else:
+            seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds, fixed_width=False)
+        #seeing_popt, seeing_pcov = fit_gaussian_curve(y_pos, seeing_band, seeing_p0, trace_band_width, plot_all=True, bounds = see_fit_bounds, fixed_width=False)
     except RuntimeError as error:
         print("RuntimeError:", error)
         seeing_popt=see_fit_bounds[0]
@@ -552,6 +720,7 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         max_fluxes=[]
         coll_seeing_sigmas= []
         rebin_counter= 0
+        #rebinned_imT=np.log10(rebinned_imT)#going to try dealing with this in log space in hopes the maxima are indicated
         for pixel_column in rebinned_imT:
             #seeing_p0[1]=np.argmax(pixel_column)
             try:
@@ -603,6 +772,138 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         plt.ylabel('amplitude of gaussian fit')
         plt.xlabel('x position')
         plt.title('binned pseudo-spectrum')
+        plt.show()
+        
+    elif trace_method=='double_gauss':
+        rebinned_im, rebinned_indices = spt.rebin_image(target_band, rebin_axis=1, rebin_num=10)
+        rebinned_imT= rebinned_im.T
+        rebinned_x_positions= rebinned_indices.T
+        y_positions=[]
+        max_fluxes=[]
+        coll_seeing_sigmas= []
+        rebin_counter= 0
+        for pixel_column in rebinned_imT:
+            #seeing_p0[1]=np.argmax(pixel_column)
+            try:
+                if rebin_counter%25==26:
+                    subset_popt, subset_pcov = fit_double_gaussian(y_pos, pixel_column, seeing_double_p0, trace_band_width, plot_all=True, bounds = see_double_fit_bounds, fixed_width=False)
+                else:
+                    subset_popt, subset_pcov = fit_double_gaussian(y_pos, pixel_column, seeing_double_p0, trace_band_width, plot_all=False, bounds = see_double_fit_bounds, fixed_width=False)
+            except RuntimeError as error:
+                print('\n\n++++++++++')
+                print(error)
+                print("Gaussian seeing fit didn't converge for column")
+                print("Setting amplitude=0, x0=trace_band_width/2., sigma=0., b=0.")
+                print('++++++++++\n\n')
+                subset_popt=[0., trace_band_width/2., 0., 0.,0., trace_band_width/2., 0]
+            if (subset_popt[2]>(see_fit_bounds[0][2]+0.05)):
+                #print(subset_popt[2], '>', see_fit_bounds[0][2])
+                print('something')
+                y_positions.append([[subset_popt[1]+(trace_band_mid-trace_band_width/2)],[subset_popt[5]+(trace_band_mid-trace_band_width/2)]])
+                max_fluxes.append([[subset_popt[0],subset_popt[4]]])
+                coll_seeing_sigmas.append([[subset_popt[2]],[subset_popt[6]]])
+            else:
+                print("seeing sigma was on the low boundary so we're not including it: x=", rebinned_x_positions[0][rebin_counter], subset_popt[2], 'pixels', 'seeing would be', subset_popt[2]*0.3*2*np.sqrt(2*np.log(2)),'"')
+                y_positions.append([[np.nan],[np.nan]])
+                max_fluxes.append([[np.nan],[np.nan]])
+                coll_seeing_sigmas.append([[np.nan],[np.nan]])
+            rebin_counter+=1
+        y_positions=np.array(y_positions)
+        print("y_positions.shape",y_positions.shape)
+        x_positions=rebinned_x_positions[0]
+        #print('x_positions', x_positions)
+        max_fluxes= np.array(max_fluxes)
+        coll_seeing_sigmas=np.array(coll_seeing_sigmas)
+        
+        nanmask= np.isnan(y_positions)
+        y_positions= y_positions[~nanmask]
+        x_positions= x_positions[~nanmask]
+        max_fluxes=max_fluxes[~nanmask]
+        coll_seeing_sigmas=coll_seeing_sigmas[~nanmask]
+        
+        plt.scatter(x_positions,2*np.sqrt(2*np.log(2))*coll_seeing_sigmas)
+        plt.ylabel('Seeing (FWHM) in pixels')
+        plt.xlabel('x pixel')
+        plt.show()
+        
+        plt.scatter(max_fluxes,2*np.sqrt(2*np.log(2))*coll_seeing_sigmas)
+        plt.ylabel('Seeing (FWHM) in pixels')
+        plt.xlabel('amplitude of gaussian fit')
+        plt.show()
+        
+        plt.scatter(x_positions, max_fluxes)
+        plt.ylabel('amplitude of gaussian fit')
+        plt.xlabel('x position')
+        plt.title('binned pseudo-spectrum')
+        plt.show()
+        
+    elif trace_method=='binned_gauss_wline':
+        rebinned_im, rebinned_indices = spt.rebin_image(target_band, rebin_axis=1, rebin_num=10)
+        rebinned_imT= rebinned_im.T
+        rebinned_x_positions= rebinned_indices.T
+        y_positions=[]
+        max_fluxes=[]
+        coll_seeing_sigmas= []
+        slopes=[]
+        rebin_counter= 0
+        for pixel_column in rebinned_imT:
+            #seeing_p0[1]=np.argmax(pixel_column)
+            try:
+                if rebin_counter%25==26:
+                    subset_popt, subset_pcov = fit_gaussian_curve_wline(y_pos, pixel_column, seeing_p0_wline, trace_band_width, plot_all=True, bounds = see_fit_bounds_wline, fixed_width=False)
+                else:
+                    subset_popt, subset_pcov = fit_gaussian_curve_wline(y_pos, pixel_column, seeing_p0_wline, trace_band_width, plot_all=False, bounds = see_fit_bounds_wline, fixed_width=False)
+            except RuntimeError as error:
+                print('\n\n++++++++++')
+                print(error)
+                print("Gaussian seeing fit didn't converge for column")
+                print("Setting amplitude=0, x0=trace_band_width/2., sigma=0., b=0.")
+                print('++++++++++\n\n')
+                subset_popt=[0., trace_band_width/2., 0., 0.]
+            if (subset_popt[2]>(see_fit_bounds[0][2]+0.05)):
+                #print(subset_popt[2], '>', see_fit_bounds[0][2])
+                y_positions.append(subset_popt[1]+(trace_band_mid-trace_band_width/2))
+                max_fluxes.append(subset_popt[0])
+                coll_seeing_sigmas.append(subset_popt[2])
+                slopes.append(subset_popt[4])
+            else:
+                print("seeing sigma was on the low boundary so we're not including it: x=", rebinned_x_positions[0][rebin_counter], subset_popt[2], 'pixels', 'seeing would be', subset_popt[2]*0.3*2*np.sqrt(2*np.log(2)),'"')
+                y_positions.append(np.nan)
+                max_fluxes.append(np.nan)
+                coll_seeing_sigmas.append(np.nan)
+            rebin_counter+=1
+        y_positions=np.array(y_positions)
+        x_positions=rebinned_x_positions[0]
+        #print('x_positions', x_positions)
+        max_fluxes= np.array(max_fluxes)
+        coll_seeing_sigmas=np.array(coll_seeing_sigmas)
+        
+        nanmask= np.isnan(y_positions)
+        y_positions= y_positions[~nanmask]
+        x_positions= x_positions[~nanmask]
+        max_fluxes=max_fluxes[~nanmask]
+        coll_seeing_sigmas=coll_seeing_sigmas[~nanmask]
+        
+        plt.scatter(x_positions,2*np.sqrt(2*np.log(2))*coll_seeing_sigmas)
+        plt.ylabel('Seeing (FWHM) in pixels')
+        plt.xlabel('x pixel')
+        plt.show()
+        
+        plt.scatter(max_fluxes,2*np.sqrt(2*np.log(2))*coll_seeing_sigmas)
+        plt.ylabel('Seeing (FWHM) in pixels')
+        plt.xlabel('amplitude of gaussian fit')
+        plt.show()
+        
+        plt.scatter(x_positions, max_fluxes)
+        plt.ylabel('amplitude of gaussian fit')
+        plt.xlabel('x position')
+        plt.title('binned pseudo-spectrum')
+        plt.show()
+        
+        plt.scatter(x_positions, slopes)
+        plt.ylabel('Slopes of lines underlying Gaussians for trace (i.e. inferred background for trace ID')
+        plt.xlabel('x position')
+        plt.title('Trace ID bkg slopes')
         plt.show()
         
             
@@ -819,6 +1120,11 @@ def get_trace_waves(target_med, lamp_im, do_wavelengths=True, poly_coeffs_lamp=[
         plt.xlabel('Pixel')
         plt.ylabel('Counts')
         plt.title('all fitting results')
+        #peaks=scisig.find_peaks(lamp_light)[0]
+        #print('peaks:',peaks)
+        #for xval in peaks:
+            #plt.axvline(x=xval,linestyle='-',color='purple')
+        
         plt.show()
         peaks_found = np.array(peaks_found)
         wave_peaks_found = np.array(wave_peaks_found)

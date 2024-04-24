@@ -387,6 +387,7 @@ def retrieve_sdss_spec(filename,scale_noise=True, wave_medium= 'air'):
             print('trying "ivar"')
             noise=np.copy(spec_array['ivar'])
             noise=np.sqrt(1./noise) #square root of the 1/variance value provided by SDSS
+            print('ivar worked.')
         except KeyError as error:
             print(error)
             print('setting noise=1')

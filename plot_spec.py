@@ -111,11 +111,11 @@ norm_range=[6630,6690]#wider double norm range
 #norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-#file_setting= 'compare_SDSS'
+file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -176,10 +176,10 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*')
+    #filenames=glob('fwctb*')
     #filenames=glob('fwctb*0850p195*')
     #filenames=glob('fwctb*WDJ0822*')
-    #filenames=glob('fwctb*2317*')
+    filenames=glob('fwctb*SDSSJ1312*')
     #filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
     #filenames=glob('fwctb*LTT*')
@@ -214,11 +214,12 @@ elif file_setting=='compare_SDSS':
     #sdss_names = glob(sdss_path+'SDSS*1636*.fits')
     #sdss_names = glob(sdss_path+'LHS*.fits')
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
-    sdss_names = glob(sdss_path+'*sdss*.fits')
+    #sdss_names = glob(sdss_path+'*sdss*.fits')
     #sdss_names=glob(sdss_path+'*J0804*.fits')
     #sdss_names=glob(sdss_path+'*Dox*.fits')
     #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*.fits')
     #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ0738p4114*.fits')
+    sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ1312*.fits')
     
     sdss_names= sorted(sdss_names)
     #print('sdss_names:',sdss_names)
@@ -922,6 +923,11 @@ if __name__ == '__main__':
             
             
             #plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box', pix_width=5,alpha=1.0,color='k')
+            
+            plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+            
+            
+            plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box', pix_width=5)
 
             #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=False, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='r',alpha=0.8)
             
@@ -957,9 +963,9 @@ if __name__ == '__main__':
                     print("IndexError:", error)
                     print("\n\nFile that lacked the extensions:",filename2,"\n\n")
             
-            #### end plotting individual sdss frames#########
+            ##### end plotting individual sdss frames#########
             
-            plot_spectrum(target_spec2, filename2.split('/')[-1]+' coadd', header1, norm=False, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='k',alpha=1.0)
+            #plot_spectrum(target_spec2, filename2.split('/')[-1]+' coadd', header1, norm=False, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='k',alpha=1.0)
             
             #filename3=sdss_names[index+1]
             #filename3=filename2
@@ -984,8 +990,8 @@ if __name__ == '__main__':
             plt.title(filename+ ' & '+ filename2.split('/')[-1])
             #plt.xlim(np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]))
             #plt.show()
-            spt.show_plot(line_id='cool_wd',convert_to_air=True,actually_show=False)
-            spt.show_plot(line_id='h',convert_to_air=True, actually_show=True)
+            spt.show_plot(line_id='cool_wd',convert_to_air=True,actually_show=True)
+            #spt.show_plot(line_id='h',convert_to_air=True, actually_show=True)
             #spt.show_plot(line_id='molecules',convert_to_air=False,label_pos=1.05)
             
             #plt.ylim(0,np.percentile(np.append(target_spec1[1],target_spec2[1],axis=0),0.9)*1.05)
@@ -1295,7 +1301,7 @@ if __name__ == '__main__':
 
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=5, kernel_type='box')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=15, kernel_type='box')
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
@@ -1319,8 +1325,8 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
             
-            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-            spt.show_plot(show_legend=True, line_id='h', convert_to_air=True)
+            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=True)
+            #spt.show_plot(show_legend=True, line_id='h', convert_to_air=True)
             #spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
             
             #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
