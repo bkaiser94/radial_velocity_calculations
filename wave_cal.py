@@ -80,7 +80,7 @@ def to_barycenter(header):
     return header
 
 ####
-trace_offset =0#amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
+trace_offset =50#amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
 
 #trace_band_mid= 110   #y-pixel that's about the center of the trace #old one as of 2018-10-31
 #trace_band_mid= 96   #y-pixel that's about the center of the trace J1431
@@ -116,13 +116,13 @@ flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
 #bkg_shift= 30 #standard shift used
-#bkg_shift=20
-bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
+bkg_shift=20
+#bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
 #bkg_shift=35
 #bkg_shift= 47
 #bkg_shift=15
 #bkg_shift=48
-#bkg_shift=11
+#bkg_shift=18
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 #bkg_side_multi= 1. #
 #bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
@@ -1205,6 +1205,7 @@ for counter, img in enumerate(speclist):
         header.append(card=('width', core_sides*2+1, 'width of extracted region for trace'))
         header.append(card=('bkgwidth', bkg_core_sides*2+1, 'width of bkg regions'))
         header.append(card=('bkgshift', bkg_shift, 'shift of bkg region from center of trace'))
+        header.append(card=('waveoff',store_offset,'pix offset input for lamp file'))
         
         if do_save_wavesoln:
             wave_soln_name=save_wavesoln(filename, polynomials[1])

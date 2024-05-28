@@ -45,9 +45,9 @@ test_side = test_width/2
 
 pix_width=10
 sdss_pix_width = 10
-boss_scale_factor=20.6 #BOSS scaling or really probably the drizzled combined spectra from Kesseli et al. 2017 because they up-resolved their class-integrated spectra
-#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
-sdss_scale_factor=boss_scale_factor#BOSS scaling
+#boss_scale_factor=20.6 #BOSS scaling or really probably the drizzled combined spectra from Kesseli et al. 2017 because they up-resolved their class-integrated spectra
+sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+#sdss_scale_factor=boss_scale_factor#BOSS scaling
 
 sdss_seeing=0.7 #arcsec seeing
 sdss_see_sig=sdss_seeing/2.355/ pixel_scale
@@ -115,13 +115,13 @@ norm_range=[6630,6690]#wider double norm range
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-file_setting= 'compare_SDSS'
+#file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
 #file_setting= 'two_arm_compare_SDSS'
-#file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
+file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
 
 single_iterate= False
 double_iterate= False #file_settings change these in their little sections ahead if they should be changed
