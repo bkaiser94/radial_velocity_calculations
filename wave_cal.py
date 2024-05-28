@@ -83,17 +83,17 @@ def to_barycenter(header):
 trace_offset =0#amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
 
 #trace_band_mid= 110   #y-pixel that's about the center of the trace #old one as of 2018-10-31
-trace_band_mid= 96   #y-pixel that's about the center of the trace J1431
+#trace_band_mid= 96   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=100
-#trace_band_mid=105 #usual extraction search center point
+trace_band_mid=105 #usual extraction search center point
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=140
 #trace_band_mid=75 #
-trace_band_width=10
+#trace_band_width=10
 #trace_band_width = 100 #pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width = 50#pixel width to determine the center of the trace 2019-03-25 commented out
-#trace_band_width=190#usual extraction search window
+trace_band_width=190#usual extraction search window
 #trace_band_width= 14 #SDSSJ1159
 #trace_band_mid=95 #y-pixel for secondary of wisea0615 2019-03-07
 #trace_band_mid=115 #y-pixel for actual wisea0615
@@ -126,8 +126,8 @@ bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 #bkg_side_multi= 1. #
 #bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
-bkg_side_multi=2. #mutliple of core_sides that that  bkg_core_sides should be later
-#bkg_side_multi=3. #mutliple of core_sides that that  bkg_core_sides should be later
+#bkg_side_multi=2. #mutliple of core_sides that that  bkg_core_sides should be later
+bkg_side_multi=3. #mutliple of core_sides that that  bkg_core_sides should be later
 #bkg_side_multi=4. #mutliple of core_sides that that  bkg_core_sides should be later
 
 bkg_max_side= bkg_shift/2.-5

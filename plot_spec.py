@@ -46,8 +46,8 @@ test_side = test_width/2
 pix_width=10
 sdss_pix_width = 10
 boss_scale_factor=20.6 #BOSS scaling or really probably the drizzled combined spectra from Kesseli et al. 2017 because they up-resolved their class-integrated spectra
-sdss_scale_factor= 1.467 #SDSS spectrograph scaling
-#sdss_scale_factor=boss_scale_factor#BOSS scaling
+#sdss_scale_factor= 1.467 #SDSS spectrograph scaling
+sdss_scale_factor=boss_scale_factor#BOSS scaling
 
 sdss_seeing=0.7 #arcsec seeing
 sdss_see_sig=sdss_seeing/2.355/ pixel_scale
@@ -176,15 +176,15 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    #filenames=glob('fwctb*')
+    filenames=glob('fwctb*')
     #filenames=glob('fwctb*0850p195*')
     #filenames=glob('fwctb*WDJ0822*')
-    filenames=glob('fwctb*SDSSJ1312*')
+    #filenames=glob('fwctb*SDSSJ1312*')
     #filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
-    #filenames=glob('fwctb*LTT*')
+    #filenames=glob('fwctb*Feige*')
     #filenames=glob('fwctb*SDSS*n*')
-    #filenames=glob('fwctb*2356*')
+    filenames=glob('fwctb*J0834*')
     
     filenames= sorted(filenames)
     single_iterate=True
@@ -207,7 +207,7 @@ elif file_setting=='compare_SDSS':
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
-    #sdss_names = glob(sdss_path+'G0_K5/*K*.fits')
+    sdss_names = glob(sdss_path+'G0_K5/*K*.fits')
     #sdss_names = glob(sdss_path+'*1651*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
@@ -219,7 +219,7 @@ elif file_setting=='compare_SDSS':
     #sdss_names=glob(sdss_path+'*Dox*.fits')
     #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*.fits')
     #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ0738p4114*.fits')
-    sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ1312*.fits')
+    #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ1312*.fits')
     
     sdss_names= sorted(sdss_names)
     #print('sdss_names:',sdss_names)
@@ -897,7 +897,7 @@ if __name__ == '__main__':
             target_spec2, header2, target_noise2= spt.retrieve_sdss_spec(filename2, wave_medium='air')
             
             
-            fbadpix_list.append(fits.getheader(filename2)['fbadpix'])
+            #fbadpix_list.append(fits.getheader(filename2)['fbadpix'])
             #print('fbadpix_list',fbadpix_list)
             
             #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
@@ -924,46 +924,46 @@ if __name__ == '__main__':
             
             #plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box', pix_width=5,alpha=1.0,color='k')
             
-            plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=False, smooth=True, kernel_type='box', pix_width=sdss_pix_width)
+            plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width*sdss_scale_factor)
             
             
-            plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box', pix_width=5)
+            plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=5)
 
             #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=False, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='r',alpha=0.8)
             
             
-            ###### plotting individual SDSS spectra frames too#####
+            ####### plotting individual SDSS spectra frames too#####
             
             
-            sdss_spec_list, sdss_header_list, sdss_noise_list=spt.retrieve_allframes_sdss_spec(filename2, wave_medium='air')
-            extension=4
-            total_extensions=len(sdss_spec_list)
-            try:
-                for sdss_spec,sdss_header in zip(sdss_spec_list, sdss_header_list):
-                    try:
-                        date=sdss_header['date-obs']+' '+sdss_header['taihms']
-                    except KeyError as error:
-                        print("KeyError:",error)
-                        date=str(0)
-                    #datetime=Time(sdss_header['tai'],format='tai')
-                    #testtai=Time(0,format='tai')
-                    #print('testtai', testtai.tai)
-                    #print('testtai', testtai.utc)
-                    if extension<total_extensions/2+4:
-                        color='b'
-                    #if extension >total_extensions/2+4:
-                    else:
-                        color='r'
-                    #if ((extension==7) or (extension==11)):
-                        #color='g'
-                    plot_spectrum(sdss_spec, filename2.split('/')[-1]+str(extension)+' '+date, header1, norm=False, smooth=True, kernel_type='sdss_match', pix_width=pix_width, alpha=0.4,color=color)
-                    #plot_spectrum(sdss_spec, filename2.split('/')[-1]+str(extension)+' '+str(sdss_header['tai-beg']), header1, norm=False, smooth=True, kernel_type='sdss_match', pix_width=pix_width, alpha=0.8,color=color)
-                    extension+=1
-            except IndexError as error:
-                    print("IndexError:", error)
-                    print("\n\nFile that lacked the extensions:",filename2,"\n\n")
+            #sdss_spec_list, sdss_header_list, sdss_noise_list=spt.retrieve_allframes_sdss_spec(filename2, wave_medium='air')
+            #extension=4
+            #total_extensions=len(sdss_spec_list)
+            #try:
+                #for sdss_spec,sdss_header in zip(sdss_spec_list, sdss_header_list):
+                    #try:
+                        #date=sdss_header['date-obs']+' '+sdss_header['taihms']
+                    #except KeyError as error:
+                        #print("KeyError:",error)
+                        #date=str(0)
+                    ##datetime=Time(sdss_header['tai'],format='tai')
+                    ##testtai=Time(0,format='tai')
+                    ##print('testtai', testtai.tai)
+                    ##print('testtai', testtai.utc)
+                    #if extension<total_extensions/2+4:
+                        #color='b'
+                    ##if extension >total_extensions/2+4:
+                    #else:
+                        #color='r'
+                    ##if ((extension==7) or (extension==11)):
+                        ##color='g'
+                    #plot_spectrum(sdss_spec, filename2.split('/')[-1]+str(extension)+' '+date, header1, norm=False, smooth=True, kernel_type='sdss_match', pix_width=pix_width, alpha=0.4,color=color)
+                    ##plot_spectrum(sdss_spec, filename2.split('/')[-1]+str(extension)+' '+str(sdss_header['tai-beg']), header1, norm=False, smooth=True, kernel_type='sdss_match', pix_width=pix_width, alpha=0.8,color=color)
+                    #extension+=1
+            #except IndexError as error:
+                    #print("IndexError:", error)
+                    #print("\n\nFile that lacked the extensions:",filename2,"\n\n")
             
-            ##### end plotting individual sdss frames#########
+            ###### end plotting individual sdss frames#########
             
             #plot_spectrum(target_spec2, filename2.split('/')[-1]+' coadd', header1, norm=False, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='k',alpha=1.0)
             
@@ -1301,7 +1301,7 @@ if __name__ == '__main__':
 
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=15, kernel_type='box')
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
@@ -1311,8 +1311,8 @@ if __name__ == '__main__':
             #plot_spectrum(target_spec, filename, header, norm=True, smooth=True, kernel_type='box', offset=counter)
             #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
             #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
-            #plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=True)
+            ##plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
+            #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=False)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:
@@ -1326,7 +1326,7 @@ if __name__ == '__main__':
             #spt.show_plot(show_telluric=False, show_legend=False)
             
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=True)
-            #spt.show_plot(show_legend=True, line_id='h', convert_to_air=True)
+            spt.show_plot(show_legend=True, line_id='h', convert_to_air=True)
             #spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
             
             #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
@@ -1353,10 +1353,11 @@ if __name__ == '__main__':
         #print('ew_list:',ew_list)
         plt.axhline(y=0, linestyle=':', color='k')
         print('\n\nstandard deviations',sig_list)
-        spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+        #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='h', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
+        spt.show_plot(show_telluric=False, show_legend=True)
 
         
         plt.plot(bmjd_list,ew_list, marker='o')

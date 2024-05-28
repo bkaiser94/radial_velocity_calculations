@@ -176,6 +176,28 @@ cal_params={
                     'air_corr':True,
                     'setupname':'400m2'}
                 }
+            },
+        12.2600:{
+            5.80000:{
+                'Blue':{
+                    'linelistname':'400M1_HgAr.txt',
+                    'offset':0,
+                    'trimregions':{
+                        'x':[380-156,blue_default_trim['x'][1]],
+                        'y':blue_default_trim['y']},
+                    'air_corr': True,
+                    'setupname':'400ma1'
+                    },
+                'Red':{
+                    'linelistname':'400ma1_HgArNe_calc20240508.txt',
+                    'offset':0,
+                    'trimregions':{
+                        'x':[380-156,red_default_trim['x'][1]],
+                        'y':red_default_trim['y']},
+                    'air_corr': True,
+                    'setupname':'400ma1'
+                    }
+                }
             }
         }
     }
@@ -324,7 +346,8 @@ line_color_dict={
     'Na': 'red',
     'K': 'blue',
     'Rb': 'magenta',
-    'Ca': '#001a4b',
+    #'Ca': '#001a4b',
+    'Ca':'#033ca6',
     'MgH':'#6e76c1',
     '?': '#f39117',
     'cyclotron': '#001a4b',
@@ -383,17 +406,20 @@ flux_cal_dict={
     '930blue':7,
     '400m1':5,
     '400m2':5,
-    'Gemini':5},
+    'Gemini':5,
+    '400ma1':5},
 'obs_poly_degree':{
     '930blue':9,
     '400m1':7,
     '400m2':7,
-    'Gemini':7},
+    'Gemini':7,
+    '400ma1':7},
 'sens_fit_method':{
     '930blue':'empirical',
     '400m1':'empirical',
     '400m2':'poly/poly',
-    'Gemini':'poly/interp'}
+    'Gemini':'poly/interp',
+    '400ma1':'empirical',}
 }
 
 line_id_dict={
@@ -406,7 +432,8 @@ line_id_dict={
     'cyclotron3800':'cyclotron_B94MG_3800A_n3.csv',
     'C2_bands':'King1948_C2Swan_Bands.csv',
     'molecules':'Fay1974_molecules.csv',
-    'h':'H_lines_vac.csv'
+    'h':'H_lines_vac.csv',
+    'J0212':'J0212_comp_lines.csv'
     }
 
 
