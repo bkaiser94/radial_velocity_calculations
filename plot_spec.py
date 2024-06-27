@@ -45,7 +45,7 @@ test_side = test_width/2
 
 pix_width=10
 sdss_pix_width = 10
-#boss_scale_factor=20.6 #BOSS scaling or really probably the drizzled combined spectra from Kesseli et al. 2017 because they up-resolved their class-integrated spectra
+boss_scale_factor=20.6 #BOSS scaling or really probably the drizzled combined spectra from Kesseli et al. 2017 because they up-resolved their class-integrated spectra
 sdss_scale_factor= 1.467 #SDSS spectrograph scaling
 #sdss_scale_factor=boss_scale_factor#BOSS scaling
 
@@ -117,11 +117,11 @@ norm_range=[6630,6690]#wider double norm range
 #file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
-#file_setting= 'all_SDSS'
+file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
 #file_setting= 'two_arm_compare_SDSS'
-file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
+#file_setting='null' #option if you want to call this script in another script. It prevents anything from actually being executed.
 
 single_iterate= False
 double_iterate= False #file_settings change these in their little sections ahead if they should be changed
@@ -233,8 +233,8 @@ elif file_setting=='all_SDSS':
     #sdss_names = glob(sdss_path+'SDSSJ1636*.fits')
     #sdss_names = glob(sdss_path+'SDSSJ1330*.fits')
     sdss_names=sorted(glob(sdss_path+'G0_K5/*K*.fits'))
-    #sdss_names=sorted(glob(sdss_path+'*M4*.fits'))
-    filenames = sorted(glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ1312*.fits'))
+    #sdss_names=sorted(glob(sdss_path+'*Dwarf*.fits'))
+    filenames = sorted(glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ2348*.fits'))
     #filenames=sdss_names
     single_iterate=False
     double_iterate=False
@@ -1018,10 +1018,16 @@ if __name__ == '__main__':
                 #target_spec2= spt.clean_spectrum(target_spec2, np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]), [])
                 target_spec2=norm_spectrum(target_spec2, norm_range)
                 #plt.ylim(top=np.nanpercentile(np.hstack([target_spec2[1], target_spec1[1]]), 99.9)+0.5)
-                
+                target_dlambda=target_spec1[0][400]-target_spec1[0][399]
+                template_dlambda=target_spec2[0][400]-sdss_spec2[0][399]
+                print('target_dlambda',target_dlambda)
+                print('template_dlambda',template_dlambda)
+                print('target kernel',main_kernel)
+                template_kernel=sdss_pix_width*(target_dlambda/template_dlambda)
+                print('template_kernel',template_kernel)
                 
                 plot_spectrum(target_spec1, filename1.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width= sdss_pix_width)
-                plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width*boss_scale_factor/sdss_scale_factor,alpha=0.7)
+                plot_spectrum(target_spec2, filename2.split('/')[-1], header2, norm=True, smooth=True, kernel_type='box', pix_width=template_kernel,alpha=0.7)
             
                 #tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
                 

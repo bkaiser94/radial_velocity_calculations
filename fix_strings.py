@@ -38,6 +38,9 @@ def fix_display_string(input_string):
             return output_string
         else:
             pass
-    
+    if ' J' in input_string:
+        pass
+    elif 'J' in input_string:
+        output_string=input_string.replace('J',' J')
     #that should essentially try every bad_string inside the input_string and if it is not present, nothing will happen.
     return output_string
