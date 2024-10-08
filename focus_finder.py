@@ -28,8 +28,10 @@ from astropy.modeling import fitting as asfitting
 from astropy.table import Table, Column
 
 
-input_files=sorted(glob('*besselR*focus*.fits'))
+#input_files=sorted(glob('*besselR*focus*.fits'))
 #input_files=sorted(glob('*besselr*focus*.fits')) #need this one for 2024-04-07 only
+input_files=sorted(glob('*besselR*focus*correct*.fits')) #2024-09-27
+
 
 
 glob_search_width=30
@@ -42,7 +44,8 @@ glob_search_width=30
 #center_search_val=2126. #2024-05-07
 #center_search_val=2111. #2024-05-08
 #center_search_val=2116. #2024-05-14
-center_search_val=2115. #2024-06-04
+#center_search_val=2115. #2024-06-04
+center_search_val=2144. #2024-09-27
 
 
 
@@ -231,7 +234,8 @@ dates=[
     '2024-05-07',
     '2024-05-08',
     '2024-05-14',
-    '2024-06-04'
+    '2024-06-04',
+    '2024-09-25'
     ]
 
 
@@ -245,7 +249,8 @@ focii=[
     0.583,
     0.627,
     0.398,
-    0.401
+    0.401,
+    0.454
     ]
 
 
@@ -261,20 +266,33 @@ col_swaps=[
 #switched to numpy datetime per matplotlib documentation
 #dates=np.datetime64(np.array(dates))
 dates=np.array(dates, dtype='datetime64')
+plt.rc('font',size=10)
+
+plt.figure(figsize=(7,2))
 plt.plot(dates, focii,marker='o')
 #plt.axvline(x=Time('2024-03-06').mjd, color='k', linestyle='--', label='Collimator swap (2024-03-06)')
+index=0
 for coldate in col_swaps:
     #plt.axvline(x=Time(coldate).mjd, color='k', linestyle='--', label='Collimator swap '+coldate)
-    plt.axvline(x=np.datetime64(coldate), color='k', linestyle='--', label='Collimator swap '+coldate)
+    #plt.axvline(x=np.datetime64(coldate), color='k', linestyle='--', label='Collimator swap '+coldate)
+    if index==0:
+        label='Col. swap '
+    else:
+        label=''
+    #plt.axvline(x=np.datetime64(coldate), color='k', linestyle='--', label='Col. swap '+coldate)
+    plt.axvline(x=np.datetime64(coldate), color='k', linestyle='--', label=label)
+    index+=1
 
 plt.axhline(y=0.45, label='0.45" slit width', color='r', linestyle=':')
 plt.legend()
-plt.ylabel('FWHM in arcseconds of best focus from focus tests')
+plt.ylabel('FWHM (arcsec)')
 #plt.xlabel('Date (MJD)')
-plt.xlabel('Date')
-plt.xticks(rotation=70)
+#plt.xlabel('Date')
+#plt.xticks(rotation=70)
+plt.xticks(rotation=40)
+
 plt.grid()
-plt.title('bessel-R image of 0.45" slit FWHM (in arcseconds) implied by focus minimization')
+#plt.title('bessel-R image of 0.45" slit FWHM (in arcseconds) implied by focus minimization')
 plt.show()
 
 

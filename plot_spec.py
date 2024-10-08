@@ -111,13 +111,13 @@ norm_range=[6630,6690]#wider double norm range
 #norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-#file_setting='all_avg'
+file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
 #file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
-file_setting= 'all_SDSS'
+#file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
 #file_setting= 'all_super'
 #file_setting= 'two_arm_compare_SDSS'
@@ -129,9 +129,9 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('ravg_fwctb*.fits')
+    filenames=glob('ravg_fwctb*WD*.fits')
     #filenames=glob('*ravg_wctb*fits')
-    #filenames=glob('ravg_fwctb*400m1*fits')
+    #filenames=glob('ravg_fwctb*2124*fits')
     #filenames=glob('ravg_fwctb*0212*fits')
     #filenames=glob('ravg_fwctb*WDJ1426*fits')
     #filenames=glob('ravg_fwctb*1824*other2_*fits')
@@ -178,13 +178,13 @@ elif file_setting=='all_fwctb':
     print(file_setting)
     filenames=glob('fwctb*')
     #filenames=glob('fwctb*0850p195*')
-    #filenames=glob('fwctb*WDJ0822*')
+    filenames=glob('fwctb*WDJ2124*')
     #filenames=glob('fwctb*SDSSJ1312*')
     #filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
     #filenames=glob('fwctb*Feige*')
     #filenames=glob('fwctb*SDSS*n*')
-    filenames=glob('fwctb*J0834*')
+    #filenames=glob('fwctb*J0834*')
     
     filenames= sorted(filenames)
     single_iterate=True
@@ -207,7 +207,7 @@ elif file_setting=='compare_SDSS':
     #filename=glob('ravg_fwctb*')
     print('filename:', filename)
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
-    sdss_names = glob(sdss_path+'G0_K5/*K*.fits')
+    #sdss_names = glob(sdss_path+'G0_K5/*K*.fits')
     #sdss_names = glob(sdss_path+'*1651*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
@@ -220,6 +220,7 @@ elif file_setting=='compare_SDSS':
     #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*.fits')
     #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ0738p4114*.fits')
     #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ1312*.fits')
+    sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ2348*.fits')
     
     sdss_names= sorted(sdss_names)
     #print('sdss_names:',sdss_names)
@@ -723,10 +724,15 @@ def get_median_dlambda(input_spec):
     return np.nanmedian(input_spec[0]-np.roll(input_spec[0],1))
 
     
-def plot_sky(filename, offset=0, line_labels=True, convolve=False, color='None',norm=False, norm_range=norm_range):
+def plot_sky(filename, offset=0, line_labels=True, convolve=False, color='None',norm=False, norm_range=norm_range,divide_width=False,show_date=False):
     hdu=fits.open(filename)
     wavelengths=np.copy(hdu[0].data)
+    label=filename+' sky'
     sky=np.copy(hdu[2].data)
+    if divide_width:
+        sky=sky/hdu[0].header['width']
+        #label=label+' per pixel (width='+str(hdu[0].header['width'])+')'
+        label=label+' per pixel'
     sky_spec=np.vstack([wavelengths, sky])
     if convolve:
         sky_spec= convolve_spectrum(sky_spec, 'dummy_header', kernel_type='box', pix_width=pix_width)
@@ -738,6 +744,7 @@ def plot_sky(filename, offset=0, line_labels=True, convolve=False, color='None',
         #spec[1]=spec[1]/np.nanmean(spec[1][norm_range[0]:norm_range[1]])
         sky_spec=norm_spectrum(sky_spec, norm_range)
         sky= sky_spec[1]
+        label=label+' normed'
     else:
         pass
         #sky= sky_spec[1]
@@ -774,12 +781,16 @@ def plot_sky(filename, offset=0, line_labels=True, convolve=False, color='None',
     else:
         pass
     print("need to put dlambda into this part again since we're about to move around wavelengths in the future.")
+    if show_date:
+        label=label+' '+hdu[0].header['date-obs']
+    else:
+        pass
     if plot_wavelength:
         plt.xlabel(r'Wavelength ($\AA$)')
         if color== 'None':
-            plt.plot(hdu[0].data, sky, label=filename+' sky')
+            plt.plot(hdu[0].data, sky, label=label)
         else:
-            plt.plot(hdu[0].data, sky, label=filename+' sky', color=color)
+            plt.plot(hdu[0].data, sky, label=label, color=color)
         #plt.plot(hdu[0].data, sky, label=filename, color=color)
         #plt.plot(hdu[0].data, sky, label=hdu[0].header['airmass'])
     else:
@@ -1307,7 +1318,7 @@ if __name__ == '__main__':
 
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=5, kernel_type='box')
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
             #target_spec[1]=header['airmass']
@@ -1318,7 +1329,10 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
             #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
             ##plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=False)
+            #plot_sky(filename, offset=0, line_labels=True, convolve=False,norm=False)
+            #if header['bmjd_tdb']>   60560.:
+                #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=False, divide_width=True, show_date=True)
+            #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=False, divide_width=True, show_date=True)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:
@@ -1332,8 +1346,8 @@ if __name__ == '__main__':
             #spt.show_plot(show_telluric=False, show_legend=False)
             
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=True)
-            spt.show_plot(show_legend=True, line_id='h', convert_to_air=True)
-            #spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
+            #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
+            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             
             #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
 
@@ -1363,8 +1377,9 @@ if __name__ == '__main__':
         #spt.show_plot(show_legend=True, line_id='h', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
-        spt.show_plot(show_telluric=False, show_legend=True)
-
+        spt.show_plot(show_telluric=False, show_legend=True, line_id='')
+        spt.show_plot(show_telluric=False, show_legend=True, line_id='J0212', convert_to_air=True)
+        #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
         
         plt.plot(bmjd_list,ew_list, marker='o')
         plt.ylabel(r'ew_values ($\AA$)')
@@ -1392,6 +1407,7 @@ if __name__ == '__main__':
         #plot_head_2_head(filenames,'ROTATOR','POSANGLE')
         #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
         plot_white_lightcurve(filenames,header_name='airofavg')
+        plot_head_2_head(filenames,'BMJD_TDB','SEE_FWHM')
         plot_head_2_head(filenames,'BMJD_TDB','seeing')
         plot_head_2_head(filenames,'BMJD_TDB','airmass')
         plot_head_2_head(filenames,'BMJD_TDB','rotator')

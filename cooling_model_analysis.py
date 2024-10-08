@@ -52,7 +52,7 @@ output_dir=output_dir+'wd_70_30_total_age_partial_contributions_each_atm_type/'
 export_total_ages=False
 
 #universe_age= 13.8 #Gyr
-universe_age=20. #Gyr, artifical age of the universe to use as upper limit to get around Malmquist bias
+universe_age=20. #Gyr, artifical age of the universe to use as upper limit to get around bias
 percent_range=0.68 #error bar coverage for total age estimate.
 #percent_range=0.95
 #null_age_val=20. #usually 20
@@ -81,12 +81,12 @@ default_z=0.02 #approximately solar
 #target_teff_err= 230.
 
 
-##1644 w/ eDR3 approximation applied
-#wd_name='WD J1644-0449'
-#target_logg=7.85
-#target_logg_err= 0.23
-#target_teff= 3830.
-#target_teff_err= 230.
+#1644 w/ eDR3 approximation applied
+wd_name='WD J1644-0449'
+target_logg=7.85
+target_logg_err= 0.23
+target_teff= 3830.
+target_teff_err= 230.
 
 
 ##1330
@@ -103,19 +103,19 @@ default_z=0.02 #approximately solar
 #target_teff= 4040. #K
 #target_teff_err=110.
 
-###J1636
-wd_name='SDSSJ1636+1619'
-target_logg= 8.10
-target_logg_err=0.06
-target_teff= 4410. #K
-target_teff_err=200.
+####J1636
+#wd_name='SDSSJ1636+1619'
+#target_logg= 8.10
+#target_logg_err=0.06
+#target_teff= 4410. #K
+#target_teff_err=200.
 
-#J1636 from Table2 extended Blouin Magnesium 2020
-wd_name='SDSSJ1636+1619'
-target_logg= 8.096
-target_logg_err=0.059
-target_teff= 4410. #K
-target_teff_err=200.
+##J1636 from Table2 extended Blouin Magnesium 2020
+#wd_name='SDSSJ1636+1619'
+#target_logg= 8.096
+#target_logg_err=0.059
+#target_teff= 4410. #K
+#target_teff_err=200.
 
 
 
@@ -217,6 +217,16 @@ target_teff_err=200.
 #target_teff= 14213. #K
 #target_teff_err=300. #arbitarily guessed
 
+
+
+##WDJ0212-5522 from Simon's fit (no He present)
+#wd_name='WD J0212-5522'
+#target_logg= 7.97
+#target_logg_err=0.02
+#target_teff= 4590. #K
+#target_teff_err=70.
+
+
 desired_NaCa= -1.1 #Sioux county meteorite, achondrite
 
 
@@ -281,12 +291,12 @@ def get_output_name(wd_name=wd_name):
 
 
 #n=100000
-#n=int(1e6)
+n=int(1e6)
 #n=int(4e6)
 #n=1000
 #n=10
 #n=int(6e6)#6 million for the 60% M_H>10^-10 from Cunningham et al. (2020)
-n=int(2.5e6)#2.5 million for the 25% 10^-14< M_H<10^-10 from Cunningham et al. (2020)
+#n=int(2.5e6)#2.5 million for the 25% 10^-14< M_H<10^-10 from Cunningham et al. (2020)
 
 
 #bin_widths=0.01

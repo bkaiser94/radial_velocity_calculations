@@ -117,6 +117,14 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     bkg_counts = i[2].data
     noise_spec = i[3].data #don't need to divide this by the exposure time since it's normalized already in proportion to whatever units we use.
     dlambda=i[4].data
+    
+    ##2024-10-07 bug tracking
+    #plt.plot(counts,label="target counts")
+    #plt.plot(bkg_counts,label="bkg_counts")
+    #plt.title("in calibrate_flux.py right after reading in")
+    #plt.legend()
+    #plt.show()
+    
     if do_tell_waves:
         print('\n\n\nCorrect the wavelengths based on the telluric features.\nor change do_tell_waves=False\n\n\n')
         tell_name= glob('telluric_thru*'+ sens_curve_file)[0]
@@ -162,11 +170,15 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     #plt.show()
     obs_spec= np.vstack([wavelengths, counts])
     obs_spec= np.copy(spt.counts_to_flambda(obs_spec, dlambda))
+    bkg_spec=np.copy(np.vstack([wavelengths,bkg_counts])) #new as of 2024-10-07, fixes the background flux being weird.
+    bkg_spec=np.copy(spt.counts_to_flambda(bkg_spec,dlambda)) #new as of 2024-10-07
+    
     print('Observed spectrum in units of erg/s/cm^2/angstrom')
     if do_ext_corr:
         print("Doing atmospheric extinction correction.")
         #obs_spec= np.vstack([wavelengths, counts])
         obs_spec= np.copy(spt.correct_extinction(obs_spec, header, plot_all=False))
+        bkg_spec=np.copy(spt.correct_extinction(bkg_spec,header,plot_all=False)) #new as of 2024-10-07; I'm less sure about the background getting extinction corrected, but it's something I wasn't doing before, and I suppose most of the air is below the layers forming lines and such, so those are probably just about as affected as anything else.
         #wavelengths=np.copy(obs_spec[0])
         #counts=np.copy(obs_spec[1])
         header.append(card=('ext_corr', True, 'atmospheric extinction correction'))
@@ -175,6 +187,9 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
     #flux = counts/sens_curve
     flux= np.copy(obs_spec[1])
     flux=flux/sens_curve# I had commented out the only flux calibration part of the flux calibration...
+    bkg_flux=np.copy(bkg_spec[1]) #2024-10-07
+    bkg_flux=bkg_flux/sens_curve #2024-10-07
+    
     if do_tell_corr:
         tell_name= glob('telluric_thru*'+ sens_curve_file)[0]
         print('tell_name', tell_name)
@@ -220,16 +235,24 @@ for target_file, sens_curve_file in zip(target_list, sens_curve_list):
         header.append(card = ('barycorr', False, 'wavelengths corrected to barycenter'))
     
     target_file = 'f'+target_file
-    bkg_flux = bkg_counts/sens_curve
+    #bkg_flux = bkg_counts/sens_curve #moving up with the target flux light calibration above, and this is supposed to be an actual flux (not counts) divided by the sensitivity curve. I implemented a unit conversion to actual flux years ago, and I guess I forgot to apply it to the background too. 2024-10-07
     
-    
+    #plt.plot(flux,label="flux")
+    #plt.plot(bkg_flux,label="bkg_flux")
+    #plt.title("prior to conversion to 1e-16")
+    #plt.legend()
+    #plt.show()
     
     ##########################3
     #convert fluxes to 1e-16 values... meaning multiply by 1e16
     flux=flux*1e16
     bkg_flux=bkg_flux*1e16
     
-    
+    #plt.plot(flux,label="flux")
+    #plt.plot(bkg_flux,label="bkg_flux")
+    #plt.title("Post to conversion to 1e-16")
+    #plt.legend()
+    #plt.show()
     
     
     ####################

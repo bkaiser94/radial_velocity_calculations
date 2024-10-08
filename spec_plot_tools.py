@@ -1144,14 +1144,17 @@ def initiate_science_plot():
     
     return
 
-def start_ApJ_fig(width_cols=1, constrained_layout=True, width_height=[1.,1.]):
+def start_ApJ_fig(width_cols=1, constrained_layout=True, width_height=[1.,1.],narrow_lines=True):
     """
     width_cols: the width of the figure in column widths for 2-column ApJ layout. Default is the width of a single column in the 2-column format.. Must be an integer! (and only 1 or 2)
     
     
     width_height: is a list of the width and height dimensions of the desired figure that you already have. It is only the ratio of these two values that matters as they are rescaled by the desired width in units of columns as specified by width_cols
     """
-    plt.rc('lines',linewidth=0.5)
+    if narrow_lines:
+        plt.rc('lines',linewidth=0.5)
+    else:
+        pass
     single_col_width=3.3522420091324205
     double_col_width=7.100005949910059
     if width_cols==1:

@@ -355,7 +355,9 @@ line_color_dict={
     'C_2':'pink',
     'AlH':'#1ABC9C',
     'SiH':'#8E44AD',
-    'H':'black'
+    'H':'black',
+    'Mg':'cyan',
+    'Cr':'#C70039'
         }
 
 #dictionary of guesses for the box1d model used to generate the shape for background skylines

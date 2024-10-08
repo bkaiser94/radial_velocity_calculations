@@ -465,6 +465,12 @@ if __name__=='__main__':
     #plt.show()
 
     #plot_class_el_abunds('[Fe/H]','[Na/Fe]',markersize=8, alpha=1,errorbars=True, MS_only=True,require_uncertainties=True,saga_table=saga_table,use_class_color=True)
+    plot_el_abunds('[Fe/H]', '[Sr/Mg]', MS_only=True,errorbars=False,require_uncertainties=True, alpha=1,color='b')
+    plot_el_abunds('[Fe/H]', '[Sr/Mg]', MS_only=True,errorbars=False,require_uncertainties=True, alpha=0.5,color='r',sol_norm_y=False)
+    plt.legend()
+    plt.show()
+    
+    
     plot_el_abunds('[Fe/H]', '[Li/Ca]', MS_only=True,errorbars=False,require_uncertainties=True, alpha=1,color='b')
     plot_el_abunds('[Fe/H]', '[Li/Ca]', MS_only=True,errorbars=False,require_uncertainties=True, alpha=0.5,color='r',sol_norm_y=False)
     plt.legend()

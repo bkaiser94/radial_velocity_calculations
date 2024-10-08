@@ -43,7 +43,8 @@ slit_yend= 199     #The end of the image with same
 #im_xstart = 9
 #im_xend = 2055
 
-sigclip=15
+#sigclip=15
+sigclip=20
 
 #red cam
 
