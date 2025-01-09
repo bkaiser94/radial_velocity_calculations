@@ -45,6 +45,7 @@ slit_yend= 199     #The end of the image with same
 
 #sigclip=15
 sigclip=20
+#sigclip=30
 
 #red cam
 

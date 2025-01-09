@@ -47,7 +47,7 @@ cooling_modeler='bedard2020'
 default_ms_method='Hurley_He'
 
 output_dir= '/Users/BenKaiser/Desktop/'
-output_dir=output_dir+'wd_70_30_total_age_partial_contributions_each_atm_type/'
+#output_dir=output_dir+'wd_70_30_total_age_partial_contributions_each_atm_type/'
 
 export_total_ages=False
 
@@ -81,12 +81,12 @@ default_z=0.02 #approximately solar
 #target_teff_err= 230.
 
 
-#1644 w/ eDR3 approximation applied
-wd_name='WD J1644-0449'
-target_logg=7.85
-target_logg_err= 0.23
-target_teff= 3830.
-target_teff_err= 230.
+##1644 w/ eDR3 approximation applied
+#wd_name='WD J1644-0449'
+#target_logg=7.85
+#target_logg_err= 0.23
+#target_teff= 3830.
+#target_teff_err= 230.
 
 
 ##1330
@@ -96,7 +96,7 @@ target_teff_err= 230.
 #target_teff= 4310. #K
 #target_teff_err=190.
 
-####2356
+#####2356
 #wd_name='WDJ2356-209'
 #target_logg=7.98
 #target_logg_err=0.07
@@ -110,12 +110,12 @@ target_teff_err= 230.
 #target_teff= 4410. #K
 #target_teff_err=200.
 
-##J1636 from Table2 extended Blouin Magnesium 2020
-#wd_name='SDSSJ1636+1619'
-#target_logg= 8.096
-#target_logg_err=0.059
-#target_teff= 4410. #K
-#target_teff_err=200.
+#J1636 from Table2 extended Blouin Magnesium 2020
+wd_name='SDSSJ1636+1619'
+target_logg= 8.096
+target_logg_err=0.059
+target_teff= 4410. #K
+target_teff_err=200.
 
 
 
@@ -126,7 +126,7 @@ target_teff_err= 230.
 #target_teff= 4210. #K
 #target_teff_err=50.
 
-#####J2317 Simon's new parameters
+######J2317 Simon's new parameters
 #wd_name='WDJ2317+1830'
 #target_logg=8.74
 #target_logg_err=0.06
@@ -291,12 +291,12 @@ def get_output_name(wd_name=wd_name):
 
 
 #n=100000
-n=int(1e6)
+#n=int(1e6)
 #n=int(4e6)
 #n=1000
 #n=10
 #n=int(6e6)#6 million for the 60% M_H>10^-10 from Cunningham et al. (2020)
-#n=int(2.5e6)#2.5 million for the 25% 10^-14< M_H<10^-10 from Cunningham et al. (2020)
+n=int(2.5e6)#2.5 million for the 25% 10^-14< M_H<10^-10 from Cunningham et al. (2020)
 
 
 #bin_widths=0.01
@@ -412,7 +412,7 @@ def get_progenitor_mass(mass_wd, randomize=False, only_lose_mass=massloss_defaul
         pass
     return output_masses
 
-def get_ms_lifetime(mass_wd, method=default_ms_method, z=default_z, randomize=False):
+def get_ms_lifetime(mass_wd, method=default_ms_method, z=default_z, randomize=False,return_prog_masses=False):
     bins=np.linspace(0,10,1000)
     plt.hist(mass_wd, label='Original WD masses', bins=bins)
     prog_mass= get_progenitor_mass(mass_wd, randomize=randomize)
@@ -420,15 +420,28 @@ def get_ms_lifetime(mass_wd, method=default_ms_method, z=default_z, randomize=Fa
     plt.hist(mass_wd[~np.isnan(prog_mass)], label='WD masses remaining', bins=bins, alpha=0.5)
     plt.legend()
     plt.show()
+    #if method=='Fontaine':
+        #return 10*prog_mass**(-2.5)
+    #elif method=='MIST':
+        #return 61*prog_mass**(-2.5)
+    #elif method=='Hurley':
+        #return hp.get_t_ms(prog_mass, z=z)
+    #elif method=='Hurley_He':
+        #return hp.get_t_he(prog_mass, z)
     if method=='Fontaine':
-        return 10*prog_mass**(-2.5)
+        ms_lifetime=10*prog_mass**(-2.5)
     elif method=='MIST':
-        return 61*prog_mass**(-2.5)
+        ms_lifetime= 61*prog_mass**(-2.5)
     elif method=='Hurley':
-        return hp.get_t_ms(prog_mass, z=z)
+        ms_lifetime= hp.get_t_ms(prog_mass, z=z)
     elif method=='Hurley_He':
-        return hp.get_t_he(prog_mass, z)
+        ms_lifetime=hp.get_t_he(prog_mass, z)
+    else:
+        pass
     
+    if return_prog_masses:
+        return ms_lifetime, prog_mass
+    return ms_lifetime
 
 
 
@@ -707,7 +720,9 @@ target_age_dist=operate_on_dist(target_teff_dist, target_mass_dist, teffm_to_age
 simon_age_dist=operate_on_dist(target_teff_dist, simon_mass_dist, teffm_to_age)*1e-9 #Gyr units
 
 #ms_age_dist=get_ms_lifetime(target_mass_dist)
-ms_age_dist=get_ms_lifetime(target_mass_dist, randomize=default_randomize)
+#ms_age_dist=get_ms_lifetime(target_mass_dist, randomize=default_randomize)
+ms_age_dist, prog_mass_dist=get_ms_lifetime(target_mass_dist, randomize=default_randomize,return_prog_masses=True)
+
 #lowz_ms_age_dist=get_ms_lifetime(target_mass_dist, z=0.0001)
 #ms_age_dist=get_ms_lifetime(simon_mass_dist)
 
@@ -740,6 +755,8 @@ throway_trimming, trimmed_teff_dist=clean_and_trim_age(total_age_dist,wd_mass_di
 #trimmed_lowz_total_age_dist=clean_and_trim_age(lowz_total_age_dist)
 throway_trimming, trimmed_cooling_dist=clean_and_trim_age(total_age_dist,wd_mass_dist= target_age_dist)
 #trimmed_lowz_total_age_dist=clean_and_trim_age(lowz_total_age_dist)
+throway_trimming, trimmed_prog_dist=clean_and_trim_age(total_age_dist,wd_mass_dist= prog_mass_dist)
+
 
 #ln_trim_ages= np.log(trimmed_total_age_dist)
 
@@ -822,6 +839,10 @@ print("\n\n")
 print("Median Total Age:", np.median(trimmed_total_age_dist))
 print("16th percentile:", np.nanpercentile(trimmed_total_age_dist,16), "difference w/ median:", np.median(trimmed_total_age_dist)-np.nanpercentile(trimmed_total_age_dist,16))
 print("84th percentile:", np.nanpercentile(trimmed_total_age_dist,84),"difference w/ median:", np.nanpercentile(trimmed_total_age_dist,84)- np.median(trimmed_total_age_dist))
+print("\n")
+print("Median Progenitor Mass:", np.median(trimmed_prog_dist))
+print("16th percentile:", np.nanpercentile(trimmed_prog_dist,16), "difference w/ median:", np.median(trimmed_prog_dist)-np.nanpercentile(trimmed_prog_dist,16))
+print("84th percentile:", np.nanpercentile(trimmed_prog_dist,84),"difference w/ median:", np.nanpercentile(trimmed_prog_dist,84)- np.median(trimmed_prog_dist))
 
 print("\n\n")
 plt.show()

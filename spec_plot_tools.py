@@ -80,6 +80,80 @@ def vac_to_air(wavelengths):
     print('new_wavelengths.min():', new_wavelengths.min())
     return new_wavelengths
 
+
+def get_photon_energy(wavelengths):
+    """
+    input wavelengths that need energy values (ideally in angstroms) or else needs to be an astropy unitted 
+    object
+    
+    returns energy for each photon at each wavelength value in erg, but not as an astropy quantity object
+    """
+    try:
+        print(wavelengths.value)
+    except AttributeError:
+        print('Input wavelengths do not have units for photon energy calculation.\nAssuming units of angstroms.')
+        wavelengths= wavelengths*u.angstrom
+    energy=(const.c*const.h/ wavelengths).cgs #energy in ergs
+    return energy.value
+
+def counts_to_flambda(input_spec, dlambda):
+    """
+    Returns a 'spec' type array after being given an input spec and the associated width of the wavelength bins
+    
+    output units: erg/s/cm^2/A, assuming the input spectrum is in units of counts/s (photons/s), which it should be...
+    """
+    photon_energies= get_photon_energy(input_spec[0]) #erg (probably erg/s)
+    #dlambda= dlambda #delta wavelengths in angstroms
+    soar_area_cm2= (soar_area*(u.meter**2)).to(u.cm**2)
+    soar_area_cm2= soar_area_cm2.value #making it not be an astropy quantity
+    
+    flambda= input_spec[1]*photon_energies/dlambda/soar_area_cm2
+    print(flambda)
+    output_spec= np.vstack([input_spec[0], flambda])
+    return output_spec
+
+def counts_to_fnu(input_spec, dlambda):
+    
+    
+    return
+    
+    
+def flambda_to_fnu(input_spec, dlambda=0.):
+    """
+    returns a 'spec' type array after being given an input spec and the associated width of the wavelength bins
+    
+    dlambda defaults to zero, which is essentially the infinitesimal version of this, which is safe for actual 
+    spectroscopy....I'm pretty sure.
+    
+    output_spec is in units of 10^-28 erg/s/cm^2/Hz assuming the input was in units of 10^-16 erg/s/cm^2/A
+    """
+    flambda= np.copy(input_spec[1])
+    flambda= flambda*u.erg/(u.cm**2)/u.s/u.angstrom
+    waves= np.copy(input_spec[0])
+    waves= waves*u.angstrom
+    delta_lambda= np.copy(dlambda)*u.angstrom
+    fnu= flambda*(waves**2-0.25*delta_lambda**2)/const.c
+    print('fnu', fnu)
+    fnu=fnu.to(u.erg/u.cm/u.cm/u.s/u.hertz)
+    print('fnu', fnu)
+    fnu=fnu*1e12 #reducing the decimal stuff and making the units match the description
+    output_spec= np.vstack([waves.value, fnu.value])
+    return output_spec
+
+def fnu_to_flambda(input_spec, dlambda=0.):
+    """
+    take a spectrum in f_nu units of  10^-28 erg/s/cm^2/Hz and output it in f_lambda units of  10^-16 erg/s/cm^2/A 
+    
+    """
+    fnu=np.copy(input_spec[1])
+    waves=np.copy(input_spec[0])*u.angstrom
+    fnu=fnu*u.erg/u.cm/u.cm/u.s/u.hertz
+    delta_lambda=dlambda*u.angstrom
+    flambda=fnu*const.c/(waves**2-0.25*delta_lambda**2)
+    flambda=flambda*1e28 #needed for the final conversion to be in units of 10^-16  erg/s/cm^2/A
+    output_spec=np.vstack([waves.value, flambda.value])
+    return output_spec
+
 def make_inside_out(input_list, min_val, max_val):
     """
     Takes a list of lists (usually something like a mask_list from the other scripts) and then makes the selected regions become the outer boundaries.
@@ -482,6 +556,33 @@ def retrieve_gaia_xp_spec(filename):
     return file_spec, file_noise
 
 
+
+def retrieve_mwdd_spec(filename):
+    """
+    Retrieve the spectrum that is stored in the MWDD as a CSV type text file. You have to have
+    downloaded the spectrum yourself and put it in this directory though!
+    
+    These are stored as wavelength in angstroms,  f_nu values, so this function will convert to 
+    f_lambda and package the spectrum to be like the other retrieved files, but will probably 
+    exclude the noise array.
+    
+    """
+    filename=cp.mwdd_spec_dir+'*'+filename+'*'
+    print(filename)
+    filename_list=glob(filename)
+    print(filename_list)
+    #input_table=Table.read(filename_list[0],format='ascii.csv',skip_header=1)
+    #input_table.pprint()
+    #waves=input_table['wavelength'] #wavelengths (in angstroms generally, maybe always)
+    #flux=input_table['flux'] #flux in f_nu usually. This is usually in erg/s/cm^2/Hz, but seemingly not with the 10^-28 contained in the units, so it's actually in the numerical values
+    full_array=np.genfromtxt(filename_list[0],delimiter=',').T
+    waves=full_array[0]
+    flux=full_array[1]
+    input_spec=np.vstack([waves,flux])
+    output_spec=fnu_to_flambda(input_spec)
+    return output_spec
+
+
 def retrieve_telluric_model(filename, wave_range):
     filename=cp.tell_dir+filename
     hdu=fits.open(filename)
@@ -583,65 +684,6 @@ def show_plot(show_telluric=True, show_legend=True, line_id='', convert_to_air=F
     else:
         pass
     return
-
-def get_photon_energy(wavelengths):
-    """
-    input wavelengths that need energy values (ideally in angstroms) or else needs to be an astropy unitted 
-    object
-    
-    returns energy for each photon at each wavelength value in erg, but not as an astropy quantity object
-    """
-    try:
-        print(wavelengths.value)
-    except AttributeError:
-        print('Input wavelengths do not have units for photon energy calculation.\nAssuming units of angstroms.')
-        wavelengths= wavelengths*u.angstrom
-    energy=(const.c*const.h/ wavelengths).cgs #energy in ergs
-    return energy.value
-
-def counts_to_flambda(input_spec, dlambda):
-    """
-    Returns a 'spec' type array after being given an input spec and the associated width of the wavelength bins
-    
-    output units: erg/s/cm^2/A, assuming the input spectrum is in units of counts/s (photons/s), which it should be...
-    """
-    photon_energies= get_photon_energy(input_spec[0]) #erg (probably erg/s)
-    #dlambda= dlambda #delta wavelengths in angstroms
-    soar_area_cm2= (soar_area*(u.meter**2)).to(u.cm**2)
-    soar_area_cm2= soar_area_cm2.value #making it not be an astropy quantity
-    
-    flambda= input_spec[1]*photon_energies/dlambda/soar_area_cm2
-    print(flambda)
-    output_spec= np.vstack([input_spec[0], flambda])
-    return output_spec
-
-def counts_to_fnu(input_spec, dlambda):
-    
-    
-    return
-    
-    
-def flambda_to_fnu(input_spec, dlambda=0.):
-    """
-    returns a 'spec' type array after being given an input spec and the associated width of the wavelength bins
-    
-    dlambda defaults to zero, which is essentially the infinitesimal version of this, which is safe for actual 
-    spectroscopy....I'm pretty sure.
-    
-    output_spec is in units of 10^-28 erg/s/cm^2/Hz assuming the input was in units of 10^-16 erg/s/cm^2/A
-    """
-    flambda= np.copy(input_spec[1])
-    flambda= flambda*u.erg/(u.cm**2)/u.s/u.angstrom
-    waves= np.copy(input_spec[0])
-    waves= waves*u.angstrom
-    delta_lambda= np.copy(dlambda)*u.angstrom
-    fnu= flambda*(waves**2-0.25*delta_lambda**2)/const.c
-    print('fnu', fnu)
-    fnu=fnu.to(u.erg/u.cm/u.cm/u.s/u.hertz)
-    print('fnu', fnu)
-    fnu=fnu*1e12 #reducing the decimal stuff and making the units match the description
-    output_spec= np.vstack([waves.value, fnu.value])
-    return output_spec
 
 
 def correct_extinction(input_spec, header, plot_all=False):

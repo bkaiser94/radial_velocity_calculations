@@ -46,6 +46,7 @@ abundance_dir='abundances/'
 model_spectra_dir='spectroscopic_models/'
 diffusion_dir='diffusion_timescales/'
 nuke_cross_dir='nuclear_cross_sections/Read_and_Viola_1984_TableVIII_empirical_excitation_functions/'
+mwdd_spec_dir='MWDD_spectra/'
 
 standard_dir=ref_dir+'standards/'
 line_list_dir= ref_dir+'line_lists/'
@@ -55,6 +56,7 @@ true_color_dir= ref_dir+'color_matching_functions/'
 model_spectra_dir=ref_dir+model_spectra_dir
 diffusion_dir=ref_dir+diffusion_dir
 nuke_cross_dir=ref_dir+nuke_cross_dir
+mwdd_spec_dir=ref_dir+mwdd_spec_dir
 
 gaia_spec_dir= '/Users/BenKaiser/Desktop/gaia/GaiaDR3_XP_spectra/'
 
@@ -348,7 +350,8 @@ line_color_dict={
     'Rb': 'magenta',
     #'Ca': '#001a4b',
     'Ca':'#033ca6',
-    'MgH':'#6e76c1',
+    #'MgH':'#6e76c1', #changed in response to reviewer comments on WD Li excess paper 2024-11-04
+    'MgH':'#A569BD',
     '?': '#f39117',
     'cyclotron': '#001a4b',
     'Ba': 'orange',

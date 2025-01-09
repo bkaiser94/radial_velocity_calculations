@@ -145,11 +145,11 @@ def extract_spectrum(img_data, header, polynomials= [0,0], core_sides=2., bkg_co
     target_light= target_light/header['EXPTIME'] #converting to counts/s
     bkg_light= bkg_light/header['EXPTIME'] #converting to counts/s
     
-    #2024-10-07 bug tracking
-    plt.plot(target_light,label="target_light")
-    plt.plot(bkg_light,label="bkg_light")
-    plt.title("in spext trace extraction")
-    plt.legend()
-    plt.show()
+    ####2024-10-07 bug tracking
+    ###plt.plot(target_light,label="target_light")
+    ###plt.plot(bkg_light,label="bkg_light")
+    ###plt.title("in spext trace extraction")
+    ###plt.legend()
+    ###plt.show()
     
     return target_light, bkg_light, noise_spectrum

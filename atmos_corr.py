@@ -161,6 +161,20 @@ tell1_array=  np.genfromtxt(tell_names[0], skip_header=1).T
 tell1_waves= tell1_array[0]
 counter=0
 
+for resid_name in resid_names:
+    header_dict= extract_AM_MJD(resid_name)
+    airmass= header_dict['Airmass']
+    mjd=header_dict['MJD']
+    resid_array = np.genfromtxt(resid_name)
+    max_index= np.argmax(sens_curve)
+    label= ','.join([resid_name, str(airmass), str(mjd)])
+    plt.plot(tell1_waves,resid_array, label=label)
+    print("\n=============")
+    print(sens_name)
+    print('airmass:', airmass, 'mjd:', mjd)
+plt.xlabel(r'Wavelength')
+spt.show_plot()
+
 
 coll_absorps= []
 header_table=[]

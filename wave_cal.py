@@ -99,8 +99,8 @@ trace_band_width=190#usual extraction search window
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 15 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-#sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side=2
+sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+#sigma_multi_side=2
 #sigma_multi_side=3
 #sigma_multi_side=2.5
 #sigma_multi_side= 1 #multiple of sigma value of trace gaussian that should be distance out to go for extraction windo
@@ -1039,12 +1039,12 @@ for counter, img in enumerate(speclist):
         #print('\n=========\n\n\n')
         target_light, bkg_light, noise_spectrum= spext.extract_spectrum(img_data, header, polynomials=polynomials, core_sides= core_sides, bkg_core_sides=bkg_core_sides, bkg_shift=bkg_shift, bkg_method=bkg_method, bkg_poly_deg= bkg_poly, n_biases= n_biases)
         
-        #2024-10-07 bug tracking
-        plt.plot(target_light,label="target_light")
-        plt.plot(bkg_light,label="bkg_light")
-        plt.title("in for loop back in wave_cal.py")
-        plt.legend()
-        plt.show()
+        ##2024-10-07 bug tracking
+        #plt.plot(target_light,label="target_light")
+        #plt.plot(bkg_light,label="bkg_light")
+        #plt.title("in for loop back in wave_cal.py")
+        #plt.legend()
+        #plt.show()
         
         seeing_FWHM = seeing_list[association_index]
         band_inds= np.indices(img_data.shape)
@@ -1222,12 +1222,12 @@ for counter, img in enumerate(speclist):
         #poly_curve_wavelength= barycentric_vel_corr(header, poly_curve_wavelength) #correction of Earth's orbital motion
         header['units']= 'Counts/s'
         
-        #2024-10-07 bug tracking
-        plt.plot(target_light,label="target_light")
-        plt.plot(bkg_light,label="bkg_light")
-        plt.title("right before writing to fits file")
-        plt.legend()
-        plt.show()
+        ###2024-10-07 bug tracking
+        ##plt.plot(target_light,label="target_light")
+        ##plt.plot(bkg_light,label="bkg_light")
+        ##plt.title("right before writing to fits file")
+        ##plt.legend()
+        ##plt.show()
         
         hdu = fits.PrimaryHDU(poly_curve_wavelength, header = header)
         hdu1= fits.ImageHDU(target_light)
