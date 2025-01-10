@@ -99,8 +99,8 @@ trace_band_width=190#usual extraction search window
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 15 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-#sigma_multi_side=2
+#sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+sigma_multi_side=2
 #sigma_multi_side=3
 #sigma_multi_side=2.5
 #sigma_multi_side= 1 #multiple of sigma value of trace gaussian that should be distance out to go for extraction windo
@@ -110,8 +110,8 @@ sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be d
 
 #y_trace_width= core_sides*2+1 #the actual number of pixels in the vertical direction that are in the trace (or background)
 poly_degree = 3 #polynomial degree of the fit to the trace
-lamp_poly_degree=5
-#lamp_poly_degree=3
+lamp_poly_degree=5 #setting prior to change on 2025-01-09. This was the default for everything up to this date.
+#lamp_poly_degree=3 #new setting changed to on 2025-01-09 for HgAr 400mshort spectra because the red is doubling back.
 flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
@@ -169,8 +169,8 @@ air_off_type='pixel' #if you want the offset to be applied in pixel space
 #air_off_type='none' #setting for not applying the airglow correction. Realistically you should just set do_airglow_corr=False for this option
 
 
-bkg_method= 'avg' #background subtraction method; 'avg'
-#bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
+#bkg_method= 'avg' #background subtraction method; 'avg'
+bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
 #bkg_method= 'opp_get_bright' #background subtraction method; gets the bright part of the frame, meaning trace_offset==0 should be true, and then the bkg_shift corresponds to ...
 #bkg_method= 'opp_get_dim' #background subtraction method; gets the dim part of the frame, meaning trace_offset should be set to however far off the extraction should be , and then the bkg_shift corresponds to ...
 

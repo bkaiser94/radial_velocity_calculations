@@ -1340,7 +1340,7 @@ if __name__ == '__main__':
 
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=25, kernel_type='box')
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=5, kernel_type='box')
             #plot_spectrum(nu_spec, filename, header, smooth=True, norm=True, pix_width=15, kernel_type='box')
 
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
@@ -1369,8 +1369,8 @@ if __name__ == '__main__':
             #spt.show_plot(show_telluric=False, show_legend=False)
             
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=True)
-            #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
-            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
+            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             
             #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
 

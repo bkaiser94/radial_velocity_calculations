@@ -200,6 +200,19 @@ cal_params={
                     'setupname':'400ma1'
                     }
                 }
+            },
+        11.0000:{
+            5.80000:{
+                'Red':{
+                    'linelistname':'400Mshort_HgAr.txt',
+                    'offset':0,
+                    'trimregions':{
+                        'x':[245,red_default_trim['x'][1]],
+                        'y':red_default_trim['y']},
+                    'air_corr': True,
+                    'setupname':'400mshort'
+                    }
+                }
             }
         }
     }
@@ -412,19 +425,25 @@ flux_cal_dict={
     '400m1':5,
     '400m2':5,
     'Gemini':5,
-    '400ma1':5},
+    '400ma1':5,
+    '400mshort':5
+    },
 'obs_poly_degree':{
     '930blue':9,
     '400m1':7,
     '400m2':7,
     'Gemini':7,
-    '400ma1':7},
+    '400ma1':7,
+    '400mshort':9
+    },
 'sens_fit_method':{
     '930blue':'empirical',
     '400m1':'empirical',
     '400m2':'poly/poly',
     'Gemini':'poly/interp',
-    '400ma1':'empirical',}
+    '400ma1':'empirical',
+    '400mshort':'empirical'
+    }
 }
 
 line_id_dict={
