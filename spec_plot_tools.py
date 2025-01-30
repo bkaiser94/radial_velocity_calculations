@@ -538,6 +538,23 @@ def retrieve_model_spec(filename):
     all_array=np.genfromtxt(filename).T
     return all_array
 
+def retrieve_blouin_model(filename):
+    """
+    Simon's H atmosphere simulations from 2025-01-13 for us to test the Balmer line wings
+    
+    It's in units of angstroms and Hnu.
+    I'm going to just treat that as fnu 
+    """
+    nu_spec=Table.read(filename,delimiter=' ', format='ascii.csv')
+    print('model nu spec')
+    nu_spec.pprint()
+    nu_new_spec=np.vstack([nu_spec['#'],nu_spec['Wavelength(A)']]) #The Table.read accidentally makes the first column have a name of "#" because there's a space after it. I'm still a bit confused as to why this isn't ignored as it usually is (I could swear) in the case of every other table with names
+    
+    model_spec=fnu_to_flambda(nu_new_spec)
+    
+    
+    return model_spec
+
 def retrieve_gaia_xp_spec(filename):
     """
     retrieve a Gaia DR3 XP spectrum generated using GaiaXPy before and now it's just a previously stored set of values. 
@@ -1256,7 +1273,21 @@ def time_string():
     time_out=str(start).split('.')[0]
     return time_out
 
-
+def plot_wien_max_wave(teff_array,label_pos=default_label_pos,color='k',linestyle='-'):
+    def get_max_wave(teff):
+        """
+        Wien's law in angstroms. Expects Teff in Kelvin
+        """
+        return 0.002897755/teff*1e10
+    print('teff_array',teff_array,teff_array.shape)
+    for teff in teff_array:
+        print('teff',teff)
+        max_wave=get_max_wave(teff)
+        print('max_wave',max_wave)
+        plt.axvline(x=max_wave,color=color,linestyle=linestyle)
+        plt.text(max_wave,label_pos,str(teff)+" K, "+str(max_wave)[:6]+" A",rotation=270,color=color)
+    
+    return
 
 
 

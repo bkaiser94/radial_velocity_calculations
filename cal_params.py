@@ -40,6 +40,7 @@ name_all_lower_case:{
 ref_dir= '/Users/BenKaiser/Desktop/Goodman_ref_files/'
 
 wave_sol_dir= 'wavelength_solns/'
+tracetrack_dir='tracetracks/'
 #tell_dir='telluric_libs/'
 tell_dir='telluric_libs/pwv_R60k/'
 abundance_dir='abundances/'
@@ -57,6 +58,8 @@ model_spectra_dir=ref_dir+model_spectra_dir
 diffusion_dir=ref_dir+diffusion_dir
 nuke_cross_dir=ref_dir+nuke_cross_dir
 mwdd_spec_dir=ref_dir+mwdd_spec_dir
+
+balmer_model_dir=model_spectra_dir+'Halpha_cool_models/'
 
 gaia_spec_dir= '/Users/BenKaiser/Desktop/gaia/GaiaDR3_XP_spectra/'
 
@@ -207,7 +210,8 @@ cal_params={
                     'linelistname':'400Mshort_HgAr.txt',
                     'offset':0,
                     'trimregions':{
-                        'x':[245,red_default_trim['x'][1]],
+                        #'x':[245,red_default_trim['x'][1]],
+                        'x':[245+225,red_default_trim['x'][1]], #removed an additional 225 pixels to try to get rid of all of the CCD with no light because atmospheric absorption
                         'y':red_default_trim['y']},
                     'air_corr': True,
                     'setupname':'400mshort'

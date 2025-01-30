@@ -153,3 +153,10 @@ def extract_spectrum(img_data, header, polynomials= [0,0], core_sides=2., bkg_co
     ###plt.show()
     
     return target_light, bkg_light, noise_spectrum
+
+
+
+def plot_trace_track(fits_filename):
+    
+    
+    return

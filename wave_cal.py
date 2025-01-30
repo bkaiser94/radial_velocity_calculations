@@ -50,6 +50,7 @@ cerro_pachon_location = coords.EarthLocation.from_geodetic(lat =(-30, 14, 16.41)
 skip_flat= True
 need_offset=True
 do_save_wavesoln=True
+do_save_tracetrack=True
 #trace_method='maxes'
 trace_method='binned_gauss'
 
@@ -103,7 +104,7 @@ trace_band_width=190#usual extraction search window
 sigma_multi_side=2
 #sigma_multi_side=3
 #sigma_multi_side=2.5
-#sigma_multi_side= 1 #multiple of sigma value of trace gaussian that should be distance out to go for extraction windo
+#sigma_multi_side= 1 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
 
 #core_sides=  5
 #core_sides=  7
@@ -118,7 +119,7 @@ flat_poly= 7
 bkg_shift= 30 #standard shift used
 #bkg_shift=20
 #bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
-#bkg_shift=43
+#bkg_shift=35
 #bkg_shift= 47
 #bkg_shift=11
 #bkg_shift=48
@@ -127,8 +128,8 @@ bkg_shift= 30 #standard shift used
 #bkg_side_multi= 1. #
 #bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
 #bkg_side_multi=2. #mutliple of core_sides that that  bkg_core_sides should be later
-bkg_side_multi=3. #mutliple of core_sides that that  bkg_core_sides should be later
-#bkg_side_multi=4. #mutliple of core_sides that that  bkg_core_sides should be later
+#bkg_side_multi=3. #mutliple of core_sides that that  bkg_core_sides should be later
+bkg_side_multi=4. #mutliple of core_sides that that  bkg_core_sides should be later
 
 bkg_max_side= bkg_shift/2.-5
 lamp_sigma_guess= 2
@@ -169,8 +170,8 @@ air_off_type='pixel' #if you want the offset to be applied in pixel space
 #air_off_type='none' #setting for not applying the airglow correction. Realistically you should just set do_airglow_corr=False for this option
 
 
-#bkg_method= 'avg' #background subtraction method; 'avg'
-bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
+bkg_method= 'avg' #background subtraction method; 'avg'
+#bkg_method= 'poly' #background subtraction method; 'avg' means the regions will be averaged together to be subtracted from each pixel in the trace region.
 #bkg_method= 'opp_get_bright' #background subtraction method; gets the bright part of the frame, meaning trace_offset==0 should be true, and then the bkg_shift corresponds to ...
 #bkg_method= 'opp_get_dim' #background subtraction method; gets the dim part of the frame, meaning trace_offset should be set to however far off the extraction should be , and then the bkg_shift corresponds to ...
 
@@ -259,6 +260,19 @@ def save_wavesoln(fits_filename, wave_polynomial):
     np.savetxt(wave_filename, wave_polynomial)
     print(wave_filename,' saved.')
     return wave_filename
+
+def save_tracetrack(fits_filename,trace_polynomial):
+    name_parts = fits_filename.split('.')
+    output_filename= 'tracetrack_'+name_parts[1]+'.txt'
+    output_filename=cp.tracetrack_dir+output_filename
+    if not os.path.exists(cp.tracetrack_dir):
+        os.makedirs(cp.tracetrack_dir)
+    else:
+        pass
+    print('Saving',output_filename,'.')
+    np.savetxt(output_filename, trace_polynomial)
+    print(output_filename,' saved.')
+    return output_filename
 
 
 
@@ -1217,6 +1231,11 @@ for counter, img in enumerate(speclist):
         if do_save_wavesoln:
             wave_soln_name=save_wavesoln(filename, polynomials[1])
             header.append(card=('wavesoln', wave_soln_name, 'filename of wavelength solution poly coeffs'))
+        else:
+            pass
+        if do_save_tracetrack:
+            tracetrack_name=save_tracetrack(filename, polynomials[0])
+            header.append(card=('trctrack', tracetrack_name, 'filename of trace tracking poly coeffs'))
         else:
             pass
         #poly_curve_wavelength= barycentric_vel_corr(header, poly_curve_wavelength) #correction of Earth's orbital motion

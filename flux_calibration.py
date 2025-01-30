@@ -85,10 +85,10 @@ standard_name= 'LTT3218'
 
 #observed_file='ravg_wctb.LTT3218_400m2.fits'
 #observed_file='ravg_wctb.LTT3218short_400m2.fits'
-#observed_file='ravg_wctb.LTT3218_400m1.fits'
+observed_file='ravg_wctb.LTT3218_400m1.fits'
 #observed_file='ravg_wctb.LTT3218_400m1_quick.fits'
 #observed_file='ravg_wctb.LTT3218_400mshort.fits'
-observed_file='ravg_wctb.LTT3218_400mshort_quick.fits'
+#observed_file='ravg_wctb.LTT3218_400mshort_quick.fits'
 
 
 

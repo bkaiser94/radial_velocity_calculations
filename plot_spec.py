@@ -105,13 +105,13 @@ mwdd_filename='GJ3866_DC_Heatm_Teff5000_Bergeron2001_fnu_MWDD_spec.csv'
 #norm_range=[5100,5400]
 #norm_range=[4420,4500]
 #norm_range=[4800.,5000.]
-norm_range=[6090,6240]
+#norm_range=[6090,6240]
 #norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
 #norm_range=[6773, 6817]#red side of Li I line short of telluric
-#norm_range=[6630,6670]
+norm_range=[6630,6690]
 #norm_range=[5740,5850]
 #norm_range=[5270,5560]
 #norm_range=[4600, 4700]
@@ -185,7 +185,7 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*0033*')
+    filenames=glob('fwctb*0714*')
     #filenames=glob('fwctb*0850p195*')
     #filenames=glob('fwctb*WDJ2124*')
     #filenames=glob('fwctb*SDSSJ1312*')
@@ -1340,7 +1340,14 @@ if __name__ == '__main__':
 
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=5, kernel_type='box')
+            plot_spectrum(target_spec, filename+', seeing '+str(header["see_FWHM"]*header["pix_scal"])[:4]+ '" '+str(header['width']), header, smooth=True, norm=False, pix_width=5, kernel_type='box')
+            #try:
+                #hold_spec[1]=hold_spec[1]-target_spec[1]
+                #plot_spectrum(hold_spec, filename+', seeing '+str(header["see_FWHM"]*header["pix_scal"])[:4]+ ' " ', header, smooth=True, norm=False, pix_width=5, kernel_type='box')
+                #hold_spec=target_spec
+            #except NameError as error:
+                #print("NameError:", error)
+                #hold_spec=target_spec
             #plot_spectrum(nu_spec, filename, header, smooth=True, norm=True, pix_width=15, kernel_type='box')
 
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
@@ -1370,9 +1377,9 @@ if __name__ == '__main__':
             
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=True)
             spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
-            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             
-            #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
+            spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
 
             #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
             #spt.show_plot(show_legend=True)
@@ -1393,12 +1400,25 @@ if __name__ == '__main__':
         #plot_telluric_spectrum([3700,9000], smooth=False, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
         #spt.show_plot(show_legend=True, line_id='alkali', convert_to_air=True)
         
+        #####Adding plotting of model spectra for Balmer lines
+        
+        #model_file_list=sorted(glob(cp.balmer_model_dir+'*.txt'))
+        #for model_filename in model_file_list:
+            #model_spec=spt.retrieve_blouin_model(model_filename)
+            #trim_model_spec=spt.clean_spectrum(model_spec,3600,7000,[])
+            #norm_model_spec=norm_spectrum(trim_model_spec,norm_range)
+            #label=model_filename.split('/')[-1]
+            #plt.plot(norm_model_spec[0],norm_model_spec[1],label=model_filename.split('/')[-1])
+        
+        ###### End of model spectra plotting
+        
         #print('ew_list:',ew_list)
         plt.axhline(y=0, linestyle=':', color='k')
         print('\n\nstandard deviations',sig_list)
-        spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
-        spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
-        #spt.show_plot(show_legend=True, line_id='h', convert_to_air=True)
+        #spt.plot_wien_max_wave(np.arange(4500,6600, 500))
+        #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
+        #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+        spt.show_plot(show_legend=True, line_id='h', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
         #spt.show_plot(show_telluric=False, show_legend=True, line_id='')
