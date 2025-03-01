@@ -55,8 +55,8 @@ export_total_ages=False
 universe_age=20. #Gyr, artifical age of the universe to use as upper limit to get around bias
 percent_range=0.68 #error bar coverage for total age estimate.
 #percent_range=0.95
-#null_age_val=20. #usually 20
-null_age_val=50. #I'm experimenting though for the moment
+null_age_val=20. #usually 20
+#null_age_val=50. #I'm experimenting though for the moment
 default_limit_universe=True
 default_randomize=True
 massloss_default=True
@@ -110,12 +110,12 @@ default_z=0.02 #approximately solar
 #target_teff= 4410. #K
 #target_teff_err=200.
 
-#J1636 from Table2 extended Blouin Magnesium 2020
-wd_name='SDSSJ1636+1619'
-target_logg= 8.096
-target_logg_err=0.059
-target_teff= 4410. #K
-target_teff_err=200.
+##J1636 from Table2 extended Blouin Magnesium 2020
+#wd_name='SDSSJ1636+1619'
+#target_logg= 8.096
+#target_logg_err=0.059
+#target_teff= 4410. #K
+#target_teff_err=200.
 
 
 
@@ -227,6 +227,75 @@ target_teff_err=200.
 #target_teff_err=70.
 
 
+##################### Berry's kinematic population groupings ###################
+
+##### DAs 7000-9500K
+#### Oh no it's not a Gaussian because he drew boxes... oh god.
+#wd_name='DAs7000_9500K'
+#target_logg=8.0538
+#target_logg_err=0.30071
+#target_teff=8085.11066
+#target_teff_err=728.06
+
+
+##### DCs
+#### Oh no it's not a Gaussian because he drew boxes... oh god.
+#wd_name='DCs7000_9500K'
+#target_logg=8.21
+#target_logg_err=0.25
+#target_teff=7980.
+#target_teff_err=728.
+
+#### DQs
+### Oh no it's not a Gaussian because he drew boxes... oh god.
+#wd_name='DQs7000_9500K'
+#target_logg=7.96
+#target_logg_err=0.21
+#target_teff=8058.
+#target_logg_err=633.
+
+
+### DAHes
+wd_name='DAHes'
+target_teff=7856.96 
+target_teff_err=668.99
+target_logg=8.243
+target_logg_err=0.303
+
+################ With no variation
+##### DAs 7000-9500K
+#### Oh no it's not a Gaussian because he drew boxes... oh god.
+#wd_name='DAs7000_9500K'
+#target_logg=8.0538
+#target_logg_err=0.00001
+#target_teff=8085.11066
+#target_teff_err=.000001
+
+
+##### DCs
+#### Oh no it's not a Gaussian because he drew boxes... oh god.
+#wd_name='DCs7000_9500K'
+#target_logg=8.21
+#target_logg_err=0.0000001
+#target_teff=7980.
+#target_teff_err=0.0000001
+
+#### DQs
+### Oh no it's not a Gaussian because he drew boxes... oh god.
+#wd_name='DQs7000_9500K'
+#target_logg=7.96
+#target_logg_err=0.000001
+#target_teff=8058.
+#target_logg_err=0.0000001
+
+
+### DAHes
+wd_name='DAHes'
+target_teff=7856.96 
+target_teff_err=0.000001
+target_logg=8.243
+target_logg_err=0.000001
+
 desired_NaCa= -1.1 #Sioux county meteorite, achondrite
 
 
@@ -291,12 +360,12 @@ def get_output_name(wd_name=wd_name):
 
 
 #n=100000
-#n=int(1e6)
+n=int(1e6)
 #n=int(4e6)
 #n=1000
 #n=10
 #n=int(6e6)#6 million for the 60% M_H>10^-10 from Cunningham et al. (2020)
-n=int(2.5e6)#2.5 million for the 25% 10^-14< M_H<10^-10 from Cunningham et al. (2020)
+#n=int(2.5e6)#2.5 million for the 25% 10^-14< M_H<10^-10 from Cunningham et al. (2020)
 
 
 #bin_widths=0.01
@@ -845,6 +914,18 @@ print("16th percentile:", np.nanpercentile(trimmed_prog_dist,16), "difference w/
 print("84th percentile:", np.nanpercentile(trimmed_prog_dist,84),"difference w/ median:", np.nanpercentile(trimmed_prog_dist,84)- np.median(trimmed_prog_dist))
 
 print("\n\n")
+
+print('\n')
+print('median cooling age (all sims)', np.nanmedian(target_age_dist))
+print("16th percentile:", np.nanpercentile(target_age_dist,16), "difference w/ median:", np.median(target_age_dist)-np.nanpercentile(target_age_dist,16))
+print("84th percentile:", np.nanpercentile(target_age_dist,84),"difference w/ median:", np.nanpercentile(target_age_dist,84)- np.median(target_age_dist))
+print('\n')
+
+print('\n')
+print('median cooling age (trimmed to retained)', np.nanmedian(trimmed_cooling_dist))
+print("16th percentile:", np.nanpercentile(trimmed_cooling_dist,16), "difference w/ median:", np.median(trimmed_cooling_dist)-np.nanpercentile(trimmed_cooling_dist,16))
+print("84th percentile:", np.nanpercentile(trimmed_cooling_dist,84),"difference w/ median:", np.nanpercentile(trimmed_cooling_dist,84)- np.median(trimmed_cooling_dist))
+print('\n')
 plt.show()
 
 these_bins= np.arange(0,1.4, 0.025)
@@ -917,9 +998,9 @@ std_age= np.std(target_age_dist)
 mean_total_age=np.nanmean(total_age_dist)
 std_total_age=np.nanstd(total_age_dist)
 
-med_total_age=np.nanmedian(clean_total_age_dist)
-upper_total_age=np.nanpercentile(clean_total_age_dist, 84)
-lower_total_age= np.nanpercentile(clean_total_age_dist, 16)
+med_total_age=np.nanmedian(trimmed_total_age_dist)
+upper_total_age=np.nanpercentile(trimmed_total_age_dist, 84)
+lower_total_age= np.nanpercentile(trimmed_total_age_dist, 16)
 
 print('med total age', med_total_age, 'up to', upper_total_age, 'or down to', lower_total_age)
 #print('\n99\%\ chance that total age > ', np.nanpercentile(clean_total_age_dist, 1),'Gyr\n')
@@ -927,6 +1008,11 @@ print('med total age', med_total_age, 'up to', upper_total_age, 'or down to', lo
 print('\n99\%\ chance that total age > ', np.nanpercentile(trimmed_total_age_dist, 1),'Gyr\n')
 print('\n99\%\ chance that total age < ', np.nanpercentile(trimmed_total_age_dist, 99),'Gyr\n')
 print('mean cooling age', mean_age, '+/-', std_age)
+print('\n')
+print('median cooling age', np.nanmedian(target_age_dist))
+print("16th percentile:", np.nanpercentile(target_age_dist,16), "difference w/ median:", np.median(target_age_dist)-np.nanpercentile(target_age_dist,16))
+print("84th percentile:", np.nanpercentile(target_age_dist,84),"difference w/ median:", np.nanpercentile(target_age_dist,84)- np.median(target_age_dist))
+print('\n')
 print('mean total age', mean_total_age, '+/-', std_total_age)
 print(np.nanpercentile(clean_total_age_dist,16),np.nanmedian(clean_total_age_dist), np.nanpercentile(clean_total_age_dist,84))
 #print(np.nanmedian(total_simon_dist), np.nanpercentile(total_simon_dist,16), np.nanpercentile(total_simon_dist,84))
@@ -955,7 +1041,7 @@ else:
     print('python_version_number',python_version_number, "somehow couldn't be <3. or >=3., so something is very wrong")
     sys.exit()
 plt.xlabel('Age (Gyr)')
-plt.axvline(x=med_total_age, linestyle='--', color='k')
+plt.axvline(x=med_total_age, linestyle='--', color='k',label='median total age and 68%% range')
 plt.axvline(x=upper_total_age, linestyle='--', color='k')
 plt.axvline(x=lower_total_age, linestyle='--', color='k')
 plt.axvline(x=max_val, linestyle='--', color='r', label='M/L estimates')
