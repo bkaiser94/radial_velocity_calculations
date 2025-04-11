@@ -84,7 +84,14 @@ save_plots=False
 
 #########################
 #mwdd_filename='WDJ0254p4255_DXP_Kilic2025_fnu_MWDD_spec.csv'
-mwdd_filename='GJ3866_DC_Heatm_Teff5000_Bergeron2001_fnu_MWDD_spec.csv'
+#mwdd_filename='GJ3866_DC_Heatm_Teff5000_Bergeron2001_fnu_MWDD_spec.csv'
+#mwdd_filename='WD1208p076_DA_Teff5150_subsavage2009_fnu_MWDD_spec.csv'
+#mwdd_filename='WDJ1753m8405_DCsus_OBrien2022_flambda_MWDD_spec.csv'
+#mwdd_filename='WDJ1838m5357_DAsus_Teff5150_OBrien2024_flambda_MWDD_spec.csv'
+#mwdd_filename='WDJ1828m6537_DAsus_Teff5050_OBrien2024_flambda_MWDD_spec.csv'
+#mwdd_filename='WDJ1604p2310_DAsus_Teff5100_Kilic2025_fnu_MWDD_spec.csv'
+#mwdd_filename='LSPMJ1951p4209_DAsus_Teff5100_Tremblay2020_fnu_MWDD_spec.csv'
+mwdd_filename='Lawd34_DC_Teff7096K_OBrien2024_flambda_MWDD_spec.csv'
 #mwdd_filename='GJ1221_DXP_Giammichele2012_fnu_MWDD_spec.csv'
 #mwdd_filename='GJ1228_DXP_Bergeron2011_fnu_MWDD_spec.csv'
 
@@ -111,9 +118,9 @@ mwdd_filename='GJ3866_DC_Heatm_Teff5000_Bergeron2001_fnu_MWDD_spec.csv'
 #norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
 #norm_range=[6773, 6817]#red side of Li I line short of telluric
-norm_range=[6630,6690]
+#norm_range=[6630,6690]
 #norm_range=[5740,5850]
-#norm_range=[5270,5560]
+norm_range=[5310,5490]
 #norm_range=[4600, 4700]
 #norm_range=[8640,8790]
 #norm_range=[4975,5050]
@@ -185,7 +192,7 @@ elif file_setting=='all_wctb':
 
 elif file_setting=='all_fwctb':
     print(file_setting)
-    filenames=glob('fwctb*0714*')
+    filenames=glob('fwctb*')
     #filenames=glob('fwctb*0850p195*')
     #filenames=glob('fwctb*WDJ2124*')
     #filenames=glob('fwctb*SDSSJ1312*')
@@ -231,6 +238,7 @@ elif file_setting=='compare_SDSS':
     #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ1312*.fits')
     #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ2348*.fits')
     sdss_names=glob(sdss_path+'WD_pec/*.fits')
+    #sdss_names=glob(sdss_path+'DC/*.fits')
 
     sdss_names= sorted(sdss_names)
     #print('sdss_names:',sdss_names)
@@ -543,6 +551,10 @@ def plot_head_2_head(file_list, header1, header2,offset=10.):
             #plt.scatter(header[header1], refraction_val-other_refraction_val, color='b')
             #plt.xlabel(header1)
             #plt.ylabel(header2+ ' (arcseconds) for '+ str(offset)+ ' arcminute offset')
+        elif ((header1.lower()=='seeing' ) and (header2.lower()=='see_fwhm')):
+            plt.scatter( header[header1],header[header2]*0.3, color='b')
+            plt.ylabel(header2)
+            plt.xlabel(header1)
         else:
             plt.scatter( header[header1],header[header2], color='b')
             plt.ylabel(header2)
@@ -910,7 +922,8 @@ if __name__ == '__main__':
         filename1=filename
         #target_spec1, header1, target_noise1= spt.retrieve_sdss_spec(filename)
         target_spec1[0]=target_spec1[0]+wavelength_offset
-        mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename)
+        #mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename)
+        mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename, convert_to_flambda=True)
         print('retrieved MWDD spec')
         #target_spec1= norm_spectrum(target_spec1, norm_range)
         #for filename2 in sdss_names:
@@ -952,10 +965,14 @@ if __name__ == '__main__':
             
             #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width*sdss_scale_factor)
             
-            plot_spectrum(mwdd_spec, mwdd_filename, header1, norm=True, smooth=False)
-            
+            plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=5*sdss_scale_factor)
+            #plot_spectrum(mwdd_spec, mwdd_filename, header1, norm=True, smooth=True, kernel_type='box',pix_width=5)
             plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=5)
             
+            #plot_spectrum(spt.flambda_to_fnu(target_spec2), filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=5*sdss_scale_factor)
+            ##plot_spectrum(spt.flambda_to_fnu(mwdd_spec), mwdd_filename, header1, norm=True, smooth=True, kernel_type='box',pix_width=5)
+            #plot_spectrum(spt.flambda_to_fnu(target_spec1), filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=5)
+            #plt.ylabel('fnu normalized')
 
             #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=False, smooth=True, kernel_type='sdss_match', pix_width=pix_width,color='r',alpha=0.8)
             
@@ -1268,6 +1285,7 @@ if __name__ == '__main__':
         ew_noise_list=[]
         bmjd_list=[]
         sig_list=[]
+        snr_list=[]
         for filename in filenames:
             target_spec, header, target_noise= spt.retrieve_spec(filename)
             hdu= fits.open(filename)
@@ -1302,12 +1320,16 @@ if __name__ == '__main__':
             ew_list.append(ew)
             ew_noise_list.append(ew_noise)
             bmjd_list.append(header['bmjd_tdb'])
-            
+            noise_inds=np.where((target_spec[0]>5166.)&(target_spec[0]<5532.))
+            this_noise=np.std(target_spec[1][noise_inds])
+            this_snr=np.mean(target_spec[1][noise_inds])/this_noise
+            snr_list.append(this_snr)
             #print(header['senscurv'], header['seeing'])
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
             print('seeing from trace:',header['see_FWHM'])
             print('\n',header['OPENDATE'])
             print('see_FWHM*0.3"', header['see_FWHM']*0.3)
+            print('seeing actual header',header['seeing'])
             print('see_sig',header['see_sig'])
             print('extraction_width',header['width'])
             print('width in units of see_sig', header['width']/header['see_sig'])
@@ -1338,9 +1360,10 @@ if __name__ == '__main__':
             #Arbitrary Resolution matching smoothing method below, but you have to specify what resolution is the target in pix_width as the number whose square has the file's see_sig's square subtracted from it.
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=np.sqrt(11.**2-header['see_sig']**2), kernel_type='gaussian',alpha=0.5)
 
-            
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=5, kernel_type='box')
+             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
-            plot_spectrum(target_spec, filename+', seeing '+str(header["see_FWHM"]*header["pix_scal"])[:4]+ '" '+str(header['width']), header, smooth=True, norm=False, pix_width=5, kernel_type='box')
+            #plot_spectrum(target_spec, filename+', seeing '+str(header["see_FWHM"]*header["pix_scal"])[:4]+ '" '+str(header['width']), header, smooth=True, norm=False, pix_width=5, kernel_type='box')
             #try:
                 #hold_spec[1]=hold_spec[1]-target_spec[1]
                 #plot_spectrum(hold_spec, filename+', seeing '+str(header["see_FWHM"]*header["pix_scal"])[:4]+ ' " ', header, smooth=True, norm=False, pix_width=5, kernel_type='box')
@@ -1376,10 +1399,10 @@ if __name__ == '__main__':
             #spt.show_plot(show_telluric=False, show_legend=False)
             
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=True)
-            spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
+            spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             
-            spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
+            #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
 
             #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
             #spt.show_plot(show_legend=True)
@@ -1411,7 +1434,9 @@ if __name__ == '__main__':
             #plt.plot(norm_model_spec[0],norm_model_spec[1],label=model_filename.split('/')[-1])
         
         ###### End of model spectra plotting
-        
+        print('\n\nSNRs')
+        print(snr_list)
+        print('\n\n')
         #print('ew_list:',ew_list)
         plt.axhline(y=0, linestyle=':', color='k')
         print('\n\nstandard deviations',sig_list)
@@ -1451,6 +1476,7 @@ if __name__ == '__main__':
         #plot_head_2_head(filenames,'ROTATOR','POSANGLE')
         #plot_head_2_head(filenames,'BMJD_TDB','POSANGLE')
         plot_white_lightcurve(filenames,header_name='airofavg')
+        plot_head_2_head(filenames,'seeing','see_fwhm')
         plot_head_2_head(filenames,'BMJD_TDB','SEE_FWHM')
         plot_head_2_head(filenames,'BMJD_TDB','seeing')
         plot_head_2_head(filenames,'BMJD_TDB','airmass')

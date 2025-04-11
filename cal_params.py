@@ -343,7 +343,16 @@ standard_dict={
          'filename':'ctio_standards/fltt6248.dat',
          'sens_filename': 'LTT6248_sensitivity_curve.txt',
          'balmer_masks':balmer_lines_wide,
-         'other_masks':telluric_lines}
+         'other_masks':telluric_lines},
+    'ltt3864':{
+         'ra': '',
+         'dec':'',
+         'sys_vel': 0,
+         'filename':'ctio_standards/fltt3864.dat',
+         'sens_filename': 'LTT3864_sensitivity_curve.txt',
+         'balmer_masks':balmer_lines_wide,
+         'other_masks':telluric_lines,
+         'comment':'F star'},
     }
      
 #EG 131 does not need Balmer masks because it is a DC. Actually no it's not; it does need the Balmer masks. I don't know where we concluded that but now that I've looked it up in Simbad to find the RV, which I realized in hindsight should have actually been 0 for a DC since no absorption, it turns out EG 131 is a DBZQA. Which is pretty much every letter a dwarf can have, which would make it nearly the opposite of a DC. I don't know what was going on with me and Erik that we concluded it was a DC. ----- Actually ACTUALLY maybe this is still wrong.... the only match was actually EGGR 131 which I think is different from EG131... to be continued. End conclusion, it's a DC at low enough resolution... because it actually has absorption. It's more or less the same as my other objects though, so there's that.
@@ -525,5 +534,14 @@ el_names = [
 #for el_num, el_name in enumerate(el_names):
     
 el_nums=dict([(el[1],el[0]) for el in enumerate(el_names)])
+
+#largely for MORDOR survey paper, but I suppose it can be reused. These are the colors to be plotted.
+sp_type_colors ={
+    'DC':'grey',
+    '??':'#006652',
+    'DZ':'#bb8fce',
+    'WDdM':'r',
+    'DQpec':'#1ca1f2'
+    }
 
 

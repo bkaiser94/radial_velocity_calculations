@@ -30,7 +30,9 @@ from astropy.table import Table, Column
 
 #input_files=sorted(glob('*besselR*focus*.fits'))
 #input_files=sorted(glob('*besselr*focus*.fits')) #need this one for 2024-04-07 only
-input_files=sorted(glob('*besselR*focus*correct*.fits')) #2024-09-27
+#input_files=sorted(glob('*besselR*focus*correct*.fits')) #2024-09-27
+input_files=sorted(glob('*besselR*focus*fix2*.fits')) #2025-02-28
+
 
 
 
@@ -235,7 +237,8 @@ dates=[
     '2024-05-08',
     '2024-05-14',
     '2024-06-04',
-    '2024-09-25'
+    '2024-09-25',
+    '2025-02-28',
     ]
 
 
@@ -250,7 +253,8 @@ focii=[
     0.627,
     0.398,
     0.401,
-    0.454
+    0.454,
+    0.461
     ]
 
 

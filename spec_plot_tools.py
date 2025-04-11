@@ -574,7 +574,7 @@ def retrieve_gaia_xp_spec(filename):
 
 
 
-def retrieve_mwdd_spec(filename):
+def retrieve_mwdd_spec(filename, convert_to_flambda=True):
     """
     Retrieve the spectrum that is stored in the MWDD as a CSV type text file. You have to have
     downloaded the spectrum yourself and put it in this directory though!
@@ -596,7 +596,10 @@ def retrieve_mwdd_spec(filename):
     waves=full_array[0]
     flux=full_array[1]
     input_spec=np.vstack([waves,flux])
-    output_spec=fnu_to_flambda(input_spec)
+    if convert_to_flambda:
+        output_spec=fnu_to_flambda(input_spec)
+    else:
+        output_spec=input_spec
     return output_spec
 
 
@@ -1228,6 +1231,33 @@ def start_ApJ_fig(width_cols=1, constrained_layout=True, width_height=[1.,1.],na
     
     return fig
 
+def start_mnras_fig(width_cols=1, constrained_layout=True, width_height=[ 1.618,1.],narrow_lines=True):
+    """
+    width_cols: the width of the figure in column widths for 2-column MNRAS layout. Default is the width of a single column in the 2-column format.. Must be an integer! (and only 1 or 2)
+    
+    MNRAS single column is 84 mm, which is 3.30709
+    
+    
+    width_height: is a list of the width and height dimensions of the desired figure that you already have. It is only the ratio of these two values that matters as they are rescaled by the desired width in units of columns as specified by width_cols
+    """
+    plt.rc('font',family='Microsoft Sans Serif',size=9)
+    if narrow_lines:
+        plt.rc('lines',linewidth=0.5)
+    else:
+        pass
+    single_col_width=3.30709
+    double_col_width=6.944889
+    if width_cols==1:
+        new_width=single_col_width
+    elif width_cols==2:
+        new_width=double_col_width
+    else:
+        print('No valid width_cols value specified:', width_cols)
+    height_over_width=width_height[1]/width_height[0]
+    new_height=new_width*height_over_width
+    fig= plt.figure(figsize=(new_width, new_height), constrained_layout=constrained_layout)
+    
+    return fig
 
 def make_spec_hump(cent_wave,wave_sigma,amp):
     
