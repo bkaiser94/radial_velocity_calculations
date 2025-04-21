@@ -89,9 +89,11 @@ save_plots=False
 #mwdd_filename='WDJ1753m8405_DCsus_OBrien2022_flambda_MWDD_spec.csv'
 #mwdd_filename='WDJ1838m5357_DAsus_Teff5150_OBrien2024_flambda_MWDD_spec.csv'
 #mwdd_filename='WDJ1828m6537_DAsus_Teff5050_OBrien2024_flambda_MWDD_spec.csv'
+mwdd_filename='WDJ2236m5548_DZsus_Teff5132_OBrien2024_flambda_MWDD_spec.csv'
 #mwdd_filename='WDJ1604p2310_DAsus_Teff5100_Kilic2025_fnu_MWDD_spec.csv'
 #mwdd_filename='LSPMJ1951p4209_DAsus_Teff5100_Tremblay2020_fnu_MWDD_spec.csv'
-mwdd_filename='Lawd34_DC_Teff7096K_OBrien2024_flambda_MWDD_spec.csv'
+#mwdd_filename='Lawd34_DC_Teff7096K_OBrien2024_flambda_MWDD_spec.csv'
+#mwdd_filename='WDJ1018m3438_DAsus_Teff5090_OBrien2024_flambda_MWDD_spec.csv'
 #mwdd_filename='GJ1221_DXP_Giammichele2012_fnu_MWDD_spec.csv'
 #mwdd_filename='GJ1228_DXP_Bergeron2011_fnu_MWDD_spec.csv'
 
@@ -127,11 +129,11 @@ norm_range=[5310,5490]
 #norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
-file_setting='all_avg'
+#file_setting='all_avg'
 #file_setting='command' #this is essentially the version for comparing 2 goodman spectra to each other
 #file_setting='all_wctb'
 #file_setting='all_fwctb'
-#file_setting= 'compare_SDSS'
+file_setting= 'compare_SDSS'
 #file_setting= 'compare_only_SDSS' #this should compare the spectra beginning with 'sdss' to other objects
 #file_setting= 'all_SDSS'
 #file_setting= 'two_arm'
@@ -922,8 +924,8 @@ if __name__ == '__main__':
         filename1=filename
         #target_spec1, header1, target_noise1= spt.retrieve_sdss_spec(filename)
         target_spec1[0]=target_spec1[0]+wavelength_offset
-        #mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename)
-        mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename, convert_to_flambda=True)
+        mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename)
+        #mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename, convert_to_flambda=True)
         print('retrieved MWDD spec')
         #target_spec1= norm_spectrum(target_spec1, norm_range)
         #for filename2 in sdss_names:
@@ -965,8 +967,8 @@ if __name__ == '__main__':
             
             #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width*sdss_scale_factor)
             
-            plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=5*sdss_scale_factor)
-            #plot_spectrum(mwdd_spec, mwdd_filename, header1, norm=True, smooth=True, kernel_type='box',pix_width=5)
+            #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=5*sdss_scale_factor)
+            plot_spectrum(mwdd_spec, mwdd_filename, header1, norm=True, smooth=True, kernel_type='box',pix_width=5)
             plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=5)
             
             #plot_spectrum(spt.flambda_to_fnu(target_spec2), filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=5*sdss_scale_factor)

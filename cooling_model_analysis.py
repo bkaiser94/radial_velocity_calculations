@@ -256,11 +256,17 @@ default_z=0.02 #approximately solar
 
 
 ### DAHes
+#wd_name='DAHes'
+#target_teff=7856.96 
+#target_teff_err=668.99
+#target_logg=8.243
+#target_logg_err=0.303
+
 wd_name='DAHes'
-target_teff=7856.96 
-target_teff_err=668.99
-target_logg=8.243
-target_logg_err=0.303
+target_teff=9500.
+target_teff_err=100.
+target_logg=8.0
+target_logg_err=0.1
 
 ################ With no variation
 ##### DAs 7000-9500K
@@ -289,12 +295,12 @@ target_logg_err=0.303
 #target_logg_err=0.0000001
 
 
-### DAHes
-wd_name='DAHes'
-target_teff=7856.96 
-target_teff_err=0.000001
-target_logg=8.243
-target_logg_err=0.000001
+#### DAHes
+#wd_name='DAHes'
+#target_teff=7856.96 
+#target_teff_err=0.000001
+#target_logg=8.243
+#target_logg_err=0.000001
 
 desired_NaCa= -1.1 #Sioux county meteorite, achondrite
 
