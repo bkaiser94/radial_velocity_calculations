@@ -263,7 +263,7 @@ default_z=0.02 #approximately solar
 #target_logg_err=0.303
 
 wd_name='DAHes'
-target_teff=9500.
+target_teff=7000.
 target_teff_err=100.
 target_logg=8.0
 target_logg_err=0.1

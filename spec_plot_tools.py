@@ -600,6 +600,7 @@ def retrieve_mwdd_spec(filename, convert_to_flambda=True):
         output_spec=fnu_to_flambda(input_spec)
     else:
         output_spec=input_spec
+        output_spec[1]=output_spec[1]*1e16
     return output_spec
 
 
@@ -1321,4 +1322,20 @@ def plot_wien_max_wave(teff_array,label_pos=default_label_pos,color='k',linestyl
 
 
 
+def blackbody_spec(wave, temperature):
+    """
+    Just using the form given in the Phet-stored values because it's easier
+    
+    returns Watts per square meter per micron with wavelength input in Angstroms
+    
+    """
+    wave=wave/10.
+    constA= 3.74192e-16
+    constB=1.438770e7
+    flux=constA / ((wave**5)*  (np.exp(constB/(wave * temperature))-1))
+    flux_units=flux*u.watt/(u.m**2)/u.nm
+    flux_cgs=flux_units.to(u.erg/(u.cm**2)/u.angstrom/u.s).value
+    print('flux_units',flux_units)
+    print('flux_cgs',flux_cgs)
+    return np.vstack([wave*10.,flux_cgs])
 

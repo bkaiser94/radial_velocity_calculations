@@ -156,7 +156,8 @@ cal_params={
                     'setupname':'400m1'
                     },
                 'Red':{
-                    'linelistname':'400m1_HgArNe_calc20190814.txt',
+                    #'linelistname':'400m1_HgArNe_calc20190814.txt',
+                    'linelistname':'400m1_HgArNe_calc20190814_alt20250424.txt',
                     'offset':0,
                     'trimregions':{
                         'x':[380,red_default_trim['x'][1]],
