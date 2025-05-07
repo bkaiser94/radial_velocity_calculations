@@ -27,8 +27,8 @@ start = time.time()
 
 import spec_plot_tools as spt
 
-#glob_string= 'wctb*'
-glob_string='fwctb*'
+glob_string= 'wctb*'
+#glob_string='fwctb*'
 #glob_string='zfwctb*'
 
 #filenames= glob('wctb*')

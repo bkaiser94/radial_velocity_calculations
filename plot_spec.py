@@ -90,9 +90,9 @@ bb_teff=9000. #K
 #mwdd_filename='GJ3866_DC_Heatm_Teff5000_Bergeron2001_fnu_MWDD_spec.csv'
 #mwdd_filename='WD1208p076_DA_Teff5150_subsavage2009_fnu_MWDD_spec.csv'
 #mwdd_filename='WDJ1753m8405_DCsus_Teff5020K_OBrien2024_flambda_MWDD_spec.csv'
-#mwdd_filename='WDJ1838m5357_DAsus_Teff5150_OBrien2024_flambda_MWDD_spec.csv'
+mwdd_filename='WDJ1838m5357_DAsus_Teff5150_OBrien2024_flambda_MWDD_spec.csv'
 #mwdd_filename='WDJ1828m6537_DAsus_Teff5050_OBrien2024_flambda_MWDD_spec.csv'
-mwdd_filename='WDJ1018m3438_DAsus_Teff5090_OBrien2024_flambda_MWDD_spec.csv'
+#mwdd_filename='WDJ1018m3438_DAsus_Teff5090_OBrien2024_flambda_MWDD_spec.csv'
 #mwdd_filename='WDJ2236m5548_DZsus_Teff5132_OBrien2024_flambda_MWDD_spec.csv'
 #mwdd_filename='WDJ1604p2310_DAsus_Teff5100_Kilic2025_fnu_MWDD_spec.csv'
 #mwdd_filename='LSPMJ1951p4209_DAsus_Teff5100_Tremblay2020_fnu_MWDD_spec.csv'
@@ -125,10 +125,10 @@ mwdd_list=[
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
-norm_range=[4420,4500]
+#norm_range=[4420,4500]
 #norm_range=[4800.,5000.]
 #norm_range=[6090,6240]
-#norm_range=[6360,6420]
+norm_range=[6360,6420]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
@@ -160,7 +160,9 @@ double_iterate= False #file_settings change these in their little sections ahead
 
 if file_setting=='all_avg':
     print(file_setting)
-    filenames=glob('ravg_fwctb*1223*.fits')
+    #filenames=glob('ravg_wctb*2320*bkg*.fits')
+    filenames=glob('ravg_wctb*2320*off*6_*.fits')
+    #filenames=glob('fravg_wctb*2320*.fits')
     #filenames=glob('*ravg_wctb*fits')
     #filenames=glob('ravg_fwctb*2124*fits')
     #filenames=glob('ravg_fwctb*0212*fits')
@@ -193,7 +195,7 @@ if file_setting=='all_avg':
 
 elif file_setting=='all_wctb':
     print(file_setting)
-    filenames=glob('wctb*')
+    filenames=glob('wctb*2320*6637_*')
     #filenames=glob('wctb*J0850*')
     #filenames=glob('wctb*4414other_*')
     #filenames=glob('wctb*1824*1213_*')
@@ -1316,6 +1318,7 @@ if __name__ == '__main__':
         bmjd_list=[]
         sig_list=[]
         snr_list=[]
+        print('\n\n',filenames,'\n\n')
         for filename in filenames:
             target_spec, header, target_noise= spt.retrieve_spec(filename)
             hdu= fits.open(filename)
@@ -1392,70 +1395,75 @@ if __name__ == '__main__':
             
             ######################################################
             #################################################
-            #Poorly placed trial run of tweaking of the flux calibration based on deviations of warm DCs from a blackbody curve.
+            #####Poorly placed trial run of tweaking of the flux calibration based on deviations of warm DCs from a blackbody curve.
 
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
-            binned_spec=spt.rebin_generic_spec(target_spec,hdu[4].data,np.arange(np.nanmin(target_spec[0]),np.nanmax(target_spec[0]),30.),np.ones(np.arange(np.nanmin(target_spec[0]),np.nanmax(target_spec[0]),30.).shape)*30.)
-            #yakima=scinterp.Akima1DInterpolator(target_spec[0],target_spec[1])(target_spec[0])
-            yakima=scinterp.Akima1DInterpolator(binned_spec[0],binned_spec[1])(target_spec[0])
-            plot_spectrum(binned_spec, '30 A-binned spec', header, smooth=False, norm=False, pix_width=5, kernel_type='box')
-            plt.plot(target_spec[0],yakima,label='Akima Interp')
-            bb_spec=spt.blackbody_spec(target_spec[0],bb_teff)
-            print(bb_spec)  
-            plot_spectrum(bb_spec, str(bb_teff)+' K BB', header, norm=True, smooth=False)
-            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-            spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
+            ####plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
+            ####binned_spec=spt.rebin_generic_spec(target_spec,hdu[4].data,np.arange(np.nanmin(target_spec[0]),np.nanmax(target_spec[0]),30.),np.ones(np.arange(np.nanmin(target_spec[0]),np.nanmax(target_spec[0]),30.).shape)*30.)
+            #####yakima=scinterp.Akima1DInterpolator(target_spec[0],target_spec[1])(target_spec[0])
+            ####yakima=scinterp.Akima1DInterpolator(binned_spec[0],binned_spec[1])(target_spec[0])
+            ####plot_spectrum(binned_spec, '30 A-binned spec', header, smooth=False, norm=False, pix_width=5, kernel_type='box')
+            ####plt.plot(target_spec[0],yakima,label='Akima Interp')
+            ####bb_spec=spt.blackbody_spec(target_spec[0],bb_teff)
+            ####print(bb_spec)  
+            ####plot_spectrum(bb_spec, str(bb_teff)+' K BB', header, norm=True, smooth=False)
+            ####spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
+            ####spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
             
-            norm_bb_spec=norm_spectrum(bb_spec,norm_range,show_norm_range=False)
-            norm_interp_spec=norm_spectrum(np.vstack([target_spec[0],yakima]),norm_range,show_norm_range=False)
+            ####norm_bb_spec=norm_spectrum(bb_spec,norm_range,show_norm_range=False)
+            ####norm_interp_spec=norm_spectrum(np.vstack([target_spec[0],yakima]),norm_range,show_norm_range=False)
             
-            plt.plot(norm_bb_spec[0],norm_bb_spec[1],label='normed BB spec')
-            plt.plot(norm_interp_spec[0],norm_interp_spec[1],label='normed interp spec')
-            plt.xlabel('Wavelength Angstroms')
-            plt.legend()
-            plt.show()
+            ####plt.plot(norm_bb_spec[0],norm_bb_spec[1],label='normed BB spec')
+            ####plt.plot(norm_interp_spec[0],norm_interp_spec[1],label='normed interp spec')
+            ####plt.xlabel('Wavelength Angstroms')
+            ####plt.legend()
+            ####plt.show()
             
-            div_flux=norm_bb_spec[1]/norm_interp_spec[1]
-            plt.plot(target_spec[0],div_flux,label='norm bb spec/norm interp spec')
-            plt.xlabel('Wavelength Angstroms')
-            plt.legend()
-            plt.show()
+            ####div_flux=norm_bb_spec[1]/norm_interp_spec[1]
+            ####plt.plot(target_spec[0],div_flux,label='norm bb spec/norm interp spec')
+            ####plt.xlabel('Wavelength Angstroms')
+            ####plt.legend()
+            ####plt.show()
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=5, kernel_type='box')
-            binned_spec=spt.rebin_generic_spec(target_spec,hdu[4].data,np.arange(np.nanmin(target_spec[0]),np.nanmax(target_spec[0]),30.),np.ones(np.arange(np.nanmin(target_spec[0]),np.nanmax(target_spec[0]),30.).shape)*30.)
-            #yakima=scinterp.Akima1DInterpolator(target_spec[0],target_spec[1])(target_spec[0])
-            yakima=scinterp.Akima1DInterpolator(binned_spec[0],binned_spec[1])(target_spec[0])
-            plot_spectrum(binned_spec, '30 A-binned spec', header, smooth=False, norm=True, pix_width=5, kernel_type='box')
-            plot_spectrum(np.vstack([target_spec[0],yakima]), 'Interp Spectrum', header, smooth=False, norm=True, pix_width=5, kernel_type='box')
-            #plt.plot(target_spec[0],yakima,label='Akima Interp')
-            bb_spec=spt.blackbody_spec(target_spec[0],bb_teff)
-            print(bb_spec)  
-            plot_spectrum(bb_spec, str(bb_teff)+' K BB', header, norm=True, smooth=False)
-            corrected_spec=np.vstack([target_spec[0],target_spec[1]*div_flux])
-            plot_spectrum(corrected_spec, 'Hopefully corrected w/ leftovers', header, smooth=False, norm=True, pix_width=5, kernel_type='box')
-            #plt.plot(target_spec[0],target_spec[1]*div_flux,label='Hopefully corrected w/ leftovers')
-            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-            spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
+            ####plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=5, kernel_type='box')
+            ####binned_spec=spt.rebin_generic_spec(target_spec,hdu[4].data,np.arange(np.nanmin(target_spec[0]),np.nanmax(target_spec[0]),30.),np.ones(np.arange(np.nanmin(target_spec[0]),np.nanmax(target_spec[0]),30.).shape)*30.)
+            #####yakima=scinterp.Akima1DInterpolator(target_spec[0],target_spec[1])(target_spec[0])
+            ####yakima=scinterp.Akima1DInterpolator(binned_spec[0],binned_spec[1])(target_spec[0])
+            ####plot_spectrum(binned_spec, '30 A-binned spec', header, smooth=False, norm=True, pix_width=5, kernel_type='box')
+            ####plot_spectrum(np.vstack([target_spec[0],yakima]), 'Interp Spectrum', header, smooth=False, norm=True, pix_width=5, kernel_type='box')
+            #####plt.plot(target_spec[0],yakima,label='Akima Interp')
+            ####bb_spec=spt.blackbody_spec(target_spec[0],bb_teff)
+            ####print(bb_spec)  
+            ####plot_spectrum(bb_spec, str(bb_teff)+' K BB', header, norm=True, smooth=False)
+            ####corrected_spec=np.vstack([target_spec[0],target_spec[1]*div_flux])
+            ####plot_spectrum(corrected_spec, 'Hopefully corrected w/ leftovers', header, smooth=False, norm=True, pix_width=5, kernel_type='box')
+            #####plt.plot(target_spec[0],target_spec[1]*div_flux,label='Hopefully corrected w/ leftovers')
+            ####spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
+            ####spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
-            plot_spectrum(corrected_spec, 'Hopefully corrected w/ leftovers', header, smooth=False, norm=False, pix_width=5, kernel_type='box')
-            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-            spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
+            ####plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
+            ####plot_spectrum(corrected_spec, 'Hopefully corrected w/ leftovers', header, smooth=False, norm=False, pix_width=5, kernel_type='box')
+            ####spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
+            ####spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
             
-            other_filename='ravg_fwctb.WDJ1828m6357_400m1.fits'
-            for other_filename in sorted(glob('ravg_fwctb.*fits')):
-                other_spec, other_header, other_noise= spt.retrieve_spec(other_filename)
-                correct_other_spec=np.vstack([other_spec[0],other_spec[1]*(np.interp(other_spec[0],target_spec[0],div_flux))])
-                plot_spectrum(other_spec, other_filename, other_header, smooth=True, norm=False, pix_width=5, kernel_type='box')
-                plot_spectrum(correct_other_spec, other_filename+' corrected with previous method', other_header, smooth=True, norm=False, pix_width=5, kernel_type='box')
-                mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=False)
-                plot_spectrum(mwdd_spec, mwdd_filename, header, norm=False, smooth=True, kernel_type='box',pix_width=10)
-                spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-                spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
+            ####other_filename='ravg_fwctb.WDJ1828m6357_400m1.fits'
+            ####for other_filename in sorted(glob('ravg_fwctb.*fits')):
+                ####other_spec, other_header, other_noise= spt.retrieve_spec(other_filename)
+                ####correct_other_spec=np.vstack([other_spec[0],other_spec[1]*(np.interp(other_spec[0],target_spec[0],div_flux))])
+                ####plot_spectrum(other_spec, other_filename, other_header, smooth=True, norm=False, pix_width=5, kernel_type='box')
+                ####plot_spectrum(correct_other_spec, other_filename+' corrected with previous method', other_header, smooth=True, norm=False, pix_width=5, kernel_type='box')
+                ####mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=False)
+                ####plot_spectrum(mwdd_spec, mwdd_filename, header, norm=False, smooth=True, kernel_type='box',pix_width=10)
+                ####spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
+                ####spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
                 
-            #End of poorly positioned flux correction code that needs to be spun off
+            #####End of poorly positioned flux correction code that needs to be spun off
             ####################################################
             ####################################################
+            
+            
+            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=5, kernel_type='box')
+            #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=True)
+            #spt.show_plot(show_legend=True, line_id='h')
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
             #plot_spectrum(target_spec, filename+', seeing '+str(header["see_FWHM"]*header["pix_scal"])[:4]+ '" '+str(header['width']), header, smooth=True, norm=False, pix_width=5, kernel_type='box')
@@ -1493,8 +1501,8 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
             
-            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-            spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
+            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
+            #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             
             #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
@@ -1538,7 +1546,8 @@ if __name__ == '__main__':
         #spt.plot_wien_max_wave(np.arange(4500,6600, 500))
         #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
         #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
-        spt.show_plot(show_legend=True, line_id='h', convert_to_air=True,actually_show=False)
+        plt.ylim(-0.1,0.6)
+        spt.show_plot(show_legend=True, line_id='h', convert_to_air=True,actually_show=True)
         #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
         #spt.show_plot(show_telluric=False, show_legend=True, line_id='')

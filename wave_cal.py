@@ -82,7 +82,7 @@ def to_barycenter(header):
 
 ####
 #trace_offset =-16.3#amount by which the calculated trace needs to be offset to end up on the dimmer desired target. Should normally be 0 unless doing a specific extraction.
-trace_offset=0
+trace_offset=-6
 #trace_band_mid= 110   #y-pixel that's about the center of the trace #old one as of 2018-10-31
 #trace_band_mid= 96   #y-pixel that's about the center of the trace J1431
 #trace_band_mid=100
@@ -100,8 +100,8 @@ trace_band_width=190#usual extraction search window
 #trace_band_mid=115 #y-pixel for actual wisea0615
 #trace_band_width = 15 #pixel width to determine the center of the trace
 #sigma_multi_side= 4 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-#sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
-sigma_multi_side=2
+sigma_multi_side=1.5 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
+#sigma_multi_side=2
 #sigma_multi_side=3
 #sigma_multi_side=2.5
 #sigma_multi_side= 1 #multiple of sigma value of trace gaussian that should be distance out to go for extraction window
@@ -116,12 +116,12 @@ lamp_poly_degree=5 #setting prior to change on 2025-01-09. This was the default 
 flat_poly= 7
 #bkg_shift= 25 #2019-03-25 commented out
 #bkg_shift = 50 #20190412 previously in place
-bkg_shift= 30 #standard shift used
+#bkg_shift= 30 #standard shift used
 #bkg_shift=20
-#bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
+bkg_shift=40 #shift used frequently for spectrophotometric standard extractions
 #bkg_shift=35
 #bkg_shift= 47
-#bkg_shift=16
+#bkg_shift=10
 #bkg_shift=48
 #bkg_shift=6
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
