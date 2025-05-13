@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from astropy.io import fits
 from astropy import units as u
 from astropy import constants as const
@@ -1252,6 +1253,9 @@ def start_mnras_fig(width_cols=1, constrained_layout=True, width_height=[ 1.618,
         new_width=single_col_width
     elif width_cols==2:
         new_width=double_col_width
+    elif width_cols>2:
+        new_width=single_col_width*width_cols
+        print("\n\nThat's more columns than there are in a MNRAS article... but sure, here you go!\n\n")
     else:
         print('No valid width_cols value specified:', width_cols)
     height_over_width=width_height[1]/width_height[0]
@@ -1277,6 +1281,43 @@ def clean_color_string(input_table, color_header='plot_color'):
         stripped_string=color_string.replace('"', '')
         input_table[color_header][index]=stripped_string
     return input_table
+
+def make_scatter_legend():
+    """
+    Make scatter plot points on legend for MORDOR survey based on the values in the cal_params.py file.
+    
+    
+    """
+    handle_list=[]
+    for label in cp.sp_type_colors:
+        in_label=label
+        if in_label=='??':
+            in_label="Unknown"
+        elif in_label=='':
+            in_label='No Spectrum'
+        elif in_label=='WDdM':
+            in_label='WD+dM'
+        else:
+            pass
+        #print('in_label',in_label)
+        handle_list.append(mpatches.Patch(color=cp.sp_type_colors[label],label=in_label))
+    #print(handle_list)
+    for num,symbol in enumerate(cp.sed_type_markers):
+        print(num,symbol)
+        if num!=0:
+            plt.scatter(np.nan,np.nan, color='k',label='SED type '+ str(num),s=cp.plot_marker_size+20,marker=symbol)
+        else:
+            pass
+    plt.scatter(np.nan,np.nan,color='w',linestyle='None',label='   ',alpha=0)
+    legend=plt.legend()
+    other_handles=legend.legendHandles
+    #other_handles.append
+    print(type(other_handles),other_handles)
+    handle_list=other_handles+handle_list
+    print(type(handle_list),handle_list)
+    plt.legend(handles=handle_list,ncol=2)
+    #plt.legend(handles=[mpatches.Patch(color=cp.sp_type_colors[label],label=in_label)])
+    return
 
 def calculate_atmospheric_refraction(header, offset=0.):
     """
@@ -1338,4 +1379,5 @@ def blackbody_spec(wave, temperature):
     print('flux_units',flux_units)
     print('flux_cgs',flux_cgs)
     return np.vstack([wave*10.,flux_cgs])
+
 

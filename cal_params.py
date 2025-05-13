@@ -538,11 +538,24 @@ el_nums=dict([(el[1],el[0]) for el in enumerate(el_names)])
 
 #largely for MORDOR survey paper, but I suppose it can be reused. These are the colors to be plotted.
 sp_type_colors ={
-    'DC':'grey',
-    '??':'#006652',
     'DZ':'#bb8fce',
+    'DQpec':'#1ca1f2',
+    'DC':'grey',
     'WDdM':'r',
-    'DQpec':'#1ca1f2'
+    '??':'#006652',
+    '':'k'
     }
+
+plot_marker_size=6
+
+#The markers to use on plots feature SED types from the MORDOR survey. The markers' indices correspond to the SED type number from the MORDOR survey. I have made index 0 an "O" because that will be the symbol for objects plotted that do not have an SED type in the event that happens.
+sed_type_markers=[
+    'o',
+    '*',
+    's',
+    '^',
+    'P',
+    'X',
+    ]
 
 
