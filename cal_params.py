@@ -165,6 +165,18 @@ cal_params={
                     'air_corr': True,
                     'setupname':'400m1'
                     }
+                },
+            4.589:{
+                'Red':{
+                    #'linelistname':'400m1_HgArNe_calc20190814.txt',
+                    'linelistname':'400m1_HgArNe_calc20190814_alt20250424.txt',
+                    'offset':0,
+                    'trimregions':{
+                        'x':[380,red_default_trim['x'][1]],
+                        'y':red_default_trim['y']},
+                    'air_corr': True,
+                    'setupname':'400m1_gtilt'
+                    }
                 }
             },
         16.10000:{
@@ -555,7 +567,7 @@ sed_type_markers=[
     's',
     '^',
     'P',
-    'X',
+    'x',
     ]
 
 

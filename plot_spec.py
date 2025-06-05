@@ -125,10 +125,13 @@ mwdd_list=[
 #norm_range=[8074,8140]
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
-#norm_range=[4420,4500]
+#norm_range=[4400,4430]
+norm_range=[4224,4250]
+
 #norm_range=[4800.,5000.]
 #norm_range=[6090,6240]
-norm_range=[6360,6420]
+#norm_range=[6360,6420]
+#norm_range=[3800,4000]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
 #norm_range=[6630,6690]#wider double norm range
@@ -161,7 +164,7 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('ravg_wctb*2320*bkg*.fits')
-    filenames=glob('ravg_wctb*2320*off*6_*.fits')
+    filenames=glob('ravg_*wctb*EC*c.fits')
     #filenames=glob('fravg_wctb*2320*.fits')
     #filenames=glob('*ravg_wctb*fits')
     #filenames=glob('ravg_fwctb*2124*fits')
@@ -195,7 +198,7 @@ if file_setting=='all_avg':
 
 elif file_setting=='all_wctb':
     print(file_setting)
-    filenames=glob('wctb*2320*6637_*')
+    filenames=glob('wctb**')
     #filenames=glob('wctb*J0850*')
     #filenames=glob('wctb*4414other_*')
     #filenames=glob('wctb*1824*1213_*')
@@ -1326,15 +1329,25 @@ if __name__ == '__main__':
             #print(filename)
             #gaia_spec, gaia_noise=spt.retrieve_gaia_xp_spec('LTT3218')
             ####Na-D line for J0850
-            ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
+            #ew,ew_noise=spt.get_ew(filename,[5728.,6068.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
             
             #H-beta for GD71
             #ew,ew_noise=spt.get_ew(filename,[4718.,5008.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
 
             #H-alpha for GD71
-            #ew,ew_noise=spt.get_ew(filename,[6448.,6678.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
-            
+            #ew,ew_noise=spt.get_ew(filename,[6448.,6678.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
+            #ew_range=[6408.,6718.]
+            #ew_range=[6488.,6638.]
+            #ew_range=[6448.,6678.]
+            #ew,ew_noise=spt.get_ew(filename,ew_range, cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=True )
             #ew,ew_noise=spt.get_ew(filename,[4150.,4302.], cont_method='poly1',cont_width=60.,noise_method='rms', plot_all=False )
+            
+            ##### Fake absorption features imposed
+            
+            index_range=[1000,1020]
+            ew_range=[5670,5735]
+            target_spec[1][index_range[0]:index_range[1]]=0
+            #ew, ew_noise=spt.get_generic_ew(target_spec,ew_range,cont_width=100,noise_method='rms',plot_all=True,cont_method='poly1')
             
             #ew,ew_noise=spt.get_ew(filename,[4190.,4262.], cont_method='poly1',cont_width=60.,noise_method='rms', plot_all=False )
             
@@ -1350,13 +1363,15 @@ if __name__ == '__main__':
             #mystery emission
             #ew,ew_noise=spt.get_ew(filename,[6255.,6295.], cont_method='poly1',cont_width=120.,noise_method='rms', plot_all=False )
             
-            ew_list.append(ew)
-            ew_noise_list.append(ew_noise)
-            bmjd_list.append(header['bmjd_tdb'])
-            noise_inds=np.where((target_spec[0]>5166.)&(target_spec[0]<5532.))
-            this_noise=np.std(target_spec[1][noise_inds])
-            this_snr=np.mean(target_spec[1][noise_inds])/this_noise
-            snr_list.append(this_snr)
+            #ew_list.append(ew)
+            #ew_noise_list.append(ew_noise)
+            ##bmjd_list.append(header['bmjd_tdb'])
+            #bmjd_list.append(counter)
+
+            #noise_inds=np.where((target_spec[0]>5166.)&(target_spec[0]<5532.))
+            #this_noise=np.std(target_spec[1][noise_inds])
+            #this_snr=np.mean(target_spec[1][noise_inds])/this_noise
+            #snr_list.append(this_snr)
             #print(header['senscurv'], header['seeing'])
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30, color='r')
             print('seeing from trace:',header['see_FWHM'])
@@ -1461,7 +1476,8 @@ if __name__ == '__main__':
             ####################################################
             
             
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=5, kernel_type='box')
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=5, kernel_type='box')
+            
             #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=True)
             #spt.show_plot(show_legend=True, line_id='h')
             
@@ -1502,7 +1518,7 @@ if __name__ == '__main__':
             #spt.show_plot(show_telluric=False, show_legend=False)
             
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-            #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
+            #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             
             #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
@@ -1546,7 +1562,15 @@ if __name__ == '__main__':
         #spt.plot_wien_max_wave(np.arange(4500,6600, 500))
         #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
         #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
-        plt.ylim(-0.1,0.6)
+        #plt.ylim(-0.1,0.6)
+        
+        flat_counts=np.ones(target_spec[0].shape)
+        flat_counts[310:340]=0
+        flat_counts[340:360]=0.5
+        flat_counts[290:310]=0.5
+        flat_flambda=spt.counts_to_flambda(np.vstack([target_spec[0],flat_counts]),dlambda)
+        #plt.plot(target_spec[0],flat_counts,label='flat counts')
+        #plot_spectrum(flat_flambda,'flat flambda',header,norm=True)
         spt.show_plot(show_legend=True, line_id='h', convert_to_air=True,actually_show=True)
         #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
@@ -1554,15 +1578,16 @@ if __name__ == '__main__':
         #spt.show_plot(show_telluric=False, show_legend=True, line_id='J0212', convert_to_air=True)
         spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
         
-        plt.plot(bmjd_list,ew_list, marker='o')
-        plt.ylabel(r'ew_values ($\AA$)')
-        plt.show()
+        #plt.plot(bmjd_list,ew_list, marker='o')
+        #plt.ylabel(r'ew_values ($\AA$)')
+        #plt.show()
         
-        plt.errorbar(bmjd_list,ew_list, yerr=ew_noise_list, marker='o')
-        plt.ylabel(r'ew_values ($\AA$)')
-        #plt.yscale('log')
-        #plt.xscale('log')
-        plt.show()
+        #plt.errorbar(bmjd_list,ew_list, yerr=ew_noise_list, marker='o')
+        #plt.ylabel(r'ew_values ($\AA$)')
+        #plt.title(str(ew_range))
+        ##plt.yscale('log')
+        ##plt.xscale('log')
+        #plt.show()
         
         #plt.plot(np.array(ew_list)/np.array(ew_noise_list),marker='o')
         #plt.ylabel(r'ew/ew_noise')

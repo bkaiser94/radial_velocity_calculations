@@ -1303,7 +1303,7 @@ def make_scatter_legend():
         handle_list.append(mpatches.Patch(color=cp.sp_type_colors[label],label=in_label))
     #print(handle_list)
     for num,symbol in enumerate(cp.sed_type_markers):
-        print(num,symbol)
+        #print(num,symbol)
         if num!=0:
             plt.scatter(np.nan,np.nan, color='k',label='SED type '+ str(num),s=cp.plot_marker_size+20,marker=symbol)
         else:
@@ -1312,10 +1312,11 @@ def make_scatter_legend():
     legend=plt.legend()
     other_handles=legend.legendHandles
     #other_handles.append
-    print(type(other_handles),other_handles)
+    #print(type(other_handles),other_handles)
     handle_list=other_handles+handle_list
-    print(type(handle_list),handle_list)
-    plt.legend(handles=handle_list,ncol=2)
+    #print(type(handle_list),handle_list)
+    #plt.legend(handles=handle_list,ncol=2)
+    plt.legend(handles=handle_list,ncol=4)
     #plt.legend(handles=[mpatches.Patch(color=cp.sp_type_colors[label],label=in_label)])
     return
 
