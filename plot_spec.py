@@ -101,15 +101,25 @@ mwdd_filename='WDJ1838m5357_DAsus_Teff5150_OBrien2024_flambda_MWDD_spec.csv'
 #mwdd_filename='GJ1221_DXP_Giammichele2012_fnu_MWDD_spec.csv'
 #mwdd_filename='GJ1228_DXP_Bergeron2011_fnu_MWDD_spec.csv'
 
+###mwdd_list=[
+    ###'WDJ1753m8405_DCsus_Teff5020K_OBrien2024_flambda_MWDD_spec.csv',
+    ###'WDJ1838m5357_DAsus_Teff5150_OBrien2024_flambda_MWDD_spec.csv',
+    ###'WDJ1828m6537_DAsus_Teff5050_OBrien2024_flambda_MWDD_spec.csv',
+    ###'WDJ1018m3438_DAsus_Teff5090_OBrien2024_flambda_MWDD_spec.csv'
+    ####'WDJ2236m5548_DZsus_Teff5132_OBrien2024_flambda_MWDD_spec.csv'
+    
+    ###]
+
 mwdd_list=[
-    'WDJ1753m8405_DCsus_Teff5020K_OBrien2024_flambda_MWDD_spec.csv',
-    'WDJ1838m5357_DAsus_Teff5150_OBrien2024_flambda_MWDD_spec.csv',
-    'WDJ1828m6537_DAsus_Teff5050_OBrien2024_flambda_MWDD_spec.csv',
-    'WDJ1018m3438_DAsus_Teff5090_OBrien2024_flambda_MWDD_spec.csv'
-    #'WDJ2236m5548_DZsus_Teff5132_OBrien2024_flambda_MWDD_spec.csv'
+    'GD356_DAHe_IUE_fnu_MWDD_spec.csv',
+    'GD229_DBP_IUE_fnu_MWDD_spec.csv',
+    'WD1456p103_DBA_Teff24000_IUE_fnu_MWDD_spec.csv',
+    'WD1459p821_DB_Teff15000_IUE_fnu_MWDD_spec.csv',
+    'WD1055m072_DC_Teff7100_IUEnoisy_fnu_MWDD_spec.csv'
+    
+    
     
     ]
-
 ##########################
 
 #norm_range=[1240,1280]
@@ -126,7 +136,8 @@ mwdd_list=[
 #norm_range=[8058,8231]
 #norm_range=[5100,5400]
 #norm_range=[4400,4430]
-norm_range=[4224,4250]
+#norm_range=[4224,4250]
+norm_range=[2700,2750]
 
 #norm_range=[4800.,5000.]
 #norm_range=[6090,6240]
@@ -164,7 +175,7 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('ravg_wctb*2320*bkg*.fits')
-    filenames=glob('ravg_*wctb*EC*c.fits')
+    filenames=glob('ravg_fwctb*.fits')
     #filenames=glob('fravg_wctb*2320*.fits')
     #filenames=glob('*ravg_wctb*fits')
     #filenames=glob('ravg_fwctb*2124*fits')
@@ -1474,10 +1485,28 @@ if __name__ == '__main__':
             #####End of poorly positioned flux correction code that needs to be spun off
             ####################################################
             ####################################################
+            #mwdd_filename='GD356_DAHe_IUE_fnu_MWDD_spec.csv'
+            #mwdd_spec, mwdd_err_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=True,iue_spec=True)
+            #plot_spectrum(mwdd_spec, mwdd_filename, header, norm=False, smooth=False, kernel_type='box',pix_width=10)
+            
+            #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
+            
+            #plt.errorbar(mwdd_spec[0],mwdd_spec[1],yerr=mwdd_err_spec[1],label=mwdd_filename)
             
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=5, kernel_type='box')
+            #mwdd_filename='GD229_DBP_IUE_fnu_MWDD_spec.csv'
+            #mwdd_spec, mwdd_err_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=True,iue_spec=True)
+            #plot_spectrum(mwdd_spec, mwdd_filename, header, norm=False, smooth=False, kernel_type='box',pix_width=10)
             
+            for mwdd_filename in mwdd_list:
+                mwdd_spec, mwdd_err_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=True,iue_spec=True)
+                plot_spectrum(mwdd_spec, mwdd_filename, header, norm=True, smooth=True, kernel_type='box',pix_width=5)
+            
+            plt.axvline(x=1200,linestyle=':')
+            plt.axvline(x=1215,linestyle=':')
+            plt.axvline(x=1303,linestyle=':')
+            plt.axvline(x=1306,linestyle=':')
+            #plt.errorbar(mwdd_spec[0],mwdd_spec[1],yerr=mwdd_err_spec[1],label=mwdd_filename)
             #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=True)
             #spt.show_plot(show_legend=True, line_id='h')
             
@@ -1519,7 +1548,7 @@ if __name__ == '__main__':
             
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
             #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
-            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             
             #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
 

@@ -575,7 +575,7 @@ def retrieve_gaia_xp_spec(filename):
 
 
 
-def retrieve_mwdd_spec(filename, convert_to_flambda=True):
+def retrieve_mwdd_spec(filename, convert_to_flambda=True,iue_spec=False):
     """
     Retrieve the spectrum that is stored in the MWDD as a CSV type text file. You have to have
     downloaded the spectrum yourself and put it in this directory though!
@@ -597,12 +597,20 @@ def retrieve_mwdd_spec(filename, convert_to_flambda=True):
     waves=full_array[0]
     flux=full_array[1]
     input_spec=np.vstack([waves,flux])
+    if iue_spec:
+        input_spec=np.vstack([waves,full_array[2]])
+    else:
+        pass
     if convert_to_flambda:
         output_spec=fnu_to_flambda(input_spec)
     else:
         output_spec=input_spec
         output_spec[1]=output_spec[1]*1e16
-    return output_spec
+    if iue_spec:
+        err_spec=np.vstack([waves,full_array[2]*1e16])
+        return output_spec,err_spec
+    else:
+        return output_spec
 
 
 def retrieve_telluric_model(filename, wave_range):
@@ -644,12 +652,14 @@ def retrieve_nist_list(nist_file):
         #print(count, row)
     for count, row in enumerate(nist_table):
         #print(count, row['intens'])
+        print(count)
         try:
-            row['intens']=int(row['intens'])
+            row['intens']=float(row['intens'])
             nist_table[count]['intens']=float(row['intens'])
             #print('converted to int!', row['intens'])
         except ValueError:
             print('ValueError ^^^^')
+
     #ne_table['intens']=ne_table['intens'].astype(float) #changing this column that gets read as strings for whatever reason
     #nist_table.pprint()
     return nist_table
@@ -671,15 +681,19 @@ def plot_line_markers(nist_file, wavelength_key='obs_wl_vac(A)', convert_to_air=
             except KeyError as error:
                 print('KeyError:', error)
                 air_name='? '+str(row[wavelength_key])[:4]
+            try:
+                color=cp.line_color_dict[row['element']]
+            except KeyError:
+                color='k'
             if convert_to_air:
-                plt.axvline(x=vac_to_air(row[wavelength_key]), linestyle='--', color=cp.line_color_dict[row['element']])
+                plt.axvline(x=vac_to_air(row[wavelength_key]), linestyle='--', color=color)
             else:
-                plt.axvline(x=row[wavelength_key], linestyle='--', color=cp.line_color_dict[row['element']])
+                plt.axvline(x=row[wavelength_key], linestyle='--', color=color)
             #plt.text(row['obs_wl_air(A)'], np.nanmax(counts), air_name, color='g', rotation=90)
             #plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90, transform=ax.transAxes)
             #plt.text(row[wavelength_key], 1. , air_name, color=cp.line_color_dict[row['element']], rotation=90)
             if show_label:
-                plt.text(row[wavelength_key], label_pos, air_name, color=cp.line_color_dict[row['element']], rotation=270)
+                plt.text(row[wavelength_key], label_pos, air_name, color=color, rotation=270)
             else:
                 pass
         else:

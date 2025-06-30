@@ -73,6 +73,10 @@ blue_default_trim={'x':[9,2055],
 red_default_trim={'x':[26,2071],
                   'y':[1,199]}
 
+blue_spectroscopic={'x':[26,2055],
+                    'y':[2,948]} 
+"""This is taken from the trimsec header from the night of 2023-12-10, I'm not sure why the trimsec header doesn't indicate overscan regions correctly in the ZZCeti ROI (at least from older nights). I should eventually migrate to using trimsec headers to do this."""
+
 goodman_unbinned_pixscale= 0.15 #arcsec/pixel
 #930-ZZcetiblue
 #400 M1
@@ -98,6 +102,56 @@ cal_params={
                     'trimregions':red_default_trim,
                     'air_corr': False,
                     'setupname':'930blue'}
+                }
+            },
+        24.16:{
+            12.08:{
+                'Blue':{
+                    'linelistname':'FeAr_lines_930m2.txt',
+                    'offset':0,
+                    'trimregions': blue_spectroscopic,
+                    'air_corr':False,
+                    'setupname':'930m2'},
+                'Red':{
+                    'linelistname':'FeAr_lines_930m2.txt',
+                    'offset':0,
+                    'trimregions':blue_spectroscopic,
+                    'air_corr': False,
+                    'setupname':'930m2'}
+                }
+            }
+        },
+    '930_SYZY':{
+        24.00000:{
+            13.00000:{
+                'Blue':{
+                    'linelistname':'JJ_FeAr_lines.txt',
+                    'offset':90,
+                    'trimregions': blue_default_trim,
+                    'air_corr':False,
+                    'setupname':'930blue'},
+                'Red':{
+                    'linelistname':'JJ_FeAr_lines.txt',
+                    'offset':90,
+                    'trimregions':red_default_trim,
+                    'air_corr': False,
+                    'setupname':'930blue'}
+                }
+            },
+        24.16:{
+            12.08:{
+                'Blue':{
+                    'linelistname':'FeAr_lines_930m2.txt',
+                    'offset':0,
+                    'trimregions': blue_spectroscopic,
+                    'air_corr':False,
+                    'setupname':'930m2'},
+                'Red':{
+                    'linelistname':'FeAr_lines_930m2.txt',
+                    'offset':0,
+                    'trimregions':blue_spectroscopic,
+                    'air_corr': False,
+                    'setupname':'930m2'}
                 }
             }
         },
@@ -399,7 +453,7 @@ line_color_dict={
     'SiH':'#8E44AD',
     'H':'black',
     'Mg':'cyan',
-    'Cr':'#C70039'
+    'Cr':'#C70039',
         }
 
 #dictionary of guesses for the box1d model used to generate the shape for background skylines
@@ -483,7 +537,8 @@ line_id_dict={
     'C2_bands':'King1948_C2Swan_Bands.csv',
     'molecules':'Fay1974_molecules.csv',
     'h':'H_lines_vac.csv',
-    'J0212':'J0212_comp_lines.csv'
+    'J0212':'J0212_comp_lines.csv',
+    'uv':'UV_lines.csv'
     }
 
 
@@ -559,7 +614,7 @@ sp_type_colors ={
     }
 
 plot_marker_size=6
-
+hrd_plot_marker_size=2
 #The markers to use on plots feature SED types from the MORDOR survey. The markers' indices correspond to the SED type number from the MORDOR survey. I have made index 0 an "O" because that will be the symbol for objects plotted that do not have an SED type in the event that happens.
 sed_type_markers=[
     'o',
