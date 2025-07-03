@@ -58,7 +58,7 @@ current_directory=os.getcwd()
 output_name_base=input_file.split('/')[-1].split('.')[0]+'_'+current_directory.split('/')[-1]
 
 object_name_base='MORDOR J'
-noerr_cols=[]
+noerr_cols=selected_output_cols
 
     
 def make_name(this_table):
@@ -189,6 +189,8 @@ def limit_sig_figs(this_table, mag_decimals=1, g_rp_decimals=2,pwd_decimals=2):
     #this_table['pwd']=this_table['pwd'].astype('S4')
     #this_table['g_rp']=this_table['g_rp'].astype('S4')
     #for row in this_table:
+    print('table just before casting to strings')
+    this_table.pprint()
     for column in this_table.colnames:
         this_table[column]=this_table[column].astype('S64')
         #if len(row['pwd'])==3:
@@ -196,28 +198,30 @@ def limit_sig_figs(this_table, mag_decimals=1, g_rp_decimals=2,pwd_decimals=2):
         #if len(row['g_rp'])==3:
             #row['g_rp']=row['g_rp']+'0'
     #digits=sig_fig_dict.copy()
-    #for row in this_table:
+    for row in this_table:
         #if row['h_or_he']=='mix':
             #row['h_or_he']='Mixed'
         #else:
             #pass
-        #for colname in sig_fig_dict:
-            #try:
-                #print('\n',row[colname])
-                #try:
-                    #row[colname]=row[colname]+("0"*(sig_fig_dict[colname]-len(row[colname].split('.')[1])))
-                    #print(row[colname])
-                #except AttributeError:
-                    #pass
-            #except IndexError as error:
-                #print('IndexError:', error)
-            ##if len(row.split('.')[1])<sig_fig_dict[colname]:
-                ##row=row+("0"*sig_fig_dict[colname]-len(row.split('.')[1]))
-            ##else:
-                ##pass
+        for colname in sig_fig_dict:
+            try:
+                print('\n',row[colname])
+                try:
+                    row[colname]=row[colname]+("0"*(sig_fig_dict[colname]-len(row[colname].split('.')[1])))
+                    print(row[colname])
+                except AttributeError:
+                    pass
+            except IndexError as error:
+                print('IndexError:', error)
+            #if len(row.split('.')[1])<sig_fig_dict[colname]:
+                #row=row+("0"*sig_fig_dict[colname]-len(row.split('.')[1]))
+            #else:
+                #pass
     #new_col_list=[]
-    #new_table=Table()
+    new_table=Table()
     newnewtable=Table()
+    print('table after casting to strings and right before checking the error columns')
+    this_table.pprint()
     for name in this_table.colnames:
         if '_err' in name:
             print('\n',name)
@@ -250,8 +254,7 @@ def limit_sig_figs(this_table, mag_decimals=1, g_rp_decimals=2,pwd_decimals=2):
     newnewtable.pprint()
     
     
-    for name in colname_replacements:
-        newnewtable.rename_column(name,colname_replacements[name])
+
         
     #for name in newnewtable.colnames:
         #if '/' in name:
@@ -265,15 +268,41 @@ def limit_sig_figs(this_table, mag_decimals=1, g_rp_decimals=2,pwd_decimals=2):
         
     return newnewtable
 
+#def remove_masked_values(input_table):
+    #for row in input_table:
+        #for name in selected_output_cols:
+            #print(name,row[name])
+            #if row[name]=='--':
+                #print('caught --',row)
+                #row[name]=''
+            #else:
+                #print(row[name],"doesn't equal",'--',type(row[name]))
+    #return 
+    
+#You actually don't need to remove the masked values. It outputs the latex table just fine.
+
+def fix_id_col(input_table):
+    for row in input_table:
+        row['designation']=row['designation'].replace("b'Gaia DR2 ",'').replace("'","")
+    return
+
 input_table.pprint()
 
 make_name(input_table)
 format_coords(input_table)
 fix_sp_types(input_table)
+print('input_table')
 input_table.pprint()
+print('subtable')
 subtable=input_table[selected_output_cols]
 subtable.pprint()
+print('new_table')
 new_table=limit_sig_figs(subtable)
+#remove_masked_values(new_table)
+fix_id_col(new_table)
+for name in colname_replacements:
+    new_table.rename_column(name,colname_replacements[name])
+new_table.pprint()
 output_table=new_table
 #input_table.pprint()
 #output_table=Table(input_table[selected_output_cols])
