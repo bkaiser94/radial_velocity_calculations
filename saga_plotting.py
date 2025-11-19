@@ -439,7 +439,15 @@ def el_hist(target_el, bounding_el='[Fe/H]', bounding_el_bounds=[-5.,1.], saga_s
 
 if __name__=='__main__':
     #el_hist('[Na/Mg]', bounding_el='[Fe/H]', bounding_el_bounds=[-5,1.], alpha=0.3)
-    
+    plot_el_abunds('[Fe/H]', '[C/O]', MS_only=True,errorbars=False,require_uncertainties=True, alpha=1,color='b')
+    plt.show()
+    plot_el_abunds('[Fe/H]', '[C/H]', MS_only=True,errorbars=False,require_uncertainties=True, alpha=1,color='b')
+    plt.show()
+    plot_el_abunds('[Fe/H]', '[O/H]',
+    MS_only=True,errorbars=False,require_uncertainties=True, alpha=1,color='b')
+    plt.show()
+    plot_el_abunds('[C/H]', '[O/H]', MS_only=True,errorbars=False,require_uncertainties=True, alpha=1,color='b')
+    plt.show()
     target_el_list=['Li','Na','Mg','K','Cr','Fe'] #ordered by atomic number
     #target_el_list=['Na'] #ordered by atomic number
     FeH_centers=[-3.,-2.,-1.,0.0]

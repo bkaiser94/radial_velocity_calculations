@@ -33,8 +33,8 @@ python_version_number=float('.'.join([python_digits[0],python_digits[1]]))
 #wd_file='temp_wd_abundances.csv'
 wd_file='20210527_all_wd_abundances_new_Blouin.csv'
 
-atm_type='thinH'
-#atm_type='thickH'
+#atm_type='thinH'
+atm_type='thickH'
 
 #cooling_modeler='fontaine2001'
 cooling_modeler='bedard2020'
@@ -262,11 +262,17 @@ default_z=0.02 #approximately solar
 #target_logg=8.243
 #target_logg_err=0.303
 
-wd_name='DAHes'
-target_teff=7000.
-target_teff_err=100.
-target_logg=8.0
-target_logg_err=0.1
+#wd_name='DAHes'
+#target_teff=7000.
+#target_teff_err=100.
+#target_logg=8.0
+#target_logg_err=0.1
+
+wd_name='G166-58'
+target_teff=7342.
+target_teff_err=53.
+target_logg=7.97
+target_logg_err=0.02
 
 ################ With no variation
 ##### DAs 7000-9500K

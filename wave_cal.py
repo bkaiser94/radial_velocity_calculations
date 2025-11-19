@@ -33,6 +33,7 @@ import get_cal_params as gcp
 import cal_params as cp
 import spec_plot_tools as spt
 import spectral_extraction_tools as spext
+import dip_corrector as dc
 
 
 
@@ -90,7 +91,7 @@ trace_band_mid=105 #usual extraction search center point
 #trace_band_mid= 112 #y-pixel for SDSSJ1159 400M1
 #trace_band_mid= 90 #y-pixel for SDSSJ1159 400M2
 #trace_band_mid=129
-#trace_band_mid=77 #
+#trace_band_mid=84 #
 #trace_band_width=10
 #trace_band_width = 100 #pixel width to determine the center of the trace 2019-03-25 commented out
 #trace_band_width = 60#pixel width to determine the center of the trace 2019-03-25 commented out
@@ -122,13 +123,13 @@ bkg_shift= 30 #standard shift used
 #bkg_shift=35
 #bkg_shift= 47
 #bkg_shift=15
-#bkg_shift=48
-#bkg_shift=6
+#bkg_shift=65
+#bkg_shift=12
 #bkg_core_sides= 2*core_sides #This should be changed most likely to make the value be higher to further reduce noise.
 #bkg_side_multi= 1. #
 #bkg_side_multi= 1.5 #mutliple of core_sides that that  bkg_core_sides should be later
-#bkg_side_multi=2. #mutliple of core_sides that that  bkg_core_sides should be later
-bkg_side_multi=3. #mutliple of core_sides that that  bkg_core_sides should be later
+bkg_side_multi=2. #mutliple of core_sides that that  bkg_core_sides should be later
+#bkg_side_multi=3. #mutliple of core_sides that that  bkg_core_sides should be later
 #bkg_side_multi=4. #mutliple of core_sides that that  bkg_core_sides should be later
 
 bkg_max_side= bkg_shift/2.-5
@@ -1209,6 +1210,20 @@ for counter, img in enumerate(speclist):
         else:
             pass
         
+        if cp.do_dip_correction:
+            correction=dc.corrector(poly_curve_wavelength)
+            corrected_light=target_light*correction
+            good_inds=np.where(~np.isnan(corrected_light))
+            poly_curve_wavelength=poly_curve_wavelength[good_inds]
+            target_light=corrected_light[good_inds]
+            bkg_light=bkg_light[good_inds]
+            noise_spectrum=noise_spectrum[good_inds]
+            dlambda_vals=dlambda_vals[good_inds]
+            x_positions=x_positions[good_inds]
+            header.append(card= ("dip_corr", True, ' "Dip 4800 A correction applied, whole spec messed with'))
+            filename='d'+filename
+        else:
+            pass
         
         plt.plot(x_positions,target_light,'-')
         plt.xlabel('x (pixel)')

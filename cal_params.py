@@ -78,6 +78,8 @@ blue_spectroscopic={'x':[26,2055],
 """This is taken from the trimsec header from the night of 2023-12-10, I'm not sure why the trimsec header doesn't indicate overscan regions correctly in the ZZCeti ROI (at least from older nights). I should eventually migrate to using trimsec headers to do this."""
 
 goodman_unbinned_pixscale= 0.15 #arcsec/pixel
+
+do_dip_correction=True
 #930-ZZcetiblue
 #400 M1
 #400 M2

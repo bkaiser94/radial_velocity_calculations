@@ -79,18 +79,19 @@ tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
 #print(filenames)
 plot_wavelength=True
 plot_400m2_tell= False
-default_norm_show=True
+default_norm_show=False
 save_plots=False
 
 #########################
-bb_teff=9000. #K
+bb_teff=4440. #K
 
 
 #mwdd_filename='WDJ0254p4255_DXP_Kilic2025_fnu_MWDD_spec.csv'
 #mwdd_filename='GJ3866_DC_Heatm_Teff5000_Bergeron2001_fnu_MWDD_spec.csv'
 #mwdd_filename='WD1208p076_DA_Teff5150_subsavage2009_fnu_MWDD_spec.csv'
 #mwdd_filename='WDJ1753m8405_DCsus_Teff5020K_OBrien2024_flambda_MWDD_spec.csv'
-mwdd_filename='WDJ1838m5357_DAsus_Teff5150_OBrien2024_flambda_MWDD_spec.csv'
+#mwdd_filename='WDJ1838m5357_DAsus_Teff5150_OBrien2024_flambda_MWDD_spec.csv'
+mwdd_filename='WD2225p176_DAZ_Teff6600_fnu_MWDD.csv'
 #mwdd_filename='WDJ1828m6537_DAsus_Teff5050_OBrien2024_flambda_MWDD_spec.csv'
 #mwdd_filename='WDJ1018m3438_DAsus_Teff5090_OBrien2024_flambda_MWDD_spec.csv'
 #mwdd_filename='WDJ2236m5548_DZsus_Teff5132_OBrien2024_flambda_MWDD_spec.csv'
@@ -137,7 +138,7 @@ mwdd_list=[
 #norm_range=[5100,5400]
 #norm_range=[4400,4430]
 #norm_range=[4224,4250]
-norm_range=[2700,2750]
+#norm_range=[2700,2750]
 
 #norm_range=[4800.,5000.]
 #norm_range=[6090,6240]
@@ -145,7 +146,7 @@ norm_range=[2700,2750]
 #norm_range=[3800,4000]
 #norm_range=[6570,6620]
 #norm_range=[6640,6670]#20190530 400M1 norm range
-#norm_range=[6630,6690]#wider double norm range
+##norm_range=[6630,6690]#wider double norm range
 #norm_range=[6773, 6817]#red side of Li I line short of telluric
 #norm_range=[6630,6690]
 #norm_range=[5740,5850]
@@ -153,6 +154,7 @@ norm_range=[2700,2750]
 #norm_range=[4600, 4700]
 #norm_range=[8640,8790]
 #norm_range=[4975,5050]
+norm_range=[4600,4740]
 #norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
@@ -175,7 +177,7 @@ double_iterate= False #file_settings change these in their little sections ahead
 if file_setting=='all_avg':
     print(file_setting)
     #filenames=glob('ravg_wctb*2320*bkg*.fits')
-    filenames=glob('ravg_fwctb*.fits')
+    filenames=glob('ravg_f*wctb*.fits')
     #filenames=glob('fravg_wctb*2320*.fits')
     #filenames=glob('*ravg_wctb*fits')
     #filenames=glob('ravg_fwctb*2124*fits')
@@ -202,6 +204,7 @@ if file_setting=='all_avg':
     #filenames=glob('avg_*')
     
     filenames= sorted(filenames)
+    print(filenames)
     single_iterate=True
     double_iterate=False
     #single_iterate=False
@@ -225,7 +228,7 @@ elif file_setting=='all_fwctb':
     print(file_setting)
     filenames=glob('fwctb*')
     #filenames=glob('fwctb*0850p195*')
-    #filenames=glob('fwctb*WDJ2124*')
+    filenames=glob('fwctb*')
     #filenames=glob('fwctb*SDSSJ1312*')
     #filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
@@ -255,6 +258,7 @@ elif file_setting=='compare_SDSS':
     print('filename:', filename)
     #sdss_names = glob(sdss_path+'*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'G0_K5/*K*.fits')
+    sdss_names = glob(sdss_path+'A0_F9/*F4*.fits')
     #sdss_names = glob(sdss_path+'*1651*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*K*.fits')
@@ -268,7 +272,7 @@ elif file_setting=='compare_SDSS':
     #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ0738p4114*.fits')
     #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ1312*.fits')
     #sdss_names=glob(sdss_path+'Kstars_mistaken_for_WDs/*SDSSJ2348*.fits')
-    sdss_names=glob(sdss_path+'WD_pec/*.fits')
+    #sdss_names=glob(sdss_path+'WD_pec/*.fits')
     #sdss_names=glob(sdss_path+'DC/*.fits')
 
     sdss_names= sorted(sdss_names)
@@ -319,11 +323,13 @@ elif file_setting =='two_arm_compare_SDSS':
     #sdss_names = glob(sdss_path+'*sdss*.fits')
     #sdss_names = glob(sdss_path+'*SDSS*.fits')
     #sdss_names = glob(sdss_path+'*Dox*.fits')
-    sdss_names = glob(sdss_path+'*WD_pec/*.fits')
+    #sdss_names = glob(sdss_path+'*WD_pec/*.fits')
     #sdss_names = glob(sdss_path+'*DQpec*.fits')
+    #sdss_names = glob(sdss_path+'*LRD*.fits')
     #sdss_names = glob(sdss_path+'*M*.fits')
     #sdss_names = glob(sdss_path+'*1636*.fits')
-    #sdss_names = glob(sdss_path+'G0_K5/*G*.fits')
+    sdss_names = glob(sdss_path+'G0_K5/*K5*Dwarf*.fits')
+    #sdss_names = glob(sdss_path+'*K7*Dwarf*.fits')
     #sdss_names = glob(sdss_path+'DC/*.fits')
     
     sdss_names= sorted(sdss_names)
@@ -409,7 +415,7 @@ def plot_spectrum(spec, filename, header, smooth=False, kernel_type='gaussian', 
         pass
     if smooth:
         spec= convolve_spectrum(spec, header, kernel_type=kernel_type, pix_width=pix_width, kernel_width=kernel_width)
-        title_string=title_string+ ' smoothed'
+        title_string=title_string+ ' smoothed '+ str(pix_width)+' pixel '+kernel_type
         #plt.title(filename+ ' smoothed')
     else:
         #plt.title(filename)
@@ -953,8 +959,8 @@ if __name__ == '__main__':
         filename1=filename
         #target_spec1, header1, target_noise1= spt.retrieve_sdss_spec(filename)
         target_spec1[0]=target_spec1[0]+wavelength_offset
-        mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=False)
-        #mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename, convert_to_flambda=True)
+        #mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=False)
+        mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename, convert_to_flambda=True)
         print('retrieved MWDD spec')
         #target_spec1= norm_spectrum(target_spec1, norm_range)
         #for filename2 in sdss_names:
@@ -991,29 +997,30 @@ if __name__ == '__main__':
             
             #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width,color='k')
             
+            plot_spectrum(mwdd_spec, mwdd_filename, header1, norm=True, smooth=True, kernel_type='box',pix_width=5)
             
-            #plot_spectrum(target_spec1, filename, header1, norm=False, smooth=True, kernel_type='box', pix_width=5,alpha=1.0,color='k')
-            
-            #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=sdss_pix_width*sdss_scale_factor)
+            plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=boss_scale_factor,offset=-0.25)
+                        
+            #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=5,alpha=1.0,color='k')
             
             #plot_spectrum(target_spec2, filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=5*sdss_scale_factor)
             #for mwdd_filename in mwdd_list:
                         #mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=False)
                         #plot_spectrum(mwdd_spec, mwdd_filename, header1, norm=True, smooth=True, kernel_type='box',pix_width=10)
-            plot_spectrum(mwdd_spec, mwdd_filename, header1, norm=True, smooth=True, kernel_type='box',pix_width=10)
-            plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=5)
-            bb_spec=spt.blackbody_spec(target_spec1[0],bb_teff)
-            print(bb_spec)
-            plot_spectrum(bb_spec, str(bb_teff)+' K BB', header1, norm=True, smooth=False)
+            #plot_spectrum(mwdd_spec, mwdd_filename, header1, norm=True, smooth=True, kernel_type='box',pix_width=10)
+            #plot_spectrum(target_spec1, filename, header1, norm=True, smooth=True, kernel_type='box', pix_width=5)
+            #bb_spec=spt.blackbody_spec(target_spec1[0],bb_teff)
+            #print(bb_spec)
+            #plot_spectrum(bb_spec, str(bb_teff)+' K BB', header1, norm=True, smooth=False)
                     
-            model_file_list=sorted(glob(cp.balmer_model_dir+'*.txt'))
-            for model_filename in model_file_list:
-                model_spec=spt.retrieve_blouin_model(model_filename)
-                trim_model_spec=spt.clean_spectrum(model_spec,3600,7000,[])
-                norm_model_spec=norm_spectrum(trim_model_spec,norm_range)
-                label=model_filename.split('/')[-1]
-                plt.plot(norm_model_spec[0],norm_model_spec[1],label=model_filename.split('/')[-1])
-            spt.plot_wien_max_wave(np.arange(4500,6600, 500))
+            #model_file_list=sorted(glob(cp.balmer_model_dir+'*.txt'))
+            #for model_filename in model_file_list:
+                #model_spec=spt.retrieve_blouin_model(model_filename)
+                #trim_model_spec=spt.clean_spectrum(model_spec,3600,7000,[])
+                #norm_model_spec=norm_spectrum(trim_model_spec,norm_range)
+                #label=model_filename.split('/')[-1]
+                #plt.plot(norm_model_spec[0],norm_model_spec[1],label=model_filename.split('/')[-1])
+            #spt.plot_wien_max_wave(np.arange(4500,6600, 500))
             
             #plot_spectrum(spt.flambda_to_fnu(target_spec2), filename2.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=5*sdss_scale_factor)
             ##plot_spectrum(spt.flambda_to_fnu(mwdd_spec), mwdd_filename, header1, norm=True, smooth=True, kernel_type='box',pix_width=5)
@@ -1081,8 +1088,10 @@ if __name__ == '__main__':
             plt.title(filename+ ' & '+ filename2.split('/')[-1])
             #plt.xlim(np.nanmin(target_spec1[0]), np.nanmax(target_spec1[0]))
             #plt.show()
+            plt.title('')
             spt.show_plot(line_id='h',convert_to_air=True,actually_show=False)
             spt.show_plot(line_id='cool_wd',convert_to_air=True,actually_show=True)
+            #spt.show_plot(line_id='',convert_to_air=True,actually_show=True)
             plt.show()
             #spt.show_plot(line_id='h',convert_to_air=True, actually_show=True)
             #spt.show_plot(line_id='molecules',convert_to_air=False,label_pos=1.05)
@@ -1302,17 +1311,36 @@ if __name__ == '__main__':
             print('median dlambda sdss spec:', get_median_dlambda(sdss_spec))
             print('scaling factor:', get_median_dlambda(target_spec1)/get_median_dlambda(sdss_spec))
             print('scaling factor:', get_median_dlambda(target_spec2)/get_median_dlambda(sdss_spec))
-            plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1], sdss_spec[1]]), 99.9)+0.5)
+            #plt.ylim(top=np.percentile(np.hstack([target_spec2[1], target_spec1[1], sdss_spec[1]]), 99.9)+0.5)
             
             #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header2, norm=True, smooth=True, kernel_type='gaussian', pix_width=pix_width, color='r')
-            plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
+            #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='sdss_match', pix_width=pix_width, color='r')
+
+            #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1], header1, norm=True, smooth=True, kernel_type='box', pix_width=15, color='grey')
+            #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1]+ ' smooth', header1, norm=True, smooth=True, kernel_type='box', pix_width=200, color='r')
+            ref_name=sdss_path+'G0_K5/K5_+0.0_Dwarf.fits'
+            ref_spec,ref_header,ref_noise=spt.retrieve_sdss_spec(ref_name, wave_medium='vac')
+            ref_spec=spt.blackbody_spec(sdss_spec[0],bb_teff)
+            #interp_spec=np.interp(sdss_spec[0],ref_spec[0],ref_spec[1])
+            sdss_spec= norm_spectrum(sdss_spec, norm_range)
+            ref_spec= norm_spectrum(ref_spec, norm_range)
+            print(ref_spec.shape)
+            interp_method=scinterp.interp1d(ref_spec[0],ref_spec[1])
+            interp_spec=interp_method(sdss_spec[0])
+            #plot_spectrum([sdss_spec[0],sdss_spec[1]/interp_spec], sdss_filename.split('/')[-1]+ ' divided by '+ref_name.split('/')[-1], header1, norm=False, smooth=True, kernel_type='box', pix_width=200)
+            plot_spectrum([sdss_spec[0],sdss_spec[1]/interp_spec], sdss_filename.split('/')[-1]+ ' divided by '+str(bb_teff)+' K BB', header1, norm=False, smooth=True, kernel_type='box', pix_width=200)
+            plt.axhline(y=1,linestyle=':',color='k')
+            #plot_spectrum([sdss_spec[0],sdss_spec[1]-interp_spec], sdss_filename.split('/')[-1]+ ' minus '+ref_name.split('/')[-1], header1, norm=False, smooth=True, kernel_type='box', pix_width=200)
+            
+            #plot_spectrum(sdss_spec, sdss_filename.split('/')[-1]+ ' smooth', header1, norm=True, smooth=True, kernel_type='box', pix_width=200)
+
             #plot_spectrum(target_spec1, filename1, header1, pix_width=header1['see_sig'],norm=True, smooth=True, kernel_type='gaussian',  color='g')
             #plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, pix_width=header2['see_sig'], kernel_type='gaussian',  color='b')
             
-            plot_spectrum(target_spec1, filename1, header1, pix_width=5,norm=True, smooth=True, kernel_type='box',  color='g')
-            plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, pix_width=5, kernel_type='box',  color='b')
+            #plot_spectrum(target_spec1, filename1, header1, pix_width=5,norm=True, smooth=True, kernel_type='box',  color='g')
+            #plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, pix_width=5, kernel_type='box',  color='b')
             
-            plot_spectrum(mwdd_spec, mwdd_filename, header1, norm=True, smooth=False, color='k')
+            #plot_spectrum(mwdd_spec, mwdd_filename, header1, norm=True, smooth=False, color='k')
 
             #plot_spectrum(gaia_spec,'LHS2534 GaiaDR3 XP',header1, smooth=False, norm=False)
             
@@ -1322,8 +1350,13 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700, 9000], smooth=True, pix_width=30)
             plt.xlim(3700,9000)
             #plt.ylabel(r'$F_{\nu}$ (normalized)')
-            spt.show_plot(line_id='cool_wd', convert_to_air=False)
+            #spt.show_plot(line_id='cool_wd', convert_to_air=False)
             #spt.show_plot(line_id='mystery', convert_to_air=False)
+        
+        #plot_spectrum(target_spec1, filename1, header1, pix_width=5,norm=True, smooth=True, kernel_type='box')
+        #plot_spectrum(target_spec2, filename2, header2, norm=True, smooth=True, pix_width=5, kernel_type='box')
+        spt.show_plot(show_legend=True, line_id='h', convert_to_air=False,actually_show=False)
+        spt.show_plot(line_id='cool_wd', convert_to_air=False)
             
     if single_iterate:
         counter=0
@@ -1355,9 +1388,11 @@ if __name__ == '__main__':
             
             ##### Fake absorption features imposed
             
-            index_range=[1000,1020]
-            ew_range=[5670,5735]
-            target_spec[1][index_range[0]:index_range[1]]=0
+            #index_range=[1000,1020]
+            #ew_range=[5670,5735]
+            #target_spec[1][index_range[0]:index_range[1]]=0
+            
+            ###################
             #ew, ew_noise=spt.get_generic_ew(target_spec,ew_range,cont_width=100,noise_method='rms',plot_all=True,cont_method='poly1')
             
             #ew,ew_noise=spt.get_ew(filename,[4190.,4262.], cont_method='poly1',cont_width=60.,noise_method='rms', plot_all=False )
@@ -1489,7 +1524,7 @@ if __name__ == '__main__':
             #mwdd_spec, mwdd_err_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=True,iue_spec=True)
             #plot_spectrum(mwdd_spec, mwdd_filename, header, norm=False, smooth=False, kernel_type='box',pix_width=10)
             
-            #plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
             
             #plt.errorbar(mwdd_spec[0],mwdd_spec[1],yerr=mwdd_err_spec[1],label=mwdd_filename)
             
@@ -1498,14 +1533,14 @@ if __name__ == '__main__':
             #mwdd_spec, mwdd_err_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=True,iue_spec=True)
             #plot_spectrum(mwdd_spec, mwdd_filename, header, norm=False, smooth=False, kernel_type='box',pix_width=10)
             
-            for mwdd_filename in mwdd_list:
-                mwdd_spec, mwdd_err_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=True,iue_spec=True)
-                plot_spectrum(mwdd_spec, mwdd_filename, header, norm=True, smooth=True, kernel_type='box',pix_width=5)
+            #for mwdd_filename in mwdd_list:
+                #mwdd_spec, mwdd_err_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=True,iue_spec=True)
+                #plot_spectrum(mwdd_spec, mwdd_filename, header, norm=True, smooth=True, kernel_type='box',pix_width=5)
             
-            plt.axvline(x=1200,linestyle=':')
-            plt.axvline(x=1215,linestyle=':')
-            plt.axvline(x=1303,linestyle=':')
-            plt.axvline(x=1306,linestyle=':')
+            #plt.axvline(x=1200,linestyle=':')
+            #plt.axvline(x=1215,linestyle=':')
+            #plt.axvline(x=1303,linestyle=':')
+            #plt.axvline(x=1306,linestyle=':')
             #plt.errorbar(mwdd_spec[0],mwdd_spec[1],yerr=mwdd_err_spec[1],label=mwdd_filename)
             #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=True)
             #spt.show_plot(show_legend=True, line_id='h')
@@ -1547,8 +1582,8 @@ if __name__ == '__main__':
             #spt.show_plot(show_telluric=False, show_legend=False)
             
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-            #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
-            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
+            spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
+            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             
             #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
 
@@ -1593,11 +1628,11 @@ if __name__ == '__main__':
         #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
         #plt.ylim(-0.1,0.6)
         
-        flat_counts=np.ones(target_spec[0].shape)
-        flat_counts[310:340]=0
-        flat_counts[340:360]=0.5
-        flat_counts[290:310]=0.5
-        flat_flambda=spt.counts_to_flambda(np.vstack([target_spec[0],flat_counts]),dlambda)
+        #flat_counts=np.ones(target_spec[0].shape)
+        #flat_counts[310:340]=0
+        #flat_counts[340:360]=0.5
+        #flat_counts[290:310]=0.5
+        #flat_flambda=spt.counts_to_flambda(np.vstack([target_spec[0],flat_counts]),dlambda)
         #plt.plot(target_spec[0],flat_counts,label='flat counts')
         #plot_spectrum(flat_flambda,'flat flambda',header,norm=True)
         spt.show_plot(show_legend=True, line_id='h', convert_to_air=True,actually_show=True)

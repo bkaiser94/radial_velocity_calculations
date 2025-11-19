@@ -28,11 +28,13 @@ start = time.time()
 import spec_plot_tools as spt
 
 #glob_string= 'wctb*'
-glob_string='fwctb*'
+#glob_string='dwctb*'
+glob_string='fdwctb*'
+#glob_string='fwctb*'
 #glob_string='zfwctb*'
 
 #filenames= glob('wctb*')
-filenames= glob(glob_string)
+filenames= sorted(glob(glob_string))
 
 #low_index=10
 low_index= len(glob_string)-1+6
@@ -47,7 +49,8 @@ filename_set=[]
 print(filenames)
 
 def get_core_name(filename):
-    return  filename[low_index:high_index]
+    #return  filename[low_index:high_index]
+    return  filename[low_index:high_index].lower()#This makes it not case sensitive, which helps for 400m1 vs. 400M1 especially; debatably this same function should be called to check if the core_name is the same for both successive files...
     #return filename.split('_')[1]
 
 for i,filename in enumerate(filenames[:-1]):
@@ -55,7 +58,8 @@ for i,filename in enumerate(filenames[:-1]):
     core_name= get_core_name(filename)
     print('filename:', filename, 'core_name:', core_name)
     filename_set.append(filename)
-    if core_name != filenames[i+1][low_index:high_index]:
+    #if core_name != filenames[i+1][low_index:high_index]:
+    if core_name != filenames[i+1][low_index:high_index].lower():#This makes it not case sensitive, which helps for 400m1 vs. 400M1 especially
         #filename_set.append(filename)
         #print('match')
         #print(core_name, prev_core)
@@ -240,7 +244,7 @@ def avg_spectra(target_list):
     plt.plot(avg_flux, label='avg')
     #plt.title(target_file)
     plt.legend()
-    plt.show()
+    #plt.show() #2025-07-18 Segmentation fault 11 is popping up now when I try to launch a plot in python2.7, I can't remember how I fixed this the other time, so I'm just commenting out the attempt to show the plot.
     core_name=target_file[low_index:high_index]
     avg_noise=avg_noise/avg_flux
     output_name= "avg_"+ glob_string[:-1]+'.'+ core_name + ".fits"
