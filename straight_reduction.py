@@ -67,9 +67,12 @@ def make_image_stack(imagelist, times= True):
     for img in imagelist:
         filename = glob(img)[0]
         i= fits.open(img)
+        print(img)
         header = fits.getheader(img)
         img_data= i[0].data
         images.append(img_data)
+        #for thing in header:
+            #print(thing)
         gain =header['GAIN']
         readnoise = header['RDNOISE']
         if times:

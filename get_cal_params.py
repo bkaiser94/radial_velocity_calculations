@@ -17,7 +17,7 @@ import cal_params as cp
 
 def get_cal_params(header):
     #if (('goodman' in header['INSTRUME'].lower()) or (header['INSTRUME'] =='')):
-    if (('goodman' in header['INSTRUME'].lower()) or (header['INSTRUME'] =='') or (header['INSTRUME']=='ghts_red')):
+    if (('goodman' in header['INSTRUME'].lower()) or (header['INSTRUME'] =='') or (header['INSTRUME'].lower()=='ghts_red')):
         setup_dict= cp.cal_params[header['GRATING']][header['CAM_TARG']][header['GRT_TARG']][header['INSTCONF']]
         if header['INSTRUME']=='':
             print('\n\n**********************\n"INSTRUME" header is blank "" so we are assuming it is a Goodman observation. If this is not the case, you better stop the script now because it is about to make a bunch of assumptions on that basis.\n\n**********************\n')
@@ -28,6 +28,9 @@ def get_cal_params(header):
     elif 'gmos-n' in header['INSTRUME'].lower():
         print('GMOS-N spectrum detected')
         setup_dict=cp.gemini_params
+    else:
+        print("No instrument match found but there's still something there:")
+        print(header['INSTRUME'])
     return setup_dict
 
 def identify_standard(header):

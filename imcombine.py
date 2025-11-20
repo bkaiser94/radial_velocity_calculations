@@ -41,7 +41,7 @@ for im_name in imlist:
     img_data= np.copy(i[0].data)
     im_stack.append(img_data)
     
-    
+print(type(im_stack))
 med_im= np.nanmedian(im_stack, axis=0)
 print('median image generated')
 

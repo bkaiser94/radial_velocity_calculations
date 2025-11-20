@@ -33,6 +33,7 @@ import cal_params as cp
 import spec_plot_tools as spt
 import plot_spec as ps
 
+############# The "norm_range" from plot_spec was [4600,4740] for the generation of this that was done on 2025-11-19
 
 
 filename='ravg_fwctb.WDJ1223m1852_400m1.fits'

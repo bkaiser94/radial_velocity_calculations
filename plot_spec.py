@@ -148,13 +148,13 @@ mwdd_list=[
 #norm_range=[6640,6670]#20190530 400M1 norm range
 ##norm_range=[6630,6690]#wider double norm range
 #norm_range=[6773, 6817]#red side of Li I line short of telluric
-#norm_range=[6630,6690]
+norm_range=[6630,6690]
 #norm_range=[5740,5850]
 #norm_range=[5310,5490]
 #norm_range=[4600, 4700]
 #norm_range=[8640,8790]
 #norm_range=[4975,5050]
-norm_range=[4600,4740]
+#norm_range=[4600,4740]
 #norm_range=[6745, 6815] #DQpec normalization range
 ####norm_range=np.array(norm_range)+wavelength_offset
 
@@ -1524,7 +1524,7 @@ if __name__ == '__main__':
             #mwdd_spec, mwdd_err_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=True,iue_spec=True)
             #plot_spectrum(mwdd_spec, mwdd_filename, header, norm=False, smooth=False, kernel_type='box',pix_width=10)
             
-            plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
+            plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=5, kernel_type='box')
             
             #plt.errorbar(mwdd_spec[0],mwdd_spec[1],yerr=mwdd_err_spec[1],label=mwdd_filename)
             
@@ -1582,7 +1582,7 @@ if __name__ == '__main__':
             #spt.show_plot(show_telluric=False, show_legend=False)
             
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-            spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
+            #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             
             #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
