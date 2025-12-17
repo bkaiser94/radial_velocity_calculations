@@ -38,7 +38,22 @@ im_stack=[]
 for im_name in imlist:
     i= fits.open(im_name)
     header = fits.getheader(im_name)
-    img_data= np.copy(i[0].data)
+    print(header)
+    print(i[1].header)
+    print(len(i))
+    try:
+        if header['instrume']=='triplespec':
+            img_data= np.copy(i[1].data)
+        else:
+            img_data= np.copy(i[0].data)
+    except KeyError as error:
+        print("KeyError:",error)
+        if i[1].header['instrume']=='triplespec':
+            img_data= np.copy(i[1].data)
+            header=i[1].header
+        else:
+            img_data= np.copy(i[0].data)
+    print('img_data.shape',img_data.shape)
     im_stack.append(img_data)
     
 print(type(im_stack))
@@ -57,7 +72,7 @@ print('mid_sub_parts:', mid_sub_parts)
 mid_new_name= '_'.join(mid_sub_parts[1:])
 
 print('mid_new_name:', mid_new_name)
-tail_end= ''.join(dec_parts[1:])
+tail_end= '.'.join(dec_parts[1:])
 full_new_name= '.'.join(['med_'+mid_new_name, tail_end])
 
 print('full_new_name:', full_new_name)

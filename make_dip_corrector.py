@@ -154,12 +154,14 @@ div_array=np.array(div_list)
 #wave_array=np.array(wave_list)
 print('div_array.shape', div_array.shape)
 for num,entry in enumerate(div_array):
-    plt.plot(entry[0],entry[1],label=str(num))
+    plt.plot(entry[0],entry[1],label='Star '+str(num))
 
 avg_div=np.mean(div_array,axis=0)
 med_div=np.median(div_array,axis=0)
 plt.plot(div_array[0,0],avg_div[1],label='avg')
 plt.plot(div_array[0,0],med_div[1],label='median')
+plt.xlabel(r'Wavelength ($\mathrm{\AA}$)')
+plt.ylabel('Correction Factor (This is multiplied by the spectrum before Flux Calibration)')
 plt.legend()
 plt.show()
 
@@ -168,7 +170,7 @@ print(med_div.shape)
 sub_div=med_div[:,good_inds[0]]
 for value in sub_div[0]:
     print(value)
-np.savetxt(input_dir+'dip_correction_points.csv',sub_div)
+#np.savetxt(input_dir+'dip_correction_points.csv',sub_div)
 
 new_akima=scinterp.Akima1DInterpolator(med_div[0],med_div[1])
 
