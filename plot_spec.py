@@ -79,7 +79,7 @@ tell_filename='LBL_A30_s0_w005_R0060000_T.fits'
 #print(filenames)
 plot_wavelength=True
 plot_400m2_tell= False
-default_norm_show=False
+default_norm_show=True
 save_plots=False
 
 #########################
@@ -228,7 +228,10 @@ elif file_setting=='all_fwctb':
     print(file_setting)
     filenames=glob('fwctb*')
     #filenames=glob('fwctb*0850p195*')
-    filenames=glob('fwctb*')
+    #filenames=glob('fdwctb*CWNU*')
+    #filenames=glob('fdwctb*HSC1733*')
+    #filenames=glob('fdwctb*HSC2453*')
+    filenames=glob('fdwctb*')
     #filenames=glob('fwctb*SDSSJ1312*')
     #filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
@@ -1433,101 +1436,30 @@ if __name__ == '__main__':
             dlambda= hdu[4].data
             #target_spec[0]=target_spec[0]+wavelength_offset
             #print(filename, 'mean: ', np.nanmean(target_spec[1]))
-            nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
+            #nu_spec= spt.flambda_to_fnu(target_spec, dlambda)
             #conv_spec= convolve_spectrum(target_spec, header)
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=False, kernel_type='box')
-            #plt.scatter(header['BMJD_TDB'], np.sum(target_spec[1]*dlambda))
-            #plt.errorbar(target_spec[0], target_spec[1], yerr=target_noise[1], label=filename, marker='o')
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=True, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            #plot_spectrum(target_spec, filename, header, smooth=True , norm=True, pix_width=5., kernel_type='box',alpha=1.0)
+            plot_spectrum(target_spec, filename, header, smooth=False , norm=False, pix_width=3., kernel_type='box',alpha=1.0)
+            
             #plot_spectrum(target_spec, filename+' smoothed', header, smooth=True , norm=False, pix_width=5., kernel_type='box',alpha=0.7)
             #plot_spectrum(gaia_spec,'LTT3218 GaiaDR3 XP',header, smooth=False, norm=False)
             
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=5., kernel_type='box',alpha=1.0,offset=(counter%6.)*1.)
             
-            #plot_spectrum(spt.flambda_to_fnu(target_spec), filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian',alpha=1.0)
-            
-            #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=1., kernel_type='gaussian',alpha=1.0)
+
             
             #Arbitrary Resolution matching smoothing method below, but you have to specify what resolution is the target in pix_width as the number whose square has the file's see_sig's square subtracted from it.
-            #plot_spectrum
             
-            ######################################################
-            #################################################
-            #####Poorly placed trial run of tweaking of the flux calibration based on deviations of warm DCs from a blackbody curve.
-
-            ####plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
-            ####binned_spec=spt.rebin_generic_spec(target_spec,hdu[4].data,np.arange(np.nanmin(target_spec[0]),np.nanmax(target_spec[0]),30.),np.ones(np.arange(np.nanmin(target_spec[0]),np.nanmax(target_spec[0]),30.).shape)*30.)
-            #####yakima=scinterp.Akima1DInterpolator(target_spec[0],target_spec[1])(target_spec[0])
-            ####yakima=scinterp.Akima1DInterpolator(binned_spec[0],binned_spec[1])(target_spec[0])
-            ####plot_spectrum(binned_spec, '30 A-binned spec', header, smooth=False, norm=False, pix_width=5, kernel_type='box')
-            ####plt.plot(target_spec[0],yakima,label='Akima Interp')
-            ####bb_spec=spt.blackbody_spec(target_spec[0],bb_teff)
-            ####print(bb_spec)  
-            ####plot_spectrum(bb_spec, str(bb_teff)+' K BB', header, norm=True, smooth=False)
-            ####spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-            ####spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
-            
-            ####norm_bb_spec=norm_spectrum(bb_spec,norm_range,show_norm_range=False)
-            ####norm_interp_spec=norm_spectrum(np.vstack([target_spec[0],yakima]),norm_range,show_norm_range=False)
-            
-            ####plt.plot(norm_bb_spec[0],norm_bb_spec[1],label='normed BB spec')
-            ####plt.plot(norm_interp_spec[0],norm_interp_spec[1],label='normed interp spec')
-            ####plt.xlabel('Wavelength Angstroms')
-            ####plt.legend()
-            ####plt.show()
-            
-            ####div_flux=norm_bb_spec[1]/norm_interp_spec[1]
-            ####plt.plot(target_spec[0],div_flux,label='norm bb spec/norm interp spec')
-            ####plt.xlabel('Wavelength Angstroms')
-            ####plt.legend()
-            ####plt.show()
-            
-            ####plot_spectrum(target_spec, filename, header, smooth=False, norm=True, pix_width=5, kernel_type='box')
-            ####binned_spec=spt.rebin_generic_spec(target_spec,hdu[4].data,np.arange(np.nanmin(target_spec[0]),np.nanmax(target_spec[0]),30.),np.ones(np.arange(np.nanmin(target_spec[0]),np.nanmax(target_spec[0]),30.).shape)*30.)
-            #####yakima=scinterp.Akima1DInterpolator(target_spec[0],target_spec[1])(target_spec[0])
-            ####yakima=scinterp.Akima1DInterpolator(binned_spec[0],binned_spec[1])(target_spec[0])
-            ####plot_spectrum(binned_spec, '30 A-binned spec', header, smooth=False, norm=True, pix_width=5, kernel_type='box')
-            ####plot_spectrum(np.vstack([target_spec[0],yakima]), 'Interp Spectrum', header, smooth=False, norm=True, pix_width=5, kernel_type='box')
-            #####plt.plot(target_spec[0],yakima,label='Akima Interp')
-            ####bb_spec=spt.blackbody_spec(target_spec[0],bb_teff)
-            ####print(bb_spec)  
-            ####plot_spectrum(bb_spec, str(bb_teff)+' K BB', header, norm=True, smooth=False)
-            ####corrected_spec=np.vstack([target_spec[0],target_spec[1]*div_flux])
-            ####plot_spectrum(corrected_spec, 'Hopefully corrected w/ leftovers', header, smooth=False, norm=True, pix_width=5, kernel_type='box')
-            #####plt.plot(target_spec[0],target_spec[1]*div_flux,label='Hopefully corrected w/ leftovers')
-            ####spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-            ####spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
-            
-            ####plot_spectrum(target_spec, filename, header, smooth=False, norm=False, pix_width=5, kernel_type='box')
-            ####plot_spectrum(corrected_spec, 'Hopefully corrected w/ leftovers', header, smooth=False, norm=False, pix_width=5, kernel_type='box')
-            ####spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-            ####spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
-            
-            ####other_filename='ravg_fwctb.WDJ1828m6357_400m1.fits'
-            ####for other_filename in sorted(glob('ravg_fwctb.*fits')):
-                ####other_spec, other_header, other_noise= spt.retrieve_spec(other_filename)
-                ####correct_other_spec=np.vstack([other_spec[0],other_spec[1]*(np.interp(other_spec[0],target_spec[0],div_flux))])
-                ####plot_spectrum(other_spec, other_filename, other_header, smooth=True, norm=False, pix_width=5, kernel_type='box')
-                ####plot_spectrum(correct_other_spec, other_filename+' corrected with previous method', other_header, smooth=True, norm=False, pix_width=5, kernel_type='box')
-                ####mwdd_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=False)
-                ####plot_spectrum(mwdd_spec, mwdd_filename, header, norm=False, smooth=True, kernel_type='box',pix_width=10)
-                ####spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=False)
-                ####spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
-                
-            #####End of poorly positioned flux correction code that needs to be spun off
-            ####################################################
-            ####################################################
+ 
             #mwdd_filename='GD356_DAHe_IUE_fnu_MWDD_spec.csv'
             #mwdd_spec, mwdd_err_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=True,iue_spec=True)
             #plot_spectrum(mwdd_spec, mwdd_filename, header, norm=False, smooth=False, kernel_type='box',pix_width=10)
             
-            plot_spectrum(target_spec, filename, header, smooth=True, norm=False, pix_width=3, kernel_type='box',offset=0)
-            
-            #plt.errorbar(mwdd_spec[0],mwdd_spec[1],yerr=mwdd_err_spec[1],label=mwdd_filename)
-            
+
+            #plot_spectrum(target_spec, filename, header,norm=False, smooth=False,kernel_type='box',pix_width=5)
             
             #mwdd_filename='GD229_DBP_IUE_fnu_MWDD_spec.csv'
             #mwdd_spec, mwdd_err_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=True,iue_spec=True)
@@ -1537,38 +1469,18 @@ if __name__ == '__main__':
                 #mwdd_spec, mwdd_err_spec=spt.retrieve_mwdd_spec(mwdd_filename,convert_to_flambda=True,iue_spec=True)
                 #plot_spectrum(mwdd_spec, mwdd_filename, header, norm=True, smooth=True, kernel_type='box',pix_width=5)
             
-            #plt.axvline(x=1200,linestyle=':')
-            #plt.axvline(x=1215,linestyle=':')
-            #plt.axvline(x=1303,linestyle=':')
-            #plt.axvline(x=1306,linestyle=':')
-            #plt.errorbar(mwdd_spec[0],mwdd_spec[1],yerr=mwdd_err_spec[1],label=mwdd_filename)
-            #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=True)
-            #spt.show_plot(show_legend=True, line_id='h')
-            
-            #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=0.5*header['see_sig'], kernel_type='gaussian', offset=counter*0.1)
-            #plot_spectrum(target_spec, filename+', seeing '+str(header["see_FWHM"]*header["pix_scal"])[:4]+ '" '+str(header['width']), header, smooth=True, norm=False, pix_width=5, kernel_type='box')
-            #try:
-                #hold_spec[1]=hold_spec[1]-target_spec[1]
-                #plot_spectrum(hold_spec, filename+', seeing '+str(header["see_FWHM"]*header["pix_scal"])[:4]+ ' " ', header, smooth=True, norm=False, pix_width=5, kernel_type='box')
-                #hold_spec=target_spec
-            #except NameError as error:
-                #print("NameError:", error)
-                #hold_spec=target_spec
-            #plot_spectrum(nu_spec, filename, header, smooth=True, norm=True, pix_width=15, kernel_type='box')
 
-            #plot_spectrum(target_spec, filename, header, smooth=True, norm=False,  kernel_type='gaussian',pix_width=header['SEE_SIG'])
-            #target_spec[1]=header['airmass']
-            #plot_spectrum(target_spec, filename, header, norm=False, smooth=True, kernel_type='box', pix_width=10)
-            #plot_spectrum(target_spec, str(header['airmass']), header, norm=False, smooth=True, kernel_type='box', pix_width=10)
-            #plot_spectrum(target_spec, filename, header, norm=True, smooth=True, pix_width=15,offset=counter*-0.2, kernel_type='box')
-            #plot_spectrum(target_spec, filename, header, norm=True, smooth=True, kernel_type='box', offset=counter)
-            #plot_spectrum(nu_spec, filename, header, norm=False, smooth=True, kernel_type='box')
-            #plt.plot(target_spec[0], dlambda,  label=filename, marker='o', markersize=10-counter)
-            ##plot_spectrum(target_spec, filename, header, smooth=True, kernel_type='gaussian', norm=True)
-            #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=False)
-            #if header['bmjd_tdb']>   60560.:
-                #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=False, divide_width=True, show_date=True)
-            #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=True, divide_width=False, show_date=True)
+            
+
+
+        
+            #if '20260120' in filename:
+                #color='r'
+            #elif '20251218' in filename:
+                #color='b'
+            #elif '2025114' in filename:
+                #color='k'
+            #plot_sky(filename, offset=0, line_labels=False, convolve=False,norm=True, divide_width=False, show_date=False, color=color)
             #if header['airmass']<1.5:
                 #plot_sky(filename, offset=0)
             #else:
@@ -1581,7 +1493,7 @@ if __name__ == '__main__':
             #plot_telluric_spectrum([3700,9000], smooth=True, pix_width=30, tell_filename='LBL_A30_s0_w200_R0060000_T.fits')
             #spt.show_plot(show_telluric=False, show_legend=False)
             
-            spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=True)
+            #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=True)
             #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             
@@ -1635,14 +1547,15 @@ if __name__ == '__main__':
         #flat_flambda=spt.counts_to_flambda(np.vstack([target_spec[0],flat_counts]),dlambda)
         #plt.plot(target_spec[0],flat_counts,label='flat counts')
         #plot_spectrum(flat_flambda,'flat flambda',header,norm=True)
-        #spt.show_plot(show_legend=True, line_id='h', convert_to_air=True,actually_show=True)
+        #plt.ylabel(r'f_nu')
+        spt.show_plot(show_legend=True, line_id='h', convert_to_air=True,actually_show=True)
         #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
         #spt.show_plot(show_legend=True, line_id='cyclotron3800', convert_to_air=True)
         #spt.show_plot(show_telluric=False, show_legend=True, line_id='')
         #spt.show_plot(show_telluric=False, show_legend=True, line_id='J0212', convert_to_air=True)
         plt.title('')
         #spt.show_plot(show_legend=False, line_id='cool_wd', convert_to_air=True)
-        spt.show_plot(show_legend=False, line_id='', convert_to_air=True)
+        #spt.show_plot(show_legend=False, line_id='', convert_to_air=True)
         
         #plt.plot(bmjd_list,ew_list, marker='o')
         #plt.ylabel(r'ew_values ($\AA$)')

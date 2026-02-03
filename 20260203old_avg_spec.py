@@ -5,7 +5,9 @@ Created by Ben Kaiser 2019-03-27 (UNC-Chapel Hill)
 
 Should average together the counts and uncertainties of matching extracted spectra.
 
-Now runs in Python 3.6 at least. I can't see why it wouldn't run in later versions than that.
+Must be run in Python2! (As of 2023-01-30 because it involves a forward reference with a 
+global declaration, which Python3 does not allow, but I wrote it that way and haven't been 
+bothered to figure out how to do it another way...
 
 """
 from __future__ import print_function
@@ -35,9 +37,8 @@ glob_string='fdwctb*'
 filenames= sorted(glob(glob_string))
 
 #low_index=10
-low_index= len(glob_string)-1+6 #Removes the reduction prefix from the front of the file and then the frame number and following underscore, leaving behind just the name stem.
-high_index=-5 #indexes to the fifth-to-last character of the filename. So at present, it omits ".fits". Yes, this could be done with a split function, but using low and high indices allows for both trimmings of the core_name to be done simultaneously.
-global do_dlambda_ext
+low_index= len(glob_string)-1+6
+high_index=-5
 
 do_dlambda_ext= True
 do_super=False
@@ -159,7 +160,6 @@ def avg_spectra(target_list):
     bmjd_tdb_list=[]
     see_sig_list=[]
     see_fwhm_list=[]
-    global do_dlambda_ext
     if do_dlambda_ext:
         dlambda_list=[]
     else:
@@ -178,7 +178,7 @@ def avg_spectra(target_list):
         hdu=fits.open(target_file)
         sky=np.copy(hdu[2].data)
         sky_list.append(sky)
-        #global do_dlambda_ext
+        global do_dlambda_ext
         if do_dlambda_ext:
             try:
                 dlambda_spec= np.copy(hdu[4].data)
@@ -287,7 +287,7 @@ def make_super_spec(target_list, save=True, plot_all=True):
         sky=np.copy(hdu[2].data)
         sky_list.append(sky)
         core_name=target_file[low_index:high_index]
-        #global do_dlambda_ext
+        global do_dlambda_ext
         if do_dlambda_ext:
             try:
                 dlambda_spec= np.copy(hdu[4].data)

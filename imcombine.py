@@ -39,10 +39,10 @@ for im_name in imlist:
     i= fits.open(im_name)
     header = fits.getheader(im_name)
     print(header)
-    print(i[1].header)
     print(len(i))
     try:
         if header['instrume']=='triplespec':
+            print(i[1].header)
             img_data= np.copy(i[1].data)
         else:
             img_data= np.copy(i[0].data)

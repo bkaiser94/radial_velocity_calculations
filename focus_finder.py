@@ -29,16 +29,16 @@ from astropy.table import Table, Column
 
 
 #input_files=sorted(glob('*besselR*focus*.fits'))
-#input_files=sorted(glob('*besselr*focus*.fits')) #need this one for 2024-04-07 only
+input_files=sorted(glob('*besselR*focus3.fits')) #need this one for 2024-04-07 only
 #input_files=sorted(glob('*besselR*focus*correct*.fits')) #2024-09-27
-input_files=sorted(glob('*besselR*focus*fix2*.fits')) #2025-02-28
+#input_files=sorted(glob('*besselR*focus*fix*.fits')) #2025-02-28
 
 
 
 
 glob_search_width=30
 #center_search_val=2067 #2024-04-17
-#center_search_val=2135. #2024-02-07
+center_search_val=2135. #2024-02-07
 #center_search_val=2130. #2024-02-10
 #center_search_val=2134. #2024-03-04. 
 #center_search_val=2130. #2024-03-12. 
@@ -47,7 +47,9 @@ glob_search_width=30
 #center_search_val=2111. #2024-05-08
 #center_search_val=2116. #2024-05-14
 #center_search_val=2115. #2024-06-04
-center_search_val=2144. #2024-09-27
+#center_search_val=2144. #2024-09-27
+#center_search_val=2105. #2025-04-24
+#center_search_val=2085. #2025-05-28
 
 
 
@@ -239,6 +241,14 @@ dates=[
     '2024-06-04',
     '2024-09-25',
     '2025-02-28',
+    '2025-04-24',
+    '2025-05-28',
+    '2025-06-28',
+    '2025-07-21',
+    '2025-09-26',
+    '2025-11-14',
+    '2025-12-18',
+    '2026-01-20'
     ]
 
 
@@ -254,13 +264,23 @@ focii=[
     0.398,
     0.401,
     0.454,
-    0.461
+    0.461,
+    0.431,
+    0.467,
+    0.445,
+    0.459,
+    0.429,
+    0.590,
+    0.530,
+    0.378
     ]
 
 
 col_swaps=[
     '2024-03-06',
-    '2024-05-10'
+    '2024-05-10',
+    '2025-10-06',
+    '2026-01-14'
     ]
 
 #old method using astropy dates/time 
