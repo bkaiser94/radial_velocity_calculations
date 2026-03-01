@@ -37,7 +37,18 @@ name_all_lower_case:{
 
 
 """
-ref_dir= '/Users/BenKaiser/Desktop/Goodman_ref_files/'
+import sys
+
+ref_dir='Goodman_ref_files/'
+#try:
+    #script_dir = Path(__file__).resolve().parent
+#except NameError:
+    ## __file__ may not exist in some interactive environments; fall back to argv[0]
+    #script_dir = Path(sys.argv[0]).resolve().parent
+
+script_dir='/Users/BenKaiser/Desktop/radial_velocity_calculations/'
+    
+ref_dir=script_dir +ref_dir
 
 wave_sol_dir= 'wavelength_solns/'
 tracetrack_dir='tracetracks/'

@@ -144,8 +144,8 @@ mwdd_list=[
 #norm_range=[6090,6240]
 #norm_range=[6360,6420]
 #norm_range=[3800,4000]
-#norm_range=[6570,6620]
-norm_range=[6640,6670]#20190530 400M1 norm range
+norm_range=[6570,6620]
+#norm_range=[6640,6670]#20190530 400M1 norm range
 ##norm_range=[6630,6690]#wider double norm range
 #norm_range=[6773, 6817]#red side of Li I line short of telluric
 #norm_range=[6630,6690]
@@ -231,7 +231,7 @@ elif file_setting=='all_fwctb':
     #filenames=glob('fdwctb*CWNU*')
     #filenames=glob('fdwctb*HSC1733*')
     #filenames=glob('fdwctb*HSC2453*')
-    filenames=glob('fdwctb*')
+    filenames=glob('fdwctb*1114*')
     #filenames=glob('fwctb*SDSSJ1312*')
     #filenames=glob('fwctb*1430*')
     #filenames=glob('fwctb*WISE*')
@@ -1442,7 +1442,7 @@ if __name__ == '__main__':
             #plot_spectrum(nu_spec, 'fnu', header, smooth=True, norm=True, kernel_type='box')
             #plot_spectrum(target_spec, filename, header, smooth=True, norm=True, pix_width=header['see_sig'], kernel_type='gaussian')
             
-            plot_spectrum(target_spec, filename, header, smooth=False , norm=False, pix_width=3., kernel_type='box',alpha=1.0)
+            plot_spectrum(target_spec, filename, header, smooth=False , norm=False, pix_width=10., kernel_type='box',alpha=1.0)
             
             #plot_spectrum(target_spec, filename+' smoothed', header, smooth=True , norm=False, pix_width=5., kernel_type='box',alpha=0.7)
             #plot_spectrum(gaia_spec,'LTT3218 GaiaDR3 XP',header, smooth=False, norm=False)
@@ -1494,7 +1494,7 @@ if __name__ == '__main__':
             #spt.show_plot(show_telluric=False, show_legend=False)
             
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True,actually_show=True)
-            #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=True)
+            #spt.show_plot(show_legend=False, line_id='h', convert_to_air=True, actually_show=False)
             #spt.show_plot(show_legend=True, line_id='cool_wd', convert_to_air=True)
             
             #spt.show_plot(show_legend=True, line_id='C2_bands', convert_to_air=True)
